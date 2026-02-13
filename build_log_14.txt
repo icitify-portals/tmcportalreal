@@ -1,0 +1,23 @@
+▲ Next.js 16.1.1 (Turbopack)
+- Environments: .env.local, .env
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+✓ Compiled successfully in 2.5min
+  Running TypeScript ...
+Failed to compile.
+
+./app/dashboard/admin/cms/menus/page.tsx:84:49
+Type error: Type '{ type: "link" | "dropdown" | "button"; path: string | undefined; isActive: boolean; parentId: string | null; id: string; createdAt: Date | null; updatedAt: Date | null; organizationId: string | null; order: number; label: string; children?: NavigationItem[]; }' is not assignable to type '{ label: string; type: "link" | "dropdown" | "button"; isActive: boolean; order: number; id?: string | undefined; path?: string | undefined; organizationId?: string | undefined; parentId?: string | ... 1 more ... | undefined; }'.
+  Types of property 'organizationId' are incompatible.
+    Type 'string | null' is not assignable to type 'string | undefined'.
+      Type 'null' is not assignable to type 'string | undefined'.
+
+[0m [90m 82 |[39m                                             [33m<[39m[33mCreateMenuItemDialog[39m
+ [90m 83 |[39m                                                 organizationId[33m=[39m{organizationId}
+[31m[1m>[22m[39m[90m 84 |[39m                                                 itemToEdit[33m=[39m{{
+ [90m    |[39m                                                 [31m[1m^[22m[39m
+ [90m 85 |[39m                                                     [33m...[39mitem[33m,[39m
+ [90m 86 |[39m                                                     type[33m:[39m item[33m.[39mtype [33m||[39m [32m'link'[39m[33m,[39m
+ [90m 87 |[39m                                                     path[33m:[39m item[33m.[39mpath [33m||[39m undefined[33m,[39m[0m
+Next.js build worker exited with code: 1 and signal: null

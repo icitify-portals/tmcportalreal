@@ -1,0 +1,21 @@
+▲ Next.js 16.1.1 (Turbopack)
+- Environments: .env.local, .env
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+✓ Compiled successfully in 115s
+  Running TypeScript ...
+Failed to compile.
+
+./app/dashboard/admin/finance/requests/page.tsx:66:107
+Type error: Argument of type 'Date | null' is not assignable to parameter of type 'string | Date'.
+  Type 'null' is not assignable to type 'string | Date'.
+
+[0m [90m 64 |[39m                                                 [33m<[39m[33mCardTitle[39m[33m>[39m{request[33m.[39mtitle}[33m<[39m[33m/[39m[33mCardTitle[39m[33m>[39m
+ [90m 65 |[39m                                                 [33m<[39m[33mCardDescription[39m[33m>[39m
+[31m[1m>[22m[39m[90m 66 |[39m                                                     [33mRequested[39m by {request[33m.[39mrequester[33m?[39m[33m.[39mname} on {formatDate(request[33m.[39mcreatedAt)}
+ [90m    |[39m                                                                                                           [31m[1m^[22m[39m
+ [90m 67 |[39m                                                 [33m<[39m[33m/[39m[33mCardDescription[39m[33m>[39m
+ [90m 68 |[39m                                             [33m<[39m[33m/[39m[33mdiv[39m[33m>[39m
+ [90m 69 |[39m                                             [33m<[39m[33mBadge[39m variant[33m=[39m{getStatusColor(request[33m.[39mstatus) [36mas[39m any}[33m>[39m[0m
+Next.js build worker exited with code: 1 and signal: null

@@ -1,0 +1,20 @@
+▲ Next.js 16.1.1 (Turbopack)
+- Environments: .env.local, .env
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+✓ Compiled successfully in 101s
+  Running TypeScript ...
+Failed to compile.
+
+./app/api/members/[id]/status/route.ts:118:21
+Type error: Type '"REJECTED"' is not assignable to type '"PENDING" | "RECOMMENDED" | "ACTIVE" | "SUSPENDED" | "EXPIRED" | "INACTIVE" | SQL<unknown> | null | undefined'.
+
+[0m [90m 116 |[39m             [36mawait[39m db[33m.[39mupdate(members)
+ [90m 117 |[39m                 [33m.[39m[36mset[39m({
+[31m[1m>[22m[39m[90m 118 |[39m                     status[33m:[39m [32m"REJECTED"[39m[33m,[39m
+ [90m     |[39m                     [31m[1m^[22m[39m
+ [90m 119 |[39m                     rejectionReason[33m:[39m reason
+ [90m 120 |[39m                 })
+ [90m 121 |[39m                 [33m.[39mwhere(eq(members[33m.[39mid[33m,[39m id))[0m
+Next.js build worker exited with code: 1 and signal: null

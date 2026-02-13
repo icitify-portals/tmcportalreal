@@ -1,0 +1,21 @@
+▲ Next.js 16.1.1 (Turbopack)
+- Environments: .env.local, .env
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+✓ Compiled successfully in 118s
+  Running TypeScript ...
+Failed to compile.
+
+./app/dashboard/admin/burials/request/[id]/page.tsx:113:37
+Type error: Type 'string | null' is not assignable to type 'string'.
+  Type 'null' is not assignable to type 'string'.
+
+[0m [90m 111 |[39m                                 [33m<[39m[33mAdminBurialActions[39m
+ [90m 112 |[39m                                     requestId[33m=[39m{request[33m.[39mid}
+[31m[1m>[22m[39m[90m 113 |[39m                                     status[33m=[39m{request[33m.[39mstatus}
+ [90m     |[39m                                     [31m[1m^[22m[39m
+ [90m 114 |[39m                                     userId[33m=[39m{session[33m.[39muser[33m.[39mid}
+ [90m 115 |[39m                                 [33m/[39m[33m>[39m
+ [90m 116 |[39m                             [33m<[39m[33m/[39m[33mCardContent[39m[33m>[39m[0m
+Next.js build worker exited with code: 1 and signal: null

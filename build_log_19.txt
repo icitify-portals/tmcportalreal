@@ -1,0 +1,20 @@
+▲ Next.js 16.1.1 (Turbopack)
+- Environments: .env.local, .env
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+✓ Compiled successfully in 119s
+  Running TypeScript ...
+Failed to compile.
+
+./app/dashboard/admin/jurisdictions/actions.ts:10:26
+Type error: Cannot find module '@/types/enums' or its corresponding type declarations.
+
+[0m [90m  8 |[39m [36mimport[39m { getServerSession } [36mfrom[39m [32m"@/lib/session"[39m
+ [90m  9 |[39m [36mimport[39m { requirePermission } [36mfrom[39m [32m"@/lib/rbac-v2"[39m
+[31m[1m>[22m[39m[90m 10 |[39m [36mimport[39m { [33mOrgLevel[39m } [36mfrom[39m [32m"@/types/enums"[39m [90m// Assuming I'll need to define or import this if not available as type[39m
+ [90m    |[39m                          [31m[1m^[22m[39m
+ [90m 11 |[39m
+ [90m 12 |[39m [90m// Define schema locally for now or import if I standardize it later[39m
+ [90m 13 |[39m [36mconst[39m createJurisdictionSchema [33m=[39m z[33m.[39mobject({[0m
+Next.js build worker exited with code: 1 and signal: null

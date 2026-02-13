@@ -1,0 +1,20 @@
+▲ Next.js 16.1.1 (Turbopack)
+- Environments: .env.local, .env
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+✓ Compiled successfully in 104s
+  Running TypeScript ...
+Failed to compile.
+
+./app/api/officials/route.ts:14:34
+Type error: Parameter 'r' implicitly has an 'any' type.
+
+[0m [90m 12 |[39m     [90m// RBAC Check - Admin or ICT Officer[39m
+ [90m 13 |[39m     [36mconst[39m isAuthorized [33m=[39m session[33m.[39muser[33m.[39misSuperAdmin [33m||[39m
+[31m[1m>[22m[39m[90m 14 |[39m         session[33m.[39muser[33m.[39mroles[33m?[39m[33m.[39msome(r [33m=>[39m
+ [90m    |[39m                                  [31m[1m^[22m[39m
+ [90m 15 |[39m             r[33m.[39mjurisdictionLevel [33m===[39m [32m"SYSTEM"[39m [33m||[39m
+ [90m 16 |[39m             r[33m.[39mcode[33m?[39m[33m.[39mincludes([32m"ADMIN"[39m) [33m||[39m
+ [90m 17 |[39m             r[33m.[39mcode[33m?[39m[33m.[39mincludes([32m"ICT_OFFICER"[39m)[0m
+Next.js build worker exited with code: 1 and signal: null

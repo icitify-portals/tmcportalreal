@@ -1,0 +1,20 @@
+▲ Next.js 16.1.1 (Turbopack)
+- Environments: .env.local, .env
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+✓ Compiled successfully in 105s
+  Running TypeScript ...
+Failed to compile.
+
+./app/api/members/[id]/status/route.ts:15:31
+Type error: Cannot find name 'getServerSession'.
+
+[0m [90m 13 |[39m     [36mtry[39m {
+ [90m 14 |[39m         [36mconst[39m { id } [33m=[39m [36mawait[39m params
+[31m[1m>[22m[39m[90m 15 |[39m         [36mconst[39m session [33m=[39m [36mawait[39m getServerSession()
+ [90m    |[39m                               [31m[1m^[22m[39m
+ [90m 16 |[39m
+ [90m 17 |[39m         [90m// Check basic permissions first, detailed checks per action below[39m
+ [90m 18 |[39m         [36mif[39m ([33m![39msession [33m||[39m [33m![39msession[33m.[39muser) {[0m
+Next.js build worker exited with code: 1 and signal: null

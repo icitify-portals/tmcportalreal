@@ -1,0 +1,136 @@
+import { getServerSession } from "@/lib/session"
+import { db } from "@/lib/db"
+import { specialProgrammes, userRoles, roles, organizations } from "@/lib/db/schema"
+import { eq, and, desc } from "drizzle-orm"
+import { redirect } from "next/navigation"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
+import { PlusCircle, Library, History, FileStack } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { DashboardLayout } from "@/components/layout/dashboard-layout"
+
+export const dynamic = 'force-dynamic'
+
+export default async function SpecialProgrammesAdminPage() {
+    const session = await getServerSession()
+    if (!session?.user?.id) redirect("/login")
+
+    // Security check: Find organization ID with fallbacks
+    const userRole = await db.select({
+        organizationId: userRoles.organizationId
+    })
+        .from(userRoles)
+        .innerJoin(roles, eq(userRoles.roleId, roles.id))
+        .where(
+            and(
+                eq(userRoles.userId, session.user.id),
+                eq(userRoles.isActive, true)
+            )
+        )
+        .limit(1)
+
+    let organizationId = userRole[0]?.organizationId
+
+    if (!organizationId) {
+        // Fallback to session organization
+        organizationId = session.user.organizationId
+    }
+
+    if (!organizationId) {
+        // Final Fallback: National Organization
+        const nationalOrg = await db.select({ id: organizations.id })
+            .from(organizations)
+            .where(eq(organizations.level, 'NATIONAL'))
+            .limit(1)
+
+        organizationId = nationalOrg[0]?.id
+    }
+
+    if (!organizationId) redirect("/dashboard")
+
+    const items = await db.select().from(specialProgrammes)
+        .where(eq(specialProgrammes.organizationId, organizationId))
+        .orderBy(desc(specialProgrammes.year), desc(specialProgrammes.createdAt))
+
+    return (
+        <DashboardLayout>
+            <div className="flex-1 space-y-4 p-8 pt-6">
+                <div className="flex items-center justify-between space-y-2">
+                    <h2 className="text-3xl font-bold tracking-tight text-green-700">Special Programmes Archive</h2>
+                    <div className="flex items-center space-x-2">
+                        <Button asChild className="bg-green-600 hover:bg-green-700">
+                            <Link href="/dashboard/admin/special-programmes/new">
+                                <PlusCircle className="mr-2 h-4 w-4" />
+                                Archive New Programme
+                            </Link>
+                        </Button>
+                    </div>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Total Archives</CardTitle>
+                            <Library className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{items.length}</div>
+                            <p className="text-xs text-muted-foreground">Historical records saved.</p>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Archived Series</CardTitle>
+                        <CardDescription>
+                            Manage multimedia reports for Teskiyah Workshops, Press Releases, etc.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {items.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-12 text-center">
+                                <History className="h-12 w-12 text-muted-foreground mb-4" />
+                                <p className="text-lg font-medium">No special programmes archived yet</p>
+                                <p className="text-sm text-muted-foreground max-w-xs mx-auto">
+                                    Start building your digital library of session recordings and reports.
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                {items.map((item) => (
+                                    <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                                        <div className="flex items-center space-x-4">
+                                            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center text-green-700 font-bold">
+                                                {item.year}
+                                            </div>
+                                            <div>
+                                                <h4 className="font-semibold">{item.title}</h4>
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    <Badge variant="outline" className="text-[10px] uppercase">
+                                                        {item.category.replace(/_/g, ' ')}
+                                                    </Badge>
+                                                    <span className="text-xs text-muted-foreground">
+                                                        Edition: {item.year}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <Button variant="ghost" size="sm" asChild>
+                                                <Link href={`/dashboard/admin/special-programmes/${item.id}`}>
+                                                    Edit
+                                                </Link>
+                                            </Button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+            </div>
+        </DashboardLayout>
+    )
+}

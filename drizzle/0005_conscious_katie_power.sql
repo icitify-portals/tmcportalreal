@@ -1,0 +1,2 @@
+ALTER TABLE `promotions` MODIFY COLUMN `status` enum('PENDING','APPROVED','REJECTED','ACTIVE','EXPIRED') DEFAULT 'PENDING';--> statement-breakpoint
+ALTER TABLE `promotions` ADD `paymentStatus` enum('PENDING','SUCCESS','FAILED','CANCELLED','REFUNDED') DEFAULT 'PENDING';

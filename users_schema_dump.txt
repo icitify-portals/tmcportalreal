@@ -1,0 +1,6 @@
+[
+  {
+    "Table": "users",
+    "Create Table": "CREATE TABLE `users` (\n  `id` varchar(191) NOT NULL,\n  `email` varchar(191) NOT NULL,\n  `emailVerified` datetime(3) DEFAULT NULL,\n  `password` varchar(191) DEFAULT NULL,\n  `name` varchar(191) NOT NULL,\n  `phone` varchar(191) DEFAULT NULL,\n  `image` varchar(191) DEFAULT NULL,\n  `createdAt` datetime(3) NOT NULL DEFAULT current_timestamp(3),\n  `updatedAt` datetime(3) NOT NULL,\n  `address` varchar(191) DEFAULT NULL,\n  `country` varchar(191) DEFAULT NULL,\n  PRIMARY KEY (`id`),\n  UNIQUE KEY `users_email_key` (`email`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+  }
+]

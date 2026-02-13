@@ -1,0 +1,55 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1768904402209,
+      "tag": "0000_uneven_beyonder",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1769521945501,
+      "tag": "0001_flaky_sir_ram",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1769680997212,
+      "tag": "0002_black_the_stranger",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1769847771607,
+      "tag": "0003_concerned_lake",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1769860053937,
+      "tag": "0004_polite_sister_grimm",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1769860308278,
+      "tag": "0005_conscious_katie_power",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1770054806869,
+      "tag": "0006_tough_adam_destine",
+      "breakpoints": true
+    }
+  ]
+}

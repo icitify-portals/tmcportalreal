@@ -1,0 +1,188 @@
+﻿
+> tmcportal@0.1.0 build
+> next build
+
+Γû▓ Next.js 16.1.1 (Turbopack)
+- Environments: .env.local, .env
+
+node.exe : ΓÜá The 
+"middleware" file 
+convention is 
+deprecated. Please 
+use "proxy" instead. 
+Learn more: https://ne
+xtjs.org/docs/messages
+/middleware-to-proxy
+At line:1 char:1
++ & "C:\Program Files\
+nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo 
+...
++ ~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+~~~~~
+    + CategoryInfo    
+          : NotSpeci  
+  fied: (ΓÜá The "m   
+ iddle...leware-to    
+-proxy:String) []    
+, RemoteException
+    + FullyQualifiedE 
+   rrorId : NativeCo  
+  mmandError
+ 
+  Creating an optimized production build ...
+Γ£ô Compiled successfully in 117s
+  Running TypeScript ...
+  Collecting page data using 3 workers ...
+  Generating static pages using 3 workers (0/30) ...
+  Generating static pages using 3 workers (7/30) 
+  Generating static pages using 3 workers (14/30) 
+  Generating static pages using 3 workers (22/30) 
+Γ£ô Generating static pages using 3 workers (30/30) in 646.3ms
+  Finalizing page optimization ...
+
+Route (app)
+Γöî ╞Æ /
+Γö£ ╞Æ /_not-found
+Γö£ ╞Æ /[jurisdiction]
+Γö£ ╞Æ /[jurisdiction]/campaigns
+Γö£ ╞Æ /[jurisdiction]/campaigns/[slug]
+Γö£ ╞Æ /[jurisdiction]/p/[slug]
+Γö£ ╞Æ /adhkar
+Γö£ ╞Æ /api/analytics/visit
+Γö£ ╞Æ /api/auth/[...nextauth]
+Γö£ ╞Æ /api/auth/keys
+Γö£ ╞Æ /api/auth/resend-verification
+Γö£ ╞Æ /api/auth/signup
+Γö£ ╞Æ /api/auth/verify-email
+Γö£ ╞Æ /api/chat
+Γö£ ╞Æ /api/chats
+Γö£ ╞Æ /api/chats/[chatId]/messages
+Γö£ ╞Æ /api/cms/organization
+Γö£ ╞Æ /api/donate
+Γö£ ╞Æ /api/fix-db
+Γö£ ╞Æ /api/members
+Γö£ ╞Æ /api/members/[id]
+Γö£ ╞Æ /api/members/[id]/manage-id
+Γö£ ╞Æ /api/members/[id]/status
+Γö£ ╞Æ /api/members/apply
+Γö£ ╞Æ /api/notifications
+Γö£ ╞Æ /api/officials
+Γö£ ╞Æ /api/organization/cms
+Γö£ ╞Æ /api/organizations/authorized
+Γö£ ╞Æ /api/payments/initialize
+Γö£ ╞Æ /api/payments/receipt/[id]
+Γö£ ╞Æ /api/payments/verify
+Γö£ ╞Æ /api/permissions
+Γö£ ╞Æ /api/posts
+Γö£ ╞Æ /api/roles
+Γö£ ╞Æ /api/roles/[id]
+Γö£ ╞Æ /api/roles/[id]/permissions
+Γö£ ╞Æ /api/settings/email-templates
+Γö£ ╞Æ /api/settings/email-templates/[key]
+Γö£ ╞Æ /api/settings/system
+Γö£ ╞Æ /api/test-db
+Γö£ ╞Æ /api/test/verify-crowdfunding
+Γö£ ╞Æ /api/upload
+Γö£ ╞Æ /api/users
+Γö£ ╞Æ /api/users/[id]/roles
+Γö£ ╞Æ /api/users/search
+Γö£ ╞Æ /auth/signin
+Γö£ ╞Æ /auth/signup
+Γö£ ╞Æ /auth/verify-email
+Γö£ ╞Æ /connect/[[...slug]]
+Γö£ ╞Æ /constitution
+Γö£ ╞Æ /dashboard/admin
+Γö£ ╞Æ /dashboard/admin/adhkar
+Γö£ ╞Æ /dashboard/admin/adhkar/new
+Γö£ ╞Æ /dashboard/admin/analytics
+Γö£ ╞Æ /dashboard/admin/assets
+Γö£ ╞Æ /dashboard/admin/audit
+Γö£ ╞Æ /dashboard/admin/burials
+Γö£ ╞Æ /dashboard/admin/burials/request/[id]
+Γö£ ╞Æ /dashboard/admin/cms/menus
+Γö£ ╞Æ /dashboard/admin/cms/pages
+Γö£ ╞Æ /dashboard/admin/cms/pages/[id]
+Γö£ ╞Æ /dashboard/admin/documents
+Γö£ ╞Æ /dashboard/admin/finance
+Γö£ ╞Æ /dashboard/admin/finance/analytics
+Γö£ ╞Æ /dashboard/admin/finance/budgets
+Γö£ ╞Æ /dashboard/admin/finance/campaigns
+Γö£ ╞Æ /dashboard/admin/finance/fees
+Γö£ ╞Æ /dashboard/admin/finance/fees/[id]
+Γö£ ╞Æ /dashboard/admin/finance/fees/new
+Γö£ ╞Æ /dashboard/admin/finance/reports
+Γö£ ╞Æ /dashboard/admin/finance/requests
+Γö£ ╞Æ /dashboard/admin/finance/transactions
+Γö£ ╞Æ /dashboard/admin/galleries
+Γö£ ╞Æ /dashboard/admin/galleries/[id]
+Γö£ ╞Æ /dashboard/admin/jurisdictions
+Γö£ ╞Æ /dashboard/admin/meetings
+Γö£ ╞Æ /dashboard/admin/meetings/[id]
+Γö£ ╞Æ /dashboard/admin/members
+Γö£ ╞Æ /dashboard/admin/members/[id]
+Γö£ ╞Æ /dashboard/admin/occasions
+Γö£ ╞Æ /dashboard/admin/officials
+Γö£ ╞Æ /dashboard/admin/officials/new
+Γö£ ╞Æ /dashboard/admin/organizations
+Γö£ ╞Æ /dashboard/admin/organizations/[id]
+Γö£ ╞Æ /dashboard/admin/organizations/[id]/edit
+Γö£ ╞Æ /dashboard/admin/organizations/new
+Γö£ ╞Æ /dashboard/admin/payments
+Γö£ ╞Æ /dashboard/admin/posts
+Γö£ ╞Æ /dashboard/admin/posts/new
+Γö£ ╞Æ /dashboard/admin/programmes
+Γö£ ╞Æ /dashboard/admin/promotions
+Γö£ ╞Æ /dashboard/admin/promotions/plans
+Γö£ ╞Æ /dashboard/admin/reports
+Γö£ ╞Æ /dashboard/admin/roles
+Γö£ ╞Æ /dashboard/admin/roles/[id]
+Γö£ ╞Æ /dashboard/admin/settings
+Γö£ ╞Æ /dashboard/admin/settings/navigation
+Γö£ ╞Æ /dashboard/admin/settings/payments
+Γö£ ╞Æ /dashboard/admin/special-programmes
+Γö£ ╞Æ /dashboard/admin/special-programmes/[id]
+Γö£ ╞Æ /dashboard/admin/special-programmes/new
+Γö£ ╞Æ /dashboard/admin/teskiyah
+Γö£ ╞Æ /dashboard/admin/teskiyah/new
+Γö£ ╞Æ /dashboard/admin/users
+Γö£ ╞Æ /dashboard/admin/users/[id]
+Γö£ ╞Æ /dashboard/broadcasts
+Γö£ ╞Æ /dashboard/burial
+Γö£ ╞Æ /dashboard/burial/new
+Γö£ ╞Æ /dashboard/burial/request/[id]
+Γö£ ╞Æ /dashboard/cms
+Γö£ ╞Æ /dashboard/council
+Γö£ ╞Æ /dashboard/council/reports
+Γö£ ╞Æ /dashboard/finance
+Γö£ ╞Æ /dashboard/member
+Γö£ ╞Æ /dashboard/member/apply
+Γö£ ╞Æ /dashboard/member/meetings
+Γö£ ╞Æ /dashboard/member/meetings/[id]
+Γö£ ╞Æ /dashboard/member/occasions
+Γö£ ╞Æ /dashboard/member/payments
+Γö£ ╞Æ /dashboard/member/programmes
+Γö£ ╞Æ /dashboard/messages
+Γö£ ╞Æ /dashboard/official
+Γö£ ╞Æ /dashboard/official/payments
+Γö£ ╞Æ /dashboard/payments/callback
+Γö£ ╞Æ /dashboard/user/promotions
+Γö£ ╞Æ /dashboard/user/promotions/new
+Γö£ ╞Æ /donate
+Γö£ ╞Æ /donate/success
+Γö£ ╞Æ /executives/[executiveId]
+Γö£ Γùï /icon.png
+Γö£ ╞Æ /programmes
+Γö£ ╞Æ /programmes/special
+Γö£ ╞Æ /programmes/special/[id]
+Γöö ╞Æ /teskiyah
+
+
+╞Æ Proxy (Middleware)
+
+Γùï  (Static)   prerendered as static content
+╞Æ  (Dynamic)  server-rendered on demand
+

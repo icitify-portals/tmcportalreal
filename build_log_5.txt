@@ -1,0 +1,20 @@
+▲ Next.js 16.1.1 (Turbopack)
+- Environments: .env.local, .env
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+✓ Compiled successfully in 87s
+  Running TypeScript ...
+Failed to compile.
+
+./app/api/members/[id]/status/route.ts:51:21
+Type error: Type '"RECOMMENDED"' is not assignable to type '"PENDING" | "ACTIVE" | "SUSPENDED" | "EXPIRED" | "INACTIVE" | SQL<unknown> | null | undefined'.
+
+[0m [90m 49 |[39m             [36mawait[39m db[33m.[39mupdate(members)
+ [90m 50 |[39m                 [33m.[39m[36mset[39m({
+[31m[1m>[22m[39m[90m 51 |[39m                     status[33m:[39m [32m"RECOMMENDED"[39m[33m,[39m [90m// As discussed, mapped to MemberStatus.RECOMMENDED[39m
+ [90m    |[39m                     [31m[1m^[22m[39m
+ [90m 52 |[39m                     recommendedBy[33m:[39m session[33m.[39muser[33m.[39mid[33m,[39m
+ [90m 53 |[39m                     recommendedAt[33m:[39m [36mnew[39m [33mDate[39m()[33m,[39m
+ [90m 54 |[39m                 })[0m
+Next.js build worker exited with code: 1 and signal: null

@@ -1,0 +1,2 @@
+
+process.env.DATABASE_URL = "mysql://root@localhost:3306/tmc_portal";

@@ -1,0 +1,26 @@
+▲ Next.js 16.1.1 (Turbopack)
+- Environments: .env.local, .env
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+✓ Compiled successfully in 2.3min
+  Running TypeScript ...
+Failed to compile.
+
+./app/dashboard/admin/finance/page.tsx:110:66
+Type error: No overload matches this call.
+  Overload 1 of 4, '(value: string | number | Date): Date', gave the following error.
+    Argument of type 'Date | null' is not assignable to parameter of type 'string | number | Date'.
+      Type 'null' is not assignable to type 'string | number | Date'.
+  Overload 2 of 4, '(value: string | number): Date', gave the following error.
+    Argument of type 'Date | null' is not assignable to parameter of type 'string | number'.
+      Type 'null' is not assignable to type 'string | number'.
+
+[0m [90m 108 |[39m                                         [33m<[39m[33mTableRow[39m key[33m=[39m{payment[33m.[39mid}[33m>[39m
+ [90m 109 |[39m                                             [33m<[39m[33mTableCell[39m className[33m=[39m[32m"font-medium"[39m[33m>[39m
+[31m[1m>[22m[39m[90m 110 |[39m                                                 {format([36mnew[39m [33mDate[39m(payment[33m.[39mcreatedAt)[33m,[39m [32m'MMM d, yyyy HH:mm'[39m)}
+ [90m     |[39m                                                                  [31m[1m^[22m[39m
+ [90m 111 |[39m                                             [33m<[39m[33m/[39m[33mTableCell[39m[33m>[39m
+ [90m 112 |[39m                                             [33m<[39m[33mTableCell[39m className[33m=[39m[32m"font-mono text-xs"[39m[33m>[39m{payment[33m.[39mpaystackRef}[33m<[39m[33m/[39m[33mTableCell[39m[33m>[39m
+ [90m 113 |[39m                                             [33m<[39m[33mTableCell[39m[33m>[39m[0m
+Next.js build worker exited with code: 1 and signal: null

@@ -1,0 +1,20 @@
+▲ Next.js 16.1.1 (Turbopack)
+- Environments: .env.local, .env
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+✓ Compiled successfully in 2.2min
+  Running TypeScript ...
+Failed to compile.
+
+./app/dashboard/admin/burials/request/[id]/page.tsx:100:42
+Type error: 'request.status' is possibly 'null'.
+
+[0m [90m  98 |[39m                                                 request[33m.[39mstatus [33m===[39m [32m'APPROVED_UNPAID'[39m [33m?[39m [32m'secondary'[39m [33m:[39m [32m'default'[39m
+ [90m  99 |[39m                                     }[33m>[39m
+[31m[1m>[22m[39m[90m 100 |[39m                                         {request[33m.[39mstatus[33m.[39mreplace([32m'_'[39m[33m,[39m [32m' '[39m)}
+ [90m     |[39m                                          [31m[1m^[22m[39m
+ [90m 101 |[39m                                     [33m<[39m[33m/[39m[33mBadge[39m[33m>[39m
+ [90m 102 |[39m                                 [33m<[39m[33m/[39m[33mdiv[39m[33m>[39m
+ [90m 103 |[39m[0m
+Next.js build worker exited with code: 1 and signal: null

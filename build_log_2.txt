@@ -1,0 +1,219 @@
+▲ Next.js 16.1.1 (Turbopack)
+- Environments: .env.local, .env
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+
+> Build error occurred
+Error: Turbopack build failed with 10 errors:
+./app/dashboard/member/meetings/[id]/page.tsx:12:1
+Module not found: Can't resolve '@/components/meetings/meeting-report-form'
+[0m [90m 10 |[39m [36mimport[39m { format[33m,[39m subDays[33m,[39m isAfter } [36mfrom[39m [32m"date-fns"[39m
+ [90m 11 |[39m [36mimport[39m { [33mMeetingRoomActions[39m } [36mfrom[39m [32m"@/components/meetings/meeting-room-actions"[39m [90m// Client component for Join/Leave[39m
+[31m[1m>[22m[39m[90m 12 |[39m [36mimport[39m { [33mMeetingReportForm[39m } [36mfrom[39m [32m"@/components/meetings/meeting-report-form"[39m [90m// Client component for upload[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 13 |[39m
+ [90m 14 |[39m [36minterface[39m [33mMeetingRoomPageProps[39m {
+ [90m 15 |[39m     params[33m:[39m { id[33m:[39m string }[0m
+
+Import map: aliased to relative './components/meetings/meeting-report-form' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+./app/dashboard/admin/officials/new/page.tsx:11:1
+Module not found: Can't resolve '@/components/ui/calendar'
+[0m [90m  9 |[39m [36mimport[39m { [33mSelect[39m[33m,[39m [33mSelectContent[39m[33m,[39m [33mSelectItem[39m[33m,[39m [33mSelectTrigger[39m[33m,[39m [33mSelectValue[39m } [36mfrom[39m [32m"@/components/ui/select"[39m
+ [90m 10 |[39m [36mimport[39m { [33mTextarea[39m } [36mfrom[39m [32m"@/components/ui/textarea"[39m
+[31m[1m>[22m[39m[90m 11 |[39m [36mimport[39m { [33mCalendar[39m } [36mfrom[39m [32m"@/components/ui/calendar"[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 12 |[39m [36mimport[39m { [33mPopover[39m[33m,[39m [33mPopoverContent[39m[33m,[39m [33mPopoverTrigger[39m } [36mfrom[39m [32m"@/components/ui/popover"[39m
+ [90m 13 |[39m [36mimport[39m { format } [36mfrom[39m [32m"date-fns"[39m
+ [90m 14 |[39m [36mimport[39m { [33mCalendarIcon[39m[33m,[39m [33mLoader2[39m[33m,[39m [33mSave[39m[33m,[39m [33mUserPlus[39m[33m,[39m [33mSearch[39m } [36mfrom[39m [32m"lucide-react"[39m[0m
+
+Import map: aliased to relative './components/ui/calendar' inside of [project]/
+
+
+Import traces:
+  Client Component Browser:
+    ./app/dashboard/admin/officials/new/page.tsx [Client Component Browser]
+    ./app/dashboard/admin/officials/new/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/dashboard/admin/officials/new/page.tsx [Client Component SSR]
+    ./app/dashboard/admin/officials/new/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+./components/admin/finance/create-campaign-dialog.tsx:23:1
+Module not found: Can't resolve '@/components/ui/calendar'
+[0m [90m 21 |[39m [36mimport[39m { createCampaign } [36mfrom[39m [32m"@/lib/actions/campaigns"[39m
+ [90m 22 |[39m [36mimport[39m { toast } [36mfrom[39m [32m"sonner"[39m
+[31m[1m>[22m[39m[90m 23 |[39m [36mimport[39m { [33mCalendar[39m } [36mfrom[39m [32m"@/components/ui/calendar"[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 24 |[39m [36mimport[39m { [33mPopover[39m[33m,[39m [33mPopoverContent[39m[33m,[39m [33mPopoverTrigger[39m } [36mfrom[39m [32m"@/components/ui/popover"[39m
+ [90m 25 |[39m [36mimport[39m { cn } [36mfrom[39m [32m"@/lib/utils"[39m
+ [90m 26 |[39m [36mimport[39m { format } [36mfrom[39m [32m"date-fns"[39m[0m
+
+Import map: aliased to relative './components/ui/calendar' inside of [project]/
+
+
+Import trace:
+  Server Component:
+    ./components/admin/finance/create-campaign-dialog.tsx
+    ./app/dashboard/admin/finance/campaigns/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+./app/[jurisdiction]/campaigns/[slug]/page.tsx:8:1
+Module not found: Can't resolve '@/components/ui/progress'
+[0m [90m  6 |[39m [36mimport[39m { organizations[33m,[39m fundraisingCampaigns[33m,[39m payments } [36mfrom[39m [32m"@/lib/db/schema"[39m
+ [90m  7 |[39m [36mimport[39m { eq[33m,[39m and[33m,[39m desc } [36mfrom[39m [32m"drizzle-orm"[39m
+[31m[1m>[22m[39m[90m  8 |[39m [36mimport[39m { [33mProgress[39m } [36mfrom[39m [32m"@/components/ui/progress"[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m  9 |[39m [36mimport[39m { [33mArrowLeft[39m[33m,[39m [33mShare2[39m[33m,[39m [33mCalendar[39m[33m,[39m [33mUser[39m } [36mfrom[39m [32m"lucide-react"[39m
+ [90m 10 |[39m [36mimport[39m { [33mButton[39m } [36mfrom[39m [32m"@/components/ui/button"[39m
+ [90m 11 |[39m [36mimport[39m { format } [36mfrom[39m [32m"date-fns"[39m[0m
+
+Import map: aliased to relative './components/ui/progress' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+./app/[jurisdiction]/campaigns/page.tsx:10:1
+Module not found: Can't resolve '@/components/ui/progress'
+[0m [90m  8 |[39m [36mimport[39m { [33mCard[39m[33m,[39m [33mCardContent[39m[33m,[39m [33mCardHeader[39m[33m,[39m [33mCardTitle[39m[33m,[39m [33mCardDescription[39m } [36mfrom[39m [32m"@/components/ui/card"[39m
+ [90m  9 |[39m [36mimport[39m { [33mButton[39m } [36mfrom[39m [32m"@/components/ui/button"[39m
+[31m[1m>[22m[39m[90m 10 |[39m [36mimport[39m { [33mProgress[39m } [36mfrom[39m [32m"@/components/ui/progress"[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 11 |[39m [36mimport[39m { [33mArrowLeft[39m[33m,[39m [33mUser[39m } [36mfrom[39m [32m"lucide-react"[39m
+ [90m 12 |[39m [36mimport[39m { format } [36mfrom[39m [32m"date-fns"[39m
+ [90m 13 |[39m[0m
+
+Import map: aliased to relative './components/ui/progress' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+./app/dashboard/admin/finance/campaigns/page.tsx:12:1
+Module not found: Can't resolve '@/components/ui/progress'
+[0m [90m 10 |[39m [36mimport[39m { redirect } [36mfrom[39m [32m"next/navigation"[39m[33m;[39m
+ [90m 11 |[39m [36mimport[39m { [33mBadge[39m } [36mfrom[39m [32m"@/components/ui/badge"[39m[33m;[39m
+[31m[1m>[22m[39m[90m 12 |[39m [36mimport[39m { [33mProgress[39m } [36mfrom[39m [32m"@/components/ui/progress"[39m[33m;[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 13 |[39m [36mimport[39m { format } [36mfrom[39m [32m"date-fns"[39m[33m;[39m
+ [90m 14 |[39m [36mimport[39m { [33mExternalLink[39m } [36mfrom[39m [32m"lucide-react"[39m[33m;[39m
+ [90m 15 |[39m [36mimport[39m [33mLink[39m [36mfrom[39m [32m"next/link"[39m[33m;[39m[0m
+
+Import map: aliased to relative './components/ui/progress' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+./components/user/promotions/request-form.tsx:14:1
+Module not found: Can't resolve '@/components/ui/radio-group'
+[0m [90m 12 |[39m [36mimport[39m { useRouter } [36mfrom[39m [32m"next/navigation"[39m
+ [90m 13 |[39m [36mimport[39m { [33mCard[39m[33m,[39m [33mCardContent[39m[33m,[39m [33mCardHeader[39m[33m,[39m [33mCardTitle[39m[33m,[39m [33mCardDescription[39m[33m,[39m [33mCardFooter[39m } [36mfrom[39m [32m"@/components/ui/card"[39m
+[31m[1m>[22m[39m[90m 14 |[39m [36mimport[39m { [33mRadioGroup[39m[33m,[39m [33mRadioGroupItem[39m } [36mfrom[39m [32m"@/components/ui/radio-group"[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 15 |[39m [36mimport[39m { [33mCheck[39m } [36mfrom[39m [32m"lucide-react"[39m
+ [90m 16 |[39m [36mimport[39m axios [36mfrom[39m [32m"axios"[39m
+ [90m 17 |[39m [36mimport[39m [33mImage[39m [36mfrom[39m [32m"next/image"[39m[0m
+
+Import map: aliased to relative './components/ui/radio-group' inside of [project]/
+
+
+Import trace:
+  Server Component:
+    ./components/user/promotions/request-form.tsx
+    ./app/dashboard/user/promotions/new/page.tsx
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+./components/ui/image-editor.tsx:5:1
+Module not found: Can't resolve '@/components/ui/slider'
+[0m [90m 3 |[39m [36mimport[39m { useState[33m,[39m useRef[33m,[39m useEffect } [36mfrom[39m [32m"react"[39m
+ [90m 4 |[39m [36mimport[39m { [33mButton[39m } [36mfrom[39m [32m"@/components/ui/button"[39m
+[31m[1m>[22m[39m[90m 5 |[39m [36mimport[39m { [33mSlider[39m } [36mfrom[39m [32m"@/components/ui/slider"[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 6 |[39m [36mimport[39m { [33mLabel[39m } [36mfrom[39m [32m"@/components/ui/label"[39m
+ [90m 7 |[39m [36mimport[39m { [33mDialog[39m[33m,[39m [33mDialogContent[39m[33m,[39m [33mDialogHeader[39m[33m,[39m [33mDialogTitle[39m[33m,[39m [33mDialogFooter[39m } [36mfrom[39m [32m"@/components/ui/dialog"[39m
+ [90m 8 |[39m [36mimport[39m { [33mCrop[39m[33m,[39m [33mCheck[39m[33m,[39m [33mX[39m[33m,[39m [33mRotateCw[39m } [36mfrom[39m [32m"lucide-react"[39m[0m
+
+Import map: aliased to relative './components/ui/slider' inside of [project]/
+
+
+Import traces:
+  Client Component Browser:
+    ./components/ui/image-editor.tsx [Client Component Browser]
+    ./components/admin/galleries/add-image-dialog.tsx [Client Component Browser]
+    ./components/admin/galleries/add-image-dialog.tsx [Server Component]
+    ./app/dashboard/admin/galleries/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./components/ui/image-editor.tsx [Client Component SSR]
+    ./components/admin/galleries/add-image-dialog.tsx [Client Component SSR]
+    ./components/admin/galleries/add-image-dialog.tsx [Server Component]
+    ./app/dashboard/admin/galleries/[id]/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+./app/dashboard/user/promotions/page.tsx:1:1
+Export auth doesn't exist in target module
+[0m[31m[1m>[22m[39m[90m 1 |[39m [36mimport[39m { auth } [36mfrom[39m [32m"@/lib/auth"[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 2 |[39m [36mimport[39m { getPromotionsSimple } [36mfrom[39m [32m"@/lib/actions/promotions"[39m
+ [90m 3 |[39m [36mimport[39m { [33mButton[39m } [36mfrom[39m [32m"@/components/ui/button"[39m
+ [90m 4 |[39m [36mimport[39m { [33mCard[39m[33m,[39m [33mCardContent[39m[33m,[39m [33mCardDescription[39m[33m,[39m [33mCardHeader[39m[33m,[39m [33mCardTitle[39m } [36mfrom[39m [32m"@/components/ui/card"[39m[0m
+
+The export auth was not found in module [project]/lib/auth.ts [app-rsc] (ecmascript).
+Did you mean to import authConfig?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+
+./lib/actions/promotions.ts:7:1
+Export auth doesn't exist in target module
+[0m [90m  5 |[39m [36mimport[39m { eq[33m,[39m desc[33m,[39m and[33m,[39m ne } [36mfrom[39m [32m"drizzle-orm"[39m
+ [90m  6 |[39m [36mimport[39m { revalidatePath } [36mfrom[39m [32m"next/cache"[39m
+[31m[1m>[22m[39m[90m  7 |[39m [36mimport[39m { auth } [36mfrom[39m [32m"@/lib/auth"[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m  8 |[39m
+ [90m  9 |[39m [36mexport[39m [36masync[39m [36mfunction[39m getPromotionPlans(includeInactive [33m=[39m [36mfalse[39m) {
+ [90m 10 |[39m     [36mtry[39m {[0m
+
+The export auth was not found in module [project]/lib/auth.ts [app-rsc] (ecmascript).
+Did you mean to import authConfig?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import trace:
+  Server Component:
+    ./lib/actions/promotions.ts
+    ./app/dashboard/admin/promotions/page.tsx
+
+
+    at <unknown> (./app/dashboard/member/meetings/[id]/page.tsx:12:1)
+    at <unknown> (https://nextjs.org/docs/messages/module-not-found)
+    at <unknown> (./app/dashboard/admin/officials/new/page.tsx:11:1)
+    at <unknown> (https://nextjs.org/docs/messages/module-not-found)
+    at <unknown> (./components/admin/finance/create-campaign-dialog.tsx:23:1)
+    at <unknown> (https://nextjs.org/docs/messages/module-not-found)
+    at <unknown> (./app/[jurisdiction]/campaigns/[slug]/page.tsx:8:1)
+    at <unknown> (https://nextjs.org/docs/messages/module-not-found)
+    at <unknown> (./app/[jurisdiction]/campaigns/page.tsx:10:1)
+    at <unknown> (https://nextjs.org/docs/messages/module-not-found)
+    at <unknown> (./app/dashboard/admin/finance/campaigns/page.tsx:12:1)
+    at <unknown> (https://nextjs.org/docs/messages/module-not-found)
+    at <unknown> (./components/user/promotions/request-form.tsx:14:1)
+    at <unknown> (https://nextjs.org/docs/messages/module-not-found)
+    at <unknown> (./components/ui/image-editor.tsx:5:1)
+    at <unknown> (https://nextjs.org/docs/messages/module-not-found)
+    at <unknown> (./app/dashboard/user/promotions/page.tsx:1:1)
+    at <unknown> (./lib/actions/promotions.ts:7:1)

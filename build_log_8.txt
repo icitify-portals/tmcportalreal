@@ -1,0 +1,20 @@
+▲ Next.js 16.1.1 (Turbopack)
+- Environments: .env.local, .env
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+✓ Compiled successfully in 113s
+  Running TypeScript ...
+Failed to compile.
+
+./app/api/organizations/authorized/route.ts:23:21
+Type error: Parameter 'r' implicitly has an 'any' type.
+
+[0m [90m 21 |[39m         [36mconst[39m userRoles [33m=[39m session[33m.[39muser[33m.[39mroles [33m||[39m []
+ [90m 22 |[39m         [36mconst[39m managedOrgIds [33m=[39m userRoles
+[31m[1m>[22m[39m[90m 23 |[39m             [33m.[39mfilter(r [33m=>[39m r[33m.[39morganizationId)
+ [90m    |[39m                     [31m[1m^[22m[39m
+ [90m 24 |[39m             [33m.[39mmap(r [33m=>[39m r[33m.[39morganizationId)
+ [90m 25 |[39m
+ [90m 26 |[39m         [36mif[39m (managedOrgIds[33m.[39mlength [33m===[39m [35m0[39m) {[0m
+Next.js build worker exited with code: 1 and signal: null

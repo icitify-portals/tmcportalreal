@@ -1,0 +1,719 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+// User model - Base user account
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime?
+  password      String?   // Hashed password
+  name          String
+  phone         String?
+  image         String?
+  country       String?
+  address       String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  accounts      Account[]
+  sessions      Session[]
+  memberProfile Member?
+  officialProfile Official?
+  userRoles     UserRole[]  // Multiple roles per user
+  auditLogs     AuditLog[]
+  documents     Document[]
+  payments      Payment[]
+  
+  // Relations as approver/recommender
+  recommendedMembers Member[] @relation("MemberRecommender")
+  approvedMembers    Member[] @relation("MemberApprover")
+  
+  notifications      Notification[]
+  posts              Post[]
+  chats              ChatParticipant[]
+  messagesSent       Message[]
+  burialRequests     BurialRequest[]
+
+  @@map("users")
+}
+
+// NextAuth required models
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// Organization hierarchy models
+model Organization {
+  id          String   @id @default(cuid())
+  name        String
+  level       OrgLevel
+  code        String   @unique // Unique code for each org (e.g., "NG", "LAG", "LAG-001")
+  parentId    String?  // Self-referential for hierarchy
+  parent      Organization? @relation("OrganizationHierarchy", fields: [parentId], references: [id])
+  children    Organization[] @relation("OrganizationHierarchy")
+  description String?  @db.Text
+  address     String?
+  city        String?
+  state       String?
+  country     String   @default("Nigeria")
+  phone       String?
+  email       String?
+  website     String?
+  welcomeMessage String? @db.Text
+  welcomeImageUrl String?
+  googleMapUrl String?   @db.Text
+  socialLinks Json?
+  
+  // Planning Settings
+  planningDeadlineMonth Int? @default(12)
+  planningDeadlineDay   Int? @default(12)
+
+  // CMS Fields
+  missionText String?   @db.Text
+  visionText  String?   @db.Text
+  whatsapp    String?
+  officeHours String?
+  sliderImages Json?    // Array of {url, title, subtitle}
+
+  // Paystack Subaccount Integration
+  paystackSubaccountCode String?
+  bankName               String?
+  accountNumber          String?
+  bankCode               String?
+
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+
+  // Relations
+  members     Member[]
+  officials   Official[]
+  userRoles   UserRole[]
+  documents   Document[]
+  payments    Payment[]
+  posts       Post[]
+  galleries   Gallery[]
+  pages       Page[]
+  navigationItems NavigationItem[]
+  campaigns   FundraisingCampaign[]
+
+  @@index([parentId])
+  @@map("organizations")
+}
+
+enum OrgLevel {
+  NATIONAL
+  STATE
+  LOCAL
+  LOCAL_GOVERNMENT
+  BRANCH
+}
+
+// Member model
+model Member {
+  id              String       @id @default(cuid())
+  userId          String       @unique
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id])
+  memberId        String       @unique // Unique membership ID
+  status          MemberStatus @default(PENDING)
+  membershipType MembershipType @default(REGULAR)
+  dateJoined      DateTime     @default(now())
+  dateExpired     DateTime?
+  isActive        Boolean      @default(true)
+  
+  // Personal information
+  dateOfBirth     DateTime?
+  gender          Gender?
+  occupation      String?
+  address         String?
+  emergencyContact String?
+  emergencyPhone  String?
+  
+  // Additional fields
+  metadata        Json?        // For flexible additional data
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  // Approval Workflow
+  recommendationStatus RecommendationStatus @default(NONE)
+  recommendedBy     String?
+  recommender       User?        @relation("MemberRecommender", fields: [recommendedBy], references: [id], onDelete: SetNull)
+  recommendedAt     DateTime?
+  
+  approvedBy        String?
+  approver          User?        @relation("MemberApprover", fields: [approvedBy], references: [id], onDelete: SetNull)
+  approvedAt        DateTime?
+  
+  rejectionReason   String?      @db.Text
+
+  // Relations
+  payments        Payment[]
+  documents       Document[]
+
+  @@map("members")
+}
+
+enum MemberStatus {
+  PENDING
+  RECOMMENDED
+  ACTIVE
+  SUSPENDED
+  EXPIRED
+  INACTIVE
+  REJECTED
+}
+
+enum RecommendationStatus {
+  NONE
+  RECOMMENDED
+  REJECTED
+}
+
+enum MembershipType {
+  REGULAR
+  ASSOCIATE
+  HONORARY
+  LIFETIME
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+// Official model - Elected/appointed officials
+model Official {
+  id            String         @id @default(cuid())
+  userId        String         @unique
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organizationId String
+  organization  Organization   @relation(fields: [organizationId], references: [id])
+  position      String         // e.g., "President", "Secretary", "Treasurer"
+  positionLevel OfficialLevel
+  dateElected   DateTime?
+  dateAppointed DateTime?
+  termStart     DateTime
+  termEnd       DateTime?
+  isActive      Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@map("officials")
+}
+
+enum OfficialLevel {
+  NATIONAL
+  STATE
+  LOCAL_GOVERNMENT
+  BRANCH
+}
+
+// Role model - Dynamic roles that can be created and managed
+model Role {
+  id            String         @id @default(cuid())
+  name          String         @unique // e.g., "SuperAdmin", "National Admin", "State Admin"
+  code          String         @unique // e.g., "SUPER_ADMIN", "NATIONAL_ADMIN", "STATE_ADMIN"
+  description   String?        @db.Text
+  jurisdictionLevel JurisdictionLevel // What level this role operates at
+  isSystem      Boolean        @default(false) // System roles cannot be deleted
+  isActive      Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  // Relations
+  userRoles     UserRole[]
+  rolePermissions RolePermission[]
+
+  @@map("roles")
+}
+
+enum JurisdictionLevel {
+  SYSTEM        // SuperAdmin - no jurisdiction limit
+  NATIONAL      // National level
+  STATE         // State level
+  LOCAL_GOVERNMENT // Local Government level
+  BRANCH        // Branch level
+}
+
+// Permission model - All available permissions in the system
+model Permission {
+  id          String   @id @default(cuid())
+  code        String   @unique // e.g., "members:create", "payments:read"
+  name        String
+  description String?  @db.Text
+  category    String   // e.g., "members", "payments", "documents"
+  isActive    Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  rolePermissions RolePermission[]
+
+  @@map("permissions")
+}
+
+// Junction table: User-Role assignment with jurisdiction
+model UserRole {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roleId        String
+  role          Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  organizationId String? // Jurisdiction - which organization this role applies to
+  organization  Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  assignedBy    String?  // User ID who assigned this role
+  assignedAt    DateTime @default(now())
+  expiresAt     DateTime? // Optional expiration
+  isActive       Boolean  @default(true)
+  metadata       Json?    // Additional context
+
+  @@unique([userId, roleId, organizationId])
+  @@index([userId])
+  @@index([roleId])
+  @@index([organizationId])
+  @@map("user_roles")
+}
+
+// Junction table: Role-Permission assignment
+model RolePermission {
+  id          String   @id @default(cuid())
+  roleId      String
+  role        Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permissionId String
+  permission  Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  granted     Boolean  @default(true) // Can be used to temporarily revoke
+  grantedAt   DateTime @default(now())
+  grantedBy   String?  // User ID who granted this permission
+
+  @@unique([roleId, permissionId])
+  @@index([roleId])
+  @@index([permissionId])
+  @@map("role_permissions")
+}
+
+// Payment model - For membership fees and donations
+model Payment {
+  id              String        @id @default(cuid())
+  userId          String?
+  user            User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  organizationId  String?
+  organization    Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  memberId        String?       // If payment is for a member
+  member          Member?       @relation(fields: [memberId], references: [id], onDelete: SetNull)
+  burialRequest   BurialRequest?
+  campaignId      String?
+  campaign        FundraisingCampaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  amount          Decimal       @db.Decimal(10, 2)
+  currency        String        @default("NGN")
+  status          PaymentStatus @default(PENDING)
+  paymentType     PaymentType
+  paystackRef     String?       @unique
+  paystackResponse Json?        // Store full Paystack response
+  description     String?
+  metadata        Json?
+  paidAt          DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@map("payments")
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentType {
+  MEMBERSHIP_FEE
+  RENEWAL
+  DONATION
+  EVENT_FEE
+  BURIAL_FEE
+  OTHER
+}
+
+// Document model - For storing uploaded documents
+model Document {
+  id            String        @id @default(cuid())
+  userId        String?
+  user          User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  organizationId String?
+  organization  Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  memberId      String?       // If document belongs to a member
+  member        Member?       @relation(fields: [memberId], references: [id], onDelete: SetNull)
+  fileName      String
+  fileType      String
+  fileSize      Int           // Size in bytes
+  fileUrl       String        // Cloud storage URL
+  documentType  DocumentType
+  description   String?
+  isPublic      Boolean       @default(false)
+  metadata      Json?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@map("documents")
+}
+
+enum DocumentType {
+  ID_CARD
+  CERTIFICATE
+  PHOTO
+  CONTRACT
+  REPORT
+  MINUTES
+  OTHER
+}
+
+// Audit Log model - Track all system actions
+model AuditLog {
+  id            String   @id @default(cuid())
+  userId        String?
+  user          User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action        String   // e.g., "CREATE_MEMBER", "UPDATE_PROFILE", "DELETE_USER"
+  entityType    String   // e.g., "Member", "User", "Organization"
+  entityId      String?
+  organizationId String?
+  description   String?
+  ipAddress     String?
+  userAgent     String?
+  metadata      Json?    // Additional context
+  createdAt     DateTime @default(now())
+
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([organizationId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// Email Log model - Track all sent emails
+model EmailLog {
+  id            String        @id @default(cuid())
+  from          String?
+  to            String
+  subject       String?
+  body          String?       @db.Text
+  template      String?       // Template name if used
+  status        EmailStatus   // Use the enum
+  provider      String?       // "resend", "smtp", etc.
+  providerId    String?       // Provider's message ID
+  error         String?       @db.Text
+  metadata      Json?
+  sentAt        DateTime?
+  createdAt     DateTime      @default(now())
+
+  @@index([to])
+  @@index([status])
+  @@index([createdAt])
+  @@map("email_logs")
+}
+
+enum EmailStatus {
+  PENDING
+  SENT
+  FAILED
+  BOUNCED
+}
+
+// Notification model - In-app notifications
+model Notification {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title         String
+  message       String   @db.Text
+  type          NotificationType @default(INFO)
+  isRead        Boolean  @default(false)
+  actionUrl     String?
+  metadata      Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([userId])
+  @@index([isRead])
+  @@map("notifications")
+}
+
+enum NotificationType {
+  INFO
+  SUCCESS
+  WARNING
+  ERROR
+}
+
+enum PostType {
+  NEWS
+  EVENT
+  ANNOUNCEMENT
+}
+
+model Post {
+  id          String   @id @default(cuid())
+  organizationId String
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  authorId    String
+  author      User     @relation(fields: [authorId], references: [id])
+  title       String
+  slug        String   @unique
+  excerpt     String?  @db.Text
+  content     String   @db.Text
+  coverImage  String?
+  postType    PostType @default(NEWS)
+  isPublished Boolean  @default(false)
+  publishedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([organizationId])
+  @@map("posts")
+}
+
+model Gallery {
+  id          String   @id @default(cuid())
+  organizationId String
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  title       String
+  description String?  @db.Text
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  images      GalleryImage[]
+
+  @@index([organizationId])
+  @@map("galleries")
+}
+
+model GalleryImage {
+  id          String   @id @default(cuid())
+  galleryId   String
+  gallery     Gallery  @relation(fields: [galleryId], references: [id], onDelete: Cascade)
+  imageUrl    String
+  caption     String?
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  @@index([galleryId])
+  @@map("gallery_images")
+}
+
+// Chat System Models
+
+
+model Chat {
+  id          String   @id @default(cuid())
+  name        String?  // Null for 1-on-1 chats
+  isGroup     Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  participants ChatParticipant[]
+  messages     Message[]
+
+  @@map("chats")
+}
+
+model ChatParticipant {
+  id        String   @id @default(cuid())
+  chatId    String
+  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isAdmin   Boolean  @default(false) // For group chats
+  joinedAt  DateTime @default(now())
+
+  @@unique([chatId, userId])
+  @@map("chat_participants")
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  chatId    String
+  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  senderId  String
+  sender    User     @relation(fields: [senderId], references: [id])
+  content   String?  @db.Text
+  mediaUrl  String?
+  readBy    Json?    // Array of user IDs or map of ID -> timestamp
+  createdAt DateTime @default(now())
+
+  @@index([chatId])
+  @@index([senderId])
+  @@map("messages")
+}
+
+// Burial Management System
+
+model BurialRequest {
+  id              String              @id @default(cuid())
+  userId          String
+  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Deceased Information
+  deceasedName    String
+  relationship    String              // Relationship to the requester
+  causeOfDeath    String
+  dateOfDeath     DateTime
+  placeOfDeath    String
+  
+  // Contact Information
+  contactPhone    String
+  contactEmail    String
+  
+  status          BurialRequestStatus @default(PENDING)
+  rejectionReason String?             @db.Text
+  
+  // Payment linking
+  paymentId       String?             @unique
+  payment         Payment?            @relation(fields: [paymentId], references: [id])
+  
+  // Certificate
+  certificate     BurialCertificate?
+  
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@map("burial_requests")
+}
+
+model BurialCertificate {
+  id              String        @id @default(cuid())
+  burialRequestId String        @unique
+  burialRequest   BurialRequest @relation(fields: [burialRequestId], references: [id], onDelete: Cascade)
+  
+  certificateNumber String      @unique
+  issuedAt        DateTime      @default(now())
+  issuedBy        String?       // Admin user ID
+  
+  pdfUrl          String?       // URL to stored PDF if generated and saved
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@map("burial_certificates")
+}
+
+enum BurialRequestStatus {
+  PENDING
+  APPROVED_UNPAID
+  PAID
+  BURIAL_DONE
+  REJECTED
+}
+
+enum CampaignStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
+  ARCHIVED
+}
+
+
+model Page {
+  id            String   @id @default(cuid())
+  organizationId String
+  organization  Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  slug          String
+  title         String
+  content       String?  @db.Text
+  isPublished   Boolean  @default(false)
+  metadata      Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([organizationId, slug])
+  @@map("pages")
+}
+
+model NavigationItem {
+  id            String   @id @default(cuid())
+  organizationId String
+  organization  Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  label         String
+  path          String?
+  parentId      String?
+  order         Int      @default(0)
+  type          String   @default("link") // simple string for now or enum
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([organizationId])
+  @@map("navigation_items")
+}
+
+model FundraisingCampaign {
+  id            String   @id @default(cuid())
+  organizationId String
+  organization  Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  title         String
+  slug          String
+  description   String?  @db.Text
+  targetAmount  Decimal  @default(0.00) @db.Decimal(15, 2)
+  raisedAmount  Decimal  @default(0.00) @db.Decimal(15, 2)
+  startDate     DateTime @default(now())
+  endDate       DateTime?
+  status        CampaignStatus @default(ACTIVE)
+  coverImage    String?
+  allowCustomAmount Boolean @default(true)
+  suggestedAmounts Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  donations     Payment[]
+
+  @@unique([organizationId, slug])
+  @@map("fundraising_campaigns")
+}

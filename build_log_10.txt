@@ -1,0 +1,24 @@
+▲ Next.js 16.1.1 (Turbopack)
+- Environments: .env.local, .env
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+✓ Compiled successfully in 100s
+  Running TypeScript ...
+Failed to compile.
+
+./app/api/posts/route.ts:80:32
+Type error: No overload matches this call.
+  Overload 1 of 2, '(value: { organizationId: string | SQL<unknown> | Placeholder<string, any>; title: string | SQL<unknown> | Placeholder<string, any>; authorId: string | SQL<...> | Placeholder<...>; ... 9 more ...; publishedAt?: SQL<...> | ... 3 more ... | undefined; }): MySqlInsertBase<...>', gave the following error.
+    Object literal may only specify known properties, and 'type' does not exist in type '{ organizationId: string | SQL<unknown> | Placeholder<string, any>; title: string | SQL<unknown> | Placeholder<string, any>; authorId: string | SQL<unknown> | Placeholder<...>; ... 9 more ...; publishedAt?: SQL<...> | ... 3 more ... | undefined; }'.
+  Overload 2 of 2, '(values: { organizationId: string | SQL<unknown> | Placeholder<string, any>; title: string | SQL<unknown> | Placeholder<string, any>; authorId: string | SQL<...> | Placeholder<...>; ... 9 more ...; publishedAt?: SQL<...> | ... 3 more ... | undefined; }[]): MySqlInsertBase<...>', gave the following error.
+    Object literal may only specify known properties, and 'title' does not exist in type '{ organizationId: string | SQL<unknown> | Placeholder<string, any>; title: string | SQL<unknown> | Placeholder<string, any>; authorId: string | SQL<unknown> | Placeholder<...>; ... 9 more ...; publishedAt?: SQL<...> | ... 3 more ... | undefined; }[]'.
+
+[0m [90m 78 |[39m         }
+ [90m 79 |[39m
+[31m[1m>[22m[39m[90m 80 |[39m         [36mawait[39m db[33m.[39minsert(posts)[33m.[39mvalues({
+ [90m    |[39m                                [31m[1m^[22m[39m
+ [90m 81 |[39m             title[33m:[39m body[33m.[39mtitle[33m,[39m
+ [90m 82 |[39m             content[33m:[39m body[33m.[39mcontent[33m,[39m
+ [90m 83 |[39m             excerpt[33m:[39m body[33m.[39mexcerpt[33m,[39m[0m
+Next.js build worker exited with code: 1 and signal: null
