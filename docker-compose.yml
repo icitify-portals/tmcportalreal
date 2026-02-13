@@ -1,0 +1,21 @@
+version: '3.9'
+
+services:
+  web:
+    container_name: tmcportal
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    driver: bridge

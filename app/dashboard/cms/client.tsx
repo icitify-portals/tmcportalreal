@@ -28,7 +28,7 @@ const cmsSchema = z.object({
     officeHours: z.string().optional(),
     googleMapUrl: z.string().optional(),
     sliderImages: z.array(z.object({
-        url: z.string().url("Invalid URL"),
+        url: z.string().optional(),
         title: z.string().optional(),
         subtitle: z.string().optional(),
     })).optional(),
@@ -64,6 +64,14 @@ export default function CMSClientPage() {
                 const response = await fetch("/api/organization/cms")
                 if (response.ok) {
                     const data = await response.json()
+                    let sliderImages = data.sliderImages;
+                    if (typeof sliderImages === 'string') {
+                        try {
+                            sliderImages = JSON.parse(sliderImages);
+                        } catch (e) {
+                            sliderImages = [];
+                        }
+                    }
                     form.reset({
                         welcomeMessage: data.welcomeMessage || "",
                         welcomeImageUrl: data.welcomeImageUrl || "",
@@ -72,7 +80,7 @@ export default function CMSClientPage() {
                         whatsapp: data.whatsapp || "",
                         officeHours: data.officeHours || "",
                         googleMapUrl: data.googleMapUrl || "",
-                        sliderImages: Array.isArray(data.sliderImages) ? data.sliderImages : [],
+                        sliderImages: Array.isArray(sliderImages) ? sliderImages : [],
                     })
                 }
             } catch (error) {
@@ -96,10 +104,30 @@ export default function CMSClientPage() {
 
         try {
             const res = await axios.post("/api/upload", formData)
-            form.setValue("welcomeImageUrl", res.data.url)
+            form.setValue("welcomeImageUrl", res.data.url, { shouldValidate: true })
             toast.success("Image uploaded successfully")
         } catch (error) {
             toast.error("Failed to upload image")
+        } finally {
+            setIsUploading(false)
+        }
+    }
+
+    const handleSliderImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+
+        setIsUploading(true)
+        const formData = new FormData()
+        formData.append("file", file)
+        formData.append("category", "cms/slider")
+
+        try {
+            const res = await axios.post("/api/upload", formData)
+            form.setValue(`sliderImages.${index}.url`, res.data.url, { shouldValidate: true })
+            toast.success("Slider image uploaded successfully")
+        } catch (error) {
+            toast.error("Failed to upload slider image")
         } finally {
             setIsUploading(false)
         }
@@ -319,9 +347,39 @@ export default function CMSClientPage() {
                                                         name={`sliderImages.${index}.url`}
                                                         render={({ field }) => (
                                                             <FormItem>
-                                                                <FormLabel>Image URL</FormLabel>
+                                                                <FormLabel>Image</FormLabel>
                                                                 <FormControl>
-                                                                    <Input placeholder="https://..." {...field} />
+                                                                    <div className="space-y-2">
+                                                                        <div className="flex gap-2">
+                                                                            <Input placeholder="https://..." {...field} className="flex-1" />
+                                                                            <Input
+                                                                                type="file"
+                                                                                accept="image/*"
+                                                                                onChange={(e) => handleSliderImageUpload(e, index)}
+                                                                                disabled={isUploading}
+                                                                                className="hidden"
+                                                                                id={`slider-upload-${index}`}
+                                                                            />
+                                                                            <Button
+                                                                                type="button"
+                                                                                variant="outline"
+                                                                                onClick={() => document.getElementById(`slider-upload-${index}`)?.click()}
+                                                                                disabled={isUploading}
+                                                                            >
+                                                                                <Upload className="h-4 w-4 mr-2" /> Upload
+                                                                            </Button>
+                                                                        </div>
+                                                                        {field.value && (
+                                                                            <div className="relative aspect-[3/1] w-full rounded-md overflow-hidden border bg-muted">
+                                                                                <Image
+                                                                                    src={field.value}
+                                                                                    alt="Slider preview"
+                                                                                    fill
+                                                                                    className="object-cover"
+                                                                                />
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
                                                                 </FormControl>
                                                                 <FormMessage />
                                                             </FormItem>

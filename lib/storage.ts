@@ -1,6 +1,7 @@
 import "server-only";
 import path from "path";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import sharp from "sharp";
 
 // robust checking for ENV variables
 const S3_REGION = process.env.AWS_REGION || "us-east-1";
@@ -23,9 +24,36 @@ const s3Client = (S3_ACCESS_KEY && S3_SECRET_KEY)
 
 export async function uploadFile(file: File, category: string): Promise<string> {
   const buffer = Buffer.from(await file.arrayBuffer());
+
+  let processedBuffer = buffer;
+  let finalContentType = file.type;
+  let extension = path.extname(file.name);
+
+  // Compress images
+  if (file.type.startsWith("image/") && !file.type.includes("svg")) {
+    try {
+      // Resize to max 1920x1080, convert to WebP, quality 80
+      processedBuffer = await sharp(buffer)
+        .rotate() // Auto-rotate based on EXIF
+        .resize(1920, 1080, {
+          fit: 'inside',
+          withoutEnlargement: true
+        })
+        .webp({ quality: 80 })
+        .toBuffer();
+
+      finalContentType = "image/webp";
+      extension = ".webp";
+    } catch (error) {
+      console.error("Image compression failed, using original:", error);
+    }
+  }
+
   const timestamp = Date.now();
-  const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, "");
-  const filename = `${timestamp}-${sanitizedName}`;
+  // Remove original extension and append new one
+  const originalNameWithoutExt = path.basename(file.name, path.extname(file.name));
+  const sanitizedName = originalNameWithoutExt.replace(/[^a-zA-Z0-9.-]/g, "");
+  const filename = `${timestamp}-${sanitizedName}${extension}`;
   const key = `${category}/${filename}`;
 
   // S3 Mode
@@ -34,8 +62,8 @@ export async function uploadFile(file: File, category: string): Promise<string> 
       await s3Client.send(new PutObjectCommand({
         Bucket: S3_BUCKET,
         Key: key,
-        Body: buffer,
-        ContentType: file.type,
+        Body: processedBuffer,
+        ContentType: finalContentType,
         ACL: 'public-read' // Only if bucket allows. Or rely on bucket policy.
       }));
 
@@ -66,7 +94,7 @@ export async function uploadFile(file: File, category: string): Promise<string> 
 
   const filepath = path.join(uploadDir, filename);
   const { writeFile } = await import("fs/promises");
-  await writeFile(filepath, buffer);
+  await writeFile(filepath, processedBuffer);
 
   return `/uploads/${category}/${filename}`;
 }

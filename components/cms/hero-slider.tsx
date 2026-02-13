@@ -6,7 +6,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface HeroSliderProps {
-    images: { url: string; caption?: string }[];
+    images: { url: string; title?: string; subtitle?: string }[];
     title: string;
     description?: string; // Fallback description if no image caption
 }
@@ -15,7 +15,7 @@ export const HeroSlider = ({ images, title, description }: HeroSliderProps) => {
     const [currentIndex, setCurrentIndex] = useState(0);
 
     // Filter out invalid images
-    const validImages = (images || []).filter(img => img.url);
+    const validImages = (Array.isArray(images) ? images : []).filter(img => img && typeof img === 'object' && img.url);
 
     useEffect(() => {
         if (validImages.length <= 1) return;
@@ -34,7 +34,7 @@ export const HeroSlider = ({ images, title, description }: HeroSliderProps) => {
     };
 
     // Fallback if no images
-    if (!validImages || validImages.length === 0) {
+    if (validImages.length === 0) {
         return (
             <div className="relative h-[400px] w-full bg-gradient-to-r from-green-900 to-green-700 rounded-xl overflow-hidden shadow-xl flex items-center justify-center text-white">
                 <div className="text-center space-y-4 p-6">
@@ -55,16 +55,16 @@ export const HeroSlider = ({ images, title, description }: HeroSliderProps) => {
                 >
                     <img
                         src={img.url}
-                        alt={img.caption || title}
+                        alt={img.title || title}
                         className="w-full h-full object-cover opacity-60"
                     />
                     <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-6 text-center bg-black/20">
                         <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight drop-shadow-lg mb-2 transform transition-all duration-700 translate-y-0">
-                            {title}
+                            {img.title || title}
                         </h1>
-                        {(img.caption || description) && (
+                        {(img.subtitle || description) && (
                             <p className="text-xl md:text-2xl font-light text-green-100 max-w-2xl drop-shadow-md mt-4">
-                                {img.caption || description}
+                                {img.subtitle || description}
                             </p>
                         )}
                     </div>

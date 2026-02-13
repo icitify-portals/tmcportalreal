@@ -29,6 +29,7 @@ import {
   Megaphone,
   Scroll,
   HeartHandshake,
+  Home,
 } from "lucide-react"
 import { signOut } from "next-auth/react"
 import { Button } from "@/components/ui/button"
@@ -40,6 +41,7 @@ interface SidebarProps {
 }
 
 const adminNavItems = [
+  { href: "/", label: "Home", icon: Home },
   { href: "/dashboard/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/dashboard/broadcasts", label: "Broadcasts", icon: Radio },
   { href: "/dashboard/messages", label: "Messages", icon: MessageSquare },
@@ -74,6 +76,7 @@ const adminNavItems = [
 ]
 
 const memberNavItems = [
+  { href: "/", label: "Home", icon: Home },
   { href: "/dashboard/member", label: "Dashboard", icon: LayoutDashboard },
   { href: "/dashboard/broadcasts", label: "Broadcasts", icon: Radio },
   { href: "/dashboard/member/profile", label: "My Profile", icon: Users },
@@ -90,6 +93,7 @@ const memberNavItems = [
 ]
 
 const officialNavItems = [
+  { href: "/", label: "Home", icon: Home },
   { href: "/dashboard/official", label: "Dashboard", icon: LayoutDashboard },
   { href: "/dashboard/broadcasts", label: "Broadcasts", icon: Radio },
   { href: "/dashboard/messages", label: "Messages", icon: MessageSquare },
@@ -101,6 +105,7 @@ const officialNavItems = [
 ]
 
 const councilNavItems = [
+  { href: "/", label: "Home", icon: Home },
   { href: "/dashboard/council", label: "Dashboard", icon: LayoutDashboard },
   { href: "/dashboard/broadcasts", label: "Broadcasts", icon: Radio },
   { href: "/dashboard/council/reports", label: "Event Reports", icon: FileText },

@@ -33,8 +33,8 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "Only image, audio, video, and document files are allowed." }, { status: 400 });
         }
 
-        // Sanitize category to prevent directory traversal
-        const sanitizedCategory = category.replace(/[^a-zA-Z0-9_-]/g, "");
+        // Sanitize category to prevent directory traversal (allowing slashes for subdirectories)
+        const sanitizedCategory = category.replace(/[^a-zA-Z0-9_\-\/]/g, "");
 
         // Create unique filename and upload
         const fileUrl = await uploadFile(file, sanitizedCategory);

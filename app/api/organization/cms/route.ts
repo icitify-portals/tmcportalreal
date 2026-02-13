@@ -109,6 +109,8 @@ export async function PATCH(req: NextRequest) {
 
     try {
         const body = await req.json()
+        console.log("CMS PATCH for OrgID:", orgId)
+        console.log("Incoming Data:", JSON.stringify(body, null, 2))
         const validData = cmsSchema.parse(body)
 
         await db.update(organizations)

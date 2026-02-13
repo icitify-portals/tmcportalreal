@@ -79,17 +79,27 @@ async function JurisdictionContent({ slug }: { slug: string }) {
 
             {/* Hero Section */}
             <div className="container px-4 md:px-6 py-8">
-                <HeroSlider
-                    images={
-                        (org.sliderImages as any[])?.length > 0
-                            ? (org.sliderImages as any[])
-                            : org.welcomeImageUrl
-                                ? [{ url: org.welcomeImageUrl }]
-                                : []
+                {(() => {
+                    let sliderImgs = org.sliderImages;
+                    if (typeof sliderImgs === 'string') {
+                        try {
+                            sliderImgs = JSON.parse(sliderImgs);
+                        } catch (e) {
+                            sliderImgs = [];
+                        }
                     }
-                    title={org.name}
-                    description={org.description || undefined}
-                />
+                    const images = (Array.isArray(sliderImgs) && sliderImgs.length > 0)
+                        ? sliderImgs
+                        : (org.welcomeImageUrl ? [{ url: org.welcomeImageUrl }] : []);
+
+                    return (
+                        <HeroSlider
+                            images={images as any[]}
+                            title={org.name}
+                            description={org.description || undefined}
+                        />
+                    );
+                })()}
             </div>
 
             {/* Welcome Message */}

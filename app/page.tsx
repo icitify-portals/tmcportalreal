@@ -79,7 +79,21 @@ async function NationalContent() {
 
       {/* Hero Section */}
       <div className="w-full bg-background mt-6 container mx-auto px-4">
-        <HeroSlider images={nationalOrg.sliderImages as any[]} title={nationalOrg.name} />
+        {(() => {
+          let sliderImgs = nationalOrg.sliderImages;
+          if (typeof sliderImgs === 'string') {
+            try {
+              sliderImgs = JSON.parse(sliderImgs);
+            } catch (e) {
+              sliderImgs = [];
+            }
+          }
+          const images = (Array.isArray(sliderImgs) && sliderImgs.length > 0)
+            ? sliderImgs
+            : (nationalOrg.welcomeImageUrl ? [{ url: nationalOrg.welcomeImageUrl }] : []);
+
+          return <HeroSlider images={images as any[]} title={nationalOrg.name} />;
+        })()}
       </div>
 
       <main className="flex-grow container mx-auto px-4 py-12 space-y-20">
