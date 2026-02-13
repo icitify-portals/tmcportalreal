@@ -10,13 +10,13 @@ import { Pencil, Trash2, RefreshCw } from "lucide-react"
 
 interface IdManagerProps {
     memberId: string
-    currentId: string
+    currentId: string | null | undefined
 }
 
 export function IdManager({ memberId, currentId }: IdManagerProps) {
     const router = useRouter()
     const [isOpen, setIsOpen] = useState(false)
-    const [newId, setNewId] = useState(currentId)
+    const [newId, setNewId] = useState(currentId || "")
     const [isLoading, setIsLoading] = useState(false)
 
     const handleUpdate = async () => {

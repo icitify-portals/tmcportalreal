@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
             isActive: true, // Pending approval effectively
             dateOfBirth: new Date(validData.date_of_birth),
             occupation: validData.occupation,
-            address: address,
+
             emergencyContact: validData.emergencyContactName,
             emergencyPhone: validData.emergencyContactPhone,
             gender: "MALE", // Defaulting as discussed
