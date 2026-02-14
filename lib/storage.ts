@@ -23,9 +23,9 @@ const s3Client = (S3_ACCESS_KEY && S3_SECRET_KEY)
   : null;
 
 export async function uploadFile(file: File, category: string): Promise<string> {
-  const buffer = Buffer.from(await file.arrayBuffer());
+  const buffer = Buffer.from(await file.arrayBuffer() as ArrayBuffer);
 
-  let processedBuffer = buffer;
+  let processedBuffer: Buffer = buffer;
   let finalContentType = file.type;
   let extension = path.extname(file.name);
 
@@ -33,7 +33,7 @@ export async function uploadFile(file: File, category: string): Promise<string> 
   if (file.type.startsWith("image/") && !file.type.includes("svg")) {
     try {
       // Resize to max 1920x1080, convert to WebP, quality 80
-      processedBuffer = await sharp(buffer)
+      processedBuffer = await sharp(buffer as any)
         .rotate() // Auto-rotate based on EXIF
         .resize(1920, 1080, {
           fit: 'inside',
