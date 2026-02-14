@@ -126,6 +126,32 @@ export const emailTemplates = {
       Login to your dashboard to view details.
     `,
   }),
+  membershipRejected: (name: string, reason: string) => ({
+    subject: "Update on Your Membership Application - Muslim Congress",
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h1 style="color: #dc2626;">Membership Application Status</h1>
+        <p>Dear ${name},</p>
+        <p>Thank you for your interest in joining Muslim Congress.</p>
+        <p>After reviewing your application, we are unable to approve it at this time.</p>
+        <p><strong>Reason:</strong> ${reason}</p>
+        <p>Please log in to your dashboard to make necessary updates or contact your local chapter for assistance.</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${process.env.NEXTAUTH_URL}/dashboard" style="background-color: #374151; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">Go to Dashboard</a>
+        </div>
+      </div>
+    `,
+    text: `
+      Membership Update
+      
+      Dear ${name},
+      
+      Your membership application was not approved.
+      Reason: ${reason}
+      
+      Please check your dashboard for details.
+    `,
+  }),
   paymentReceived: (name: string, amount: number, description: string) => ({
     subject: "Payment Received - Muslim Congress",
     html: `
@@ -167,34 +193,61 @@ export const emailTemplates = {
       If you didn't create an account, please ignore this email.
     `,
   }),
-  membershipRejected: (name: string, reason: string) => ({
-    subject: "Update on Your Membership Application - Muslim Congress",
+  officerReminder: (name: string, programmeTitle: string, date: string, status: string) => ({
+    subject: `Action Required: Upcoming Programme - ${programmeTitle}`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <h1 style="color: #dc2626;">Application Update</h1>
+        <h1 style="color: #eab308;">Upcoming Programme Reminder</h1>
         <p>Dear ${name},</p>
-        <p>Thank you for applying for membership with The Muslim Congress.</p>
-        <p>We have reviewed your application and unfortunately, we cannot proceed with it at this time due to the following reason:</p>
-        <blockquote style="background-color: #fca5a5; padding: 10px; border-left: 4px solid #dc2626; margin: 20px 0;">
-          ${reason}
-        </blockquote>
-        <p>Please log in to your dashboard to review the feedback and update your application details. You can resubmit your application once the necessary changes have been made.</p>
+        <p>This is a reminder that the programme <strong>${programmeTitle}</strong> is scheduled for <strong>${date}</strong>.</p>
+        <p>Current Status: <strong>${status}</strong></p>
+        <p>Please ensure all necessary arrangements are in place.</p>
         <div style="text-align: center; margin: 30px 0;">
-          <a href="${process.env.NEXTAUTH_URL}/dashboard/member/apply" style="background-color: #374151; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">Go to Dashboard</a>
+          <a href="${process.env.NEXTAUTH_URL}/dashboard/programmes" style="background-color: #374151; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">Manage Programme</a>
         </div>
-        <p>If you have any questions, please contact your local branch.</p>
       </div>
     `,
     text: `
-      Application Update
+      Upcoming Programme Reminder
       
       Dear ${name},
       
-      Your membership application has been reviewed. Unfortunately, we cannot proceed at this time due to the following reason:
+      This is a reminder that the programme ${programmeTitle} is scheduled for ${date}.
+      Current Status: ${status}
       
-      ${reason}
+      Please ensure all necessary arrangements are in place.
+    `,
+  }),
+  weeklyDigest: (name: string, events: { title: string, date: string, venue: string }[]) => ({
+    subject: "Events This Week - Muslim Congress",
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h1 style="color: #166534;">Events This Week</h1>
+        <p>Dear ${name},</p>
+        <p>Here are the upcoming programmes scheduled for this week:</p>
+        <ul style="list-style: none; padding: 0;">
+          ${events.map(event => `
+            <li style="border-bottom: 1px solid #eee; padding: 15px 0;">
+              <h3 style="margin: 0 0 5px 0; color: #166534;">${event.title}</h3>
+              <p style="margin: 0; color: #666;">📅 ${event.date} | 📍 ${event.venue}</p>
+            </li>
+          `).join('')}
+        </ul>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${process.env.NEXTAUTH_URL}/programmes" style="background-color: #166534; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">View All Events</a>
+        </div>
+      </div>
+    `,
+    text: `
+      Events This Week
       
-      Please log in to to your dashboard to fix the issues and resubmit.
+      Dear ${name},
+      
+      Here are the upcoming programmes:
+      
+      ${events.map(e => `- ${e.title} on ${e.date} at ${e.venue}`).join('\n')}
+      
+      Visit our website for more details.
     `,
   }),
 }

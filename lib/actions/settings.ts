@@ -29,6 +29,18 @@ const DEFAULT_MEMBERSHIP_SETTINGS: MembershipSettings = {
     recommendationRequired: false
 }
 
+export interface YearPlannerSettings {
+    programYearStart: Date
+    programYearEnd: Date
+    submissionDeadline: Date
+}
+
+const DEFAULT_YEAR_PLANNER_SETTINGS: YearPlannerSettings = {
+    programYearStart: new Date(new Date().getFullYear(), 0, 1), // Jan 1
+    programYearEnd: new Date(new Date().getFullYear(), 11, 31), // Dec 31
+    submissionDeadline: new Date(new Date().getFullYear(), 11, 12) // Dec 12
+}
+
 export async function getAISettings(): Promise<AISettings> {
     const session = await getServerSession()
     if (!session?.user) return DEFAULT_AI_SETTINGS // Safe default for unauth (though UI is protected)
@@ -132,6 +144,56 @@ export async function updateMembershipSettings(data: MembershipSettings) {
 
     await upsertSetting("membership_registration_enabled", String(data.registrationEnabled))
     await upsertSetting("membership_recommendation_required", String(data.recommendationRequired))
+
+    revalidatePath("/dashboard/admin/settings")
+    return { success: true }
+}
+
+export async function getYearPlannerSettings(): Promise<YearPlannerSettings> {
+    const session = await getServerSession()
+    if (!session?.user) return DEFAULT_YEAR_PLANNER_SETTINGS
+
+    try {
+        const settings = await db.select().from(systemSettings).where(eq(systemSettings.category, "GENERAL"))
+
+        const config: YearPlannerSettings = { ...DEFAULT_YEAR_PLANNER_SETTINGS }
+
+        settings.forEach(s => {
+            if (s.settingKey === "year_planner_start") config.programYearStart = new Date(s.settingValue as string)
+            if (s.settingKey === "year_planner_end") config.programYearEnd = new Date(s.settingValue as string)
+            if (s.settingKey === "year_planner_deadline") config.submissionDeadline = new Date(s.settingValue as string)
+        })
+
+        return config
+    } catch (error) {
+        return DEFAULT_YEAR_PLANNER_SETTINGS
+    }
+}
+
+export async function updateYearPlannerSettings(data: YearPlannerSettings) {
+    const session = await getServerSession()
+    if (!session?.user?.id) throw new Error("Unauthorized")
+    requireAdmin(session)
+
+    const upsertSetting = async (key: string, value: string) => {
+        const existing = await db.select().from(systemSettings).where(eq(systemSettings.settingKey, key))
+        if (existing.length > 0) {
+            await db.update(systemSettings)
+                .set({ settingValue: value, updatedBy: session.user.id })
+                .where(eq(systemSettings.settingKey, key))
+        } else {
+            await db.insert(systemSettings).values({
+                settingKey: key,
+                settingValue: value,
+                category: "GENERAL",
+                updatedBy: session.user.id
+            })
+        }
+    }
+
+    await upsertSetting("year_planner_start", data.programYearStart.toISOString())
+    await upsertSetting("year_planner_end", data.programYearEnd.toISOString())
+    await upsertSetting("year_planner_deadline", data.submissionDeadline.toISOString())
 
     revalidatePath("/dashboard/admin/settings")
     return { success: true }

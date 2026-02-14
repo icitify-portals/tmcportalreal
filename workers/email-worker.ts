@@ -1,7 +1,11 @@
 import { Worker } from 'bullmq';
 import { connection } from '../lib/redis';
-import { sendEmail } from '../lib/email'; // Assuming this exists or will be created
+import { sendEmail } from '../lib/email';
 import { EmailJobData } from '../lib/queue';
+import { startScheduler } from './scheduler';
+
+// Start the Cron Scheduler
+startScheduler();
 
 const worker = new Worker<EmailJobData>('email-queue', async (job) => {
     console.log(`Processing email job ${job.id} to ${job.data.to}`);

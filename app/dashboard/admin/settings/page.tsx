@@ -16,12 +16,14 @@ import { EmailTemplatesDialog } from "@/components/admin/settings/email-template
 
 import { AiSettingsCard } from "@/components/admin/settings/ai-settings-card"
 import { SecuritySettingsForm } from "@/components/admin/settings/security-settings-form"
-import { getAISettings, getMembershipSettings } from "@/lib/actions/settings"
+import { getAISettings, getMembershipSettings, getYearPlannerSettings } from "@/lib/actions/settings"
+import { YearPlannerSettingsCard } from "@/components/admin/settings/year-planner-settings"
 
 export default async function AdminSettingsPage() {
     const session = await getServerSession()
     const aiSettings = await getAISettings()
     const membershipSettings = await getMembershipSettings()
+    const yearPlannerSettings = await getYearPlannerSettings()
 
     // Fetch National Org as the "System Settings" source
     const nationalOrg = await db.query.organizations.findFirst({
@@ -82,6 +84,8 @@ export default async function AdminSettingsPage() {
                         </Card>
 
                         <AiSettingsCard initialSettings={aiSettings} />
+
+                        <YearPlannerSettingsCard initialSettings={yearPlannerSettings} />
 
                         <SecuritySettingsForm initialSettings={membershipSettings} />
                     </div>

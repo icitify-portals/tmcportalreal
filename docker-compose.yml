@@ -18,7 +18,7 @@ services:
     command: >
       sh -c "npx prisma migrate deploy && node server.js"
     volumes:
-      - /var/www/tmcportal/uploads:/app/public/uploads
+      - ./uploads:/app/public/uploads
     networks:
       - app_network
     depends_on:

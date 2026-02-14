@@ -6,6 +6,7 @@ import {
     programmeStatusEnum, registrationStatusEnum,
     users, organizations, offices
 } from "@/lib/db/schema"
+import { getYearPlannerSettings } from "@/lib/actions/settings"
 import { eq, desc, and, or, aliasedTable, inArray, sql } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
@@ -58,22 +59,28 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
         const validData = ProgrammeSchema.parse(data)
 
         // Flexible Deadline Check: 
-        // Retrieve organization's deadline settings (default to Dec 12)
+        // Retrieve global year planner settings
+        const yearSettings = await getYearPlannerSettings()
+
         const now = new Date()
-        const programmeYear = validData.startDate.getFullYear()
-        const currentYear = now.getFullYear()
+        const progDate = new Date(validData.startDate)
+
+        // 1. Validate Programme is within current Programme Year
+        if (progDate < yearSettings.programYearStart || progDate > yearSettings.programYearEnd) {
+            // Optional: Return error or just warn. User asked for "manageable date range". 
+            // Let's return error if it's completely outside the active year to enforce discipline.
+            return {
+                success: false,
+                error: `Programme date must be between ${yearSettings.programYearStart.toDateString()} and ${yearSettings.programYearEnd.toDateString()}`
+            }
+        }
 
         let isLateSubmission = false
 
-        if (programmeYear > currentYear) {
-            const deadlineMonth = org.planningDeadlineMonth ?? 12
-            const deadlineDay = org.planningDeadlineDay ?? 12
-            const deadline = new Date(currentYear, deadlineMonth - 1, deadlineDay, 23, 59, 59)
-
-            if (now > deadline) {
-                isLateSubmission = true
-                // Note: We no longer return error, we just mark as late
-            }
+        // 2. Check Deadline
+        // If current date is past the submission deadline, mark as late
+        if (now > yearSettings.submissionDeadline) {
+            isLateSubmission = true
         }
 
         let initialStatus: 'DRAFT' | 'PENDING_STATE' | 'PENDING_NATIONAL' | 'APPROVED' = 'DRAFT'
