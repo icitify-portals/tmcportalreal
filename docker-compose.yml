@@ -8,22 +8,56 @@ services:
       dockerfile: Dockerfile
     restart: always
     ports:
-      - "${PORT:-3000}:3000"
+      - "3002:3000" # Mapped to 3002 as requested
     env_file:
-      - .env
+      - .env.production
     environment:
       - NODE_ENV=production
       - HOSTNAME=0.0.0.0
+      - REDIS_URL=redis://redis:6379
+    command: >
+      sh -c "npx prisma migrate deploy && node server.js"
     volumes:
-      # Map host uploads folder to container for persistence
       - /var/www/tmcportal/uploads:/app/public/uploads
     networks:
       - app_network
+    depends_on:
+      - redis
     healthcheck:
       test: [ "CMD", "wget", "--spider", "-q", "http://localhost:3000/api/health" ]
       interval: 30s
       timeout: 10s
       retries: 3
+
+  worker:
+    container_name: tmcportal_worker
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    env_file:
+      - .env.production
+    environment:
+      - NODE_ENV=production
+      - REDIS_URL=redis://redis:6379
+    command: npm run worker:email
+    networks:
+      - app_network
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:alpine
+    container_name: tmcportal_redis
+    restart: always
+    volumes:
+      - redis_data:/data
+    networks:
+      - app_network
+
+volumes:
+  redis_data:
+
 
 networks:
   app_network:
