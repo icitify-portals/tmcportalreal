@@ -1,3 +1,4 @@
+import { NextAuthConfig } from "next-auth"
 import { authConfig as baseConfig } from "./auth.config"
 import { DrizzleAdapter } from "@auth/drizzle-adapter"
 import type { Adapter } from "next-auth/adapters"
