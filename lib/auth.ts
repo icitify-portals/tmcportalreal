@@ -1,4 +1,4 @@
-import { NextAuthConfig } from "next-auth"
+import { authConfig as baseConfig } from "./auth.config"
 import { DrizzleAdapter } from "@auth/drizzle-adapter"
 import type { Adapter } from "next-auth/adapters"
 import CredentialsProvider from "next-auth/providers/credentials"
@@ -21,7 +21,7 @@ import {
 import { eq } from "drizzle-orm"
 
 export const authConfig: NextAuthConfig = {
-  trustHost: true, // Required for NextAuth v5
+  ...baseConfig,
   adapter: DrizzleAdapter(db, {
     usersTable: users,
     accountsTable: accounts,
