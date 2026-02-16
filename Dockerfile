@@ -34,6 +34,9 @@ COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Generate Prisma Client (Ensures client is up to date with the latest schema)
+# Dummy database URL to satisfy validation during build
+ARG DATABASE_URL
+ENV DATABASE_URL="mysql://dummy:dummy@localhost:3306/dummy"
 RUN npx prisma generate
 
 # Build the Next.js app
