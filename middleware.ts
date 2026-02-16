@@ -11,17 +11,10 @@ export default auth((req) => {
   // Debug logging
   console.log(`Middleware: ${req.method} ${path}`, { hasToken: !!session })
 
-  // Public routes - allow access
-  if (
-    path.startsWith("/auth") ||
-    path.startsWith("/api/auth") ||
-    path === "/"
-  ) {
-    return NextResponse.next()
-  }
+  // Only protect dashboard routes
+  const isDashboardRoute = path.startsWith("/dashboard")
 
-  // Protected routes - require authentication
-  if (!session) {
+  if (isDashboardRoute && !session) {
     const signInUrl = new URL("/auth/signin", req.url)
     signInUrl.searchParams.set("callbackUrl", path)
     return NextResponse.redirect(signInUrl)

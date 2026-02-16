@@ -62,13 +62,17 @@ export function NavbarClient({ items }: NavbarClientProps) {
                         )
                     }
 
+                    const isDashboard = item.path === "/dashboard"
+                    const label = (isDashboard && !session) ? "Sign In" : item.label
+                    const path = (isDashboard && !session) ? "/auth/signin" : (item.path || "#")
+
                     return (
                         <Link
                             key={item.id}
-                            href={item.path || "#"}
+                            href={path}
                             className="text-green-100 hover:text-white transition-colors"
                         >
-                            {item.label}
+                            {label}
                         </Link>
                     )
                 })}
@@ -112,14 +116,18 @@ export function NavbarClient({ items }: NavbarClientProps) {
                                             </div>
                                         )
                                     }
+                                    const isDashboard = item.path === "/dashboard"
+                                    const label = (isDashboard && !session) ? "Sign In" : item.label
+                                    const path = (isDashboard && !session) ? "/auth/signin" : (item.path || "#")
+
                                     return (
                                         <Link
                                             key={item.id}
-                                            href={item.path || "#"}
+                                            href={path}
                                             className="block py-2 px-2 hover:bg-muted rounded-md font-medium"
                                             onClick={() => setIsOpen(false)}
                                         >
-                                            {item.label}
+                                            {label}
                                         </Link>
                                     )
                                 })}
