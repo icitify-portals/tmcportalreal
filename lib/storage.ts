@@ -30,7 +30,10 @@ export async function uploadFile(file: File, category: string): Promise<string> 
   let extension = path.extname(file.name);
 
   // Compress images
-  if (file.type.startsWith("image/") && !file.type.includes("svg")) {
+  const skipCompression = process.env.SKIP_IMAGE_COMPRESSION === "true";
+
+  if (!skipCompression && file.type.startsWith("image/") && !file.type.includes("svg")) {
+    console.log(`[STORAGE] Compressing image: ${file.name} (${file.type}), Size: ${file.size} bytes`);
     try {
       // Resize to max 1920x1080, convert to WebP, quality 80
       processedBuffer = await sharp(buffer as any)
@@ -42,11 +45,14 @@ export async function uploadFile(file: File, category: string): Promise<string> 
         .webp({ quality: 80 })
         .toBuffer();
 
+      console.log(`[STORAGE] Compression successful: ${processedBuffer.length} bytes`);
       finalContentType = "image/webp";
       extension = ".webp";
     } catch (error) {
-      console.error("Image compression failed, using original:", error);
+      console.error("[STORAGE] Image compression failed, using original:", error);
     }
+  } else if (skipCompression && file.type.startsWith("image/")) {
+    console.log(`[STORAGE] Skipping compression for: ${file.name} (SKIP_IMAGE_COMPRESSION=true)`);
   }
 
   const timestamp = Date.now();
