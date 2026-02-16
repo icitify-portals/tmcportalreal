@@ -69,14 +69,17 @@ COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modul
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma/client ./node_modules/@prisma/client
 
 # Copy prisma directory (needed for migrate deploy at runtime)
-COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma      
+COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+COPY --from=builder --chown=nextjs:nodejs /app/prisma.config.js ./prisma.config.js
+COPY --from=builder --chown=nextjs:nodejs /app/workers ./workers
+COPY --from=builder --chown=nextjs:nodejs /app/lib ./lib
 COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
 
 # Set npm cache location
 ENV NPM_CONFIG_CACHE=/home/nextjs/.npm
 
-# Install prisma CLI globally to ensure availability for migrations
-RUN npm install -g prisma@7.2.0
+# Install prisma and tsx CLI globally to ensure availability for migrations and workers
+RUN npm install -g prisma@7.2.0 tsx
 
 USER nextjs
 
