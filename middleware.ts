@@ -21,7 +21,7 @@ export default auth((req) => {
   }
 
   // Redirect to appropriate dashboard based on role
-  if (path === "/dashboard") {
+  if (path === "/dashboard" && session) {
     // Check for SuperAdmin or SYSTEM level role
     const isSuperAdmin = session.user?.isSuperAdmin ||
       (session.user as any)?.roles?.some((r: any) => r.jurisdictionLevel === "SYSTEM")
