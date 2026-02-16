@@ -8,7 +8,7 @@ services:
       dockerfile: Dockerfile
     restart: always
     ports:
-      - "3002:3000" # Mapped to 3002 as requested
+      - "3003:3000" # Mapped to 3003 to avoid conflict with app-app
     env_file:
       - .env.production
     environment:
