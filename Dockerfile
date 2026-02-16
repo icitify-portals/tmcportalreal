@@ -59,16 +59,15 @@ RUN groupadd --system --gid 1001 nodejs \
 RUN mkdir -p /home/nextjs/.npm \
   && chown -R nextjs:nodejs /home/nextjs /app
 
-# Copy Next.js standalone output
+# Copy standalone build output
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
-# Manually copy the generated Prisma Client to standalone node_modules
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma/client ./node_modules/@prisma/client
+# Copy all node_modules from builder (includes generated Prisma client and all dependencies for workers)
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 
-# Copy prisma directory (needed for migrate deploy at runtime)
+# Copy other source files needed for workers and migrations
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/prisma.config.js ./prisma.config.js
 COPY --from=builder --chown=nextjs:nodejs /app/workers ./workers
