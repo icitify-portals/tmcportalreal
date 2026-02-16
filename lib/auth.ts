@@ -43,27 +43,40 @@ export const authConfig: NextAuthConfig = {
         const email = credentials.email as string
         const password = credentials.password as string
 
+        console.log(`[DEBUG] Login attempt for: ${email}`);
+
         // Simplified query - we only need credentials here
         const userResults = await db.select().from(users).where(eq(users.email, email)).limit(1)
         const user = userResults[0]
 
-        if (!user || !user.password) {
+        if (!user) {
+          console.log(`[DEBUG] User not found: ${email}`);
+          return null
+        }
+
+        if (!user.password) {
+          console.log(`[DEBUG] User has no password: ${email}`);
           return null
         }
 
         // Check if email is verified
         if (!user.emailVerified) {
+          console.log(`[DEBUG] Email not verified: ${email}`);
           throw new Error("Please verify your email address before signing in. Check your inbox for the verification link.")
         }
 
+        console.log(`[DEBUG] Comparing password for: ${email}`);
         const isPasswordValid = await bcrypt.compare(
           password,
           user.password
         )
 
         if (!isPasswordValid) {
+          console.log(`[DEBUG] Invalid password for: ${email}`);
           return null
         }
+
+        console.log(`[DEBUG] Login successful for: ${email}`);
 
         return {
           id: user.id,
