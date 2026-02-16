@@ -2,8 +2,6 @@
 
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
-import Underline from '@tiptap/extension-underline'
-import Link from '@tiptap/extension-link'
 import { Toggle } from "@/components/ui/toggle"
 import { Separator } from "@/components/ui/separator"
 import {
@@ -38,10 +36,10 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
 
     const editor = useEditor({
         extensions: [
-            StarterKit,
-            Underline,
-            Link.configure({
-                openOnClick: false,
+            StarterKit.configure({
+                link: {
+                    openOnClick: false
+                }
             }),
         ],
         content: value,

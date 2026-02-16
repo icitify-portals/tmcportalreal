@@ -1,9 +1,7 @@
-
 "use client"
 
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
-import Link from '@tiptap/extension-link'
 import Image from '@tiptap/extension-image'
 import { Bold, Italic, List, ListOrdered, Link as LinkIcon, Image as ImageIcon, Heading1, Heading2, Quote, Undo, Redo } from 'lucide-react'
 import { Button } from "@/components/ui/button"
@@ -19,9 +17,10 @@ interface RichTextEditorProps {
 export function RichTextEditor({ content, onChange, editable = true }: RichTextEditorProps) {
     const editor = useEditor({
         extensions: [
-            StarterKit,
-            Link.configure({
-                openOnClick: false,
+            StarterKit.configure({
+                link: {
+                    openOnClick: false
+                }
             }),
             Image,
         ],
