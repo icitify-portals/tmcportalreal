@@ -93,113 +93,131 @@ export const authConfig: NextAuthConfig = {
   },
   callbacks: {
     async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id
-        token.country = user.country // Store in token
+      try {
+        if (user) {
+          console.log(`[DEBUG] JWT Callback: Processing new login for user ${user.id}`);
+          token.id = user.id
+          token.country = user.country // Store in token
 
-        // 1. Fetch User Roles & Permissions
-        // We join userRoles -> roles -> rolePermissions -> permissions -> organizations
-        const userRolesData = await db.select({
-          roleId: roles.id,
-          roleName: roles.name,
-          roleCode: roles.code,
-          jurisdictionLevel: roles.jurisdictionLevel,
-          organizationId: userRoles.organizationId,
-          orgName: organizations.name,
-          permissionCode: permissions.code,
-          permissionGranted: rolePermissions.granted
-        })
-          .from(userRoles)
-          .innerJoin(roles, eq(userRoles.roleId, roles.id))
-          .leftJoin(organizations, eq(userRoles.organizationId, organizations.id))
-          .leftJoin(rolePermissions, eq(roles.id, rolePermissions.roleId))
-          .leftJoin(permissions, eq(rolePermissions.permissionId, permissions.id))
-          .where(eq(userRoles.userId, user.id))
+          // 1. Fetch User Roles & Permissions
+          // We join userRoles -> roles -> rolePermissions -> permissions -> organizations
+          const userRolesData = await db.select({
+            roleId: roles.id,
+            roleName: roles.name,
+            roleCode: roles.code,
+            jurisdictionLevel: roles.jurisdictionLevel,
+            organizationId: userRoles.organizationId,
+            orgName: organizations.name,
+            permissionCode: permissions.code,
+            permissionGranted: rolePermissions.granted
+          })
+            .from(userRoles)
+            .innerJoin(roles, eq(userRoles.roleId, roles.id))
+            .leftJoin(organizations, eq(userRoles.organizationId, organizations.id))
+            .leftJoin(rolePermissions, eq(roles.id, rolePermissions.roleId))
+            .leftJoin(permissions, eq(rolePermissions.permissionId, permissions.id))
+            .where(eq(userRoles.userId, user.id))
 
-        // Process roles and permissions
-        const allPermissions = new Set<string>()
-        const processedRoles = new Map<string, any>()
+          console.log(`[DEBUG] JWT Callback: Found ${userRolesData.length} role/permission entries`);
 
-        userRolesData.forEach(row => {
-          // Add permission if granted
-          if (row.permissionCode && row.permissionGranted) {
-            allPermissions.add(row.permissionCode)
+          // Process roles and permissions
+          const allPermissions = new Set<string>()
+          const processedRoles = new Map<string, any>()
+
+          userRolesData.forEach(row => {
+            // Add permission if granted
+            if (row.permissionCode && row.permissionGranted) {
+              allPermissions.add(row.permissionCode)
+            }
+
+            // Build unique roles list
+            const roleKey = `${row.roleId}-${row.organizationId}`
+            if (!processedRoles.has(roleKey)) {
+              processedRoles.set(roleKey, {
+                id: row.roleId,
+                name: row.roleName,
+                code: row.roleCode,
+                jurisdictionLevel: row.jurisdictionLevel,
+                organizationId: row.organizationId,
+                organization: row.organizationId ? {
+                  id: row.organizationId,
+                  name: row.orgName
+                } : null
+              })
+            }
+          })
+
+          const rolesList = Array.from(processedRoles.values())
+          token.roles = rolesList
+          token.permissions = Array.from(allPermissions)
+          token.isSuperAdmin = rolesList.some((r) => r.jurisdictionLevel === "SYSTEM")
+
+          console.log(`[DEBUG] JWT Callback: isSuperAdmin=${token.isSuperAdmin}`);
+
+          // 2. Fetch Member Profile
+          const memberProfileData = await db.select({
+            id: members.id,
+            organizationId: members.organizationId,
+            status: members.status
+          })
+            .from(members)
+            .where(eq(members.userId, user.id))
+            .limit(1)
+
+          if (memberProfileData.length > 0) {
+            const profile = memberProfileData[0]
+            token.memberId = profile.id
+            token.memberOrganizationId = profile.organizationId
+            token.memberStatus = profile.status || undefined
+            console.log(`[DEBUG] JWT Callback: Found member profile ${profile.id}`);
           }
 
-          // Build unique roles list
-          const roleKey = `${row.roleId}-${row.organizationId}`
-          if (!processedRoles.has(roleKey)) {
-            processedRoles.set(roleKey, {
-              id: row.roleId,
-              name: row.roleName,
-              code: row.roleCode,
-              jurisdictionLevel: row.jurisdictionLevel,
-              organizationId: row.organizationId,
-              organization: row.organizationId ? {
-                id: row.organizationId,
-                name: row.orgName
-              } : null
-            })
+          // 3. Fetch Official Profile
+          const officialProfileData = await db.select({
+            id: officials.id,
+            organizationId: officials.organizationId,
+            positionLevel: officials.positionLevel
+          })
+            .from(officials)
+            .where(eq(officials.userId, user.id))
+            .limit(1)
+
+          if (officialProfileData.length > 0) {
+            const profile = officialProfileData[0]
+            token.officialId = profile.id
+            token.officialOrganizationId = profile.organizationId
+            token.officialLevel = profile.positionLevel
+            console.log(`[DEBUG] JWT Callback: Found official profile ${profile.id}`);
           }
-        })
-
-        const rolesList = Array.from(processedRoles.values())
-        token.roles = rolesList
-        token.permissions = Array.from(allPermissions)
-        token.isSuperAdmin = rolesList.some((r) => r.jurisdictionLevel === "SYSTEM")
-
-        // 2. Fetch Member Profile
-        const memberProfileData = await db.select({
-          id: members.id,
-          organizationId: members.organizationId,
-          status: members.status
-        })
-          .from(members)
-          .where(eq(members.userId, user.id))
-          .limit(1)
-
-        if (memberProfileData.length > 0) {
-          const profile = memberProfileData[0]
-          token.memberId = profile.id
-          token.memberOrganizationId = profile.organizationId
-          token.memberStatus = profile.status || undefined
         }
-
-        // 3. Fetch Official Profile
-        const officialProfileData = await db.select({
-          id: officials.id,
-          organizationId: officials.organizationId,
-          positionLevel: officials.positionLevel
-        })
-          .from(officials)
-          .where(eq(officials.userId, user.id))
-          .limit(1)
-
-        if (officialProfileData.length > 0) {
-          const profile = officialProfileData[0]
-          token.officialId = profile.id
-          token.officialOrganizationId = profile.organizationId
-          token.officialLevel = profile.positionLevel
-        }
+        return token
+      } catch (error) {
+        console.error("[DEBUG] JWT Callback Error:", error);
+        return token;
       }
-      return token
     },
     async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.id as string
-        session.user.roles = token.roles as UserRole[] || undefined
-        session.user.permissions = token.permissions as string[] | undefined
-        session.user.isSuperAdmin = token.isSuperAdmin as boolean
-        session.user.memberId = token.memberId as string | undefined
-        session.user.memberOrganizationId = token.memberOrganizationId as string | undefined
-        session.user.memberStatus = token.memberStatus as string | undefined
-        session.user.officialId = token.officialId as string | undefined
-        session.user.officialOrganizationId = token.officialOrganizationId as string | undefined
-        session.user.officialLevel = token.officialLevel as string | undefined
-        // Add country to session user
-        session.user.country = token.country as string | undefined
+      try {
+        if (session.user) {
+          console.log(`[DEBUG] Session Callback: Populating session for user ${token.id}`);
+          session.user.id = token.id as string
+          session.user.roles = token.roles as UserRole[] || undefined
+          session.user.permissions = token.permissions as string[] | undefined
+          session.user.isSuperAdmin = token.isSuperAdmin as boolean
+          session.user.memberId = token.memberId as string | undefined
+          session.user.memberOrganizationId = token.memberOrganizationId as string | undefined
+          session.user.memberStatus = token.memberStatus as string | undefined
+          session.user.officialId = token.officialId as string | undefined
+          session.user.officialOrganizationId = token.officialOrganizationId as string | undefined
+          session.user.officialLevel = token.officialLevel as string | undefined
+          // Add country to session user
+          session.user.country = token.country as string | undefined
+        }
+        return session
+      } catch (error) {
+        console.error("[DEBUG] Session Callback Error:", error);
+        return session;
       }
-      return session
     },
   },
   pages: {
