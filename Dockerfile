@@ -75,6 +75,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
 # Set npm cache location
 ENV NPM_CONFIG_CACHE=/home/nextjs/.npm
 
+# Install prisma CLI globally to ensure availability for migrations
+RUN npm install -g prisma@7.2.0
+
 USER nextjs
 
 EXPOSE 3000
