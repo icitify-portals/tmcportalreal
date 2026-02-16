@@ -37,6 +37,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 # Dummy database URL to satisfy validation during build
 ARG DATABASE_URL
 ENV DATABASE_URL="mysql://dummy:dummy@localhost:3306/dummy"
+RUN echo "DEBUG: DATABASE_URL is set to $DATABASE_URL"
 RUN npx prisma generate
 
 # Build the Next.js app
