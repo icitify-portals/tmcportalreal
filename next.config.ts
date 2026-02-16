@@ -9,6 +9,17 @@ const nextConfig: NextConfig = {
   },
   // Use webpack for now to avoid Prisma issues
   serverExternalPackages: ['@prisma/client'],
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'tmcng.net',
+        port: '',
+        pathname: '/uploads/**',
+      },
+    ],
+    unoptimized: true,
+  },
 };
 
 export default nextConfig;
