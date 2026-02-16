@@ -61,6 +61,8 @@ export async function POST(request: NextRequest) {
     const userId = crypto.randomUUID()
     const name = `${data.surname} ${data.otherNames}`
 
+    const now = new Date()
+
     // Create user
     await db.insert(users).values({
       id: userId,
@@ -71,6 +73,8 @@ export async function POST(request: NextRequest) {
       country: data.country,
       address: data.address,
       emailVerified: null,
+      createdAt: now,
+      updatedAt: now,
     })
 
     // Store verification token
