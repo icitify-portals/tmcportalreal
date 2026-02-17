@@ -7,20 +7,8 @@ import { revalidatePath } from "next/cache"
 import * as XLSX from "xlsx"
 import { eq } from "drizzle-orm"
 
-// Type for Excel Row
-type PlannerRow = {
-    "OFFICE": string;
-    "PROGRAM AND ACTIVITY": string; // Title
-    "PROGRAM FORMAT": string;
-    "PROGRAM FREQUENCY": string;
-    "PROGRAM OBJECTIVES": string;
-    "PROGRAM ADDITIONAL INFORMATION": string;
-    "PROGRAM DATE": number | string; // Excel date serial or string
-    "PROGRAM TIME": string;
-    "PROGRAM VENUE": string;
-    "BUDGETED EXPENDITURE (NGN)": number;
-    "PROGRAM COMMITTEE": string;
-}
+// Type for Excel Row (Loose typing as keys vary)
+type PlannerRow = Record<string, any>
 
 function parseExcelDate(serial: number): Date {
     // Excel base date is Dec 30 1899
@@ -30,25 +18,25 @@ function parseExcelDate(serial: number): Date {
     return date_info;
 }
 
+// Helper to find value by fuzzy key
+function getValue(row: PlannerRow, targetKeys: string[]): any {
+    const keys = Object.keys(row);
+    for (const key of keys) {
+        const normalizedKey = key.trim().toUpperCase();
+        if (targetKeys.includes(normalizedKey)) { // Check if key matches any of targets
+            return row[key];
+        }
+    }
+    return undefined;
+}
+
 export async function uploadYearPlanner(formData: FormData) {
     try {
         const session = await getServerSession()
         if (!session?.user?.id) return { success: false, error: "Unauthorized" }
 
-        // Determine user's organization - likely ADMIN uploading for National or specific org
-        // For now, let's assume the user belongs to an organization and we attach these programmes to it.
-        // Or if they are super admin, they might be uploading for National.
-        // Let's fetch user's primary org connection? Or pass orgId in formData if needed.
-        // Assuming user context has orgId or we find one.
-        // Simplification: User must be an admin of an organization.
-
-        // Let's get the organization ID from the first organization the user is an admin/member of for now, 
-        // or ensure the session has it.
-        // Only National admins should probably do this?
-        // Let's default to the user's first organization found for 'NATIONAL' or 'STATE' level.
-
-        // This part relies on specific app logic for "current organization". 
-        // I will default to a placeholder lookup for "National Headquarters" if not found.
+        // Determine user's organization
+        // Default to a placeholder lookup for "National Headquarters" if not found.
         const [userOrg] = await db.select({ id: organizations.id, level: organizations.level })
             .from(organizations)
             // This join logic is complex without direct user->org link in session sometimes.
@@ -69,41 +57,52 @@ export async function uploadYearPlanner(formData: FormData) {
         const worksheet = workbook.Sheets[sheetName]
         const jsonData = XLSX.utils.sheet_to_json<PlannerRow>(worksheet)
 
+        console.log(`[YearPlanner] Found ${jsonData.length} rows in sheet: ${sheetName}`)
+        if (jsonData.length > 0) {
+            console.log(`[YearPlanner] Headers:`, Object.keys(jsonData[0]))
+        }
+
         // Pre-fetch offices to map names to IDs
         const existingOffices = await db.select().from(offices).where(eq(offices.organizationId, organizationId))
         const officeMap = new Map(existingOffices.map(o => [o.name.toUpperCase(), o.id]))
 
         let count = 0;
+        let skipped = 0;
 
         for (const row of jsonData) {
-            // Map Fields
-            const officeName = row["OFFICE"]?.toString().trim();
-            const title = row["PROGRAM AND ACTIVITY"]?.toString().trim();
-            if (!title) continue; // Skip empty rows
+            // Map Fields with Fuzzy Search
+            const officeName = getValue(row, ["OFFICE", "OFFICE NAME"])?.toString().trim();
+            const title = getValue(row, ["PROGRAM AND ACTIVITY", "PROGRAM", "ACTIVITY", "TITLE"])?.toString().trim();
+
+            if (!title) {
+                console.log(`[YearPlanner] Skipping row due to missing title:`, row)
+                skipped++
+                continue;
+            }
 
             // Office Mapping
             let officeId = null;
             if (officeName && officeMap.has(officeName.toUpperCase())) {
                 officeId = officeMap.get(officeName.toUpperCase());
             } else if (officeName) {
-                // Create new office if not exists?? Or just ignore?
-                // Let's create it to be helpful
+                // Create new office including organizationId!
                 const [newOffice] = await db.insert(offices).values({
-                    organizationId,
+                    organizationId, // IMPORTANT: Link new office to org
                     name: officeName,
                     description: "Imported from Year Planner",
+                    isActive: true
                 }).$returningId()
                 officeId = newOffice.id
                 officeMap.set(officeName.toUpperCase(), officeId)
             }
 
             // Parsing Enums
-            const formatRaw = row["PROGRAM FORMAT"]?.toString().toUpperCase() || 'PHYSICAL';
+            const formatRaw = getValue(row, ["PROGRAM FORMAT", "FORMAT"])?.toString().toUpperCase() || 'PHYSICAL';
             let format: 'PHYSICAL' | 'VIRTUAL' | 'HYBRID' = 'PHYSICAL';
             if (formatRaw.includes('VIRTUAL')) format = 'VIRTUAL';
             if (formatRaw.includes('HYBRID')) format = 'HYBRID';
 
-            const freqRaw = row["PROGRAM FREQUENCY"]?.toString().toUpperCase() || 'ONCE';
+            const freqRaw = getValue(row, ["PROGRAM FREQUENCY", "FREQUENCY"])?.toString().toUpperCase() || 'ONCE';
             let frequency: 'WEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'BI-ANNUALLY' | 'ANNUALLY' | 'ONCE' = 'ONCE';
             if (freqRaw.includes('WEEKLY')) frequency = 'WEEKLY';
             if (freqRaw.includes('MONTHLY')) frequency = 'MONTHLY';
@@ -113,46 +112,55 @@ export async function uploadYearPlanner(formData: FormData) {
 
             // Dates
             let startDate = new Date();
+            const rawDate = getValue(row, ["PROGRAM DATE", "DATE"]);
+
             // Handle Excel serial date
-            if (typeof row["PROGRAM DATE"] === 'number') {
-                startDate = parseExcelDate(row["PROGRAM DATE"]);
-            } else if (typeof row["PROGRAM DATE"] === 'string') {
-                startDate = new Date(row["PROGRAM DATE"]);
+            if (typeof rawDate === 'number') {
+                startDate = parseExcelDate(rawDate);
+            } else if (typeof rawDate === 'string') {
+                startDate = new Date(rawDate);
             }
             // Is it valid?
             if (isNaN(startDate.getTime())) {
+                console.warn(`[YearPlanner] Invalid date for "${title}": ${rawDate}. Using current date.`)
                 startDate = new Date(); // Fallback
             }
 
             // Time
-            const time = row["PROGRAM TIME"]?.toString() || "09:00";
+            const time = getValue(row, ["PROGRAM TIME", "TIME"])?.toString() || "09:00";
+            const venue = getValue(row, ["PROGRAM VENUE", "VENUE"])?.toString() || "TBD";
+            const budget = getValue(row, ["BUDGETED EXPENDITURE (NGN)", "BUDGET", "COST"])?.toString() || "0";
+            const objectives = getValue(row, ["PROGRAM OBJECTIVES", "OBJECTIVES"])?.toString();
+            const info = getValue(row, ["PROGRAM ADDITIONAL INFORMATION", "ADDITIONAL INFO"])?.toString();
+            const committee = getValue(row, ["PROGRAM COMMITTEE", "COMMITTEE"])?.toString();
 
             await db.insert(programmes).values({
                 organizationId,
-                title: title, // "Program and Activity" usually contains the title
-                description: title, // Use title as description for now
-                level: userOrg.level, // Inherit org level
-                status: 'APPROVED', // Auto-approve planner items?
-                venue: row["PROGRAM VENUE"]?.toString() || "TBD",
+                title: title,
+                description: title,
+                level: userOrg.level,
+                status: 'APPROVED',
+                venue: venue,
                 startDate: startDate,
                 time: time,
-                budget: row["BUDGETED EXPENDITURE (NGN)"]?.toString() || "0",
-                organizingOfficeId: officeId as string, // cast
+                budget: budget,
+                organizingOfficeId: officeId as string,
 
                 // New Fields
                 format: format,
                 frequency: frequency,
-                objectives: row["PROGRAM OBJECTIVES"]?.toString(),
-                additionalInfo: row["PROGRAM ADDITIONAL INFORMATION"]?.toString(),
-                committee: row["PROGRAM COMMITTEE"]?.toString(),
+                objectives: objectives,
+                additionalInfo: info,
+                committee: committee,
 
                 createdBy: session.user.id
             })
             count++;
         }
 
+        console.log(`[YearPlanner] Import complete. Success: ${count}, Skipped: ${skipped}`)
         revalidatePath("/dashboard/admin/programmes")
-        return { success: true, count }
+        return { success: true, count, skipped }
 
     } catch (error) {
         console.error("Upload Error", error)

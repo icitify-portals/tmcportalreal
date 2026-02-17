@@ -48,7 +48,14 @@ async function ProgrammeList({ type, orgId }: { type: 'MY_PROGRAMMES' | 'TO_APPR
                         <div className="flex justify-between items-start">
                             <div className="space-y-1">
                                 <CardTitle className="text-xl">{p.title}</CardTitle>
-                                <CardDescription suppressHydrationWarning>{format(new Date(p.startDate), 'PPP')} @ {p.venue}</CardDescription>
+                                <CardDescription suppressHydrationWarning>
+                                    {format(new Date(p.startDate), 'PPP')} @ {p.venue}
+                                </CardDescription>
+                                {p.office && (
+                                    <Badge variant="outline" className="mt-1">
+                                        {p.office.name}
+                                    </Badge>
+                                )}
                             </div>
                             <div className="flex items-center gap-2">
                                 {p.isLateSubmission && (

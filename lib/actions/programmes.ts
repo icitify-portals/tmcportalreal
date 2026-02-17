@@ -194,21 +194,28 @@ export async function getProgrammes(filters?: { level?: string, state?: string, 
 export async function getAdminProgrammes(organizationId: string, type: 'MY_PROGRAMMES' | 'TO_APPROVE') {
     const creator = aliasedTable(users, "creator")
     const org = aliasedTable(organizations, "org")
+    const office = aliasedTable(offices, "office")
 
     if (type === 'MY_PROGRAMMES') {
-        const results = await db.select({ programme: programmes, creator: creator })
+        const results = await db.select({
+            programme: programmes,
+            creator: creator,
+            office: office
+        })
             .from(programmes)
             .leftJoin(creator, eq(programmes.createdBy, creator.id))
+            .leftJoin(office, eq(programmes.organizingOfficeId, office.id))
             .where(eq(programmes.organizationId, organizationId))
             .orderBy(desc(programmes.createdAt))
 
-        return results.map(r => ({ ...r.programme, creator: r.creator }))
+        return results.map(r => ({ ...r.programme, creator: r.creator, office: r.office }))
     }
 
     if (type === 'TO_APPROVE') {
         // Complex logic:
         // If I am state, I see PENDING_STATE from my child branches (or all branches in my state)
         // If I am national, I see PENDING_NATIONAL from states
+        // National -> APPROVED
 
         const [myOrg] = await db.select().from(organizations).where(eq(organizations.id, organizationId))
         if (!myOrg) return []
@@ -226,15 +233,17 @@ export async function getAdminProgrammes(organizationId: string, type: 'MY_PROGR
         const results = await db.select({
             programme: programmes,
             creator: creator,
-            org: org
+            org: org,
+            office: office
         })
             .from(programmes)
             .leftJoin(creator, eq(programmes.createdBy, creator.id))
             .leftJoin(org, eq(programmes.organizationId, org.id))
+            .leftJoin(office, eq(programmes.organizingOfficeId, office.id))
             .where(condition)
             .orderBy(desc(programmes.createdAt))
 
-        return results.map(r => ({ ...r.programme, creator: r.creator, organization: r.org }))
+        return results.map(r => ({ ...r.programme, creator: r.creator, organization: r.org, office: r.office }))
     }
 }
 
