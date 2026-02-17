@@ -42,6 +42,8 @@ export async function createCampaign(data: CampaignInput) {
         await db.insert(fundraisingCampaigns).values({
             ...validated,
             targetAmount: validated.targetAmount.toString(),
+            createdAt: new Date(),
+            updatedAt: new Date(),
         })
 
         revalidatePath("/dashboard/admin/finance/campaigns")
