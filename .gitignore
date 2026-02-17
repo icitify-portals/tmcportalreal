@@ -24,6 +24,8 @@
 .DS_Store
 *.pem
 
+# temp
+env.production.temp
 # debug
 npm-debug.log*
 yarn-debug.log*

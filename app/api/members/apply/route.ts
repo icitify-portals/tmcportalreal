@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
         // Try to find by Branch name
         if (validData.branch) {
             organization = await db.query.organizations.findFirst({
-                where: (organizations, { eq, and, like }) =>
+                where: (organizations, { eq, and, like, or }) =>
                     and(
                         eq(organizations.level, "BRANCH"),
                         or(
@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
         // If not found, try LGA
         if (!organization && validData.local_government_area) {
             organization = await db.query.organizations.findFirst({
-                where: (organizations, { eq, and, like }) =>
+                where: (organizations, { eq, and, like, or }) =>
                     and(
                         eq(organizations.level, "LOCAL_GOVERNMENT"),
                         or(
@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
         // If not found, try State
         if (!organization && validData.state) {
             organization = await db.query.organizations.findFirst({
-                where: (organizations, { eq, and, like }) =>
+                where: (organizations, { eq, and, like, or }) =>
                     and(
                         eq(organizations.level, "STATE"),
                         or(
