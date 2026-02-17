@@ -6,7 +6,7 @@ import { getServerSession } from "@/lib/session"
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { db } from "@/lib/db"
-import { fundraisingCampaigns } from "@/lib/db/schema"
+import { fundraisingCampaigns, organizations } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
 
 const DonationSchema = z.object({
@@ -37,21 +37,21 @@ export async function initiateDonation(data: z.infer<typeof DonationSchema>) {
         })
 
         // Resolve Organization Subaccount
+        // User requested that ALL campaign payments go to the National Account
         let subaccount: string | undefined = undefined
-        const campaign = await db.query.fundraisingCampaigns.findFirst({
-            where: eq(fundraisingCampaigns.id, validated.campaignId),
-            with: {
-                organization: {
-                    columns: {
-                        paystackSubaccountCode: true
-                    }
-                }
+
+        // Fetch National Organization
+        const nationalOrg = await db.query.organizations.findFirst({
+            where: (organizations, { eq }) => eq(organizations.level, "NATIONAL"),
+            columns: {
+                paystackSubaccountCode: true
             }
         })
 
-        if (campaign?.organization?.paystackSubaccountCode) {
-            subaccount = campaign.organization.paystackSubaccountCode
+        if (nationalOrg?.paystackSubaccountCode) {
+            subaccount = nationalOrg.paystackSubaccountCode
         }
+        // If no national subaccount, it defaults to main account (which is correct for National)
 
         // Initialize with Paystack
         const paystackResult = await initializePayment({
