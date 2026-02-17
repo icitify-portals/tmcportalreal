@@ -120,6 +120,96 @@ export default async function MemberDetailsPage({ params }: { params: Promise<{ 
                             </CardContent>
                         </Card>
 
+                    </div>
+
+                    <div className="md:col-span-2 space-y-6">
+                        {/* Professional Information */}
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Professional Information</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <span className="text-sm font-medium text-muted-foreground">Occupation</span>
+                                        <p>{member.occupation || meta.occupation || "N/A"}</p>
+                                    </div>
+                                    <div>
+                                        <span className="text-sm font-medium text-muted-foreground">Qualification</span>
+                                        <p>{meta.qualification || "N/A"}</p>
+                                    </div>
+                                    <div>
+                                        <span className="text-sm font-medium text-muted-foreground">Specialization</span>
+                                        <p>{meta.specialization || "N/A"}</p>
+                                    </div>
+                                    <div>
+                                        <span className="text-sm font-medium text-muted-foreground">Years of Experience</span>
+                                        <p>{meta.years_of_experience || "N/A"}</p>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* Origin & Family */}
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Origin & Family</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <span className="text-sm font-medium text-muted-foreground">State of Origin</span>
+                                        <p>{meta.state_of_origin || "N/A"}</p>
+                                    </div>
+                                    <div>
+                                        <span className="text-sm font-medium text-muted-foreground">LGA of Origin</span>
+                                        <p>{meta.lga_of_origin || "N/A"}</p>
+                                    </div>
+                                    <div>
+                                        <span className="text-sm font-medium text-muted-foreground">Marital Status</span>
+                                        <p>{meta.maritalStatus || "N/A"}</p>
+                                    </div>
+                                    {meta.maritalStatus === "MARRIED" && (
+                                        <>
+                                            <div>
+                                                <span className="text-sm font-medium text-muted-foreground">Date of Marriage</span>
+                                                <p>{meta.dateOfMarriage ? format(new Date(meta.dateOfMarriage), 'PP') : "N/A"}</p>
+                                            </div>
+                                            <div>
+                                                <span className="text-sm font-medium text-muted-foreground">Children (Male)</span>
+                                                <p>{meta.numChildrenMale || "0"}</p>
+                                            </div>
+                                            <div>
+                                                <span className="text-sm font-medium text-muted-foreground">Children (Female)</span>
+                                                <p>{meta.numChildrenFemale || "0"}</p>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* Education History */}
+                        {meta.educationHistory && meta.educationHistory.length > 0 && (
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Education History</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="space-y-4">
+                                        {meta.educationHistory.map((edu: any, i: number) => (
+                                            <div key={i} className="border-b last:border-0 pb-2 last:pb-0">
+                                                <p className="font-semibold">{edu.institution}</p>
+                                                <p className="text-sm">{edu.course} - {edu.degreeClass}</p>
+                                                <p className="text-xs text-muted-foreground">{edu.yearAdmitted} - {edu.yearGraduated}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        )}
+
+                        {/* Health & Emergency */}
                         <Card>
                             <CardHeader>
                                 <CardTitle>Health & Emergency</CardTitle>
@@ -134,9 +224,27 @@ export default async function MemberDetailsPage({ params }: { params: Promise<{ 
                                         <span className="text-sm font-medium text-muted-foreground">Blood Group</span>
                                         <p>{meta.blood_group || "N/A"}</p>
                                     </div>
+                                    <div className="col-span-2">
+                                        <span className="text-sm font-medium text-muted-foreground">Specific Ailment</span>
+                                        <p>{meta.specific_ailment || "None"}</p>
+                                    </div>
+                                    <div className="col-span-2">
+                                        <span className="text-sm font-medium text-muted-foreground">Primary Hospital</span>
+                                        <p>{meta.hospital || "N/A"}</p>
+                                    </div>
                                     <div>
-                                        <span className="text-sm font-medium text-muted-foreground">Emergency Contact</span>
-                                        <p>{member.emergencyContact} ({member.emergencyPhone})</p>
+                                        <span className="text-sm font-medium text-muted-foreground">Doctor Name</span>
+                                        <p>{meta.doctorName || "N/A"}</p>
+                                    </div>
+                                    <div>
+                                        <span className="text-sm font-medium text-muted-foreground">Doctor Phone</span>
+                                        <p>{meta.doctorPhone || "N/A"}</p>
+                                    </div>
+
+                                    <div className="col-span-2 pt-2 border-t mt-2">
+                                        <span className="text-sm font-medium text-muted-foreground block mb-1">Emergency Contact</span>
+                                        <p className="font-medium">{member.emergencyContact}</p>
+                                        <p className="text-sm text-muted-foreground">{member.emergencyPhone}</p>
                                     </div>
                                 </div>
                             </CardContent>

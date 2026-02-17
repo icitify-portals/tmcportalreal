@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
         }
 
         const payment = await db.insert(payments).values({
-            amount: (parseFloat(amount) / 100).toString(), // Convert kobo to Naira for storage
+            amount: amount.toString(), // Store as is (Naira)
             currency: "NGN",
             status: "SUCCESS", // Assumed success from client callback, ideally verify with Paystack backend API
             paymentType: "DONATION",

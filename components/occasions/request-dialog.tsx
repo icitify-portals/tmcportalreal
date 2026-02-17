@@ -46,6 +46,11 @@ const formSchema = z.object({
     wifeName: z.string().optional(),
     babyName: z.string().optional(),
     dowry: z.string().optional(),
+
+    // Naming specific
+    fatherName: z.string().optional(),
+    motherName: z.string().optional(),
+    dob: z.string().optional(),
 })
 
 interface RequestDialogProps {
@@ -77,6 +82,9 @@ export function RequestOccasionDialog({ types, organizations }: RequestDialogPro
                 details.dowry = values.dowry
             } else if (selectedType?.includes('naming')) {
                 details.babyName = values.babyName
+                details.fatherName = values.fatherName
+                details.motherName = values.motherName
+                details.dob = values.dob
             }
 
             const res = await requestOccasion({
@@ -227,9 +235,22 @@ export function RequestOccasionDialog({ types, organizations }: RequestDialogPro
                         {(selectedType?.includes('naming')) && (
                             <div className="border p-4 rounded-md space-y-4 bg-muted/50">
                                 <h4 className="font-semibold">Naming Details</h4>
-                                <FormField control={form.control} name="babyName" render={({ field }) => (
-                                    <FormItem><FormLabel>Baby Name</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>
-                                )} />
+                                <div className="grid grid-cols-2 gap-4">
+                                    <FormField control={form.control} name="babyName" render={({ field }) => (
+                                        <FormItem><FormLabel>Baby Name</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>
+                                    )} />
+                                    <FormField control={form.control} name="dob" render={({ field }) => (
+                                        <FormItem><FormLabel>Date of Birth</FormLabel><FormControl><Input type="date" {...field} /></FormControl></FormItem>
+                                    )} />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <FormField control={form.control} name="fatherName" render={({ field }) => (
+                                        <FormItem><FormLabel>Father's Name</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>
+                                    )} />
+                                    <FormField control={form.control} name="motherName" render={({ field }) => (
+                                        <FormItem><FormLabel>Mother's Name</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>
+                                    )} />
+                                </div>
                             </div>
                         )}
 

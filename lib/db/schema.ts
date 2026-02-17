@@ -43,6 +43,8 @@ export const transactionTypeEnum = mysqlEnum('type', ['INFLOW', 'OUTFLOW']);
 export const programmeStatusEnum = mysqlEnum('status', ['DRAFT', 'PENDING_STATE', 'PENDING_NATIONAL', 'APPROVED', 'REJECTED', 'CANCELLED', 'COMPLETED']);
 export const targetAudienceEnum = mysqlEnum('targetAudience', ['PUBLIC', 'MEMBERS', 'BROTHERS', 'SISTERS', 'CHILDREN', 'YOUTH', 'ELDERS']);
 export const registrationStatusEnum = mysqlEnum('status', ['REGISTERED', 'PAID', 'ATTENDED', 'CANCELLED']);
+export const programmeFormatEnum = mysqlEnum('format', ['PHYSICAL', 'VIRTUAL', 'HYBRID']);
+export const programmeFrequencyEnum = mysqlEnum('frequency', ['WEEKLY', 'MONTHLY', 'QUARTERLY', 'BI-ANNUALLY', 'ANNUALLY', 'ONCE']);
 
 // Asset Enums
 export const assetCategoryEnum = mysqlEnum('category', ['FURNITURE', 'ELECTRONICS', 'VEHICLE', 'PROPERTY', 'EQUIPMENT', 'OTHER']);
@@ -929,6 +931,14 @@ export const programmes = mysqlTable("programmes", {
     approvedNationalAt: timestamp("approvedNationalAt", { mode: "date", fsp: 3 }),
 
     organizingOfficeId: varchar("organizingOfficeId", { length: 255 }).references(() => offices.id),
+    // Year Planner Fields
+    format: programmeFormatEnum.default('PHYSICAL'),
+    frequency: programmeFrequencyEnum.default('ONCE'),
+    objectives: text("objectives"),
+    budget: decimal("budget", { precision: 15, scale: 2 }).default("0.00"),
+    committee: varchar("committee", { length: 255 }),
+    additionalInfo: text("additionalInfo"),
+
     isLateSubmission: boolean("isLateSubmission").default(false),
 
     paymentRequired: boolean("paymentRequired").default(false),

@@ -52,6 +52,7 @@ const adminNavItems = [
   { href: "/dashboard/admin/programmes", label: "Programmes & Events", icon: Calendar },
   { href: "/dashboard/admin/reports", label: "Activity Reports", icon: FileText },
   { href: "/dashboard/admin/special-programmes", label: "Special Resource Archive", icon: Library },
+  { href: "/dashboard/admin/planner", label: "Year Planner", icon: Calendar },
   { href: "/dashboard/admin/meetings", label: "Meetings", icon: Users },
   { href: "/dashboard/admin/posts", label: "News & Posts", icon: Newspaper },
   { href: "/dashboard/admin/galleries", label: "Galleries", icon: Image },

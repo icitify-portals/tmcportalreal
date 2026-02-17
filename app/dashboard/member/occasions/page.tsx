@@ -36,8 +36,9 @@ async function OccasionsList() {
                     wifeName: details.wifeName,
                     dowry: details.dowry,
                     babyName: details.babyName,
-                    fatherName: details.fatherName, // Not capturing father/mother name yet in form explicitly?
+                    fatherName: details.fatherName,
                     motherName: details.motherName,
+                    dob: details.dob,
                 }
 
                 return (

@@ -78,9 +78,62 @@ export async function POST(request: NextRequest) {
             )
         }
 
-        // 2. Get default organization. Ideally we'd map "branch" to an Organization ID here.
-        // For MVP, we still default to NATIONAL or just pick one, but store the branch name.
-        const organization = await db.query.organizations.findFirst()
+        // 2. Get organization based on selection
+        let organization = null;
+
+        // Try to find by Branch name
+        if (validData.branch) {
+            organization = await db.query.organizations.findFirst({
+                where: (organizations, { eq, and, like }) =>
+                    and(
+                        eq(organizations.level, "BRANCH"),
+                        or(
+                            eq(organizations.name, validData.branch),
+                            like(organizations.name, `%${validData.branch}%`)
+                        )
+                    )
+            })
+        }
+
+        // If not found, try LGA
+        if (!organization && validData.local_government_area) {
+            organization = await db.query.organizations.findFirst({
+                where: (organizations, { eq, and, like }) =>
+                    and(
+                        eq(organizations.level, "LOCAL_GOVERNMENT"),
+                        or(
+                            eq(organizations.name, validData.local_government_area),
+                            like(organizations.name, `%${validData.local_government_area}%`)
+                        )
+                    )
+            })
+        }
+
+        // If not found, try State
+        if (!organization && validData.state) {
+            organization = await db.query.organizations.findFirst({
+                where: (organizations, { eq, and, like }) =>
+                    and(
+                        eq(organizations.level, "STATE"),
+                        or(
+                            eq(organizations.name, validData.state),
+                            like(organizations.name, `%${validData.state}%`)
+                        )
+                    )
+            })
+        }
+
+        // Fallback to National
+        if (!organization) {
+            organization = await db.query.organizations.findFirst({
+                where: eq(organizations.level, "NATIONAL")
+            })
+        }
+
+        // Absolute fallback (just in case no National exists, though unlikely)
+        if (!organization) {
+            organization = await db.query.organizations.findFirst()
+        }
 
         if (!organization) {
             return NextResponse.json(

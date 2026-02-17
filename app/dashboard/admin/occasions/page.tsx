@@ -53,6 +53,7 @@ async function RequestsTable() {
                             babyName: details.babyName,
                             fatherName: details.fatherName,
                             motherName: details.motherName,
+                            dob: details.dob,
                         }
 
                         return (
