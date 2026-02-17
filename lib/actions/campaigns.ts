@@ -2,7 +2,7 @@
 "use server"
 
 import { db } from "@/lib/db"
-import { fundraisingCampaigns, payments } from "@/lib/db/schema"
+import { fundraisingCampaigns, payments, organizations } from "@/lib/db/schema"
 import { eq, desc, and, sql } from "drizzle-orm"
 
 import { revalidatePath, revalidateTag, unstable_cache } from "next/cache"
