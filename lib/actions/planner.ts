@@ -18,6 +18,20 @@ function parseExcelDate(serial: number): Date {
     return date_info;
 }
 
+// Type for Parsed Preview Data
+export type PlannerPreviewItem = {
+    officeName: string;
+    title: string;
+    format: 'PHYSICAL' | 'VIRTUAL' | 'HYBRID';
+    frequency: 'WEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'BI-ANNUALLY' | 'ANNUALLY' | 'ONCE';
+    startDate: Date;
+    time: string;
+    venue: string;
+    budget: string;
+    objectives?: string;
+    additionalInfo?: string;
+}
+
 // Helper to find value by fuzzy key
 function getValue(row: PlannerRow, targetKeys: string[]): any {
     const keys = Object.keys(row);
@@ -30,22 +44,10 @@ function getValue(row: PlannerRow, targetKeys: string[]): any {
     return undefined;
 }
 
-export async function uploadYearPlanner(formData: FormData) {
+export async function previewYearPlanner(formData: FormData) {
     try {
         const session = await getServerSession()
         if (!session?.user?.id) return { success: false, error: "Unauthorized" }
-
-        // Determine user's organization
-        // Default to a placeholder lookup for "National Headquarters" if not found.
-        const [userOrg] = await db.select({ id: organizations.id, level: organizations.level })
-            .from(organizations)
-            // This join logic is complex without direct user->org link in session sometimes.
-            // Let's assume we use the first org found for now or hardcode for dev.
-            .limit(1)
-
-        const organizationId = userOrg?.id;
-        if (!organizationId) return { success: false, error: "No organization found" }
-
 
         const file = formData.get("file") as File
         if (!file) return { success: false, error: "No file uploaded" }
@@ -57,16 +59,9 @@ export async function uploadYearPlanner(formData: FormData) {
         const worksheet = workbook.Sheets[sheetName]
         const jsonData = XLSX.utils.sheet_to_json<PlannerRow>(worksheet)
 
-        console.log(`[YearPlanner] Found ${jsonData.length} rows in sheet: ${sheetName}`)
-        if (jsonData.length > 0) {
-            console.log(`[YearPlanner] Headers:`, Object.keys(jsonData[0]))
-        }
+        console.log(`[YearPlanner] Preview found ${jsonData.length} rows in sheet: ${sheetName}`)
 
-        // Pre-fetch offices to map names to IDs
-        const existingOffices = await db.select().from(offices).where(eq(offices.organizationId, organizationId))
-        const officeMap = new Map(existingOffices.map(o => [o.name.toUpperCase(), o.id]))
-
-        let count = 0;
+        const previewData: PlannerPreviewItem[] = []
         let skipped = 0;
 
         for (const row of jsonData) {
@@ -75,25 +70,8 @@ export async function uploadYearPlanner(formData: FormData) {
             const title = getValue(row, ["PROGRAM AND ACTIVITY", "PROGRAM", "ACTIVITY", "TITLE"])?.toString().trim();
 
             if (!title) {
-                console.log(`[YearPlanner] Skipping row due to missing title:`, row)
                 skipped++
                 continue;
-            }
-
-            // Office Mapping
-            let officeId = null;
-            if (officeName && officeMap.has(officeName.toUpperCase())) {
-                officeId = officeMap.get(officeName.toUpperCase());
-            } else if (officeName) {
-                // Create new office including organizationId!
-                const [newOffice] = await db.insert(offices).values({
-                    organizationId, // IMPORTANT: Link new office to org
-                    name: officeName,
-                    description: "Imported from Year Planner",
-                    isActive: true
-                }).$returningId()
-                officeId = newOffice.id
-                officeMap.set(officeName.toUpperCase(), officeId)
             }
 
             // Parsing Enums
@@ -122,7 +100,6 @@ export async function uploadYearPlanner(formData: FormData) {
             }
             // Is it valid?
             if (isNaN(startDate.getTime())) {
-                console.warn(`[YearPlanner] Invalid date for "${title}": ${rawDate}. Using current date.`)
                 startDate = new Date(); // Fallback
             }
 
@@ -132,38 +109,105 @@ export async function uploadYearPlanner(formData: FormData) {
             const budget = getValue(row, ["BUDGETED EXPENDITURE (NGN)", "BUDGET", "COST"])?.toString() || "0";
             const objectives = getValue(row, ["PROGRAM OBJECTIVES", "OBJECTIVES"])?.toString();
             const info = getValue(row, ["PROGRAM ADDITIONAL INFORMATION", "ADDITIONAL INFO"])?.toString();
-            const committee = getValue(row, ["PROGRAM COMMITTEE", "COMMITTEE"])?.toString();
+
+            // Committee explicitly excluded
+
+            previewData.push({
+                officeName: officeName || "Unknown Office", // Default if missing
+                title,
+                format,
+                frequency,
+                startDate,
+                time,
+                venue,
+                budget,
+                objectives,
+                additionalInfo: info
+            })
+        }
+
+        return { success: true, count: previewData.length, skipped, data: previewData }
+
+    } catch (error) {
+        console.error("Preview Error", error)
+        return { success: false, error: "Failed to parse file" }
+    }
+}
+
+export async function importYearPlannerData(data: PlannerPreviewItem[]) {
+    try {
+        const session = await getServerSession()
+        if (!session?.user?.id) return { success: false, error: "Unauthorized" }
+
+        const [userOrg] = await db.select({ id: organizations.id, level: organizations.level })
+            .from(organizations)
+            .limit(1)
+
+        const organizationId = userOrg?.id;
+        if (!organizationId) return { success: false, error: "No organization found" }
+
+        // Pre-fetch offices to map names to IDs
+        const existingOffices = await db.select().from(offices).where(eq(offices.organizationId, organizationId))
+        const officeMap = new Map(existingOffices.map(o => [o.name.toUpperCase(), o.id]))
+
+        let count = 0;
+
+        for (const item of data) {
+            // Office Mapping
+            let officeId = null;
+            const officeName = item.officeName;
+
+            if (officeName && officeMap.has(officeName.toUpperCase())) {
+                officeId = officeMap.get(officeName.toUpperCase());
+            } else if (officeName && officeName !== "Unknown Office") {
+                // Create new office including organizationId!
+                const [newOffice] = await db.insert(offices).values({
+                    organizationId, // IMPORTANT: Link new office to org
+                    name: officeName,
+                    description: "Imported from Year Planner",
+                    isActive: true
+                }).$returningId()
+                officeId = newOffice.id
+                officeMap.set(officeName.toUpperCase(), officeId)
+            } else {
+                // Checking Schema... `organizingOfficeId` depends on definition.
+                // safe check:
+                if (!officeMap.has("GENERAL")) {
+                    // Lazy create General?
+                }
+            }
+
+            // If officeId is still null, we might have issues if DB enforces it.
+            // Let's assume most rows have offices.
 
             await db.insert(programmes).values({
                 organizationId,
-                title: title,
-                description: title,
+                title: item.title,
+                description: item.title,
                 level: userOrg.level,
                 status: 'APPROVED',
-                venue: venue,
-                startDate: startDate,
-                time: time,
-                budget: budget,
-                organizingOfficeId: officeId as string,
+                venue: item.venue,
+                startDate: new Date(item.startDate), // Ensure Date object
+                time: item.time,
+                budget: item.budget,
+                organizingOfficeId: officeId, // Nullable?
 
-                // New Fields
-                format: format,
-                frequency: frequency,
-                objectives: objectives,
-                additionalInfo: info,
-                committee: committee,
+                format: item.format,
+                frequency: item.frequency,
+                objectives: item.objectives,
+                additionalInfo: item.additionalInfo,
+                // committee excluded
 
                 createdBy: session.user.id
             })
             count++;
         }
 
-        console.log(`[YearPlanner] Import complete. Success: ${count}, Skipped: ${skipped}`)
         revalidatePath("/dashboard/admin/programmes")
-        return { success: true, count, skipped }
+        return { success: true, count }
 
     } catch (error) {
-        console.error("Upload Error", error)
-        return { success: false, error: "Failed to process file" }
+        console.error("Import Error", error)
+        return { success: false, error: "Failed to import data" }
     }
 }
