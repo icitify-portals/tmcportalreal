@@ -336,3 +336,49 @@ export async function getUserRegistrations() {
         programme: r.programme
     }))
 }
+
+export async function deleteProgramme(programmeId: string) {
+    try {
+        const session = await getServerSession()
+        if (!session?.user?.id) return { success: false, error: "Unauthorized" }
+
+        // Optional: Check permissions (e.g. only Admin or Creator)
+
+        await db.delete(programmes).where(eq(programmes.id, programmeId))
+
+        revalidatePath("/dashboard/admin/programmes")
+        return { success: true }
+    } catch (error) {
+        console.error("Delete Programme Error:", error)
+        return { success: false, error: "Failed to delete programme" }
+    }
+}
+
+export async function updateProgramme(programmeId: string, data: Partial<z.infer<typeof ProgrammeSchema>>) {
+    try {
+        const session = await getServerSession()
+        if (!session?.user?.id) return { success: false, error: "Unauthorized" }
+
+        const validData = ProgrammeSchema.partial().parse(data)
+
+        await db.update(programmes).set({
+            title: validData.title,
+            description: validData.description,
+            venue: validData.venue,
+            startDate: validData.startDate,
+            endDate: validData.endDate,
+            time: validData.time,
+            targetAudience: validData.targetAudience,
+            paymentRequired: validData.paymentRequired,
+            amount: validData.amount !== undefined ? validData.amount.toString() : undefined,
+            organizingOfficeId: validData.organizingOfficeId,
+            updatedAt: new Date()
+        }).where(eq(programmes.id, programmeId))
+
+        revalidatePath("/dashboard/admin/programmes")
+        return { success: true }
+    } catch (error) {
+        console.error("Update Programme Error:", error)
+        return { success: false, error: "Failed to update programme" }
+    }
+}

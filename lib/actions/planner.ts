@@ -30,6 +30,7 @@ export type PlannerPreviewItem = {
     budget: string;
     objectives?: string;
     additionalInfo?: string;
+    committee?: string;
 }
 
 // Helper to find value by fuzzy key
@@ -108,9 +109,7 @@ export async function previewYearPlanner(formData: FormData) {
             const venue = getValue(row, ["PROGRAM VENUE", "VENUE"])?.toString() || "TBD";
             const budget = getValue(row, ["BUDGETED EXPENDITURE (NGN)", "BUDGET", "COST"])?.toString() || "0";
             const objectives = getValue(row, ["PROGRAM OBJECTIVES", "OBJECTIVES"])?.toString();
-            const info = getValue(row, ["PROGRAM ADDITIONAL INFORMATION", "ADDITIONAL INFO"])?.toString();
-
-            // Committee explicitly excluded
+            const committee = getValue(row, ["PROGRAM COMMITTEE", "COMMITTEE"])?.toString();
 
             previewData.push({
                 officeName: officeName || "Unknown Office", // Default if missing
@@ -122,7 +121,8 @@ export async function previewYearPlanner(formData: FormData) {
                 venue,
                 budget,
                 objectives,
-                additionalInfo: info
+                additionalInfo: info,
+                committee
             })
         }
 
@@ -196,7 +196,7 @@ export async function importYearPlannerData(data: PlannerPreviewItem[]) {
                 frequency: item.frequency,
                 objectives: item.objectives,
                 additionalInfo: item.additionalInfo,
-                // committee excluded
+                committee: item.committee,
 
                 createdBy: session.user.id
             })

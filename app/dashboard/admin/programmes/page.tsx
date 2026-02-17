@@ -15,6 +15,7 @@ import { db } from "@/lib/db"
 import { organizations, userRoles, roles } from "@/lib/db/schema"
 import { eq, and } from "drizzle-orm"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
+import { ProgrammeActions } from "@/components/admin/programmes/programme-actions"
 
 
 // Helper for status badge color
@@ -62,6 +63,7 @@ async function ProgrammeList({ type, orgId }: { type: 'MY_PROGRAMMES' | 'TO_APPR
                                     <Badge variant="destructive" className="animate-pulse">LATE</Badge>
                                 )}
                                 <Badge className={getStatusColor(p.status || "")}>{p.status?.replace('_', ' ')}</Badge>
+                                <ProgrammeActions programme={p} />
                             </div>
                         </div>
                     </CardHeader>

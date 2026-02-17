@@ -58,6 +58,10 @@ export function UploadPlannerDialog() {
         }
     }
 
+    const handleRemove = (index: number) => {
+        setPreviewData(prev => prev.filter((_, i) => i !== index))
+    }
+
     async function onConfirmImport() {
         setIsLoading(true)
         try {
@@ -80,12 +84,12 @@ export function UploadPlannerDialog() {
             <DialogTrigger asChild>
                 <Button variant="outline"><Upload className="mr-2 h-4 w-4" /> Import Excel</Button>
             </DialogTrigger>
-            <DialogContent className={step === 'preview' ? "sm:max-w-[900px]" : "sm:max-w-[425px]"}>
+            <DialogContent className={step === 'preview' ? "max-w-[95vw] h-[90vh] flex flex-col" : "sm:max-w-[425px]"}>
                 <DialogHeader>
                     <DialogTitle>{step === 'preview' ? 'Preview Import' : 'Import Year Planner'}</DialogTitle>
                     <DialogDescription>
                         {step === 'preview'
-                            ? 'Review the data below. Columns like "Committee" are excluded. Click Confirm to save.'
+                            ? `Review the ${previewData.length} items below. Scroll horizontally to see all fields. Remove any unwanted rows.`
                             : 'Upload an Excel file (.xlsx) containing the year planner.'
                         }
                     </DialogDescription>
@@ -111,43 +115,68 @@ export function UploadPlannerDialog() {
                         </DialogFooter>
                     </form>
                 ) : (
-                    <div className="space-y-4">
-                        <div className="max-h-[60vh] overflow-auto border rounded-md">
-                            <table className="w-full text-sm">
-                                <thead className="bg-muted sticky top-0">
+                    <div className="flex-1 overflow-hidden flex flex-col gap-4">
+                        <div className="flex-1 overflow-auto border rounded-md">
+                            <table className="w-full text-sm whitespace-nowrap">
+                                <thead className="bg-muted sticky top-0 z-10">
                                     <tr>
+                                        <th className="p-2 text-left w-[50px]">Action</th>
                                         <th className="p-2 text-left">Office</th>
                                         <th className="p-2 text-left">Title</th>
                                         <th className="p-2 text-left">Format</th>
+                                        <th className="p-2 text-left">Frequency</th>
+                                        <th className="p-2 text-left">Objectives</th>
+                                        <th className="p-2 text-left">Info</th>
                                         <th className="p-2 text-left">Date</th>
+                                        <th className="p-2 text-left">Time</th>
                                         <th className="p-2 text-left">Venue</th>
+                                        <th className="p-2 text-left">Budget</th>
+                                        <th className="p-2 text-left">Committee</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {previewData.slice(0, 100).map((row, i) => (
+                                    {previewData.map((row, i) => (
                                         <tr key={i} className="border-t hover:bg-muted/50">
+                                            <td className="p-2">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-6 w-6 text-red-500 hover:text-red-700 hover:bg-red-100"
+                                                    onClick={() => handleRemove(i)}
+                                                    title="Remove row"
+                                                >
+                                                    <span className="sr-only">Remove</span>
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+                                                </Button>
+                                            </td>
                                             <td className="p-2">{row.officeName}</td>
-                                            <td className="p-2 font-medium">{row.title}</td>
+                                            <td className="p-2 font-medium max-w-[200px] truncate" title={row.title}>{row.title}</td>
                                             <td className="p-2 text-xs">{row.format}</td>
+                                            <td className="p-2 text-xs">{row.frequency}</td>
+                                            <td className="p-2 text-xs max-w-[150px] truncate" title={row.objectives}>{row.objectives}</td>
+                                            <td className="p-2 text-xs max-w-[150px] truncate" title={row.additionalInfo}>{row.additionalInfo}</td>
                                             <td className="p-2 text-xs">{new Date(row.startDate).toLocaleDateString()}</td>
-                                            <td className="p-2 text-xs truncate max-w-[150px]">{row.venue}</td>
+                                            <td className="p-2 text-xs">{row.time}</td>
+                                            <td className="p-2 text-xs max-w-[150px] truncate" title={row.venue}>{row.venue}</td>
+                                            <td className="p-2 text-xs">{row.budget}</td>
+                                            <td className="p-2 text-xs max-w-[150px] truncate" title={row.committee}>{row.committee}</td>
                                         </tr>
                                     ))}
-                                    {previewData.length > 100 && (
+                                    {previewData.length === 0 && (
                                         <tr>
-                                            <td colSpan={5} className="p-2 text-center text-muted-foreground">
-                                                ... and {previewData.length - 100} more items
+                                            <td colSpan={12} className="p-8 text-center text-muted-foreground">
+                                                No items to import.
                                             </td>
                                         </tr>
                                     )}
                                 </tbody>
                             </table>
                         </div>
-                        <DialogFooter className="gap-2">
+                        <DialogFooter className="gap-2 shrink-0">
                             <Button variant="outline" onClick={() => setStep('upload')} disabled={isLoading}>
                                 Back
                             </Button>
-                            <Button onClick={onConfirmImport} disabled={isLoading}>
+                            <Button onClick={onConfirmImport} disabled={isLoading || previewData.length === 0}>
                                 {isLoading ? "Importing..." : `Confirm Import (${previewData.length})`}
                             </Button>
                         </DialogFooter>
