@@ -52,8 +52,6 @@ function Calendar({
                     "aria-selected:bg-accent aria-selected:text-accent-foreground",
                 day_hidden: "invisible",
                 ...classNames,
-                day_hidden: "invisible",
-                ...classNames,
             }}
             components={{
                 IconLeft: ({ ...props }) => <ChevronLeft className="h-4 w-4" />,
