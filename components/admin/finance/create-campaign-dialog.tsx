@@ -168,7 +168,7 @@ export function CreateCampaignDialog({ organizationId }: { organizationId: strin
                                         date < new Date("1900-01-01")
                                     }
                                     initialFocus
-                                    captionLayout="dropdown-buttons"
+                                    captionLayout="dropdown"
                                     fromYear={new Date().getFullYear()}
                                     toYear={new Date().getFullYear() + 10}
                                 />
@@ -202,7 +202,7 @@ export function CreateCampaignDialog({ organizationId }: { organizationId: strin
                                         date < new Date("1900-01-01")
                                     }
                                     initialFocus
-                                    captionLayout="dropdown-buttons"
+                                    captionLayout="dropdown"
                                     fromYear={new Date().getFullYear()}
                                     toYear={new Date().getFullYear() + 10}
                                 />
