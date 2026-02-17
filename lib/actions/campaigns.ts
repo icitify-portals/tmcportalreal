@@ -15,7 +15,7 @@ const CampaignSchema = z.object({
     targetAmount: z.number().min(100),
     startDate: z.date().default(new Date()),
     endDate: z.date().optional().nullable(),
-    status: z.enum(['ACTIVE', 'PAUSED', 'COMPLETED', 'ARCHIVED']).default('ACTIVE'),
+    status: z.enum(['PENDING', 'ACTIVE', 'PAUSED', 'COMPLETED', 'ARCHIVED']).default('PENDING'), // Default to PENDING for safety
     organizationId: z.string().min(1, "Organization is required"),
     coverImage: z.string().optional(),
     allowCustomAmount: z.boolean().default(true),
@@ -26,6 +26,29 @@ export type CampaignInput = z.infer<typeof CampaignSchema>
 export async function createCampaign(data: CampaignInput) {
     try {
         const validated = CampaignSchema.parse(data)
+
+        // Fetch Organization Level to determine if approval is needed
+        const org = await db.query.organizations.findFirst({
+            where: eq(organizations.id, validated.organizationId),
+            columns: { level: true }
+        })
+
+        if (!org) {
+            return { success: false, error: "Organization not found" }
+        }
+
+        // Logic: Only NATIONAL can create ACTIVE campaigns directly.
+        // Others must be PENDING.
+        let status = validated.status;
+        if (org.level !== 'NATIONAL') {
+            status = 'PENDING';
+        } else if (status === 'PENDING') {
+            // If national specifically chose pending, keep it, otherwise default active if they passed nothing? 
+            // schema default is 'ACTIVE' in Zod above (changed to PENDING now), so let's be explicit.
+            // If National and they passed ACTIVE, it stays ACTIVE.
+            // If they passed nothing, Zod default is PENDING (per my change above), but we might want National to default to ACTIVE.
+            if (data.status === undefined) status = 'ACTIVE';
+        }
 
         // Check unique slug within organization
         const existing = await db.query.fundraisingCampaigns.findFirst({
@@ -41,14 +64,13 @@ export async function createCampaign(data: CampaignInput) {
 
         await db.insert(fundraisingCampaigns).values({
             ...validated,
+            status: status, // Apply the determined status
             targetAmount: validated.targetAmount.toString(),
             createdAt: new Date(),
             updatedAt: new Date(),
         })
 
         revalidatePath("/dashboard/admin/finance/campaigns")
-        // revalidateTag(`campaigns-${validated.organizationId}`)
-        // revalidateTag('campaigns')
         return { success: true }
     } catch (error) {
         console.error("Failed to create campaign:", error)

@@ -6,8 +6,10 @@ import { organizations, galleries, galleryImages } from "@/lib/db/schema"
 import { eq, and, desc, inArray } from "drizzle-orm"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Facebook, Twitter, Instagram, Linkedin, Calendar, Newspaper, ArrowRight } from "lucide-react"
+import { Facebook, Twitter, Instagram, Linkedin, Calendar, Newspaper, ArrowRight, Heart } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
+import { Progress } from "@/components/ui/progress"
+import { Badge } from "@/components/ui/badge"
 
 // CMS Components
 import { HeroSlider } from "@/components/cms/hero-slider"
@@ -42,6 +44,15 @@ async function NationalContent() {
   const rawGalleries = await db.query.galleries.findMany({
     where: and(eq(galleries.organizationId, nationalOrg.id), eq(galleries.isActive, true)),
     limit: 1
+  })
+
+  // Fetch Latest Active Campaign
+  const latestCampaign = await db.query.fundraisingCampaigns.findFirst({
+    where: and(
+      eq(fundraisingCampaigns.organizationId, nationalOrg.id),
+      eq(fundraisingCampaigns.status, 'ACTIVE')
+    ),
+    orderBy: [desc(fundraisingCampaigns.createdAt)],
   })
 
   // Manual fetch of images to avoid LATERAL JOIN
@@ -164,17 +175,73 @@ async function NationalContent() {
             </Card>
 
             {/* Donation / CTA Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Support Our Cause</CardTitle>
-                <CardDescription>Your contribution helps us serve the community better.</CardDescription>
+            {/* Donation / Campaign Card */}
+            <Card className="overflow-hidden border-green-100 dark:border-green-900 shadow-md">
+              <CardHeader className="bg-green-50 dark:bg-green-900/20 pb-4">
+                <CardTitle className="flex items-center gap-2 text-green-800 dark:text-green-400">
+                  <Heart className="h-5 w-5 fill-current" />
+                  {latestCampaign ? "Donate to Cause" : "Support Our Cause"}
+                </CardTitle>
               </CardHeader>
-              <CardContent>
-                <Link href={`/${nationalOrg.code}/campaigns`}>
-                  <Button className="w-full">
-                    Donate Now / Active Campaigns
-                  </Button>
-                </Link>
+              <CardContent className="pt-6 space-y-4">
+                {latestCampaign ? (
+                  <div className="space-y-4">
+                    {latestCampaign.coverImage && (
+                      <div className="aspect-video w-full overflow-hidden rounded-md">
+                        <img
+                          src={latestCampaign.coverImage}
+                          alt={latestCampaign.title}
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                    )}
+                    <div>
+                      <h4 className="font-semibold line-clamp-1" title={latestCampaign.title}>{latestCampaign.title}</h4>
+                      <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
+                        {latestCampaign.description?.replace(/<[^>]*>?/gm, "")}
+                      </p>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between text-xs font-medium">
+                        <span className="text-green-600">
+                          ₦{parseFloat(latestCampaign.raisedAmount || "0").toLocaleString()}
+                        </span>
+                        <span className="text-muted-foreground">
+                          of ₦{parseFloat(latestCampaign.targetAmount || "0").toLocaleString()}
+                        </span>
+                      </div>
+                      <Progress
+                        value={Math.min((parseFloat(latestCampaign.raisedAmount || "0") / parseFloat(latestCampaign.targetAmount || "1")) * 100, 100)}
+                        className="h-2 bg-green-100"
+                      />
+                    </div>
+
+                    <div className="grid gap-2">
+                      <Link href={`/${nationalOrg.code}/campaigns/${latestCampaign.slug}`} className="w-full">
+                        <Button className="w-full bg-green-600 hover:bg-green-700">
+                          Donate Now
+                        </Button>
+                      </Link>
+                      <Link href={`/${nationalOrg.code}/campaigns`} className="w-full">
+                        <Button variant="outline" size="sm" className="w-full text-xs text-muted-foreground">
+                          View All Campaigns
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center space-y-4">
+                    <p className="text-sm text-muted-foreground">
+                      Your contribution helps us serve the community better. Support our general cause.
+                    </p>
+                    <Link href={`/${nationalOrg.code}/campaigns`}>
+                      <Button className="w-full">
+                        Make a Donation
+                      </Button>
+                    </Link>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
