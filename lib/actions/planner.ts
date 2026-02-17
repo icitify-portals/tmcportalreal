@@ -109,6 +109,7 @@ export async function previewYearPlanner(formData: FormData) {
             const venue = getValue(row, ["PROGRAM VENUE", "VENUE"])?.toString() || "TBD";
             const budget = getValue(row, ["BUDGETED EXPENDITURE (NGN)", "BUDGET", "COST"])?.toString() || "0";
             const objectives = getValue(row, ["PROGRAM OBJECTIVES", "OBJECTIVES"])?.toString();
+            const info = getValue(row, ["PROGRAM ADDITIONAL INFORMATION", "ADDITIONAL INFO"])?.toString();
             const committee = getValue(row, ["PROGRAM COMMITTEE", "COMMITTEE"])?.toString();
 
             previewData.push({
