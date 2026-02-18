@@ -59,6 +59,13 @@ export const reportStatusEnum = mysqlEnum('reportStatus', ['DRAFT', 'SUBMITTED',
 export const settingsCategoryEnum = mysqlEnum('category', ['EMAIL', 'NOTIFICATION', 'GENERAL', 'AI']);
 export const messageTypeEnum = mysqlEnum('type', ['TEXT', 'IMAGE', 'E2AE']); // Added E2AE for encrypted
 
+// Meeting / Broadcast Enums
+export const meetingStatusEnum = mysqlEnum('meetingStatus', ['SCHEDULED', 'ONGOING', 'ENDED', 'CANCELLED']);
+export const meetingAttendanceStatusEnum = mysqlEnum('meetingAttendanceStatus', ['INVITED', 'PRESENT', 'ABSENT', 'EXCUSED']);
+export const meetingDocTypeEnum = mysqlEnum('meetingDocType', ['AGENDA', 'MINUTES', 'MEMBER_REPORT', 'OTHER']);
+export const meetingDocSubmissionStatusEnum = mysqlEnum('meetingDocSubmissionStatus', ['ON_TIME', 'LATE']);
+export const broadcastTargetLevelEnum = mysqlEnum('broadcastTargetLevel', ['NATIONAL', 'STATE', 'LOCAL_GOVERNMENT', 'BRANCH']);
+
 
 // Users
 export const users = mysqlTable("users", {
@@ -1475,7 +1482,7 @@ export const broadcasts = mysqlTable("broadcasts", {
     senderId: varchar("senderId", { length: 255 }).notNull(),
     title: varchar("title", { length: 255 }).notNull(),
     content: text("content").notNull(),
-    targetLevel: mysqlEnum("targetLevel", ['NATIONAL', 'STATE', 'LOCAL_GOVERNMENT', 'BRANCH']).notNull(),
+    targetLevel: broadcastTargetLevelEnum.notNull(),
     targetId: varchar("targetId", { length: 255 }),
     media: json("media").$type<{ type: string; url: string }[]>().default([]),
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
@@ -1525,7 +1532,7 @@ export const meetings = mysqlTable("meetings", {
     venue: varchar("venue", { length: 255 }),
     isOnline: boolean("isOnline").default(false),
     meetingLink: varchar("meetingLink", { length: 500 }),
-    status: mysqlEnum("status", ['SCHEDULED', 'ONGOING', 'ENDED', 'CANCELLED']).default('SCHEDULED'),
+    status: meetingStatusEnum.default('SCHEDULED'),
     createdBy: varchar("createdBy", { length: 255 }).notNull(),
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
     updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
@@ -1536,7 +1543,7 @@ export const meetingAttendances = mysqlTable("meeting_attendances", {
     id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
     meetingId: varchar("meetingId", { length: 255 }).notNull(),
     userId: varchar("userId", { length: 255 }).notNull(),
-    status: mysqlEnum("status", ['INVITED', 'PRESENT', 'ABSENT', 'EXCUSED']).default('INVITED'),
+    status: meetingAttendanceStatusEnum.default('INVITED'),
     joinedAt: timestamp("joinedAt", { mode: "date" }),
     leftAt: timestamp("leftAt", { mode: "date" }),
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
@@ -1549,8 +1556,8 @@ export const meetingDocs = mysqlTable("meeting_docs", {
     userId: varchar("userId", { length: 255 }).notNull(),
     title: varchar("title", { length: 255 }).notNull(),
     url: text("url").notNull(),
-    type: mysqlEnum("type", ['AGENDA', 'MINUTES', 'MEMBER_REPORT', 'OTHER']).default('OTHER'),
-    submissionStatus: mysqlEnum("submissionStatus", ['ON_TIME', 'LATE']).default('ON_TIME'),
+    type: meetingDocTypeEnum.default('OTHER'),
+    submissionStatus: meetingDocSubmissionStatusEnum.default('ON_TIME'),
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
 });
 
