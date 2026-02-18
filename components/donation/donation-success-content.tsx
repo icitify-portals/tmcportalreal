@@ -10,14 +10,35 @@ export function SuccessContent() {
     const searchParams = useSearchParams();
     const reference = searchParams.get('ref');
 
-    const paymentStub = {
-        paystackRef: reference || "N/A",
-        amount: "0.00",
-        metadata: {
-            email: "Donor",
-            jurisdiction: { level: "Standard", state: "Donation" }
+    const [paymentStub, setPaymentStub] = useState<{
+        paystackRef: string;
+        amount: string;
+        metadata: any;
+        date?: Date;
+    } | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        if (reference) {
+            import('@/lib/actions/donation').then(({ getPaymentByReference }) => {
+                getPaymentByReference(reference).then(result => {
+                    if (result.success && result.payment) {
+                        setPaymentStub({
+                            paystackRef: result.payment.paystackRef,
+                            amount: result.payment.amount,
+                            metadata: result.payment.metadata,
+                            date: result.payment.createdAt
+                        });
+                    }
+                    setLoading(false);
+                })
+            })
         }
-    }
+    }, [reference]);
+
+    if (!reference) return null;
+    if (loading) return <div className="flex justify-center p-8"><span className="animate-spin">Loading...</span></div>;
+    if (!paymentStub) return <div className="text-center p-8 text-red-500">Payment not found</div>;
 
     const handlePrint = () => {
         window.print();

@@ -46,15 +46,18 @@ export function DonationWidget({ campaignId, suggestedAmounts = [1000, 5000, 100
             return
         }
 
-        if (!scriptLoaded) {
-            toast.error("Payment system loading, please wait...")
-            return
+        // Robust check for Paystack
+        let paystack = (window as any).PaystackPop;
+
+        if (!paystack && !scriptLoaded) {
+            toast.error("Payment system is still loading... please try again in a moment.");
+            return;
         }
 
-        const paystack = (window as any).PaystackPop
         if (!paystack) {
-            toast.error("Payment system failed to load")
-            return
+            // Attempt to reload or notify
+            toast.error("Unable to load payment system. Please refresh the page.");
+            return;
         }
 
         setIsLoading(true)
