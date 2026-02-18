@@ -52,6 +52,27 @@ model User {
   burialRequests     BurialRequest[]
   siteVisits         SiteVisit[]
   approvedPromotions Promotion[] @relation("PromotionApprover")
+  
+  // New Relations
+  occasionRequests   OccasionRequest[]
+  createdMeetings    Meeting[] @relation("MeetingCreator")
+  meetingAttendances MeetingAttendance[]
+  meetingDocs        MeetingDoc[]
+  createdProgrammes  Programme[] @relation("ProgrammeCreator")
+  programmeRegistrations ProgrammeRegistration[]
+  submittedReports   ProgrammeReport[]
+  createdSpecialProgrammes SpecialProgramme[]
+  custodianAssets    Asset[]
+  createdBudgets     FinanceBudget[] @relation("BudgetCreator")
+  approvedBudgets    FinanceBudget[] @relation("BudgetApprover")
+  requestedFunds     FinanceFundRequest[] @relation("RequestRequester")
+  recommendedFunds   FinanceFundRequest[] @relation("RequestRecommender")
+  approvedFunds      FinanceFundRequest[] @relation("RequestApprover")
+  disbursedFunds     FinanceFundRequest[] @relation("RequestDisburser")
+  performedTransactions FinanceTransaction[]
+  feeAssignments     FeeAssignment[]
+  reports            Report[]
+  approvedReports    Report[] @relation("ReportApprover")
 
   @@map("users")
 }
@@ -147,10 +168,23 @@ model Organization {
   documents   Document[]
   payments    Payment[]
   posts       Post[]
-  galleries   Gallery[]
-  pages       Page[]
+  galleries     Gallery[]
+  pages         Page[]
   navigationItems NavigationItem[]
-  campaigns   FundraisingCampaign[]
+  campaigns     FundraisingCampaign[]
+  
+  // New Relations
+  occasionRequests OccasionRequest[]
+  meetings         Meeting[]
+  programmes       Programme[]
+  specialProgrammes SpecialProgramme[]
+  assets           Asset[]
+  financeBudgets   FinanceBudget[]
+  financeFundRequests FinanceFundRequest[]
+  financeTransactions FinanceTransaction[]
+  fees             Fee[]
+  offices          Office[]
+  reports          Report[]
 
   @@index([parentId])
   @@map("organizations")
@@ -206,6 +240,7 @@ model Member {
   // Relations
   payments        Payment[]
   documents       Document[]
+  programmeRegistrations ProgrammeRegistration[]
 
   @@map("members")
 }
@@ -251,6 +286,8 @@ model Official {
   dateAppointed DateTime?
   termStart     DateTime
   termEnd       DateTime?
+  image         String?        @db.VarChar(500)
+  bio           String?        @db.Text
   isActive      Boolean        @default(true)
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
@@ -372,6 +409,8 @@ model Payment {
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
+  feeAssignments  FeeAssignment[]
+
   @@map("payments")
 }
 
@@ -464,10 +503,602 @@ model EmailLog {
   createdAt     DateTime      @default(now())
 
   @@index([to])
-  @@index([status])
-  @@index([createdAt])
+  @@index([template])
   @@map("email_logs")
 }
+
+// --- NEW MODELS SYNCED FROM DRIZZLE ---
+
+// Navigation Items
+model NavigationItem {
+  id             String        @id @default(cuid())
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  label          String
+  path           String?
+  parentId       String?       // Self-reference
+  parent         NavigationItem? @relation("NavHierarchy", fields: [parentId], references: [id])
+  children       NavigationItem[] @relation("NavHierarchy")
+  order          Int           @default(0)
+  type           String        @default("link") // Enum: link, dropdown, button
+  isActive       Boolean       @default(true)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([organizationId])
+  @@index([parentId])
+  @@map("navigation_items")
+}
+
+// Religious Centres
+model AdhkarCentre {
+  id             String   @id @default(cuid())
+  name           String
+  venue          String
+  address        String   @db.Text
+  time           String
+  contactNumber  String?
+  state          String
+  lga            String
+  organizationId String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("adhkar_centres")
+}
+
+model TeskiyahCentre {
+  id             String   @id @default(cuid())
+  name           String
+  venue          String
+  address        String   @db.Text
+  time           String
+  contactNumber  String?
+  state          String
+  lga            String
+  branch         String?
+  organizationId String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("teskiyah_centres")
+}
+
+// Occasions (Engagement)
+model OccasionType {
+  id             String   @id @default(cuid())
+  name           String   @unique
+  certificateFee Decimal? @default(0.00) @db.Decimal(10, 2)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  requests       OccasionRequest[]
+
+  @@map("occasion_types")
+}
+
+model OccasionRequest {
+  id                String       @id @default(cuid())
+  userId            String
+  user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  typeId            String
+  type              OccasionType @relation(fields: [typeId], references: [id])
+  organizationId    String
+  organization      Organization @relation(fields: [organizationId], references: [id])
+  date              DateTime
+  time              String
+  venue             String
+  address           String       @db.Text
+  role              String       // Enum: COORDINATING, WITNESS
+  certificateNeeded Boolean      @default(false)
+  status            String       @default("PENDING") // PENDING, APPROVED, COMPLETED, REJECTED
+  paymentStatus     PaymentStatus @default(PENDING)
+  amount            Decimal?     @default(0.00) @db.Decimal(10, 2)
+  details           Json?
+  certificateNo     String?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  @@index([userId])
+  @@index([organizationId])
+  @@map("occasion_requests")
+}
+
+// Meetings
+model Meeting {
+  id             String   @id @default(cuid())
+  title          String
+  description    String?  @db.Text
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  scheduledAt    DateTime
+  endAt          DateTime?
+  venue          String?
+  isOnline       Boolean  @default(false)
+  meetingLink    String?  @db.VarChar(500)
+  status         String   @default("SCHEDULED") // SCHEDULED, ONGOING, ENDED, CANCELLED
+  createdBy      String
+  creator        User     @relation("MeetingCreator", fields: [createdBy], references: [id])
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  attendances    MeetingAttendance[]
+  docs           MeetingDoc[]
+
+  @@index([organizationId])
+  @@map("meetings")
+}
+
+model MeetingAttendance {
+  id        String   @id @default(cuid())
+  meetingId String
+  meeting   Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status    String   @default("INVITED") // INVITED, ACCEPTED, DECLINED, PRESENT, ABSENT
+  joinedAt  DateTime?
+  leftAt    DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([meetingId, userId])
+  @@map("meeting_attendances")
+}
+
+model MeetingDoc {
+  id               String   @id @default(cuid())
+  meetingId        String
+  meeting          Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  userId           String
+  user             User     @relation(fields: [userId], references: [id])
+  title            String
+  url              String   @db.VarChar(500)
+  type             String   @default("OTHER") // AGENDA, MINUTES, MEMBER_REPORT, OTHER
+  submissionStatus String   @default("ON_TIME") // ON_TIME, LATE
+  createdAt        DateTime @default(now())
+
+  @@index([meetingId])
+  @@map("meeting_docs")
+}
+
+// Programmes
+model Programme {
+  id                 String   @id @default(cuid())
+  organizationId     String
+  organization       Organization @relation(fields: [organizationId], references: [id])
+  title              String
+  description        String   @db.Text
+  venue              String
+  startDate          DateTime
+  endDate            DateTime?
+  time               String?
+  level              String   // orgLevelEnum
+  targetAudience     String?  @default("PUBLIC")
+  status             String   @default("DRAFT") // DRAFT, PENDING_STATE, PENDING_NATIONAL, APPROVED, REJECTED, etc.
+  
+  approvedStateBy    String?
+  approvedStateAt    DateTime?
+  approvedNationalBy String?
+  approvedNationalAt DateTime?
+  
+  organizingOfficeId String?
+  organizingOffice   Office?  @relation(fields: [organizingOfficeId], references: [id])
+  
+  format             String   @default("PHYSICAL") // PHYSICAL, VIRTUAL, HYBRID
+  frequency          String   @default("ONCE")
+  objectives         String?  @db.Text
+  budget             Decimal? @default(0.00) @db.Decimal(15, 2)
+  committee          String?
+  additionalInfo     String?  @db.Text
+  isLateSubmission   Boolean  @default(false)
+  paymentRequired    Boolean  @default(false)
+  amount             Decimal? @default(0.00) @db.Decimal(10, 2)
+  hasCertificate     Boolean  @default(false)
+  
+  createdBy          String
+  creator            User     @relation("ProgrammeCreator", fields: [createdBy], references: [id])
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  registrations      ProgrammeRegistration[]
+  report             ProgrammeReport?
+
+  @@index([organizationId])
+  @@map("programmes")
+}
+
+model ProgrammeRegistration {
+  id               String   @id @default(cuid())
+  programmeId      String
+  programme        Programme @relation(fields: [programmeId], references: [id], onDelete: Cascade)
+  userId           String?
+  user             User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  memberId         String?
+  member           Member?   @relation(fields: [memberId], references: [id], onDelete: SetNull)
+  name             String
+  email            String
+  phone            String?
+  status           String    @default("REGISTERED")
+  paymentReference String?
+  certificateUrl   String?   @db.VarChar(500)
+  certificateIssuedAt DateTime?
+  registeredAt     DateTime  @default(now())
+
+  @@index([programmeId])
+  @@map("programme_registrations")
+}
+
+model ProgrammeReport {
+  id              String   @id @default(cuid())
+  programmeId     String   @unique
+  programme       Programme @relation(fields: [programmeId], references: [id], onDelete: Cascade)
+  summary         String   @db.Text
+  challenges      String?  @db.Text
+  comments        String?  @db.Text
+  attendeesMale   Int      @default(0)
+  attendeesFemale Int      @default(0)
+  amountSpent     Decimal? @default(0.00) @db.Decimal(15, 2)
+  images          Json?
+  submittedBy     String
+  submitter       User     @relation(fields: [submittedBy], references: [id])
+  submittedAt     DateTime @default(now())
+
+  @@map("programme_reports")
+}
+
+// Special Programmes
+model SpecialProgramme {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  category       String   // TESKIYAH_WORKSHOP, FRIDAY_KHUTHBAH, etc.
+  title          String
+  description    String?  @db.Text
+  summary        String?  @db.Text
+  year           Int
+  date           DateTime?
+  imageUrl       String?  @db.VarChar(500)
+  isPublished    Boolean  @default(true)
+  createdBy      String
+  creator        User     @relation(fields: [createdBy], references: [id])
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  files          SpecialProgrammeFile[]
+
+  @@index([organizationId])
+  @@map("special_programmes")
+}
+
+model SpecialProgrammeFile {
+  id          String           @id @default(cuid())
+  programmeId String
+  programme   SpecialProgramme @relation(fields: [programmeId], references: [id], onDelete: Cascade)
+  title       String
+  url         String           @db.VarChar(500)
+  type        String           // AUDIO, VIDEO, DOCUMENT
+  order       Int              @default(0)
+  createdAt   DateTime         @default(now())
+
+  @@index([programmeId])
+  @@map("special_programme_files")
+}
+
+// Assets
+model Asset {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  name           String
+  description    String?  @db.Text
+  serialNumber   String?
+  category       String   // FURNITURE, ELECTRONICS, etc.
+  condition      String   @default("GOOD")
+  status         String   @default("ACTIVE")
+  purchaseDate   DateTime?
+  purchasePrice  Decimal? @default(0.00) @db.Decimal(15, 2)
+  currentValue   Decimal? @default(0.00) @db.Decimal(15, 2)
+  location       String?  @db.Text
+  custodianId    String?
+  custodian      User?    @relation(fields: [custodianId], references: [id])
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  maintenanceLogs AssetMaintenanceLog[]
+
+  @@index([organizationId])
+  @@map("assets")
+}
+
+model AssetMaintenanceLog {
+  id              String   @id @default(cuid())
+  assetId         String
+  asset           Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  type            String   // REPAIR, SERVICE
+  description     String   @db.Text
+  cost            Decimal? @default(0.00) @db.Decimal(15, 2)
+  date            DateTime
+  performedBy     String?
+  nextServiceDate DateTime?
+  createdAt       DateTime @default(now())
+
+  @@index([assetId])
+  @@map("asset_maintenance_logs")
+}
+
+// Finance
+model FinanceBudget {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  year           Int
+  title          String
+  totalAmount    Decimal  @default(0.00) @db.Decimal(15, 2)
+  status         String   @default("DRAFT")
+  createdBy      String
+  creator        User     @relation("BudgetCreator", fields: [createdBy], references: [id])
+  approvedBy     String?
+  approver       User?    @relation("BudgetApprover", fields: [approvedBy], references: [id])
+  approvedAt     DateTime?
+  comments       String?  @db.Text
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  items          FinanceBudgetItem[]
+
+  @@index([organizationId])
+  @@map("finance_budgets")
+}
+
+model FinanceBudgetItem {
+  id          String        @id @default(cuid())
+  budgetId    String
+  budget      FinanceBudget @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+  category    String
+  description String        @db.VarChar(500)
+  amount      Decimal       @db.Decimal(15, 2)
+  createdAt   DateTime      @default(now())
+
+  @@index([budgetId])
+  @@map("finance_budget_items")
+}
+
+model FinanceFundRequest {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  requesterId    String
+  requester      User     @relation("RequestRequester", fields: [requesterId], references: [id])
+  title          String
+  description    String   @db.Text
+  amount         Decimal  @db.Decimal(15, 2)
+  status         String   @default("PENDING")
+  
+  recommendedBy  String?
+  recommender    User?    @relation("RequestRecommender", fields: [recommendedBy], references: [id])
+  recommendedAt  DateTime?
+  approvedBy     String?
+  approver       User?    @relation("RequestApprover", fields: [approvedBy], references: [id])
+  approvedAt     DateTime?
+  disbursedBy    String?
+  disburser      User?    @relation("RequestDisburser", fields: [disbursedBy], references: [id])
+  disbursedAt    DateTime?
+
+  rejectionReason String? @db.Text
+  evidenceUrl     String? @db.VarChar(500)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  transaction     FinanceTransaction?
+
+  @@index([organizationId])
+  @@map("finance_fund_requests")
+}
+
+model FinanceTransaction {
+  id               String   @id @default(cuid())
+  organizationId   String
+  organization     Organization @relation(fields: [organizationId], references: [id])
+  type             String   // INFLOW, OUTFLOW
+  amount           Decimal  @db.Decimal(15, 2)
+  category         String
+  description      String   @db.VarChar(500)
+  performedBy      String
+  performer        User     @relation(fields: [performedBy], references: [id])
+  date             DateTime @default(now())
+  
+  relatedRequestId String?  @unique
+  relatedRequest   FinanceFundRequest? @relation(fields: [relatedRequestId], references: [id])
+  
+  metadata         Json?
+  createdAt        DateTime @default(now())
+
+  @@index([organizationId])
+  @@map("finance_transactions")
+}
+
+// Fees
+model Fee {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  title          String
+  description    String?  @db.Text
+  amount         Decimal  @db.Decimal(10, 2)
+  targetType     String   // ALL_MEMBERS, OFFICIALS
+  dueDate        DateTime?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  assignments    FeeAssignment[]
+
+  @@index([organizationId])
+  @@map("fees")
+}
+
+model FeeAssignment {
+  id         String   @id @default(cuid())
+  feeId      String
+  fee        Fee      @relation(fields: [feeId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status     String   @default("PENDING")
+  amountPaid Decimal? @default(0.00) @db.Decimal(10, 2)
+  paidAt     DateTime?
+  paymentId  String?
+  payment    Payment? @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  createdAt  DateTime @default(now())
+
+  @@index([feeId])
+  @@index([userId])
+  @@map("fee_assignments")
+}
+
+// Promotions
+model PromotionPlan {
+  id           String   @id @default(cuid())
+  name         String
+  durationDays Int
+  amount       Decimal  @db.Decimal(15, 2)
+  description  String?  @db.Text
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  promotions   Promotion[]
+
+  @@map("promotion_plans")
+}
+
+model Promotion {
+  id              String        @id @default(cuid())
+  userId          String
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planId          String
+  plan            PromotionPlan @relation(fields: [planId], references: [id])
+  title           String
+  imageUrl        String        @db.VarChar(500)
+  link            String?       @db.VarChar(500)
+  status          String        @default("PENDING") // PENDING, APPROVED, REJECTED, ACTIVE, EXPIRED
+  paymentStatus   String        @default("PENDING")
+  amount          Decimal       @db.Decimal(15, 2)
+  startDate       DateTime?
+  endDate         DateTime?
+  approvedBy      String?
+  approver        User?         @relation("PromotionApprover", fields: [approvedBy], references: [id])
+  approvedAt      DateTime?
+  rejectionReason String?       @db.Text
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([userId])
+  @@map("promotions")
+}
+
+// Burial
+model BurialRequest {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deceasedName    String
+  relationship    String
+  causeOfDeath    String
+  dateOfDeath     DateTime
+  placeOfDeath    String
+  contactPhone    String
+  contactEmail    String
+  status          String   @default("PENDING")
+  rejectionReason String?  @db.Text
+  paymentId       String?  @unique
+  payment         Payment? @relation(fields: [paymentId], references: [id])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  certificate     BurialCertificate?
+
+  @@map("burial_requests")
+}
+
+model BurialCertificate {
+  id                String        @id @default(cuid())
+  burialRequestId   String        @unique
+  burialRequest     BurialRequest @relation(fields: [burialRequestId], references: [id], onDelete: Cascade)
+  certificateNumber String        @unique
+  issuedAt          DateTime?     @default(now())
+  issuedBy          String?
+  pdfUrl            String?       @db.VarChar(500)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@map("burial_certificates")
+}
+
+// Pages
+model Page {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  slug           String
+  title          String
+  content        String?  @db.Text
+  isPublished    Boolean  @default(false)
+  metadata       Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([organizationId, slug])
+  @@map("pages")
+}
+
+// System Settings
+model SystemSetting {
+  id           String           @id @default(cuid())
+  settingKey   String           @unique @db.VarChar(100)
+  settingValue String?          @db.Text
+  category     SettingsCategory
+  isEncrypted  Boolean          @default(false)
+  description  String?          @db.VarChar(500)
+  updatedBy    String?          @db.VarChar(255)
+  updatedAt    DateTime         @updatedAt
+  createdAt    DateTime         @default(now())
+
+  @@map("system_settings")
+}
+
+model EmailTemplate {
+  id          String   @id @default(cuid())
+  templateKey String   @unique @db.VarChar(100)
+  name        String
+  subject     String
+  htmlBody    String   @db.Text
+  textBody    String?  @db.Text
+  variables   Json?
+  description String?  @db.VarChar(500)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("email_templates")
+}
+
+model SiteVisit {
+  id        String   @id @default(cuid())
+  visitorId String   @db.VarChar(255)
+  sessionId String   @db.VarChar(255)
+  path      String   @db.VarChar(500)
+  userId    String?  @db.VarChar(255)
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userAgent String?  @db.Text
+  ip        String?  @db.VarChar(255)
+  createdAt DateTime @default(now())
+
+  @@map("site_visits")
+}
+
 
 enum EmailStatus {
   PENDING
@@ -602,66 +1233,7 @@ model Message {
   @@map("messages")
 }
 
-// Burial Management System
 
-model BurialRequest {
-  id              String              @id @default(cuid())
-  userId          String
-  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  // Deceased Information
-  deceasedName    String
-  relationship    String              // Relationship to the requester
-  causeOfDeath    String
-  dateOfDeath     DateTime
-  placeOfDeath    String
-  
-  // Contact Information
-  contactPhone    String
-  contactEmail    String
-  
-  status          BurialRequestStatus @default(PENDING)
-  rejectionReason String?             @db.Text
-  
-  // Payment linking
-  paymentId       String?             @unique
-  payment         Payment?            @relation(fields: [paymentId], references: [id])
-  
-  // Certificate
-  certificate     BurialCertificate?
-  
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
-
-  @@index([userId])
-  @@index([status])
-  @@map("burial_requests")
-}
-
-model BurialCertificate {
-  id              String        @id @default(cuid())
-  burialRequestId String        @unique
-  burialRequest   BurialRequest @relation(fields: [burialRequestId], references: [id], onDelete: Cascade)
-  
-  certificateNumber String      @unique
-  issuedAt        DateTime      @default(now())
-  issuedBy        String?       // Admin user ID
-  
-  pdfUrl          String?       // URL to stored PDF if generated and saved
-  
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-
-  @@map("burial_certificates")
-}
-
-enum BurialRequestStatus {
-  PENDING
-  APPROVED_UNPAID
-  PAID
-  BURIAL_DONE
-  REJECTED
-}
 
 enum CampaignStatus {
   PENDING
@@ -672,38 +1244,7 @@ enum CampaignStatus {
 }
 
 
-model Page {
-  id            String   @id @default(cuid())
-  organizationId String
-  organization  Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  slug          String
-  title         String
-  content       String?  @db.Text
-  isPublished   Boolean  @default(false)
-  metadata      Json?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
 
-  @@unique([organizationId, slug])
-  @@map("pages")
-}
-
-model NavigationItem {
-  id            String   @id @default(cuid())
-  organizationId String
-  organization  Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  label         String
-  path          String?
-  parentId      String?
-  order         Int      @default(0)
-  type          String   @default("link") // simple string for now or enum
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  @@index([organizationId])
-  @@map("navigation_items")
-}
 
 model FundraisingCampaign {
   id            String   @id @default(cuid())
@@ -729,56 +1270,7 @@ model FundraisingCampaign {
   @@map("fundraising_campaigns")
 }
 
-// Promotion System
-model PromotionPlan {
-  id            String   @id @default(cuid())
-  name          String
-  durationDays  Int
-  amount        Decimal  @db.Decimal(15, 2)
-  description   String?  @db.Text
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
 
-  promotions    Promotion[]
-
-  @@map("promotion_plans")
-}
-
-model Promotion {
-  id            String   @id @default(cuid())
-  userId        String
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  planId        String
-  plan          PromotionPlan @relation(fields: [planId], references: [id])
-  title         String
-  imageUrl      String   @db.VarChar(500)
-  link          String?  @db.VarChar(500)
-  status        PromotionStatus @default(PENDING)
-  paymentStatus PaymentStatus @default(PENDING)
-  amount        Decimal  @db.Decimal(15, 2)
-  startDate     DateTime?
-  endDate       DateTime?
-  approvedBy    String?
-  approver      User?    @relation("PromotionApprover", fields: [approvedBy], references: [id], onDelete: SetNull)
-  approvedAt    DateTime?
-  rejectionReason String? @db.Text
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  @@index([userId])
-  @@index([planId])
-  @@index([status])
-  @@map("promotions")
-}
-
-enum PromotionStatus {
-  PENDING
-  APPROVED
-  REJECTED
-  ACTIVE
-  EXPIRED
-}
 
 // ID Generation Tables (Matched to Drizzle Schema)
 model JurisdictionCode {
@@ -806,32 +1298,46 @@ enum JurisdictionType {
   STATE
 }
 
-model SystemSetting {
-  id           String           @id @default(cuid())
-  settingKey   String           @unique @db.VarChar(100)
-  settingValue String?          @db.Text
-  category     SettingsCategory
-  isEncrypted  Boolean          @default(false)
-  description  String?          @db.VarChar(500)
-  updatedBy    String?          @db.VarChar(255)
-  updatedAt    DateTime         @updatedAt
-  createdAt    DateTime         @default(now())
 
-  @@map("system_settings")
+
+// Offices
+model Office {
+  id             String        @id @default(cuid())
+  organizationId String
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  description    String?       @db.Text
+  isActive       Boolean       @default(true)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  reports        Report[]
+  programmes     Programme[]
+
+  @@map("offices")
 }
 
-model SiteVisit {
-  id        String   @id @default(cuid())
-  visitorId String   @db.VarChar(255)
-  sessionId String   @db.VarChar(255)
-  path      String   @db.VarChar(500)
-  userId    String?  @db.VarChar(255)
-  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-  userAgent String?  @db.Text
-  ip        String?  @db.VarChar(255)
-  createdAt DateTime @default(now())
+// Reports
+model Report {
+  id             String        @id @default(cuid())
+  organizationId String
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User          @relation(fields: [userId], references: [id])
+  officeId       String?
+  office         Office?       @relation(fields: [officeId], references: [id])
+  type           String        // reportTypeEnum
+  status         String        @default("DRAFT")
+  title          String
+  period         String
+  content        Json
+  approvedBy     String?
+  approver       User?         @relation("ReportApprover", fields: [approvedBy], references: [id])
+  approvedAt     DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 
-  @@map("site_visits")
+  @@map("reports")
 }
 
 enum SettingsCategory {
