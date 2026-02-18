@@ -41,8 +41,10 @@ model User {
   posts              Post[]
   chats              ChatParticipant[]
   messagesSent       Message[]
+  promotions         Promotion[]
   burialRequests     BurialRequest[]
   siteVisits         SiteVisit[]
+  approvedPromotions Promotion[] @relation("PromotionApprover")
 
   @@map("users")
 }
@@ -718,6 +720,57 @@ model FundraisingCampaign {
 
   @@unique([organizationId, slug])
   @@map("fundraising_campaigns")
+}
+
+// Promotion System
+model PromotionPlan {
+  id            String   @id @default(cuid())
+  name          String
+  durationDays  Int
+  amount        Decimal  @db.Decimal(15, 2)
+  description   String?  @db.Text
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  promotions    Promotion[]
+
+  @@map("promotion_plans")
+}
+
+model Promotion {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planId        String
+  plan          PromotionPlan @relation(fields: [planId], references: [id])
+  title         String
+  imageUrl      String   @db.VarChar(500)
+  link          String?  @db.VarChar(500)
+  status        PromotionStatus @default(PENDING)
+  paymentStatus PaymentStatus @default(PENDING)
+  amount        Decimal  @db.Decimal(15, 2)
+  startDate     DateTime?
+  endDate       DateTime?
+  approvedBy    String?
+  approver      User?    @relation("PromotionApprover", fields: [approvedBy], references: [id], onDelete: SetNull)
+  approvedAt    DateTime?
+  rejectionReason String? @db.Text
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([userId])
+  @@index([planId])
+  @@index([status])
+  @@map("promotions")
+}
+
+enum PromotionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  ACTIVE
+  EXPIRED
 }
 
 // ID Generation Tables (Matched to Drizzle Schema)
