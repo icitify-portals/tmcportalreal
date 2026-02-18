@@ -1464,3 +1464,188 @@ export const programmesRelationsUpdate = relations(programmes, ({ one }) => ({
         references: [offices.id],
     }),
 }));
+
+// ============================================================
+// MISSING TABLE DEFINITIONS - Added to fix navigation errors
+// ============================================================
+
+// Broadcasts
+export const broadcasts = mysqlTable("broadcasts", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+    senderId: varchar("senderId", { length: 255 }).notNull(),
+    title: varchar("title", { length: 255 }).notNull(),
+    content: text("content").notNull(),
+    targetLevel: mysqlEnum("targetLevel", ['NATIONAL', 'STATE', 'LOCAL_GOVERNMENT', 'BRANCH']).notNull(),
+    targetId: varchar("targetId", { length: 255 }),
+    media: json("media").$type<{ type: string; url: string }[]>().default([]),
+    createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+});
+
+// Assets
+export const assets = mysqlTable("assets", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+    organizationId: varchar("organizationId", { length: 255 }).notNull(),
+    name: varchar("name", { length: 255 }).notNull(),
+    description: text("description"),
+    serialNumber: varchar("serialNumber", { length: 255 }),
+    category: assetCategoryEnum.notNull().default('OTHER'),
+    condition: assetConditionEnum.notNull().default('GOOD'),
+    status: assetStatusEnum.notNull().default('ACTIVE'),
+    purchaseDate: timestamp("purchaseDate", { mode: "date" }),
+    purchasePrice: decimal("purchasePrice", { precision: 15, scale: 2 }).default("0"),
+    currentValue: decimal("currentValue", { precision: 15, scale: 2 }).default("0"),
+    location: varchar("location", { length: 255 }),
+    custodianId: varchar("custodianId", { length: 255 }),
+    createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+});
+
+// Asset Maintenance Logs
+export const assetMaintenanceLogs = mysqlTable("asset_maintenance_logs", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+    assetId: varchar("assetId", { length: 255 }).notNull(),
+    type: maintenanceTypeEnum.notNull(),
+    description: text("description").notNull(),
+    cost: decimal("cost", { precision: 15, scale: 2 }).default("0"),
+    date: timestamp("date", { mode: "date" }).notNull(),
+    performedBy: varchar("performedBy", { length: 255 }),
+    nextServiceDate: timestamp("nextServiceDate", { mode: "date" }),
+    createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+});
+
+// Meetings
+export const meetings = mysqlTable("meetings", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+    organizationId: varchar("organizationId", { length: 255 }).notNull(),
+    title: varchar("title", { length: 255 }).notNull(),
+    description: text("description"),
+    scheduledAt: timestamp("scheduledAt", { mode: "date" }).notNull(),
+    endAt: timestamp("endAt", { mode: "date" }),
+    venue: varchar("venue", { length: 255 }),
+    isOnline: boolean("isOnline").default(false),
+    meetingLink: varchar("meetingLink", { length: 500 }),
+    status: mysqlEnum("status", ['SCHEDULED', 'ONGOING', 'ENDED', 'CANCELLED']).default('SCHEDULED'),
+    createdBy: varchar("createdBy", { length: 255 }).notNull(),
+    createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+});
+
+// Meeting Attendances
+export const meetingAttendances = mysqlTable("meeting_attendances", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+    meetingId: varchar("meetingId", { length: 255 }).notNull(),
+    userId: varchar("userId", { length: 255 }).notNull(),
+    status: mysqlEnum("status", ['INVITED', 'PRESENT', 'ABSENT', 'EXCUSED']).default('INVITED'),
+    joinedAt: timestamp("joinedAt", { mode: "date" }),
+    leftAt: timestamp("leftAt", { mode: "date" }),
+    createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+});
+
+// Meeting Documents
+export const meetingDocs = mysqlTable("meeting_docs", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+    meetingId: varchar("meetingId", { length: 255 }).notNull(),
+    userId: varchar("userId", { length: 255 }).notNull(),
+    title: varchar("title", { length: 255 }).notNull(),
+    url: text("url").notNull(),
+    type: mysqlEnum("type", ['AGENDA', 'MINUTES', 'MEMBER_REPORT', 'OTHER']).default('OTHER'),
+    submissionStatus: mysqlEnum("submissionStatus", ['ON_TIME', 'LATE']).default('ON_TIME'),
+    createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+});
+
+// Galleries
+export const galleries = mysqlTable("galleries", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+    organizationId: varchar("organizationId", { length: 255 }).notNull(),
+    title: varchar("title", { length: 255 }).notNull(),
+    description: text("description"),
+    isActive: boolean("isActive").default(true),
+    createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+});
+
+// Gallery Images
+export const galleryImages = mysqlTable("gallery_images", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+    galleryId: varchar("galleryId", { length: 255 }).notNull(),
+    imageUrl: text("imageUrl").notNull(),
+    caption: varchar("caption", { length: 500 }),
+    order: int("order").default(0),
+    createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+});
+
+// Teskiyah Centres
+export const teskiyahCentres = mysqlTable("teskiyah_centres", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+    name: varchar("name", { length: 255 }).notNull(),
+    venue: varchar("venue", { length: 255 }).notNull(),
+    address: text("address").notNull(),
+    time: varchar("time", { length: 100 }).notNull(),
+    contactNumber: varchar("contactNumber", { length: 50 }),
+    state: varchar("state", { length: 100 }).notNull(),
+    lga: varchar("lga", { length: 100 }).notNull(),
+    branch: varchar("branch", { length: 100 }),
+    organizationId: varchar("organizationId", { length: 255 }),
+    isActive: boolean("isActive").default(true),
+    createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+});
+
+// Adhkar Centres
+export const adhkarCentres = mysqlTable("adhkar_centres", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+    name: varchar("name", { length: 255 }).notNull(),
+    venue: varchar("venue", { length: 255 }),
+    address: text("address"),
+    time: varchar("time", { length: 100 }),
+    contactNumber: varchar("contactNumber", { length: 50 }),
+    state: varchar("state", { length: 100 }).notNull(),
+    lga: varchar("lga", { length: 100 }),
+    branch: varchar("branch", { length: 100 }),
+    organizationId: varchar("organizationId", { length: 255 }),
+    isActive: boolean("isActive").default(true),
+    createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+});
+
+// Relations for new tables
+export const broadcastsRelations = relations(broadcasts, ({ one }) => ({
+    sender: one(users, { fields: [broadcasts.senderId], references: [users.id] }),
+    targetOrganization: one(organizations, { fields: [broadcasts.targetId], references: [organizations.id] }),
+}));
+
+export const assetsRelations = relations(assets, ({ one, many }) => ({
+    organization: one(organizations, { fields: [assets.organizationId], references: [organizations.id] }),
+    maintenanceLogs: many(assetMaintenanceLogs),
+}));
+
+export const assetMaintenanceLogsRelations = relations(assetMaintenanceLogs, ({ one }) => ({
+    asset: one(assets, { fields: [assetMaintenanceLogs.assetId], references: [assets.id] }),
+}));
+
+export const meetingsRelations = relations(meetings, ({ one, many }) => ({
+    organization: one(organizations, { fields: [meetings.organizationId], references: [organizations.id] }),
+    creator: one(users, { fields: [meetings.createdBy], references: [users.id] }),
+    attendances: many(meetingAttendances),
+    docs: many(meetingDocs),
+}));
+
+export const meetingAttendancesRelations = relations(meetingAttendances, ({ one }) => ({
+    meeting: one(meetings, { fields: [meetingAttendances.meetingId], references: [meetings.id] }),
+    user: one(users, { fields: [meetingAttendances.userId], references: [users.id] }),
+}));
+
+export const meetingDocsRelations = relations(meetingDocs, ({ one }) => ({
+    meeting: one(meetings, { fields: [meetingDocs.meetingId], references: [meetings.id] }),
+    user: one(users, { fields: [meetingDocs.userId], references: [users.id] }),
+}));
+
+export const galleriesRelationsNew = relations(galleries, ({ one, many }) => ({
+    organization: one(organizations, { fields: [galleries.organizationId], references: [organizations.id] }),
+    images: many(galleryImages),
+}));
+
+export const galleryImagesRelationsNew = relations(galleryImages, ({ one }) => ({
+    gallery: one(galleries, { fields: [galleryImages.galleryId], references: [galleries.id] }),
+}));
