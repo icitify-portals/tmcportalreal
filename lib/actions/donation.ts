@@ -145,3 +145,15 @@ export async function verifyCampaignDonation(reference: string, campaignId: stri
         return { success: false, error: "Failed to verify donation" }
     }
 }
+
+export async function getPaymentByReference(reference: string) {
+    try {
+        const payment = await db.query.payments.findFirst({
+            where: (payments, { eq }) => eq(payments.paystackRef, reference)
+        })
+        return { success: true, payment }
+    } catch (error) {
+        console.error("Error fetching payment:", error)
+        return { success: false, error: "Failed to fetch payment" }
+    }
+}
