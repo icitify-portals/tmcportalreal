@@ -74,7 +74,7 @@ export default async function MemberDashboardPage() {
     <DashboardLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold">Welcome, Member!</h1>
+          <h1 className="text-3xl font-bold">Welcome, {authSession.user.name || "Member"}!</h1>
         </div>
 
         {/* Membership Status Section */}
