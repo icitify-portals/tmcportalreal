@@ -7,9 +7,11 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Switch } from "@/components/ui/switch"
-import { initiateDonation } from "@/lib/actions/donation"
+import { verifyCampaignDonation } from "@/lib/actions/donation"
 import { toast } from "sonner"
 import { Loader2, Heart } from "lucide-react"
+import { cn } from "@/lib/utils"
+import Script from "next/script"
 import { cn } from "@/lib/utils"
 
 interface DonationWidgetProps {
@@ -27,6 +29,7 @@ export function DonationWidget({ campaignId, suggestedAmounts = [1000, 5000, 100
     const [isLoading, setIsLoading] = useState(false)
     const [mode, setMode] = useState<"preset" | "custom">("preset")
     const [mounted, setMounted] = useState(false)
+    const [scriptLoaded, setScriptLoaded] = useState(false)
 
     useEffect(() => {
         setMounted(true)
@@ -44,30 +47,65 @@ export function DonationWidget({ campaignId, suggestedAmounts = [1000, 5000, 100
             return
         }
 
-        setIsLoading(true)
-        try {
-            const result = await initiateDonation({
-                campaignId,
-                amount: finalAmount,
-                email,
-                name: isAnonymous ? "Anonymous" : name,
-                isAnonymous
-            })
-
-            if (result.success && result.authorizationUrl) {
-                window.location.href = result.authorizationUrl
-            } else {
-                toast.error(result.error || "Failed to start donation")
-            }
-        } catch (error) {
-            toast.error("Something went wrong")
-        } finally {
-            setIsLoading(false)
+        if (!scriptLoaded) {
+            toast.error("Payment system loading, please wait...")
+            return
         }
+
+        const paystack = (window as any).PaystackPop
+        if (!paystack) {
+            toast.error("Payment system failed to load")
+            return
+        }
+
+        setIsLoading(true)
+
+        const config = {
+            key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || 'pk_test_xxxxxxxxxxxxxxxxxxxx',
+            email: email,
+            amount: finalAmount * 100, // in kobo
+            currency: 'NGN',
+            metadata: {
+                custom_fields: [
+                    { display_name: "Campaign ID", variable_name: "campaign_id", value: campaignId },
+                    { display_name: "Donor Name", variable_name: "donor_name", value: isAnonymous ? "Anonymous" : name }
+                ]
+            },
+            onClose: () => {
+                toast.info("Payment cancelled")
+                setIsLoading(false)
+            },
+            callback: async (response: any) => {
+                // response: { reference, message, status, trans, transaction, trxref }
+                try {
+                    toast.info("Verifying payment...")
+                    const result = await verifyCampaignDonation(response.reference, campaignId)
+
+                    if (result.success) {
+                        toast.success("Donation successful! Thank you.")
+                        // Optionally redirect or reset
+                        setEmail("")
+                        setName("")
+                        setCustomAmount("")
+                    } else {
+                        toast.error(result.error || "Payment verified but recording failed")
+                    }
+                } catch (err) {
+                    console.error(err)
+                    toast.error("An error occurred during verification")
+                } finally {
+                    setIsLoading(false)
+                }
+            }
+        }
+
+        paystack.setup(config).openIframe()
     }
 
     return (
         <div className="rounded-xl border bg-card text-card-foreground shadow p-6 space-y-6">
+            <Script src="https://js.paystack.co/v1/inline.js" onReady={() => setScriptLoaded(true)} />
+
             <div className="space-y-2">
                 <h3 className="font-semibold text-lg flex items-center gap-2">
                     <Heart className="h-5 w-5 text-red-500 fill-red-500" />

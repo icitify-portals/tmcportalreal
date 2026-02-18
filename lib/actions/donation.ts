@@ -6,8 +6,8 @@ import { getServerSession } from "@/lib/session"
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { db } from "@/lib/db"
-import { fundraisingCampaigns, organizations } from "@/lib/db/schema"
-import { eq } from "drizzle-orm"
+import { fundraisingCampaigns, organizations, payments } from "@/lib/db/schema"
+import { eq, sql } from "drizzle-orm"
 
 const DonationSchema = z.object({
     campaignId: z.string().min(1),
@@ -85,5 +85,61 @@ export async function initiateDonation(data: z.infer<typeof DonationSchema>) {
     } catch (error) {
         console.error("Donation initialization failed:", error)
         return { success: false, error: "Failed to initialize donation" }
+    }
+}
+
+export async function verifyCampaignDonation(reference: string, campaignId: string) {
+    try {
+        // 1. Verify with Paystack
+        const verification = await import("@/lib/payments").then(m => m.verifyPayment(reference))
+
+        if (!verification.success || !verification.data) {
+            return { success: false, error: "Payment verification failed" }
+        }
+
+        const paystackData = verification.data
+
+        // 2. Check if payment already exists
+        const existingPayment = await db.query.payments.findFirst({
+            where: (payments, { eq }) => eq(payments.paystackRef, reference)
+        })
+
+        if (existingPayment) {
+            return { success: true, message: "Payment already recorded" }
+        }
+
+        // 3. Create Payment Record
+        const paymentId = crypto.randomUUID()
+        await db.insert(payments).values({
+            id: paymentId,
+            campaignId: campaignId,
+            amount: String(paystackData.amount), // Paystack verifies the actual amount paid
+            currency: paystackData.currency,
+            status: "SUCCESS",
+            paymentType: "DONATION",
+            paystackRef: reference,
+            paystackResponse: paystackData as any,
+            description: `Donation to Campaign`,
+            metadata: paystackData.metadata,
+            paidAt: new Date(),
+            createdAt: new Date(),
+            updatedAt: new Date()
+        })
+
+        // 4. Update Campaign Raised Amount
+        await db.update(fundraisingCampaigns)
+            .set({
+                raisedAmount: sql`${fundraisingCampaigns.raisedAmount} + ${paystackData.amount}`
+            })
+            .where(eq(fundraisingCampaigns.id, campaignId))
+
+        revalidatePath(`/campaigns/${campaignId}`)
+        revalidatePath("/") // Update home page progress
+
+        return { success: true }
+
+    } catch (error) {
+        console.error("Verification error:", error)
+        return { success: false, error: "Failed to verify donation" }
     }
 }
