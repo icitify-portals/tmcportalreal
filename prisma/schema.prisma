@@ -42,6 +42,7 @@ model User {
   chats              ChatParticipant[]
   messagesSent       Message[]
   burialRequests     BurialRequest[]
+  siteVisits         SiteVisit[]
 
   @@map("users")
 }
@@ -717,4 +718,65 @@ model FundraisingCampaign {
 
   @@unique([organizationId, slug])
   @@map("fundraising_campaigns")
+}
+
+// ID Generation Tables (Matched to Drizzle Schema)
+model JurisdictionCode {
+  id        String   @id @default(cuid())
+  type      JurisdictionType
+  name      String
+  code      String
+  parentId  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("jurisdiction_codes")
+}
+
+model MemberIdSequence {
+  key        String   @id
+  lastSerial Int      @default(0)
+  updatedAt  DateTime @updatedAt
+
+  @@map("member_id_sequences")
+}
+
+enum JurisdictionType {
+  COUNTRY
+  STATE
+}
+
+model SystemSetting {
+  id           String           @id @default(cuid())
+  settingKey   String           @unique @db.VarChar(100)
+  settingValue String?          @db.Text
+  category     SettingsCategory
+  isEncrypted  Boolean          @default(false)
+  description  String?          @db.VarChar(500)
+  updatedBy    String?          @db.VarChar(255)
+  updatedAt    DateTime         @updatedAt
+  createdAt    DateTime         @default(now())
+
+  @@map("system_settings")
+}
+
+model SiteVisit {
+  id        String   @id @default(cuid())
+  visitorId String   @db.VarChar(255)
+  sessionId String   @db.VarChar(255)
+  path      String   @db.VarChar(500)
+  userId    String?  @db.VarChar(255)
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userAgent String?  @db.Text
+  ip        String?  @db.VarChar(255)
+  createdAt DateTime @default(now())
+
+  @@map("site_visits")
+}
+
+enum SettingsCategory {
+  EMAIL
+  NOTIFICATION
+  GENERAL
+  AI
 }

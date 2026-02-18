@@ -4,6 +4,6 @@ module.exports = {
         path: "prisma/migrations",
     },
     datasource: {
-        url: process.env.DATABASE_URL || "mysql://tmc_user:Tmcportal123%23@172.17.0.1:3306/tmc_portal",
+        url: process.env.DATABASE_URL || "mysql://root@127.0.0.1:3306/tmc_portal",
     },
 };

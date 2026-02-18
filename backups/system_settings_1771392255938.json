@@ -1,0 +1,57 @@
+[
+  {
+    "id": "0a711858-773b-45f5-9fdb-ba991f7638dd",
+    "settingKey": "ai_system_prompt",
+    "settingValue": "",
+    "category": "AI",
+    "isEncrypted": 0,
+    "description": null,
+    "updatedBy": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "updatedAt": "2026-02-10T14:04:00.855Z",
+    "createdAt": "2026-02-10T14:04:00.855Z"
+  },
+  {
+    "id": "2f3d71fc-00f1-41c9-a68c-6a9532fbaafb",
+    "settingKey": "ai_enabled",
+    "settingValue": "true",
+    "category": "AI",
+    "isEncrypted": 0,
+    "description": null,
+    "updatedBy": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "updatedAt": "2026-02-10T14:04:00.812Z",
+    "createdAt": "2026-02-10T14:04:00.812Z"
+  },
+  {
+    "id": "7d10b02e-477b-43bc-875a-fc2a32a3db18",
+    "settingKey": "membership_registration_enabled",
+    "settingValue": "true",
+    "category": "GENERAL",
+    "isEncrypted": 0,
+    "description": null,
+    "updatedBy": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "updatedAt": "2026-02-10T13:30:34.210Z",
+    "createdAt": "2026-02-10T13:30:34.210Z"
+  },
+  {
+    "id": "8ce59172-64a0-416c-85c4-0ced044da8f2",
+    "settingKey": "ai_provider",
+    "settingValue": "deepseek",
+    "category": "AI",
+    "isEncrypted": 0,
+    "description": null,
+    "updatedBy": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "updatedAt": "2026-02-10T14:04:00.848Z",
+    "createdAt": "2026-02-10T14:04:00.848Z"
+  },
+  {
+    "id": "cfb7390a-1702-4ffc-adad-db4c9a10370b",
+    "settingKey": "membership_recommendation_required",
+    "settingValue": "true",
+    "category": "GENERAL",
+    "isEncrypted": 0,
+    "description": null,
+    "updatedBy": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "updatedAt": "2026-02-10T13:30:34.282Z",
+    "createdAt": "2026-02-10T13:30:34.282Z"
+  }
+]

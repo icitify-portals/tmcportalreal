@@ -1,0 +1,2252 @@
+[
+  {
+    "id": "0189b86e-94c5-45c0-a9ff-d09f08db36be",
+    "visitorId": "0b29b9ff-9b47-49a3-8825-bb74c60ae87c",
+    "sessionId": "898aa311-44c3-4f9f-a071-466b3c476d44",
+    "path": "/auth/signin",
+    "userId": null,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+    "ip": "::1",
+    "createdAt": "2026-02-12T14:26:29.995Z"
+  },
+  {
+    "id": "019c6399-2876-442f-b40f-ac4eddfefa42",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "45b2e5d9-ea98-43fe-8b54-cb55aba629e8",
+    "path": "/dashboard/admin",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T16:53:32.832Z"
+  },
+  {
+    "id": "0567bbd3-42e0-4dde-84fd-df1cd5235140",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "35966b3a-90ee-4857-87c7-5c4e8b305791",
+    "path": "/dashboard/admin/settings",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T12:05:06.728Z"
+  },
+  {
+    "id": "05b1ce92-7a8f-453a-a511-16149b01e6a4",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "1e39a00c-3be2-4b71-8c03-74460dad8c81",
+    "path": "/dashboard/admin/assets",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-12T13:53:21.130Z"
+  },
+  {
+    "id": "05f9bfc0-4d3e-4d07-bce3-ef8d8ec9776b",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "591f06c8-d411-4ab2-8f09-703331858927",
+    "path": "/dashboard/admin/members",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-13T10:00:31.630Z"
+  },
+  {
+    "id": "09b11eac-3513-406c-aa83-8ddd72329ae4",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "1fde6246-e1be-4175-8da7-06777ce0e11b",
+    "path": "/dashboard/admin/special-programmes",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T20:27:56.176Z"
+  },
+  {
+    "id": "0a02908f-a08c-4172-a878-107914b73d83",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "68027df1-e2e1-4bd8-b75d-b28651daa5a3",
+    "path": "/dashboard/admin/galleries",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T09:48:12.003Z"
+  },
+  {
+    "id": "0bc785c2-dccc-4808-82fa-da292beeb4ee",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "6bedebe5-6f75-404a-ab0f-2dbc2b176d05",
+    "path": "/dashboard/admin/members",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-13T09:03:07.947Z"
+  },
+  {
+    "id": "0d62fc35-02ea-40ff-8b1d-e994f9042f8c",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "6bedebe5-6f75-404a-ab0f-2dbc2b176d05",
+    "path": "/dashboard/admin/members/de10819f-0034-4ff6-9516-3ac5df4691ed",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-13T08:30:38.768Z"
+  },
+  {
+    "id": "0d7a4364-bf22-4141-ad21-0de5d60d84f6",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "2d1d9066-eef4-467a-9145-b572a3b64494",
+    "path": "/dashboard/admin/organizations/new",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T14:16:12.724Z"
+  },
+  {
+    "id": "0e08f4e7-d96d-47f2-ab08-eeba75bb2c08",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "35966b3a-90ee-4857-87c7-5c4e8b305791",
+    "path": "/dashboard/admin/finance",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T10:59:43.016Z"
+  },
+  {
+    "id": "0e4a5fd6-c3da-412d-b149-947d49ae0254",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "cca0b95f-f5d6-4d07-ab44-6e8d7bdd431b",
+    "path": "/dashboard/admin/organizations/c02137d0-c3c1-445d-9d1a-92c7be200332",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T16:24:23.720Z"
+  },
+  {
+    "id": "0f04384b-77d5-4574-a9ce-ff9269a74f9f",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "dede3470-5fc4-484b-b533-e7e684fdf749",
+    "path": "/",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-12T08:09:46.996Z"
+  },
+  {
+    "id": "11279b82-e815-4286-9b37-532fae7e28c8",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "65b62226-3747-4fa3-81f2-fe51a45b3058",
+    "path": "/",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T09:57:33.899Z"
+  },
+  {
+    "id": "114894c0-5896-4344-8b50-7e403428dc76",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "35966b3a-90ee-4857-87c7-5c4e8b305791",
+    "path": "/dashboard/admin/settings",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T11:36:29.072Z"
+  },
+  {
+    "id": "115e3f51-05d5-4628-b2c7-1bb6984dcf98",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "1fde6246-e1be-4175-8da7-06777ce0e11b",
+    "path": "/dashboard/messages",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T20:04:20.456Z"
+  },
+  {
+    "id": "11e013e8-f9ae-4962-a3f8-ac5d0246f2a4",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "1fde6246-e1be-4175-8da7-06777ce0e11b",
+    "path": "/dashboard/admin/special-programmes",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T20:05:01.359Z"
+  },
+  {
+    "id": "125c572f-db6f-40ff-8968-3b78c026e078",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "e8384f45-2f12-4834-828a-2a586813d091",
+    "path": "/dashboard/admin",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-13T11:46:07.506Z"
+  },
+  {
+    "id": "12ce885d-704a-4d22-be2b-f076b7da981c",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "35966b3a-90ee-4857-87c7-5c4e8b305791",
+    "path": "/dashboard/admin/documents",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T11:31:36.632Z"
+  },
+  {
+    "id": "13ac65fa-f599-4b43-8f4f-c267ddfab136",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "c0c6a559-98ca-4b4e-b610-3e91804e00a4",
+    "path": "/",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-13T11:57:24.544Z"
+  },
+  {
+    "id": "182b7d9c-36d4-4a01-90e0-db86d1056123",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "68027df1-e2e1-4bd8-b75d-b28651daa5a3",
+    "path": "/dashboard/admin/special-programmes",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T09:47:09.038Z"
+  },
+  {
+    "id": "18a67e2c-4778-4596-8575-8c73d1b93f56",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "68027df1-e2e1-4bd8-b75d-b28651daa5a3",
+    "path": "/dashboard/messages",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T09:44:29.336Z"
+  },
+  {
+    "id": "1a045139-1a73-4d8a-a93f-4a0e3253b5dc",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "35966b3a-90ee-4857-87c7-5c4e8b305791",
+    "path": "/dashboard/admin/special-programmes",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T11:23:34.348Z"
+  },
+  {
+    "id": "1af2688e-7930-4196-9811-fc5992550855",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "68027df1-e2e1-4bd8-b75d-b28651daa5a3",
+    "path": "/dashboard/admin/posts",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T09:48:09.295Z"
+  },
+  {
+    "id": "1af43c46-a85a-4026-88d5-bea2512edbdf",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "65b62226-3747-4fa3-81f2-fe51a45b3058",
+    "path": "/",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T16:32:37.191Z"
+  },
+  {
+    "id": "1e23e5a0-a374-4896-810d-607c711ae1f8",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "1e39a00c-3be2-4b71-8c03-74460dad8c81",
+    "path": "/dashboard/admin/posts",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-12T14:05:32.257Z"
+  },
+  {
+    "id": "1e72fac8-fc81-4187-b51d-9a3a10709011",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "35966b3a-90ee-4857-87c7-5c4e8b305791",
+    "path": "/dashboard/admin/roles",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T11:31:50.763Z"
+  },
+  {
+    "id": "1eb50c0a-8f1f-4a7a-ae6c-07edccb2c25a",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "c5603455-9f70-4669-9854-bf533c3b61a8",
+    "path": "/dashboard/admin/organizations",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T10:53:39.502Z"
+  },
+  {
+    "id": "20d27ee7-0ab6-4863-b07c-68f4cef11600",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "68027df1-e2e1-4bd8-b75d-b28651daa5a3",
+    "path": "/dashboard/admin/reports",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T09:47:05.997Z"
+  },
+  {
+    "id": "2184c0b0-1b04-4e6a-aac3-26ed038e3730",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "68027df1-e2e1-4bd8-b75d-b28651daa5a3",
+    "path": "/dashboard/admin/officials",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T09:49:19.917Z"
+  },
+  {
+    "id": "219bf3b7-3fdf-43e3-b1f3-913931d668a8",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "76c61a7e-bfb7-489a-847b-66819a1599c5",
+    "path": "/dashboard/admin/settings",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T13:30:53.696Z"
+  },
+  {
+    "id": "22178ff3-025e-49a6-ab3c-e46bc67dbdc3",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "35966b3a-90ee-4857-87c7-5c4e8b305791",
+    "path": "/dashboard/admin/adhkar",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T11:30:24.995Z"
+  },
+  {
+    "id": "23079174-aba5-458d-8495-ef256f1a3d23",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "35966b3a-90ee-4857-87c7-5c4e8b305791",
+    "path": "/dashboard/admin/members",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T11:30:48.684Z"
+  },
+  {
+    "id": "2724189a-b97d-4e5a-af88-b7b634079aae",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "2d1d9066-eef4-467a-9145-b572a3b64494",
+    "path": "/dashboard/admin/organizations",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T15:03:03.008Z"
+  },
+  {
+    "id": "27335cce-f449-4441-a2af-1fd5f29a793e",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "88fa3e85-4300-4c06-becb-fcd17acc8c06",
+    "path": "/",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T07:15:20.824Z"
+  },
+  {
+    "id": "27db7ada-5175-491d-83b0-e133022b8b88",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "fcf03513-7dd4-445c-8f60-d1eee9cfc3a5",
+    "path": "/",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T09:57:31.937Z"
+  },
+  {
+    "id": "294972aa-56a4-4cab-a3ff-e960425322c5",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "f6215dc2-d41b-4f55-86c2-9954192b4097",
+    "path": "/dashboard/admin/users",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-12T16:16:41.437Z"
+  },
+  {
+    "id": "295c305d-d306-49eb-a91f-c755b4213db1",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "2d1d9066-eef4-467a-9145-b572a3b64494",
+    "path": "/dashboard/admin/organizations/c02137d0-c3c1-445d-9d1a-92c7be200332",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T15:13:47.499Z"
+  },
+  {
+    "id": "299b7218-d093-4188-8830-adb10892afda",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "35966b3a-90ee-4857-87c7-5c4e8b305791",
+    "path": "/dashboard/admin/special-programmes/new",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T11:27:30.359Z"
+  },
+  {
+    "id": "2d1139b6-e12b-4983-aaf1-04810dbcfcd3",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "1e39a00c-3be2-4b71-8c03-74460dad8c81",
+    "path": "/auth/signin",
+    "userId": null,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-12T14:18:45.325Z"
+  },
+  {
+    "id": "32da56af-2f70-4a0c-a659-835f55232499",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "3e1cd580-965a-46fb-be83-268a6c8e4a9c",
+    "path": "/",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T08:04:26.806Z"
+  },
+  {
+    "id": "347309f2-c88a-453a-8cb7-fa39e5c86a21",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "2d1d9066-eef4-467a-9145-b572a3b64494",
+    "path": "/dashboard/admin/organizations",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T14:32:58.812Z"
+  },
+  {
+    "id": "34cfd83a-e228-4309-b297-cccebd161105",
+    "visitorId": "0b29b9ff-9b47-49a3-8825-bb74c60ae87c",
+    "sessionId": "898aa311-44c3-4f9f-a071-466b3c476d44",
+    "path": "/auth/verify-email",
+    "userId": null,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+    "ip": "::1",
+    "createdAt": "2026-02-12T14:26:11.609Z"
+  },
+  {
+    "id": "35148cd5-f3c3-4453-9cff-1fac9da26312",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "35966b3a-90ee-4857-87c7-5c4e8b305791",
+    "path": "/dashboard/admin/teskiyah",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T11:30:30.653Z"
+  },
+  {
+    "id": "358ba6fa-4041-4bfa-8511-78f3b02353d4",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "1e39a00c-3be2-4b71-8c03-74460dad8c81",
+    "path": "/auth/signup",
+    "userId": null,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-12T14:18:54.193Z"
+  },
+  {
+    "id": "3619e080-2dc2-48b8-82e7-85740baf44b5",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "1e39a00c-3be2-4b71-8c03-74460dad8c81",
+    "path": "/auth/verify-email",
+    "userId": null,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-12T14:23:42.640Z"
+  },
+  {
+    "id": "3668c7cd-cd5d-4e44-82c8-6ee6e8666fe3",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "1fde6246-e1be-4175-8da7-06777ce0e11b",
+    "path": "/dashboard/admin/meetings",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T20:05:06.516Z"
+  },
+  {
+    "id": "3674cf21-cccf-468c-ad49-8bf6b7bc650f",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "2499c6ff-e8bb-4ebf-8f8c-b6fe6e4e7727",
+    "path": "/dashboard/member",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36 Edg/145.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-17T07:02:39.378Z"
+  },
+  {
+    "id": "3758c1fe-8409-4199-82ed-64173ca6610d",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "ccabc753-a981-42b5-83e4-2151a95d57fe",
+    "path": "/",
+    "userId": null,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T08:53:26.595Z"
+  },
+  {
+    "id": "393af3fa-57ca-4da1-b9e3-f85dda91ca72",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "35966b3a-90ee-4857-87c7-5c4e8b305791",
+    "path": "/dashboard/admin/special-programmes",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T11:29:43.688Z"
+  },
+  {
+    "id": "3aaa3085-a64a-47c7-9b2c-94f0ca0260ae",
+    "visitorId": "0b29b9ff-9b47-49a3-8825-bb74c60ae87c",
+    "sessionId": "47599a5e-5d95-40de-bb0e-9dee7b33b988",
+    "path": "/auth/verify-email",
+    "userId": null,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+    "ip": "::1",
+    "createdAt": "2026-02-12T14:34:37.044Z"
+  },
+  {
+    "id": "3b47fb09-c288-48b0-adaf-44892843b512",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "ccabc753-a981-42b5-83e4-2151a95d57fe",
+    "path": "/dashboard/admin",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T08:02:07.932Z"
+  },
+  {
+    "id": "3d4384d0-8f43-45fa-9ee8-d8cea3ae23a1",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "68027df1-e2e1-4bd8-b75d-b28651daa5a3",
+    "path": "/dashboard/broadcasts",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T09:43:52.522Z"
+  },
+  {
+    "id": "3d813a68-e6eb-42e4-861f-26ffdfcd9b38",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "1fde6246-e1be-4175-8da7-06777ce0e11b",
+    "path": "/dashboard/admin/finance/analytics",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T20:05:12.274Z"
+  },
+  {
+    "id": "4003e0da-09a7-4333-bdbb-8bcedac7997a",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "1fde6246-e1be-4175-8da7-06777ce0e11b",
+    "path": "/dashboard/admin/finance/analytics",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T20:04:35.913Z"
+  },
+  {
+    "id": "4063ca85-3c9c-4b4e-9d96-e826fd3173f6",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "35966b3a-90ee-4857-87c7-5c4e8b305791",
+    "path": "/",
+    "userId": null,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T10:51:26.707Z"
+  },
+  {
+    "id": "42748ada-bf6c-4e48-bb57-56f1984b9eff",
+    "visitorId": "0b29b9ff-9b47-49a3-8825-bb74c60ae87c",
+    "sessionId": "36cad9be-78db-4df8-a74d-0f25b906ef8c",
+    "path": "/auth/verify-email",
+    "userId": null,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+    "ip": "::1",
+    "createdAt": "2026-02-12T14:36:17.188Z"
+  },
+  {
+    "id": "444ee240-922a-4902-905f-12e2a6c489e2",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "35966b3a-90ee-4857-87c7-5c4e8b305791",
+    "path": "/dashboard/admin/special-programmes",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T11:49:23.596Z"
+  },
+  {
+    "id": "46116a61-0e22-4d1b-b0fc-83337bea8aee",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "68b92d4d-527d-4d0d-8b34-653c05c9d0e8",
+    "path": "/",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-14T11:08:40.724Z"
+  },
+  {
+    "id": "484ce6ad-acb9-40f7-8706-c177a170c515",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "1fde6246-e1be-4175-8da7-06777ce0e11b",
+    "path": "/dashboard/admin/programmes",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T20:26:39.894Z"
+  },
+  {
+    "id": "4a9a9e9b-c6fd-4a50-a6a2-44088121bc3c",
+    "visitorId": "0b29b9ff-9b47-49a3-8825-bb74c60ae87c",
+    "sessionId": "c7b6fb95-20ba-47b2-b474-4ebaa1446960",
+    "path": "/auth/signin",
+    "userId": null,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+    "ip": "::1",
+    "createdAt": "2026-02-12T15:00:03.446Z"
+  },
+  {
+    "id": "4b34f5db-11bc-4a3f-bf0a-75c853ee2985",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "35966b3a-90ee-4857-87c7-5c4e8b305791",
+    "path": "/dashboard/admin/occasions",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T11:30:36.526Z"
+  },
+  {
+    "id": "4babfe2c-a82e-473b-9959-33b11624620a",
+    "visitorId": "0b29b9ff-9b47-49a3-8825-bb74c60ae87c",
+    "sessionId": "86889e5d-0db7-46e0-9a01-b5e5af93e2c1",
+    "path": "/auth/signin",
+    "userId": null,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+    "ip": "::1",
+    "createdAt": "2026-02-12T16:15:43.611Z"
+  },
+  {
+    "id": "4bb5068d-a36d-4587-9192-dd0dee2e7788",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "35966b3a-90ee-4857-87c7-5c4e8b305791",
+    "path": "/dashboard/admin/galleries",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T11:30:20.943Z"
+  },
+  {
+    "id": "50483866-0d6a-4cea-9ca9-5ec4500ff01b",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "e8384f45-2f12-4834-828a-2a586813d091",
+    "path": "/dashboard/admin/cms/pages",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-13T11:37:29.644Z"
+  },
+  {
+    "id": "53b150c0-731f-43d9-9e9c-3fdfe35a316d",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "e8384f45-2f12-4834-828a-2a586813d091",
+    "path": "/dashboard/cms",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-13T11:46:22.766Z"
+  },
+  {
+    "id": "54945559-172a-4d5e-a223-7e9135c7729c",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "e983b416-aad7-44a3-b8ce-24dedd14e215",
+    "path": "/",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36 Edg/145.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-18T04:10:03.480Z"
+  },
+  {
+    "id": "54c2c503-ed60-4d33-a171-568f68650b09",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "e8384f45-2f12-4834-828a-2a586813d091",
+    "path": "/dashboard/cms",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-13T11:57:00.217Z"
+  },
+  {
+    "id": "56899934-63bd-47bc-9a09-09d85fe0a040",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "35966b3a-90ee-4857-87c7-5c4e8b305791",
+    "path": "/dashboard/admin",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T10:52:55.556Z"
+  },
+  {
+    "id": "57806f2c-7872-46c6-a110-07aad7614a82",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "88fa3e85-4300-4c06-becb-fcd17acc8c06",
+    "path": "/",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T07:24:39.079Z"
+  },
+  {
+    "id": "5dad983f-a09e-4950-921a-fa588ce16dd2",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "2499c6ff-e8bb-4ebf-8f8c-b6fe6e4e7727",
+    "path": "/dashboard/admin/finance/campaigns",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36 Edg/145.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-17T07:02:55.892Z"
+  },
+  {
+    "id": "5de12e5a-c68b-4a95-8fa0-b2ee7a715345",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "1dbc8d26-eaed-4f07-8f44-bb3b1bffc2a3",
+    "path": "/dashboard/admin/galleries",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-12T09:03:58.064Z"
+  },
+  {
+    "id": "5df58634-eb60-465c-b424-efa39d65e496",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "1e39a00c-3be2-4b71-8c03-74460dad8c81",
+    "path": "/dashboard/admin/special-programmes",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-12T13:53:10.262Z"
+  },
+  {
+    "id": "5edb1278-c359-4c7a-a652-466c59373cff",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "35966b3a-90ee-4857-87c7-5c4e8b305791",
+    "path": "/dashboard/admin/settings/navigation",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T11:34:36.630Z"
+  },
+  {
+    "id": "5efb6d24-fceb-4958-a1f1-9867c43eec1a",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "68027df1-e2e1-4bd8-b75d-b28651daa5a3",
+    "path": "/dashboard/admin/organizations",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T09:51:55.643Z"
+  },
+  {
+    "id": "5f984495-1ac0-41f1-b6d1-1344f6eb2168",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "01f74018-68da-429a-b8f8-f686fa048447",
+    "path": "/",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-14T17:50:54.892Z"
+  },
+  {
+    "id": "604c5de1-6820-4f34-8c1d-fdab4a0dc3f2",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "35966b3a-90ee-4857-87c7-5c4e8b305791",
+    "path": "/dashboard/admin/officials",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T11:30:59.048Z"
+  },
+  {
+    "id": "61267384-4072-4f2b-9e19-939e4cc762e8",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "3e1cd580-965a-46fb-be83-268a6c8e4a9c",
+    "path": "/dashboard/admin",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T08:07:00.138Z"
+  },
+  {
+    "id": "620e9491-854c-4be4-b5f7-1db33b446e50",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "cca0b95f-f5d6-4d07-ab44-6e8d7bdd431b",
+    "path": "/dashboard/admin/officials/new",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T16:42:01.409Z"
+  },
+  {
+    "id": "6227d564-bd47-4358-b85d-61ca3665f478",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "35966b3a-90ee-4857-87c7-5c4e8b305791",
+    "path": "/dashboard/admin/programmes",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T11:06:44.197Z"
+  },
+  {
+    "id": "626c72f8-cb2b-44b9-8a5e-5cc8399e048c",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "ccabc753-a981-42b5-83e4-2151a95d57fe",
+    "path": "/dashboard/admin/finance",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T08:51:06.219Z"
+  },
+  {
+    "id": "63938a02-1561-4fb0-80f3-a694f6e26c1a",
+    "visitorId": "0b29b9ff-9b47-49a3-8825-bb74c60ae87c",
+    "sessionId": "c7b6fb95-20ba-47b2-b474-4ebaa1446960",
+    "path": "/dashboard/member",
+    "userId": "c5068b94-ae78-4c39-9ca8-6c43055bde18",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+    "ip": "::1",
+    "createdAt": "2026-02-12T14:58:38.900Z"
+  },
+  {
+    "id": "651cdfeb-c638-41e1-a308-d92e6a60b31f",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "dede3470-5fc4-484b-b533-e7e684fdf749",
+    "path": "/dashboard/admin/organizations",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-12T08:21:20.328Z"
+  },
+  {
+    "id": "679409ed-e6ef-4bf3-b04a-bb9069bfa0c6",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "c5603455-9f70-4669-9854-bf533c3b61a8",
+    "path": "/dashboard/admin/organizations",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T10:54:42.764Z"
+  },
+  {
+    "id": "68960e02-d0b1-4987-94ac-11bf2128df0c",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "1dbc8d26-eaed-4f07-8f44-bb3b1bffc2a3",
+    "path": "/dashboard/admin/burials",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-12T09:00:19.949Z"
+  },
+  {
+    "id": "6b4062ca-e12b-4c0d-a50c-dd4e51392047",
+    "visitorId": "0b29b9ff-9b47-49a3-8825-bb74c60ae87c",
+    "sessionId": "c7b6fb95-20ba-47b2-b474-4ebaa1446960",
+    "path": "/dashboard/member/apply",
+    "userId": "c5068b94-ae78-4c39-9ca8-6c43055bde18",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+    "ip": "::1",
+    "createdAt": "2026-02-12T14:41:04.286Z"
+  },
+  {
+    "id": "6d3840d0-fb1d-4f7c-b563-ca2381d41d47",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "35966b3a-90ee-4857-87c7-5c4e8b305791",
+    "path": "/dashboard/admin/payments",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T11:31:15.265Z"
+  },
+  {
+    "id": "6ebff26b-7e1b-4719-ae75-cd42dcc52c2e",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "cca0b95f-f5d6-4d07-ab44-6e8d7bdd431b",
+    "path": "/dashboard/admin/officials/new",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T16:25:19.289Z"
+  },
+  {
+    "id": "700b013a-cd2f-48af-b0fc-1b309ba6f157",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "1fde6246-e1be-4175-8da7-06777ce0e11b",
+    "path": "/media",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T20:04:01.080Z"
+  },
+  {
+    "id": "72a3b2f9-704d-4724-840d-2c41481a66dd",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "63869f4b-8a02-46d0-ab34-1a49122cd69f",
+    "path": "/",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T14:39:59.276Z"
+  },
+  {
+    "id": "751988ec-6f45-4d68-9e59-6235ef07481a",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "35966b3a-90ee-4857-87c7-5c4e8b305791",
+    "path": "/dashboard/admin/settings",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T12:24:07.216Z"
+  },
+  {
+    "id": "7833065f-4a37-4f81-aa0c-860cdb7facf1",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "e8384f45-2f12-4834-828a-2a586813d091",
+    "path": "/dashboard/admin/members",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-13T11:11:29.222Z"
+  },
+  {
+    "id": "787e330a-c8a7-45b0-8544-c940302bff5c",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "35966b3a-90ee-4857-87c7-5c4e8b305791",
+    "path": "/dashboard/admin/settings",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T11:53:01.403Z"
+  },
+  {
+    "id": "7af3d69b-d657-4291-a902-2677f058b354",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "c0c6a559-98ca-4b4e-b610-3e91804e00a4",
+    "path": "/",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-13T11:52:48.056Z"
+  },
+  {
+    "id": "7b7d794d-1425-444a-a321-339df8e9e04e",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "ccabc753-a981-42b5-83e4-2151a95d57fe",
+    "path": "/dashboard/messages",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T08:35:37.966Z"
+  },
+  {
+    "id": "7b997476-8ed9-49c3-947c-a6c02745b9ca",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "68027df1-e2e1-4bd8-b75d-b28651daa5a3",
+    "path": "/dashboard/admin/organizations",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T09:51:59.248Z"
+  },
+  {
+    "id": "7cde1dc8-773e-4906-a213-ea51e9faf827",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "68027df1-e2e1-4bd8-b75d-b28651daa5a3",
+    "path": "/dashboard/admin/finance/analytics",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T09:45:08.749Z"
+  },
+  {
+    "id": "7e2a4eb2-cabf-4a05-a904-03e61fa0e7e8",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "45b2e5d9-ea98-43fe-8b54-cb55aba629e8",
+    "path": "/",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T16:48:46.365Z"
+  },
+  {
+    "id": "7e4e6671-011e-4b5d-a6b3-59af886f47d4",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "68027df1-e2e1-4bd8-b75d-b28651daa5a3",
+    "path": "/dashboard/admin/finance",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T09:44:56.276Z"
+  },
+  {
+    "id": "7fc70bf9-2493-48ea-825d-fb04f325b914",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "e8384f45-2f12-4834-828a-2a586813d091",
+    "path": "/dashboard/cms",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-13T11:51:31.075Z"
+  },
+  {
+    "id": "7fed512f-3c05-4bc8-8afc-cb4364ce340b",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "68027df1-e2e1-4bd8-b75d-b28651daa5a3",
+    "path": "/dashboard/admin/programmes",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T09:45:20.700Z"
+  },
+  {
+    "id": "81215924-1123-4553-becb-73540c1cf8b8",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "e8384f45-2f12-4834-828a-2a586813d091",
+    "path": "/",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-13T11:44:54.686Z"
+  },
+  {
+    "id": "8224d0d6-ef08-45c7-b1a1-4d5e21989676",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "775a4ff7-b739-4560-bb04-d690531eacfe",
+    "path": "/",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-14T19:05:24.361Z"
+  },
+  {
+    "id": "833aa633-8a79-46a9-a0bb-e78cc75eb1bf",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "2d1d9066-eef4-467a-9145-b572a3b64494",
+    "path": "/dashboard/admin/organizations",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T14:52:44.014Z"
+  },
+  {
+    "id": "847184cc-491b-4383-a8b7-eaaa29c4bff2",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "45b2e5d9-ea98-43fe-8b54-cb55aba629e8",
+    "path": "/dashboard/cms",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T16:53:39.360Z"
+  },
+  {
+    "id": "854dd320-23f7-4ead-ab2b-97e9606dd485",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "2d1d9066-eef4-467a-9145-b572a3b64494",
+    "path": "/dashboard/admin/organizations",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T14:16:50.476Z"
+  },
+  {
+    "id": "855c1ca2-ec7c-4e05-9179-0bea0fdc936e",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "1fde6246-e1be-4175-8da7-06777ce0e11b",
+    "path": "/dashboard/broadcasts",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T20:04:16.007Z"
+  },
+  {
+    "id": "85c5c71f-fb6d-4dc4-bfdd-1d04b62e30ad",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "e8384f45-2f12-4834-828a-2a586813d091",
+    "path": "/dashboard/cms",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-13T11:12:13.536Z"
+  },
+  {
+    "id": "87189645-68b3-41b7-9574-eb29a50e5478",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "35966b3a-90ee-4857-87c7-5c4e8b305791",
+    "path": "/dashboard/admin/analytics",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T11:32:31.351Z"
+  },
+  {
+    "id": "882a5f72-1f3b-49c6-8d29-1382138ac5bf",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "1fde6246-e1be-4175-8da7-06777ce0e11b",
+    "path": "/dashboard/admin/special-programmes/new",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T20:27:05.258Z"
+  },
+  {
+    "id": "885b005f-58bd-49a3-8902-5cabeec2c695",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "6bedebe5-6f75-404a-ab0f-2dbc2b176d05",
+    "path": "/",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-13T08:28:57.676Z"
+  },
+  {
+    "id": "8b3fceca-d6b9-487a-b759-f0ea895ad61f",
+    "visitorId": "0b29b9ff-9b47-49a3-8825-bb74c60ae87c",
+    "sessionId": "c7b6fb95-20ba-47b2-b474-4ebaa1446960",
+    "path": "/dashboard/member/apply",
+    "userId": "c5068b94-ae78-4c39-9ca8-6c43055bde18",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+    "ip": "::1",
+    "createdAt": "2026-02-12T14:58:42.521Z"
+  },
+  {
+    "id": "8bad9bc7-1fb6-426e-b283-688db870c51f",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "cca0b95f-f5d6-4d07-ab44-6e8d7bdd431b",
+    "path": "/dashboard/admin/organizations/c02137d0-c3c1-445d-9d1a-92c7be200332",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T16:21:58.794Z"
+  },
+  {
+    "id": "8c74c882-3bb0-40d2-8295-cea57dcb0980",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "cefda9f5-5555-4659-82e2-87ad14902110",
+    "path": "/dashboard/broadcasts",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T08:54:32.451Z"
+  },
+  {
+    "id": "8d5ebebf-e1c8-44c2-ad7a-9be476292727",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "dede3470-5fc4-484b-b533-e7e684fdf749",
+    "path": "/dashboard/admin",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-12T08:10:25.265Z"
+  },
+  {
+    "id": "8db3ae99-499f-4048-876a-41ea703f0c3f",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "1fde6246-e1be-4175-8da7-06777ce0e11b",
+    "path": "/dashboard/admin/special-programmes",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T20:26:44.735Z"
+  },
+  {
+    "id": "8fb27e26-0a59-4b11-bc5f-ac53b0fcb1f9",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "1fde6246-e1be-4175-8da7-06777ce0e11b",
+    "path": "/dashboard/admin/reports",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T20:04:57.661Z"
+  },
+  {
+    "id": "90b570d0-33bd-46a1-b7a7-061487098788",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "e8384f45-2f12-4834-828a-2a586813d091",
+    "path": "/",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-13T11:44:52.237Z"
+  },
+  {
+    "id": "90cd956a-7b21-41b7-84d2-78ed38613593",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "6bedebe5-6f75-404a-ab0f-2dbc2b176d05",
+    "path": "/dashboard/admin/members",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-13T08:39:01.208Z"
+  },
+  {
+    "id": "91176cb3-3289-4e3f-abc9-95070f3205f2",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "35966b3a-90ee-4857-87c7-5c4e8b305791",
+    "path": "/auth/signin",
+    "userId": null,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T10:51:28.618Z"
+  },
+  {
+    "id": "917da4be-18a2-4d36-85a0-3dc458c22ce2",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "1e39a00c-3be2-4b71-8c03-74460dad8c81",
+    "path": "/dashboard/admin/special-programmes",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-12T14:01:27.818Z"
+  },
+  {
+    "id": "928df00b-4225-4d1f-8cc8-30c7980e6158",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "45b2e5d9-ea98-43fe-8b54-cb55aba629e8",
+    "path": "/dashboard/cms",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T17:20:02.862Z"
+  },
+  {
+    "id": "947473bc-71ed-494a-afbc-c89a25d8bb65",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "35966b3a-90ee-4857-87c7-5c4e8b305791",
+    "path": "/dashboard/admin/settings",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T11:32:37.504Z"
+  },
+  {
+    "id": "94d0bb21-8af3-4009-8ec0-c469af45eb61",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "68027df1-e2e1-4bd8-b75d-b28651daa5a3",
+    "path": "/dashboard/admin/meetings",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T09:47:53.888Z"
+  },
+  {
+    "id": "9740979c-6f40-4611-bed3-0f94732cd906",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "cefda9f5-5555-4659-82e2-87ad14902110",
+    "path": "/dashboard/messages",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T09:04:55.382Z"
+  },
+  {
+    "id": "9827f97f-4248-4dad-8268-918345c0c234",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "6bedebe5-6f75-404a-ab0f-2dbc2b176d05",
+    "path": "/OYO",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-13T08:22:40.953Z"
+  },
+  {
+    "id": "982851fe-846a-4cba-a5a4-edda291c7001",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "68027df1-e2e1-4bd8-b75d-b28651daa5a3",
+    "path": "/dashboard/admin/organizations",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T09:57:36.201Z"
+  },
+  {
+    "id": "9905bb58-b549-4132-9c36-d5c656b43b72",
+    "visitorId": "0b29b9ff-9b47-49a3-8825-bb74c60ae87c",
+    "sessionId": "c7b6fb95-20ba-47b2-b474-4ebaa1446960",
+    "path": "/dashboard/member",
+    "userId": "c5068b94-ae78-4c39-9ca8-6c43055bde18",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+    "ip": "::1",
+    "createdAt": "2026-02-12T14:39:54.348Z"
+  },
+  {
+    "id": "9aa2f210-1534-43ca-a253-45a7674fe6c9",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "e8384f45-2f12-4834-828a-2a586813d091",
+    "path": "/dashboard/cms",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-13T11:53:02.719Z"
+  },
+  {
+    "id": "9b31a959-1680-48c8-9044-8de075af829d",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "1fde6246-e1be-4175-8da7-06777ce0e11b",
+    "path": "/dashboard/admin/finance",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T20:04:11.184Z"
+  },
+  {
+    "id": "9cdf8add-deb6-4aea-ab06-cfe2045c29b9",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "35966b3a-90ee-4857-87c7-5c4e8b305791",
+    "path": "/dashboard/admin/audit",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T11:31:41.978Z"
+  },
+  {
+    "id": "9d8fb271-8d1f-41a3-95c9-8170e7da7599",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "2d1d9066-eef4-467a-9145-b572a3b64494",
+    "path": "/dashboard/admin/organizations",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T15:03:00.230Z"
+  },
+  {
+    "id": "9f2e2cdb-a552-4790-af72-868eacc8d771",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "35966b3a-90ee-4857-87c7-5c4e8b305791",
+    "path": "/dashboard/admin/posts",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T11:30:08.627Z"
+  },
+  {
+    "id": "a0a493cc-a00f-46a6-bf26-a7b3eefc8498",
+    "visitorId": "0b29b9ff-9b47-49a3-8825-bb74c60ae87c",
+    "sessionId": "c7b6fb95-20ba-47b2-b474-4ebaa1446960",
+    "path": "/dashboard/member",
+    "userId": "c5068b94-ae78-4c39-9ca8-6c43055bde18",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+    "ip": "::1",
+    "createdAt": "2026-02-12T14:59:55.790Z"
+  },
+  {
+    "id": "a1ecaccc-0449-4753-abf9-2b8ec13d4a3e",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "88fa3e85-4300-4c06-becb-fcd17acc8c06",
+    "path": "/EDO-BENIN-AUCHIBRANC",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T07:24:02.419Z"
+  },
+  {
+    "id": "a31e8050-c6a7-402b-a89f-78d662fd2be7",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "35966b3a-90ee-4857-87c7-5c4e8b305791",
+    "path": "/dashboard/admin/finance",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T10:53:15.884Z"
+  },
+  {
+    "id": "a5b9f435-17c2-4ee7-9acb-9db964743448",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "e8384f45-2f12-4834-828a-2a586813d091",
+    "path": "/dashboard/admin",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-13T11:51:23.842Z"
+  },
+  {
+    "id": "a7056677-5ece-4f7c-b1da-42710ee9df03",
+    "visitorId": "0b29b9ff-9b47-49a3-8825-bb74c60ae87c",
+    "sessionId": "c7b6fb95-20ba-47b2-b474-4ebaa1446960",
+    "path": "/dashboard/member/apply",
+    "userId": "c5068b94-ae78-4c39-9ca8-6c43055bde18",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+    "ip": "::1",
+    "createdAt": "2026-02-12T15:07:35.878Z"
+  },
+  {
+    "id": "a7facafa-18b2-4147-8c14-795e7b72351d",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "1fde6246-e1be-4175-8da7-06777ce0e11b",
+    "path": "/dashboard/admin/assets",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T20:04:41.633Z"
+  },
+  {
+    "id": "a89cc14b-7540-4c76-b694-527f87f190e8",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "2499c6ff-e8bb-4ebf-8f8c-b6fe6e4e7727",
+    "path": "/",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36 Edg/145.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-17T07:02:29.331Z"
+  },
+  {
+    "id": "a8f4520b-9f95-4382-b508-e5df1b2c6375",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "35966b3a-90ee-4857-87c7-5c4e8b305791",
+    "path": "/dashboard/admin/finance",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T11:00:56.057Z"
+  },
+  {
+    "id": "a9e38a4d-207f-4497-a7f6-afbf4410f5a6",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "1fde6246-e1be-4175-8da7-06777ce0e11b",
+    "path": "/dashboard/admin/cms/pages",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T20:45:27.704Z"
+  },
+  {
+    "id": "a9fd167b-f749-4786-9fb2-7709e53a09a8",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "e8384f45-2f12-4834-828a-2a586813d091",
+    "path": "/dashboard/cms",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-13T11:30:05.834Z"
+  },
+  {
+    "id": "aa67bba1-a64f-4272-ba8a-17b351220edb",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "ccabc753-a981-42b5-83e4-2151a95d57fe",
+    "path": "/auth/signin",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T12:06:00.417Z"
+  },
+  {
+    "id": "aa871ea0-69b7-4ebb-bff5-80451156ffe6",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "b735bdc2-01be-4fa8-b269-0c5b2bb37409",
+    "path": "/dashboard/admin/burials",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-12T10:31:36.490Z"
+  },
+  {
+    "id": "aae4a665-a3f7-4db9-bbe8-e94d1aedaca4",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "1e39a00c-3be2-4b71-8c03-74460dad8c81",
+    "path": "/dashboard/admin/finance/campaigns",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-12T13:56:03.890Z"
+  },
+  {
+    "id": "acb7bdba-1d34-414e-903d-600a4456abc0",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "1e39a00c-3be2-4b71-8c03-74460dad8c81",
+    "path": "/dashboard/admin",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-12T14:17:43.933Z"
+  },
+  {
+    "id": "ad61f29d-5e90-4ed2-a247-694445e73518",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "35966b3a-90ee-4857-87c7-5c4e8b305791",
+    "path": "/dashboard/admin/users",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T11:32:02.672Z"
+  },
+  {
+    "id": "af594dda-c737-4d2d-80f1-79460dda225f",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "68027df1-e2e1-4bd8-b75d-b28651daa5a3",
+    "path": "/dashboard/admin/teskiyah",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T09:48:25.102Z"
+  },
+  {
+    "id": "afaeeecd-a0ef-442b-921d-25d8f57d2691",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "ccabc753-a981-42b5-83e4-2151a95d57fe",
+    "path": "/auth/signin",
+    "userId": null,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T08:59:38.296Z"
+  },
+  {
+    "id": "b0098a7e-db08-42b5-99b4-2a6613c65c6a",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "2d1d9066-eef4-467a-9145-b572a3b64494",
+    "path": "/dashboard/admin/organizations",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T15:09:46.121Z"
+  },
+  {
+    "id": "b08660af-41f8-4126-8560-6eed27c77acc",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "e8384f45-2f12-4834-828a-2a586813d091",
+    "path": "/dashboard/cms",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-13T11:29:50.218Z"
+  },
+  {
+    "id": "b0bf35c1-5f12-4012-98d1-88e2271ebff2",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "775a4ff7-b739-4560-bb04-d690531eacfe",
+    "path": "/",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-14T18:58:22.681Z"
+  },
+  {
+    "id": "b12a4655-4e7e-423f-a6b2-c1c113a94be1",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "1fde6246-e1be-4175-8da7-06777ce0e11b",
+    "path": "/dashboard/admin/special-programmes%20text-muted-foreground",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T20:27:48.222Z"
+  },
+  {
+    "id": "b1860361-a1dc-4c1e-8f11-8d652e6dd247",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "cefda9f5-5555-4659-82e2-87ad14902110",
+    "path": "/dashboard/broadcasts",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T09:03:03.650Z"
+  },
+  {
+    "id": "b1f044a6-58f4-4a8b-b6cc-ee3812a30495",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "6bedebe5-6f75-404a-ab0f-2dbc2b176d05",
+    "path": "/dashboard/admin/users",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-13T08:29:19.699Z"
+  },
+  {
+    "id": "b4e9cb5d-91d0-4357-abf5-bca8f2da2598",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "2499c6ff-e8bb-4ebf-8f8c-b6fe6e4e7727",
+    "path": "/",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36 Edg/145.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-17T06:45:25.055Z"
+  },
+  {
+    "id": "b59a2108-e025-4c5a-8c6a-e19d8ebfeb73",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "f6215dc2-d41b-4f55-86c2-9954192b4097",
+    "path": "/dashboard/admin/members",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-12T16:17:19.207Z"
+  },
+  {
+    "id": "b691676a-34f4-492e-a41e-447f6391a8d7",
+    "visitorId": "0b29b9ff-9b47-49a3-8825-bb74c60ae87c",
+    "sessionId": "a632344f-7158-4f2a-8994-01203d8a1e37",
+    "path": "/auth/signin",
+    "userId": null,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+    "ip": "::1",
+    "createdAt": "2026-02-12T16:46:24.244Z"
+  },
+  {
+    "id": "b69e9d78-78d4-4f38-a7da-7fad03988da0",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "1e39a00c-3be2-4b71-8c03-74460dad8c81",
+    "path": "/dashboard/messages",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-12T13:56:50.505Z"
+  },
+  {
+    "id": "b6b4541b-25b8-4c57-8ef0-d9cbdea7774a",
+    "visitorId": "0b29b9ff-9b47-49a3-8825-bb74c60ae87c",
+    "sessionId": "c7b6fb95-20ba-47b2-b474-4ebaa1446960",
+    "path": "/dashboard/member/apply",
+    "userId": "c5068b94-ae78-4c39-9ca8-6c43055bde18",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+    "ip": "::1",
+    "createdAt": "2026-02-12T15:00:16.995Z"
+  },
+  {
+    "id": "b8003d7c-59de-44dc-8e2c-14f9a3670eb9",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "1fde6246-e1be-4175-8da7-06777ce0e11b",
+    "path": "/dashboard/admin/finance",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T20:04:26.412Z"
+  },
+  {
+    "id": "b850d785-faec-4b53-8cb5-a7bbaf586c77",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "63869f4b-8a02-46d0-ab34-1a49122cd69f",
+    "path": "/dashboard/admin",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T14:52:33.955Z"
+  },
+  {
+    "id": "ba9de015-ad7b-4e63-948a-a6b3791790b7",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "88fa3e85-4300-4c06-becb-fcd17acc8c06",
+    "path": "/OYO",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T07:20:54.566Z"
+  },
+  {
+    "id": "bb1f00e7-fbed-48b6-a69f-d35186cbc3c2",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "ccabc753-a981-42b5-83e4-2151a95d57fe",
+    "path": "/dashboard/broadcasts",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T08:34:59.096Z"
+  },
+  {
+    "id": "bbb55392-f702-4ea7-bcf4-a901ce7c82bb",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "ccabc753-a981-42b5-83e4-2151a95d57fe",
+    "path": "/dashboard/messages",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T08:51:12.148Z"
+  },
+  {
+    "id": "bcf62819-78e9-4dc6-a9b1-65f59d818eec",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "1e39a00c-3be2-4b71-8c03-74460dad8c81",
+    "path": "/dashboard/admin/users",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-12T14:06:03.998Z"
+  },
+  {
+    "id": "bd567897-02ae-4591-9378-09f4efe52821",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "591f06c8-d411-4ab2-8f09-703331858927",
+    "path": "/dashboard/admin/members",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-13T10:00:19.058Z"
+  },
+  {
+    "id": "be800993-decc-4603-89df-2c5b2e4e16c5",
+    "visitorId": "0b29b9ff-9b47-49a3-8825-bb74c60ae87c",
+    "sessionId": "c7b6fb95-20ba-47b2-b474-4ebaa1446960",
+    "path": "/auth/signin",
+    "userId": null,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+    "ip": "::1",
+    "createdAt": "2026-02-12T14:39:26.379Z"
+  },
+  {
+    "id": "be90cbc9-f423-460a-8f76-ad7d2a4c614d",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "35966b3a-90ee-4857-87c7-5c4e8b305791",
+    "path": "/dashboard/admin/finance/analytics",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T11:01:18.628Z"
+  },
+  {
+    "id": "bec77648-881f-4aed-a22f-3588d44bb4b2",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "ccabc753-a981-42b5-83e4-2151a95d57fe",
+    "path": "/auth/signin",
+    "userId": null,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T09:08:02.663Z"
+  },
+  {
+    "id": "c07418fa-83b2-4518-a5a9-57385c255a10",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "35966b3a-90ee-4857-87c7-5c4e8b305791",
+    "path": "/dashboard/admin/settings/payments",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T11:36:44.652Z"
+  },
+  {
+    "id": "c555f336-46b9-4ec3-8d47-39e2bc7dff26",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "1c1f325c-b503-404d-9bea-b129a2d93004",
+    "path": "/",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T13:23:43.760Z"
+  },
+  {
+    "id": "c6bf2a23-ec69-49bf-838c-1b964ccefffd",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "e8384f45-2f12-4834-828a-2a586813d091",
+    "path": "/dashboard/admin/members",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-13T11:08:36.525Z"
+  },
+  {
+    "id": "c85f38ec-741b-4151-80da-b6e00da4e619",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "45b2e5d9-ea98-43fe-8b54-cb55aba629e8",
+    "path": "/dashboard/admin/settings",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T16:00:49.603Z"
+  },
+  {
+    "id": "c96e69dc-ac78-4b77-84bc-d4a80fb57ece",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "1fde6246-e1be-4175-8da7-06777ce0e11b",
+    "path": "/dashboard/admin/galleries",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T20:49:47.571Z"
+  },
+  {
+    "id": "c984f074-5fb2-4a6c-a715-74843f8a8d19",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "6bedebe5-6f75-404a-ab0f-2dbc2b176d05",
+    "path": "/dashboard/admin/members/de10819f-0034-4ff6-9516-3ac5df4691ed",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-13T09:02:06.493Z"
+  },
+  {
+    "id": "cc4ffd86-379f-494e-ad92-cf7c1203cdcf",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "35966b3a-90ee-4857-87c7-5c4e8b305791",
+    "path": "/dashboard/cms",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T11:32:21.752Z"
+  },
+  {
+    "id": "cd10be70-b135-4d7f-8551-53cd36555122",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "1e39a00c-3be2-4b71-8c03-74460dad8c81",
+    "path": "/auth/signin",
+    "userId": null,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-12T14:17:30.300Z"
+  },
+  {
+    "id": "cd9a80dc-3ec8-48c6-95a4-1f17d967e5f3",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "ccabc753-a981-42b5-83e4-2151a95d57fe",
+    "path": "/dashboard/admin/finance",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T08:35:45.345Z"
+  },
+  {
+    "id": "cda7f02c-3840-4118-b0ec-d5177652e8d8",
+    "visitorId": "0b29b9ff-9b47-49a3-8825-bb74c60ae87c",
+    "sessionId": "c7b6fb95-20ba-47b2-b474-4ebaa1446960",
+    "path": "/dashboard/member/apply",
+    "userId": "c5068b94-ae78-4c39-9ca8-6c43055bde18",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+    "ip": "::1",
+    "createdAt": "2026-02-12T14:58:34.099Z"
+  },
+  {
+    "id": "d081801b-1ccf-41f2-afb7-8637d4a0b9f9",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "1e39a00c-3be2-4b71-8c03-74460dad8c81",
+    "path": "/dashboard/admin/settings",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-12T14:18:35.959Z"
+  },
+  {
+    "id": "d1052b1c-3741-4560-8011-32d23cea977a",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "68027df1-e2e1-4bd8-b75d-b28651daa5a3",
+    "path": "/dashboard/admin/adhkar",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T09:48:20.177Z"
+  },
+  {
+    "id": "d178b08d-650f-4128-9223-2f8879afd2c9",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "6bedebe5-6f75-404a-ab0f-2dbc2b176d05",
+    "path": "/dashboard/admin/members",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-13T08:30:07.325Z"
+  },
+  {
+    "id": "d27621d9-a33e-4f3a-99fe-6f641fbb11e4",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "1fde6246-e1be-4175-8da7-06777ce0e11b",
+    "path": "/dashboard/admin/cms/menus",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T20:48:50.121Z"
+  },
+  {
+    "id": "d324275e-f2b5-4dc9-8b74-afb6f3f8a7ed",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "2d1d9066-eef4-467a-9145-b572a3b64494",
+    "path": "/dashboard/admin/organizations",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T14:15:23.286Z"
+  },
+  {
+    "id": "d33a2adf-0971-4a2b-9a9b-8b4f72a8dac0",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "1e39a00c-3be2-4b71-8c03-74460dad8c81",
+    "path": "/dashboard/admin/meetings",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-12T14:05:28.226Z"
+  },
+  {
+    "id": "d3c12db1-82c1-4f1a-950c-8352c2952be8",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "35966b3a-90ee-4857-87c7-5c4e8b305791",
+    "path": "/dashboard/admin/meetings",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T11:30:03.085Z"
+  },
+  {
+    "id": "d41d1c65-9a6d-40a9-8775-74e8789d98e1",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "6bedebe5-6f75-404a-ab0f-2dbc2b176d05",
+    "path": "/dashboard/admin/members/de10819f-0034-4ff6-9516-3ac5df4691ed",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-13T08:39:09.838Z"
+  },
+  {
+    "id": "d420b25a-0f6e-4df3-9d85-d95e2a35c784",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "63869f4b-8a02-46d0-ab34-1a49122cd69f",
+    "path": "/dashboard/admin",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T15:06:54.657Z"
+  },
+  {
+    "id": "d4f1ad15-9cf3-41e2-8990-257fbfa6ce32",
+    "visitorId": "0b29b9ff-9b47-49a3-8825-bb74c60ae87c",
+    "sessionId": "c7b6fb95-20ba-47b2-b474-4ebaa1446960",
+    "path": "/dashboard/member",
+    "userId": "c5068b94-ae78-4c39-9ca8-6c43055bde18",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+    "ip": "::1",
+    "createdAt": "2026-02-12T15:00:13.210Z"
+  },
+  {
+    "id": "d4f2395a-861f-47c1-97aa-377b4bc13a38",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "e8384f45-2f12-4834-828a-2a586813d091",
+    "path": "/",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-13T11:48:18.942Z"
+  },
+  {
+    "id": "d557ece2-526f-4941-8c72-a26ca74f77ca",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "ccabc753-a981-42b5-83e4-2151a95d57fe",
+    "path": "/auth/signin",
+    "userId": null,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T08:51:39.394Z"
+  },
+  {
+    "id": "d565f6a4-620e-43c7-97f1-c8ef5640050b",
+    "visitorId": "0b29b9ff-9b47-49a3-8825-bb74c60ae87c",
+    "sessionId": "86889e5d-0db7-46e0-9a01-b5e5af93e2c1",
+    "path": "/dashboard/member",
+    "userId": "c5068b94-ae78-4c39-9ca8-6c43055bde18",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+    "ip": "::1",
+    "createdAt": "2026-02-12T16:14:23.188Z"
+  },
+  {
+    "id": "d5c1f068-5360-40e1-89e5-026d9e7e47fd",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "6bedebe5-6f75-404a-ab0f-2dbc2b176d05",
+    "path": "/OYO",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-13T08:28:26.548Z"
+  },
+  {
+    "id": "d69c92e4-b51e-4109-ae51-cc04084b6d9f",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "8e525930-2273-4e05-9cab-9a0882568541",
+    "path": "/",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-13T08:17:31.977Z"
+  },
+  {
+    "id": "d7c80200-7ad1-42e0-8605-a6563314450b",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "68027df1-e2e1-4bd8-b75d-b28651daa5a3",
+    "path": "/dashboard/admin/members",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T09:49:13.285Z"
+  },
+  {
+    "id": "da83119b-b223-4cf2-a50a-366218fec493",
+    "visitorId": "0b29b9ff-9b47-49a3-8825-bb74c60ae87c",
+    "sessionId": "bebdcce6-2fae-4eb8-a3bd-e47e568fd3de",
+    "path": "/auth/verify-email",
+    "userId": null,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+    "ip": "::1",
+    "createdAt": "2026-02-12T14:36:53.802Z"
+  },
+  {
+    "id": "dac3d9be-2c8f-4332-b71c-0e7078ff5929",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "68027df1-e2e1-4bd8-b75d-b28651daa5a3",
+    "path": "/dashboard/admin/occasions",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T09:48:33.097Z"
+  },
+  {
+    "id": "dacb467d-affd-4c42-a787-647de8452eb7",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "35966b3a-90ee-4857-87c7-5c4e8b305791",
+    "path": "/dashboard/admin/reports",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T11:06:48.755Z"
+  },
+  {
+    "id": "db26c0ae-5f7f-4cd2-bb41-b59ea5241c46",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "68027df1-e2e1-4bd8-b75d-b28651daa5a3",
+    "path": "/dashboard/admin/organizations",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T09:49:25.044Z"
+  },
+  {
+    "id": "ddb4cd1f-ee86-433c-8905-c1f439aa1fac",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "63869f4b-8a02-46d0-ab34-1a49122cd69f",
+    "path": "/dashboard/admin/promotions",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T15:22:36.246Z"
+  },
+  {
+    "id": "ddba8cb6-1371-49e6-a113-2013122795ca",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "35966b3a-90ee-4857-87c7-5c4e8b305791",
+    "path": "/dashboard/admin/settings",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T11:49:16.915Z"
+  },
+  {
+    "id": "e10a6b5a-9318-407c-9980-9052466c7653",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "ccabc753-a981-42b5-83e4-2151a95d57fe",
+    "path": "/auth/signin",
+    "userId": null,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T08:53:29.922Z"
+  },
+  {
+    "id": "e2a89e16-7454-426b-be7a-2eb224c6f3c6",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "68b92d4d-527d-4d0d-8b34-653c05c9d0e8",
+    "path": "/dashboard/admin",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-14T11:08:29.856Z"
+  },
+  {
+    "id": "e2d50154-4995-4ee0-b9e6-535bcecdfab6",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "45b2e5d9-ea98-43fe-8b54-cb55aba629e8",
+    "path": "/dashboard/cms",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T16:03:01.696Z"
+  },
+  {
+    "id": "e566b09a-6123-460c-9aed-8d24f4119b6a",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "6bedebe5-6f75-404a-ab0f-2dbc2b176d05",
+    "path": "/dashboard/admin",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-13T08:29:04.492Z"
+  },
+  {
+    "id": "e5c7a29d-7748-4966-a526-991c9fa0f360",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "88fa3e85-4300-4c06-becb-fcd17acc8c06",
+    "path": "/OYO-AKINYELE-TOSEBRANCH",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T07:24:28.118Z"
+  },
+  {
+    "id": "e5cdf462-488d-4251-b2b4-8570e4a32a11",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "68b92d4d-527d-4d0d-8b34-653c05c9d0e8",
+    "path": "/",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-14T11:06:30.300Z"
+  },
+  {
+    "id": "e7e9be1d-09de-4874-ac8c-6d20858a823d",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "1e39a00c-3be2-4b71-8c03-74460dad8c81",
+    "path": "/dashboard/admin/teskiyah",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-12T14:05:52.527Z"
+  },
+  {
+    "id": "e89ad78e-2777-47c6-b572-5e0689c62c23",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "35966b3a-90ee-4857-87c7-5c4e8b305791",
+    "path": "/dashboard/admin/assets",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T11:06:39.956Z"
+  },
+  {
+    "id": "ea80fd5c-3398-4891-90eb-f462aea2d8f5",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "35966b3a-90ee-4857-87c7-5c4e8b305791",
+    "path": "/dashboard/admin/organizations",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T11:31:05.618Z"
+  },
+  {
+    "id": "eaacc08e-1ea1-46b2-a7c6-c23ed084a6ff",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "1e39a00c-3be2-4b71-8c03-74460dad8c81",
+    "path": "/auth/signin",
+    "userId": null,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-12T14:24:01.774Z"
+  },
+  {
+    "id": "ebf06359-a08f-407f-a603-9efa63247410",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "35966b3a-90ee-4857-87c7-5c4e8b305791",
+    "path": "/dashboard/admin/settings/payments",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T11:41:05.956Z"
+  },
+  {
+    "id": "ed056bf6-5c5b-45f9-ad1d-671bd8942194",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "f6215dc2-d41b-4f55-86c2-9954192b4097",
+    "path": "/dashboard/admin",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-12T16:16:11.353Z"
+  },
+  {
+    "id": "f2b99ba1-fa4d-4649-b254-a70e8d81c031",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "ccabc753-a981-42b5-83e4-2151a95d57fe",
+    "path": "/auth/signin",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T12:24:04.836Z"
+  },
+  {
+    "id": "f46d6838-4f5f-4f24-a317-167371d7947b",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "68b92d4d-527d-4d0d-8b34-653c05c9d0e8",
+    "path": "/",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-14T11:31:28.211Z"
+  },
+  {
+    "id": "f88a203d-e4b5-4e11-842f-1365acf4f1fa",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "ccabc753-a981-42b5-83e4-2151a95d57fe",
+    "path": "/dashboard/admin/analytics",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T08:27:39.603Z"
+  },
+  {
+    "id": "f9412272-f980-4186-b001-7b440c85c635",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "68027df1-e2e1-4bd8-b75d-b28651daa5a3",
+    "path": "/dashboard/admin/assets",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T09:45:15.150Z"
+  },
+  {
+    "id": "fa8e116b-0a17-4eab-9070-9c10894b73ac",
+    "visitorId": "0b29b9ff-9b47-49a3-8825-bb74c60ae87c",
+    "sessionId": "c7b6fb95-20ba-47b2-b474-4ebaa1446960",
+    "path": "/auth/verify-email",
+    "userId": null,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+    "ip": "::1",
+    "createdAt": "2026-02-12T14:39:22.031Z"
+  },
+  {
+    "id": "fb26ee73-aad8-43b7-b0dc-76006b30b5ea",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "2d1d9066-eef4-467a-9145-b572a3b64494",
+    "path": "/dashboard/admin/organizations",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-10T14:52:17.491Z"
+  },
+  {
+    "id": "fc2c98a3-e6d0-4f09-9353-75f76a581d0e",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "1fde6246-e1be-4175-8da7-06777ce0e11b",
+    "path": "/",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T20:03:43.112Z"
+  },
+  {
+    "id": "fe560a88-661e-4e6e-8694-477f23102b80",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "1fde6246-e1be-4175-8da7-06777ce0e11b",
+    "path": "/dashboard/admin/assets",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T20:26:29.509Z"
+  },
+  {
+    "id": "feef9dd3-91e1-40c5-b42e-d614bbeb1e2a",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "1fde6246-e1be-4175-8da7-06777ce0e11b",
+    "path": "/dashboard/admin/cms/pages/new",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T20:45:59.279Z"
+  },
+  {
+    "id": "ffa16859-811f-4daa-97ca-02abcf0c9c26",
+    "visitorId": "aba367f2-7c23-4777-a261-8bd19d682e78",
+    "sessionId": "45b2e5d9-ea98-43fe-8b54-cb55aba629e8",
+    "path": "/dashboard/cms",
+    "userId": "bea3ace2-2b9b-4868-8798-7a8d5e567a29",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0",
+    "ip": "::1",
+    "createdAt": "2026-02-11T17:35:16.625Z"
+  }
+]

@@ -23,7 +23,13 @@ export async function generateMembershipId(memberIdStr: string) {
     // Extract Location Data from Metadata (or direct fields if we mapped them)
     // We rely on metadata.country and metadata.state
     const metadata = member.metadata as any
-    const countryName = metadata?.country || "Nigeria" // Default to Nigeria if missing?
+    let countryName = metadata?.country || "Nigeria" // Default to Nigeria if missing?
+
+    // Normalize NG to Nigeria
+    if (countryName === "NG") {
+        countryName = "Nigeria"
+    }
+
     const stateName = metadata?.state
 
     if (!stateName) throw new Error("Member state is missing")
@@ -70,7 +76,10 @@ export async function generateMembershipId(memberIdStr: string) {
     const serialFormatted = serialRaw.toString().padStart(4, '0')
 
     // 6. Format ID
-    const newMemberId = `TMC/${country.code}/${state.code}/${serialFormatted}`
+    const prefix = "TMC"
+
+    // ID Format: TM/CC/SS/#### or TMC/CC/SS/####
+    const newMemberId = `${prefix}/${country.code}/${state.code}/${serialFormatted}`
 
     // 7. Update Member
     // Note: We only set ID and ApprovedAt. Status change might happen in the calling function or here.

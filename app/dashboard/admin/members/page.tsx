@@ -73,43 +73,59 @@ export default async function MembersPage() {
                       <tr className="border-b">
                         <th className="text-left p-2">Member ID</th>
                         <th className="text-left p-2">Name</th>
-                        <th className="text-left p-2">Email</th>
-                        <th className="text-left p-2">Organization</th>
+                        <th className="text-left p-2">State</th>
+                        <th className="text-left p-2">LGA</th>
+                        <th className="text-left p-2">Branch / Org</th>
                         <th className="text-left p-2">Status</th>
                         <th className="text-left p-2">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {membersList.map((member) => (
-                        <tr key={member.id} className="border-b">
-                          <td className="p-2 font-mono text-sm">{member.memberId}</td>
-                          <td className="p-2">{member.user.name}</td>
-                          <td className="p-2">{member.user.email}</td>
-                          <td className="p-2">
-                            <Badge variant="outline">{member.organization.name}</Badge>
-                          </td>
-                          <td className="p-2">
-                            <Badge
-                              variant={
-                                member.status === "ACTIVE"
-                                  ? "default"
-                                  : member.status === "PENDING"
-                                    ? "secondary"
-                                    : "destructive"
-                              }
-                            >
-                              {member.status}
-                            </Badge>
-                          </td>
-                          <td className="p-2">
-                            <Link href={`/dashboard/admin/members/${member.id}`}>
-                              <Button variant="ghost" size="sm">
-                                View
-                              </Button>
-                            </Link>
-                          </td>
-                        </tr>
-                      ))}
+                      {membersList.map((member) => {
+                        const metadata = member.metadata as any || {}
+                        return (
+                          <tr key={member.id} className="border-b">
+                            <td className="p-2 font-mono text-sm">{member.memberId || "Pending"}</td>
+                            <td className="p-2">
+                              <div>{member.user.name}</div>
+                              <div className="text-xs text-muted-foreground">{member.user.email}</div>
+                            </td>
+                            <td className="p-2">{metadata.state || "-"}</td>
+                            <td className="p-2">{metadata.lga || "-"}</td>
+                            <td className="p-2">
+                              {metadata.branch ? (
+                                <div className="text-sm">
+                                  <span className="font-medium">{metadata.branch}</span>
+                                  <br />
+                                  <Badge variant="outline" className="text-[10px]">{member.organization.name}</Badge>
+                                </div>
+                              ) : (
+                                <Badge variant="outline">{member.organization.name}</Badge>
+                              )}
+                            </td>
+                            <td className="p-2">
+                              <Badge
+                                variant={
+                                  member.status === "ACTIVE"
+                                    ? "default"
+                                    : member.status === "PENDING"
+                                      ? "secondary"
+                                      : "destructive"
+                                }
+                              >
+                                {member.status}
+                              </Badge>
+                            </td>
+                            <td className="p-2">
+                              <Link href={`/dashboard/admin/members/${member.id}`}>
+                                <Button variant="ghost" size="sm">
+                                  View
+                                </Button>
+                              </Link>
+                            </td>
+                          </tr>
+                        )
+                      })}
                     </tbody>
                   </table>
                 </div>
