@@ -23,6 +23,13 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
+  // E2EE Fields
+  publicKey                 String?   @db.Text
+  encryptedPrivateKey       String?   @db.Text
+  salt                      String?
+  encryptedPrivateKeyRecovery String? @db.Text
+  recoveryKeyHash           String?
+
   // Relations
   accounts      Account[]
   sessions      Session[]
