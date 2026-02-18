@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { PaymentReceipt } from '@/components/donation/payment-receipt';
 import { CheckCircle, Printer } from 'lucide-react';
 import Link from 'next/link';
+import { getPaymentByReference } from '@/lib/actions/donation';
 
 export function SuccessContent() {
     const searchParams = useSearchParams();
@@ -20,18 +21,16 @@ export function SuccessContent() {
 
     useEffect(() => {
         if (reference) {
-            import('@/lib/actions/donation').then(({ getPaymentByReference }) => {
-                getPaymentByReference(reference).then(result => {
-                    if (result.success && result.payment) {
-                        setPaymentStub({
-                            paystackRef: result.payment.paystackRef,
-                            amount: result.payment.amount,
-                            metadata: result.payment.metadata,
-                            date: result.payment.createdAt
-                        });
-                    }
-                    setLoading(false);
-                })
+            getPaymentByReference(reference).then(result => {
+                if (result.success && result.payment) {
+                    setPaymentStub({
+                        paystackRef: result.payment.paystackRef,
+                        amount: result.payment.amount,
+                        metadata: result.payment.metadata,
+                        date: result.payment.createdAt
+                    });
+                }
+                setLoading(false);
             })
         }
     }, [reference]);
