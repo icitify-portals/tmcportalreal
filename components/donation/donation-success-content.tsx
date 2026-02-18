@@ -22,12 +22,13 @@ export function SuccessContent() {
     useEffect(() => {
         if (reference) {
             getPaymentByReference(reference).then(result => {
-                if (result.success && result.payment) {
+                const payment = result.payment as any;
+                if (result.success && payment) {
                     setPaymentStub({
-                        paystackRef: result.payment.paystackRef,
-                        amount: result.payment.amount,
-                        metadata: result.payment.metadata,
-                        date: result.payment.createdAt
+                        paystackRef: payment.paystackRef,
+                        amount: payment.amount,
+                        metadata: payment.metadata,
+                        date: payment.createdAt
                     });
                 }
                 setLoading(false);
