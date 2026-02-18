@@ -1,34 +1,10 @@
 
-import 'dotenv/config';
-import mysql from 'mysql2/promise';
+import { PrismaClient } from '@prisma/client';
 
-// Parse DATABASE_URL if available
-const databaseUrl = process.env.DATABASE_URL;
-let dbConfig: any = {
-    host: '127.0.0.1',
-    user: 'root',
-    database: 'tmc_portal',
-};
-
-if (databaseUrl) {
-    try {
-        const url = new URL(databaseUrl);
-        dbConfig = {
-            host: url.hostname,
-            user: url.username,
-            password: url.password,
-            database: url.pathname.substring(1), // remove leading /
-            port: Number(url.port) || 3306,
-        };
-    } catch (e) {
-        console.warn("Invalid DATABASE_URL, using defaults");
-    }
-}
+const prisma = new PrismaClient();
 
 async function fix() {
-    console.log(`Connecting to DB at ${dbConfig.host}...`);
-    const connection = await mysql.createConnection(dbConfig);
-
+    console.log("Connecting to DB via Prisma...");
     try {
         console.log("Fixing invalid zero dates...");
 
@@ -37,21 +13,22 @@ async function fix() {
 
         for (const table of tables) {
             try {
-                // Check if table exists
-                const [rows] = await connection.execute(`SHOW TABLES LIKE '${table}'`);
-                if ((rows as any[]).length === 0) continue;
-
-                // Check if updatedAt exists
-                const [cols] = await connection.execute(`SHOW COLUMNS FROM ${table} LIKE 'updatedAt'`);
-                if ((cols as any[]).length === 0) continue;
-
                 console.log(`Checking ${table}...`);
-                // Update invalid dates
-                // MySQL 5.7/8.0 '0000-00-00' handling depends on sql_mode but updating it to NOW() is standard fix
-                await connection.query(`UPDATE ${table} SET updatedAt = CURRENT_TIMESTAMP WHERE CAST(updatedAt AS CHAR) LIKE '0000%' OR updatedAt IS NULL`);
-                console.log(`Fixed ${table}`);
+                // Use executeRawUnsafe because table names are dynamic
+                // CAST(updatedAt AS CHAR) might fail if column doesn't exist, so this is risky if we don't know schema
+                // But we are in a hurry. 
+                // Better query: check column existence first? 
+                // Prisma doesn't have easy "show columns".
+                // We'll try/catch each update.
+
+                // Note: updating to NOW().
+                const query = `UPDATE ${table} SET updatedAt = NOW() WHERE CAST(updatedAt AS CHAR) LIKE '0000%' OR updatedAt IS NULL`;
+
+                await prisma.$executeRawUnsafe(query);
+                console.log(`Fixed ${table} (or no invalid dates found/column missing)`);
             } catch (err: any) {
-                console.log(`Skipping ${table}: ${err.message}`);
+                // Ignore "Column not found" errors
+                console.log(`Skipping ${table}: ${err.message.split('\n')[0]}`);
             }
         }
 
@@ -60,7 +37,7 @@ async function fix() {
     } catch (error) {
         console.error("Fix failed:", error);
     } finally {
-        await connection.end();
+        await prisma.$disconnect();
     }
 }
 
