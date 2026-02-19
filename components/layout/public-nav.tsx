@@ -5,7 +5,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Home, LayoutDashboard, Calendar, Heart, Menu } from "lucide-react"
+import { Home, LayoutDashboard, Calendar, Heart, Menu, Building2 } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet"
 
 export function PublicNav() {
@@ -32,6 +32,11 @@ export function PublicNav() {
             title: "Programmes",
             href: "/programmes",
             icon: Calendar
+        },
+        {
+            title: "Our Organs",
+            href: "/organs",
+            icon: Building2
         },
         {
             title: "Donate",

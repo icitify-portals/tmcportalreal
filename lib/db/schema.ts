@@ -1508,3 +1508,17 @@ export const galleryImagesRelationsNew = relations(galleryImages, ({ one }) => (
     gallery: one(galleries, { fields: [galleryImages.galleryId], references: [galleries.id] }),
 }));
 
+// ─── Organs ────────────────────────────────────────────────────────────────────
+// Represents TMC institutional organs/subsidiaries (e.g. Al-Barakah, ZSF, etc.)
+export const organs = mysqlTable("organs", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
+    name: varchar("name", { length: 255 }).notNull(),
+    description: text("description"),
+    websiteUrl: varchar("websiteUrl", { length: 500 }),
+    logoUrl: varchar("logoUrl", { length: 500 }),
+    category: varchar("category", { length: 100 }),
+    order: int("order").default(0),
+    isActive: boolean("isActive").default(true),
+    createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+});

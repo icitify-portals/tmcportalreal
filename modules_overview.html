@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TMC Portal — Implemented Modules Overview</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+    :root {
+      --primary: #1a5276;
+      --accent: #2980b9;
+      --light: #eaf4fb;
+      --bg: #f8fafc;
+      --border: #d5e8f5;
+      --text: #1c2b3a;
+      --muted: #5d7a8e;
+      --admin-badge: #1a5276;
+      --user-badge: #27ae60;
+      --public-badge: #8e44ad;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    /* ── Print button – hidden on print ──────────────────────── */
+    #print-bar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      background: var(--primary);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 32px;
+      z-index: 1000;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    #print-bar span { font-size: 14px; font-weight: 600; letter-spacing: 0.3px; }
+    #print-bar button {
+      background: #fff;
+      color: var(--primary);
+      border: none;
+      border-radius: 6px;
+      padding: 8px 22px;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    #print-bar button:hover { background: #d6eaf8; }
+
+    /* ── Layout ──────────────────────────────────────────────── */
+    .container {
+      max-width: 900px;
+      margin: 70px auto 40px;
+      padding: 0 24px;
+    }
+
+    /* ── Cover ───────────────────────────────────────────────── */
+    .cover {
+      background: linear-gradient(135deg, #1a5276 0%, #2980b9 100%);
+      border-radius: 14px;
+      padding: 48px 40px;
+      color: #fff;
+      text-align: center;
+      margin-bottom: 36px;
+    }
+    .cover .logo-text {
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      opacity: 0.8;
+      margin-bottom: 12px;
+    }
+    .cover h1 {
+      font-size: 30px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .cover p { font-size: 14px; opacity: 0.85; }
+    .cover .date {
+      margin-top: 18px;
+      font-size: 12px;
+      opacity: 0.7;
+      font-style: italic;
+    }
+    .cover .badge-row {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+    .cover .badge {
+      background: rgba(255,255,255,0.18);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 20px;
+      padding: 4px 14px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    /* ── Note box ────────────────────────────────────────────── */
+    .note {
+      background: #eaf4fb;
+      border-left: 4px solid var(--accent);
+      border-radius: 6px;
+      padding: 12px 18px;
+      margin-bottom: 28px;
+      font-size: 12.5px;
+      color: var(--muted);
+    }
+    .note strong { color: var(--primary); }
+
+    /* ── Section headers ─────────────────────────────────────── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--primary);
+      color: #fff;
+      border-radius: 8px;
+      padding: 10px 18px;
+      margin: 32px 0 16px;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+    .section-header .icon { font-size: 18px; }
+
+    /* ── Module cards ────────────────────────────────────────── */
+    .module-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 16px;
+      overflow: hidden;
+      page-break-inside: avoid;
+      box-shadow: 0 1px 4px rgba(26,82,118,0.06);
+    }
+
+    .module-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 13px 18px;
+      background: var(--light);
+      border-bottom: 1px solid var(--border);
+    }
+    .module-icon { font-size: 20px; }
+    .module-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+    .module-path {
+      margin-left: auto;
+      background: var(--primary);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 600;
+      font-family: monospace;
+      padding: 3px 10px;
+      border-radius: 12px;
+      letter-spacing: 0.2px;
+    }
+
+    .module-body { padding: 14px 18px; }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .info-block {
+      border-radius: 7px;
+      padding: 11px 14px;
+    }
+    .info-block.admin {
+      background: #eaf4fb;
+      border-left: 3px solid var(--admin-badge);
+    }
+    .info-block.user {
+      background: #eafaf1;
+      border-left: 3px solid var(--user-badge);
+    }
+    .info-block.full {
+      grid-column: 1 / -1;
+    }
+
+    .info-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 5px;
+    }
+    .info-block.admin .info-label { color: var(--admin-badge); }
+    .info-block.user .info-label { color: var(--user-badge); }
+
+    .info-text { font-size: 12.5px; color: var(--text); line-height: 1.55; }
+
+    /* ── Public pages table ──────────────────────────────────── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      font-size: 12.5px;
+      box-shadow: 0 1px 4px rgba(26,82,118,0.06);
+    }
+    thead tr {
+      background: var(--primary);
+      color: #fff;
+    }
+    thead th {
+      padding: 10px 14px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 12px;
+    }
+    tbody tr:nth-child(even) { background: #f4f9fe; }
+    tbody td { padding: 9px 14px; border-top: 1px solid var(--border); color: var(--text); }
+    tbody td code {
+      background: #d6eaf8;
+      color: var(--primary);
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    /* ── Footer ──────────────────────────────────────────────── */
+    .footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 11px;
+      margin-top: 40px;
+      padding: 20px 0;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ── Print tweaks ────────────────────────────────────────── */
+    @media print {
+      #print-bar { display: none !important; }
+      body { background: #fff; font-size: 11.5px; }
+      .container { margin-top: 0; padding: 0 16px; }
+      .cover { border-radius: 8px; padding: 36px; }
+      .module-card { box-shadow: none; }
+      .section-header { margin-top: 22px; }
+      @page { margin: 18mm 16mm; size: A4; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Print bar -->
+<div id="print-bar">
+  <span>📋 TMC Portal — Modules Overview</span>
+  <button onclick="window.print()">⬇ Download / Print as PDF</button>
+</div>
+
+<div class="container">
+
+  <!-- Cover -->
+  <div class="cover">
+    <div class="logo-text">TMC Portal Documentation</div>
+    <h1>Implemented Modules Overview</h1>
+    <p>A comprehensive reference for administrators and members, detailing every implemented module, its admin setup workflow, and how users interact with it.</p>
+    <div class="badge-row">
+      <span class="badge">27 Admin Modules</span>
+      <span class="badge">6 Member Modules</span>
+      <span class="badge">9 Public Pages</span>
+    </div>
+    <div class="date">Generated: February 2026</div>
+  </div>
+
+  <!-- Note -->
+  <div class="note">
+    <strong>Multi-Tenant Hierarchy:</strong> The portal operates on a <strong>National → State → Local Government → Branch</strong> structure.
+    Admins at each level see only data scoped to their organisation and its children.
+  </div>
+
+  <!-- ════════ ADMIN MODULES ════════ -->
+  <div class="section-header">
+    <span class="icon">🛡️</span>
+    Admin Dashboard Modules
+  </div>
+
+  <!-- 1. Dashboard Overview -->
+  <div class="module-card">
+    <div class="module-header">
+      <span class="module-icon">🏠</span>
+      <div>
+        <div class="module-title">1. Admin Dashboard Overview</div>
+      </div>
+      <span class="module-path">/dashboard/admin</span>
+    </div>
+    <div class="module-body">
+      <div class="row">
+        <div class="info-block admin">
+          <div class="info-label">🔧 Admin Setup</div>
+          <div class="info-text">No manual setup required. Automatically populated from live database data scoped to the admin's organisation level.</div>
+        </div>
+        <div class="info-block user">
+          <div class="info-label">👤 Admin View</div>
+          <div class="info-text">Shows total members, total revenue (₦), sub-organisations count, payment count, pending programmes, pending reports, pending promotions, and recent payments list.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Members Management -->
+  <div class="module-card">
+    <div class="module-header">
+      <span class="module-icon">👥</span>
+      <div><div class="module-title">2. Members Management</div></div>
+      <span class="module-path">/dashboard/admin/members</span>
+    </div>
+    <div class="module-body">
+      <div class="row">
+        <div class="info-block admin">
+          <div class="info-label">🔧 Admin Setup</div>
+          <div class="info-text">No setup required — the system auto-captures members who apply via the membership form. Admins can view, search, filter, and manage member records and status.</div>
+        </div>
+        <div class="info-block user">
+          <div class="info-label">👤 Member Usage</div>
+          <div class="info-text">Members apply via <strong>/dashboard/member/apply</strong>. After submission and review, they appear in the admin member list. Admin can approve or update their status.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Organizations & Jurisdictions -->
+  <div class="module-card">
+    <div class="module-header">
+      <span class="module-icon">🏢</span>
+      <div><div class="module-title">3. Organizations & Jurisdictions</div></div>
+      <span class="module-path">/dashboard/admin/organizations</span>
+    </div>
+    <div class="module-body">
+      <div class="row">
+        <div class="info-block admin">
+          <div class="info-label">🔧 Admin Setup</div>
+          <div class="info-text">National admin builds the hierarchy: creates States, assigns Local Governments under states, and Branches under LGAs. Each node is assigned a parent organisation.</div>
+        </div>
+        <div class="info-block user">
+          <div class="info-label">👤 Member Usage</div>
+          <div class="info-text">Membership applications tie members to a specific branch. Members see their branch and LGA information on their profile. The hierarchy powers data scoping across all modules.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Officials -->
+  <div class="module-card">
+    <div class="module-header">
+      <span class="module-icon">👤</span>
+      <div><div class="module-title">4. Officials Management</div></div>
+      <span class="module-path">/dashboard/admin/officials</span>
+    </div>
+    <div class="module-body">
+      <div class="row">
+        <div class="info-block admin">
+          <div class="info-label">🔧 Admin Setup</div>
+          <div class="info-text">Admin assigns officials (office holders) to an organisation, specifying their title, role, and tenure dates. Officials can be updated or removed at any time.</div>
+        </div>
+        <div class="info-block user">
+          <div class="info-label">👤 Public Access</div>
+          <div class="info-text">Officials are displayed publicly on the <strong>/executives</strong> page and on jurisdiction-specific public pages, giving the public visibility into organizational leadership.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. Roles & Permissions -->
+  <div class="module-card">
+    <div class="module-header">
+      <span class="module-icon">🔑</span>
+      <div><div class="module-title">5. Roles & Permissions (RBAC)</div></div>
+      <span class="module-path">/dashboard/admin/roles</span>
+    </div>
+    <div class="module-body">
+      <div class="row">
+        <div class="info-block admin">
+          <div class="info-label">🔧 Admin Setup</div>
+          <div class="info-text">Super admin creates roles (e.g. National Admin, State Admin, Branch Admin) and assigns them to user accounts. Each role controls which dashboard sections are accessible.</div>
+        </div>
+        <div class="info-block user">
+          <div class="info-label">👤 User Impact</div>
+          <div class="info-text">After login, a user's assigned role automatically determines their dashboard access level, which modules they can see, and which data scope they operate within.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. Users Management -->
+  <div class="module-card">
+    <div class="module-header">
+      <span class="module-icon">🧑‍💼</span>
+      <div><div class="module-title">6. Users Management</div></div>
+      <span class="module-path">/dashboard/admin/users</span>
+    </div>
+    <div class="module-body">
+      <div class="row">
+        <div class="info-block admin">
+          <div class="info-label">🔧 Admin Setup</div>
+          <div class="info-text">Admin reviews newly registered accounts, assigns roles, and activates or deactivates user accounts as needed via the user management interface.</div>
+        </div>
+        <div class="info-block user">
+          <div class="info-label">👤 User Flow</div>
+          <div class="info-text">Users register via the auth pages. After submitting registration, they await admin role assignment before gaining scoped dashboard access. Deactivated users cannot log in.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. Finance Module -->
+  <div class="module-card">
+    <div class="module-header">
+      <span class="module-icon">💰</span>
+      <div><div class="module-title">7. Finance Module</div></div>
+      <span class="module-path">/dashboard/admin/finance</span>
+    </div>
+    <div class="module-body">
+      <div class="info-block admin full" style="margin-bottom:10px;">
+        <div class="info-label">🔧 Sub-sections</div>
+        <div class="info-text">
+          <strong>Fee Management</strong> — define dues (annual, monthly amounts) per organisation level &nbsp;|&nbsp;
+          <strong>Payments</strong> — all payment records &nbsp;|&nbsp;
+          <strong>Transactions</strong> — detailed ledger &nbsp;|&nbsp;
+          <strong>Budgets</strong> — budget planning &nbsp;|&nbsp;
+          <strong>Financial Reports</strong> — summary reports &nbsp;|&nbsp;
+          <strong>Analytics</strong> — charts and trends &nbsp;|&nbsp;
+          <strong>Payment Requests</strong> — user-initiated requests &nbsp;|&nbsp;
+          <strong>Campaigns</strong> — fundraising campaigns
+        </div>
+      </div>
+      <div class="row">
+        <div class="info-block admin">
+          <div class="info-label">🔧 Admin Setup</div>
+          <div class="info-text">Admin creates fee structures, links them to organisation levels, sets amounts, and creates fundraising campaigns. Configures Paystack keys in Settings.</div>
+        </div>
+        <div class="info-block user">
+          <div class="info-label">👤 Member Usage</div>
+          <div class="info-text">Members pay dues at <strong>/dashboard/member/payments</strong> via Paystack. They can view their personal payment history. All transactions feed into admin analytics.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 8. Programmes -->
+  <div class="module-card">
+    <div class="module-header">
+      <span class="module-icon">📅</span>
+      <div><div class="module-title">8. Programmes / Activity Planner</div></div>
+      <span class="module-path">/dashboard/admin/programmes</span>
+    </div>
+    <div class="module-body">
+      <div class="row">
+        <div class="info-block admin">
+          <div class="info-label">🔧 Admin Setup</div>
+          <div class="info-text">Admins submit programme proposals which go through a multi-level vetting workflow: Branch → State (PENDING_STATE) → National (PENDING_NATIONAL) → Approved. Late submissions are flagged automatically.</div>
+        </div>
+        <div class="info-block user">
+          <div class="info-label">👤 Member Usage</div>
+          <div class="info-text">Branch-level admins submit programmes for their branch. Members can view all approved programmes on the public page at <strong>/programmes</strong>.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 9. Activity Reports -->
+  <div class="module-card">
+    <div class="module-header">
+      <span class="module-icon">📊</span>
+      <div><div class="module-title">9. Activity Reports</div></div>
+      <span class="module-path">/dashboard/admin/reports</span>
+    </div>
+    <div class="module-body">
+      <div class="row">
+        <div class="info-block admin">
+          <div class="info-label">🔧 Admin Setup</div>
+          <div class="info-text">No special setup required. Reports are submitted by branch/LGA officials and flow up for review. Higher-level admins see them with SUBMITTED status and can approve them.</div>
+        </div>
+        <div class="info-block user">
+          <div class="info-label">👤 Official Usage</div>
+          <div class="info-text">Officials submit activity reports from their dashboard after conducting programmes or events. Approved reports contribute to the overall analytics and reporting data.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 10. Promotions -->
+  <div class="module-card">
+    <div class="module-header">
+      <span class="module-icon">📣</span>
+      <div><div class="module-title">10. Promotions / Advertisements</div></div>
+      <span class="module-path">/dashboard/admin/promotions</span>
+    </div>
+    <div class="module-body">
+      <div class="row">
+        <div class="info-block admin">
+          <div class="info-label">🔧 Admin Setup</div>
+          <div class="info-text">Admin reviews promotion requests in a PENDING queue. Approves or rejects each request. Approved promotions are published to the public homepage and news sections.</div>
+        </div>
+        <div class="info-block user">
+          <div class="info-label">👤 Member Usage</div>
+          <div class="info-text">Members or officials submit promotion requests (ads, announcements) from their dashboard. Submissions remain pending until admin review.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 11. Posts / News -->
+  <div class="module-card">
+    <div class="module-header">
+      <span class="module-icon">🗞️</span>
+      <div><div class="module-title">11. Posts / News</div></div>
+      <span class="module-path">/dashboard/admin/posts</span>
+    </div>
+    <div class="module-body">
+      <div class="row">
+        <div class="info-block admin">
+          <div class="info-label">🔧 Admin Setup</div>
+          <div class="info-text">Admin creates and publishes news articles/announcements using a rich text editor. Assigns categories, publication dates, and featured images. Can draft, publish, or archive posts.</div>
+        </div>
+        <div class="info-block user">
+          <div class="info-label">👤 Public Access</div>
+          <div class="info-text">Published posts appear automatically on the public homepage and jurisdiction-specific pages. Any visitor can read them without logging in.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 12. Gallery -->
+  <div class="module-card">
+    <div class="module-header">
+      <span class="module-icon">🖼️</span>
+      <div><div class="module-title">12. Gallery Management</div></div>
+      <span class="module-path">/dashboard/admin/galleries</span>
+    </div>
+    <div class="module-body">
+      <div class="row">
+        <div class="info-block admin">
+          <div class="info-label">🔧 Admin Setup</div>
+          <div class="info-text">Admin creates gallery albums and uploads images via the add-image dialog. Individual images can be deleted at any time using the delete image button.</div>
+        </div>
+        <div class="info-block user">
+          <div class="info-label">👤 Public Access</div>
+          <div class="info-text">Gallery images appear on public-facing pages of the portal for all visitors to browse. No login required to view gallery content.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 13. CMS -->
+  <div class="module-card">
+    <div class="module-header">
+      <span class="module-icon">🌐</span>
+      <div><div class="module-title">13. CMS — Pages & Menus</div></div>
+      <span class="module-path">/dashboard/admin/cms</span>
+    </div>
+    <div class="module-body">
+      <div class="row">
+        <div class="info-block admin">
+          <div class="info-label">🔧 Admin Setup</div>
+          <div class="info-text">Admin creates custom static pages (About Us, Contact, etc.) and manages the navigation menu structure — add, edit, reorder, and nest menu items.</div>
+        </div>
+        <div class="info-block user">
+          <div class="info-label">👤 Public Access</div>
+          <div class="info-text">Custom pages appear on the public site. Navigation menus built in the CMS display in the site's public navigation bar for all visitors.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 14. Documents -->
+  <div class="module-card">
+    <div class="module-header">
+      <span class="module-icon">📋</span>
+      <div><div class="module-title">14. Documents</div></div>
+      <span class="module-path">/dashboard/admin/documents</span>
+    </div>
+    <div class="module-body">
+      <div class="row">
+        <div class="info-block admin">
+          <div class="info-label">🔧 Admin Setup</div>
+          <div class="info-text">Admin uploads official documents (forms, circulars, constitution copies) and categorises them. Sets visibility to public or members-only.</div>
+        </div>
+        <div class="info-block user">
+          <div class="info-label">👤 Member Usage</div>
+          <div class="info-text">Members download documents from their dashboard. The Constitution is also publicly accessible at <strong>/constitution</strong> without login.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 15. Teskiyah -->
+  <div class="module-card">
+    <div class="module-header">
+      <span class="module-icon">🕌</span>
+      <div><div class="module-title">15. Teskiyah (Spiritual Programme)</div></div>
+      <span class="module-path">/dashboard/admin/teskiyah</span>
+    </div>
+    <div class="module-body">
+      <div class="row">
+        <div class="info-block admin">
+          <div class="info-label">🔧 Admin Setup</div>
+          <div class="info-text">Admin creates Teskiyah sessions/content with titles, descriptions, and associated media. New sessions are created via the /new sub-route.</div>
+        </div>
+        <div class="info-block user">
+          <div class="info-label">👤 Public/Member Access</div>
+          <div class="info-text">Members browse Teskiyah content at <strong>/teskiyah</strong> and from their member dashboard. Publicly accessible to all visitors.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 16. Adhkar -->
+  <div class="module-card">
+    <div class="module-header">
+      <span class="module-icon">📿</span>
+      <div><div class="module-title">16. Adhkar (Islamic Remembrances)</div></div>
+      <span class="module-path">/dashboard/admin/adhkar</span>
+    </div>
+    <div class="module-body">
+      <div class="row">
+        <div class="info-block admin">
+          <div class="info-label">🔧 Admin Setup</div>
+          <div class="info-text">Admin creates and manages Adhkar entries (morning/evening remembrances, du'a, etc.) with text, transliteration, and translation content.</div>
+        </div>
+        <div class="info-block user">
+          <div class="info-label">👤 Public/Member Access</div>
+          <div class="info-text">Members and the public access Adhkar at <strong>/adhkar</strong> — a section for Islamic daily remembrances available to all visitors without login.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 17. Burial Fund -->
+  <div class="module-card">
+    <div class="module-header">
+      <span class="module-icon">🪦</span>
+      <div><div class="module-title">17. Burial Fund</div></div>
+      <span class="module-path">/dashboard/admin/burials</span>
+    </div>
+    <div class="module-body">
+      <div class="row">
+        <div class="info-block admin">
+          <div class="info-label">🔧 Admin Setup</div>
+          <div class="info-text">Admin manages burial fund records, tracks beneficiaries, and processes payout approvals for eligible members who apply for burial support assistance.</div>
+        </div>
+        <div class="info-block user">
+          <div class="info-label">👤 Member Usage</div>
+          <div class="info-text">Members submit burial support requests via <strong>/dashboard/burial</strong>. The request enters an admin review queue for approval and processing.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 18. Council -->
+  <div class="module-card">
+    <div class="module-header">
+      <span class="module-icon">🤝</span>
+      <div><div class="module-title">18. Council</div></div>
+      <span class="module-path">/dashboard/council</span>
+    </div>
+    <div class="module-body">
+      <div class="row">
+        <div class="info-block admin">
+          <div class="info-label">🔧 Admin Setup</div>
+          <div class="info-text">Officials assigned to council roles automatically appear in this section. Admin manages council composition through the Officials module.</div>
+        </div>
+        <div class="info-block user">
+          <div class="info-label">👤 Council Member Usage</div>
+          <div class="info-text">Council members access this section to view council-specific information, records, and data relevant to their council responsibilities.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 19. Meetings -->
+  <div class="module-card">
+    <div class="module-header">
+      <span class="module-icon">🗓️</span>
+      <div><div class="module-title">19. Meetings</div></div>
+      <span class="module-path">/dashboard/admin/meetings</span>
+    </div>
+    <div class="module-body">
+      <div class="row">
+        <div class="info-block admin">
+          <div class="info-label">🔧 Admin Setup</div>
+          <div class="info-text">Admin schedules meetings — sets date, time, venue (or virtual link), and agenda. Members are notified via the broadcast/notification system.</div>
+        </div>
+        <div class="info-block user">
+          <div class="info-label">👤 Member Usage</div>
+          <div class="info-text">Members view upcoming and past meetings from their member dashboard at <strong>/dashboard/member/meetings</strong>. Can view full meeting details and agenda.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 20. Occasions -->
+  <div class="module-card">
+    <div class="module-header">
+      <span class="module-icon">🎉</span>
+      <div><div class="module-title">20. Occasions / Events</div></div>
+      <span class="module-path">/dashboard/admin/occasions</span>
+    </div>
+    <div class="module-body">
+      <div class="row">
+        <div class="info-block admin">
+          <div class="info-label">🔧 Admin Setup</div>
+          <div class="info-text">Admin creates special occasion events (Eid celebrations, anniversaries, etc.) with dates, descriptions, and relevant details.</div>
+        </div>
+        <div class="info-block user">
+          <div class="info-label">👤 Member/Public Usage</div>
+          <div class="info-text">Members view upcoming occasions from their dashboard at <strong>/dashboard/member/occasions</strong>. Events are also visible on the public homepage for all visitors.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 21. Broadcasts -->
+  <div class="module-card">
+    <div class="module-header">
+      <span class="module-icon">📢</span>
+      <div><div class="module-title">21. Broadcasts</div></div>
+      <span class="module-path">/dashboard/broadcasts</span>
+    </div>
+    <div class="module-body">
+      <div class="row">
+        <div class="info-block admin">
+          <div class="info-label">🔧 Admin Setup</div>
+          <div class="info-text">Admin composes a broadcast message and selects the target audience (all members, specific org level, etc.). Message is sent immediately or scheduled.</div>
+        </div>
+        <div class="info-block user">
+          <div class="info-label">👤 Member Usage</div>
+          <div class="info-text">Members receive broadcasts as in-app notifications via the Notification Bell component in their dashboard header, and optionally via email.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 22. Messages -->
+  <div class="module-card">
+    <div class="module-header">
+      <span class="module-icon">💬</span>
+      <div><div class="module-title">22. Messages / Inbox</div></div>
+      <span class="module-path">/dashboard/messages</span>
+    </div>
+    <div class="module-body">
+      <div class="row">
+        <div class="info-block admin">
+          <div class="info-label">🔧 Admin Setup</div>
+          <div class="info-text">No specific setup required. Messaging is peer-to-peer. Admins can send and receive direct messages through the same inbox interface.</div>
+        </div>
+        <div class="info-block user">
+          <div class="info-label">👤 Member Usage</div>
+          <div class="info-text">All users with dashboard access can view, compose, and reply to direct messages from their inbox. Real-time notifications alert users of new messages.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 23. Special Programmes -->
+  <div class="module-card">
+    <div class="module-header">
+      <span class="module-icon">🏅</span>
+      <div><div class="module-title">23. Special Programmes</div></div>
+      <span class="module-path">/dashboard/admin/special-programmes</span>
+    </div>
+    <div class="module-body">
+      <div class="row">
+        <div class="info-block admin">
+          <div class="info-label">🔧 Admin Setup</div>
+          <div class="info-text">Admin creates special (flagship) programmes with dedicated analytics and budget tracking. Includes sub-sections for programme analytics and budget management.</div>
+        </div>
+        <div class="info-block user">
+          <div class="info-label">👤 Member Usage</div>
+          <div class="info-text">Members may apply or register for special programmes. Programme details can be made publicly visible to attract wider participation.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 24. Analytics -->
+  <div class="module-card">
+    <div class="module-header">
+      <span class="module-icon">📈</span>
+      <div><div class="module-title">24. Analytics</div></div>
+      <span class="module-path">/dashboard/admin/analytics</span>
+    </div>
+    <div class="module-body">
+      <div class="row">
+        <div class="info-block admin">
+          <div class="info-label">🔧 Admin Setup</div>
+          <div class="info-text">No setup needed — auto-populated from existing data across all modules. Data is scoped to the admin's organisation level automatically.</div>
+        </div>
+        <div class="info-block user">
+          <div class="info-label">👤 Admin Only</div>
+          <div class="info-text">Visual dashboards showing membership growth, payment trends, programme activity, and more. Accessible only to administrators — not visible to regular members.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 25. Assets -->
+  <div class="module-card">
+    <div class="module-header">
+      <span class="module-icon">🗃️</span>
+      <div><div class="module-title">25. Assets Management</div></div>
+      <span class="module-path">/dashboard/admin/assets</span>
+    </div>
+    <div class="module-body">
+      <div class="row">
+        <div class="info-block admin">
+          <div class="info-label">🔧 Admin Setup</div>
+          <div class="info-text">Admin uploads and manages organisational assets including files, logos, and media files that are used across the portal in published content.</div>
+        </div>
+        <div class="info-block user">
+          <div class="info-label">👤 Usage</div>
+          <div class="info-text">Uploaded assets are used in published posts, gallery albums, documents, and pages. Assets power the visual content throughout the portal.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 26. Audit Log -->
+  <div class="module-card">
+    <div class="module-header">
+      <span class="module-icon">🔍</span>
+      <div><div class="module-title">26. Audit Log</div></div>
+      <span class="module-path">/dashboard/admin/audit</span>
+    </div>
+    <div class="module-body">
+      <div class="row">
+        <div class="info-block admin">
+          <div class="info-label">🔧 Admin Setup</div>
+          <div class="info-text">Automatic — all significant actions in the system are logged automatically (who did what, when). No manual setup is required.</div>
+        </div>
+        <div class="info-block user">
+          <div class="info-label">👤 Admin Only</div>
+          <div class="info-text">Admin views a chronological log of all system actions for compliance, accountability, and security review. Not accessible to regular members.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 27. Settings -->
+  <div class="module-card">
+    <div class="module-header">
+      <span class="module-icon">⚙️</span>
+      <div><div class="module-title">27. Settings</div></div>
+      <span class="module-path">/dashboard/admin/settings</span>
+    </div>
+    <div class="module-body">
+      <div class="info-block admin full" style="margin-bottom:10px;">
+        <div class="info-label">🔧 Sub-sections</div>
+        <div class="info-text">
+          <strong>General</strong> — organisation name, logo, contact information &nbsp;|&nbsp;
+          <strong>Navigation</strong> — portal navigation configuration &nbsp;|&nbsp;
+          <strong>Payments</strong> — Paystack public/secret key configuration
+        </div>
+      </div>
+      <div class="info-block user full">
+        <div class="info-label">👤 Impact on Users</div>
+        <div class="info-text">Settings here affect the entire portal. Branding changes update the site appearance for all visitors. Payment configuration must be set correctly for member payments to work. Navigation setup determines what links appear in the public menu.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════ MEMBER MODULES ════════ -->
+  <div class="section-header">
+    <span class="icon">👤</span>
+    Member Dashboard Modules (/dashboard/member/...)
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Module</th>
+        <th>Path</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Member Overview</strong></td>
+        <td><code>/dashboard/member</code></td>
+        <td>Personal welcome page with member stats, quick links, and summary of activity</td>
+      </tr>
+      <tr>
+        <td><strong>Apply for Membership</strong></td>
+        <td><code>/dashboard/member/apply</code></td>
+        <td>Multi-step membership application form linking member to their branch/LGA</td>
+      </tr>
+      <tr>
+        <td><strong>Payments</strong></td>
+        <td><code>/dashboard/member/payments</code></td>
+        <td>Pay dues via Paystack and view personal payment history</td>
+      </tr>
+      <tr>
+        <td><strong>Meetings</strong></td>
+        <td><code>/dashboard/member/meetings</code></td>
+        <td>View scheduled meetings set by admin with date, time, and agenda</td>
+      </tr>
+      <tr>
+        <td><strong>Occasions</strong></td>
+        <td><code>/dashboard/member/occasions</code></td>
+        <td>View upcoming special events and occasions created by admin</td>
+      </tr>
+      <tr>
+        <td><strong>Programmes</strong></td>
+        <td><code>/dashboard/member/programmes</code></td>
+        <td>Browse all approved programmes relevant to the member's branch/org</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ════════ PUBLIC PAGES ════════ -->
+  <div class="section-header">
+    <span class="icon">🌍</span>
+    Public-Facing Pages (No Login Required)
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Page</th>
+        <th>Path</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Home</strong></td>
+        <td><code>/</code></td>
+        <td>Hero slider, latest news, officials spotlight, gallery, upcoming events</td>
+      </tr>
+      <tr>
+        <td><strong>Jurisdiction Page</strong></td>
+        <td><code>/[jurisdiction]</code></td>
+        <td>State/LGA-specific public page with local news, officials, and events</td>
+      </tr>
+      <tr>
+        <td><strong>Executives</strong></td>
+        <td><code>/executives/[executiveId]</code></td>
+        <td>Individual executive/official profile pages</td>
+      </tr>
+      <tr>
+        <td><strong>Programmes</strong></td>
+        <td><code>/programmes</code></td>
+        <td>Public listing of all approved organisational programmes</td>
+      </tr>
+      <tr>
+        <td><strong>Constitution</strong></td>
+        <td><code>/constitution</code></td>
+        <td>Organisation constitution document publicly available for download</td>
+      </tr>
+      <tr>
+        <td><strong>Adhkar</strong></td>
+        <td><code>/adhkar</code></td>
+        <td>Islamic daily remembrances — morning/evening du'a with transliterations</td>
+      </tr>
+      <tr>
+        <td><strong>Teskiyah</strong></td>
+        <td><code>/teskiyah</code></td>
+        <td>Spiritual programme content created and managed by admin</td>
+      </tr>
+      <tr>
+        <td><strong>Donate</strong></td>
+        <td><code>/donate</code></td>
+        <td>Donation page for public contributions to the organisation</td>
+      </tr>
+      <tr>
+        <td><strong>Connect</strong></td>
+        <td><code>/connect</code></td>
+        <td>Contact and connect page for reaching the organisation</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="footer">
+    TMC Portal — Modules Documentation &nbsp;·&nbsp; Generated February 2026
+    &nbsp;·&nbsp; <em>Built with Next.js, Drizzle ORM, and Paystack</em>
+  </div>
+
+</div>
+
+</body>
+</html>
