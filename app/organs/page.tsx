@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic'
 import Link from "next/link"
 import { getOrgans } from "@/lib/actions/organs"
 import { ExternalLink, Building2, Landmark } from "lucide-react"
+import { PublicNav } from "@/components/layout/public-nav"
 
 // Category color map
 const categoryColors: Record<string, { bg: string; text: string; border: string }> = {
@@ -19,12 +20,7 @@ const categoryColors: Record<string, { bg: string; text: string; border: string 
 }
 
 function getInitials(name: string) {
-    return name
-        .split(" ")
-        .slice(0, 2)
-        .map(w => w[0])
-        .join("")
-        .toUpperCase()
+    return name.split(" ").slice(0, 2).map(w => w[0]).join("").toUpperCase()
 }
 
 function getCategoryStyle(category: string | null) {
@@ -39,27 +35,7 @@ export default async function OrgansPage() {
         <div className="min-h-screen flex flex-col bg-gray-50">
 
             {/* ── Navigation ──────────────────────────────────────────── */}
-            <header className="sticky top-0 z-50 w-full border-b bg-green-700/95 backdrop-blur supports-[backdrop-filter]:bg-green-700/60 text-white shadow-sm">
-                <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-                    <Link href="/" className="flex items-center gap-2 font-bold text-xl">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src="/images/logo.png" alt="TMC Logo" className="h-10 w-10 object-contain" />
-                        <span>TMC Portal</span>
-                    </Link>
-                    <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
-                        <Link href="/" className="opacity-80 hover:opacity-100 transition-opacity">Home</Link>
-                        <Link href="/programmes" className="opacity-80 hover:opacity-100 transition-opacity">Programmes</Link>
-                        <Link href="/organs" className="opacity-100 underline underline-offset-4 decoration-white/50">Our Organs</Link>
-                        <Link href="/donate" className="opacity-80 hover:opacity-100 transition-opacity">Donate</Link>
-                        <Link
-                            href="/auth/signin"
-                            className="bg-white text-green-700 font-semibold px-4 py-1.5 rounded-full text-sm hover:bg-green-50 transition-colors"
-                        >
-                            Login
-                        </Link>
-                    </nav>
-                </div>
-            </header>
+            <PublicNav />
 
             {/* ── Hero Banner ─────────────────────────────────────────── */}
             <section

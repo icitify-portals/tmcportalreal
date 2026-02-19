@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic'
 import Link from "next/link"
 import { getTmcProgrammes } from "@/lib/actions/tmc-programmes"
 import { BookOpen, GraduationCap, Heart, Users, Star, Globe, Shield, Leaf, Sun, Moon, Lightbulb, Zap, Landmark } from "lucide-react"
+import { PublicNav } from "@/components/layout/public-nav"
 
 // Lucide icon map
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -33,24 +34,7 @@ export default async function OurProgrammesPage() {
         <div className="min-h-screen flex flex-col bg-gray-50">
 
             {/* ── Navigation ──────────────────────────────────────────── */}
-            <header className="sticky top-0 z-50 w-full border-b bg-green-700/95 backdrop-blur supports-[backdrop-filter]:bg-green-700/60 text-white shadow-sm">
-                <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-                    <Link href="/" className="flex items-center gap-2 font-bold text-xl">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src="/images/logo.png" alt="TMC Logo" className="h-10 w-10 object-contain" />
-                        <span>TMC Portal</span>
-                    </Link>
-                    <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
-                        <Link href="/" className="opacity-80 hover:opacity-100 transition-opacity">Home</Link>
-                        <Link href="/our-programmes" className="opacity-100 underline underline-offset-4 decoration-white/50">Our Programmes</Link>
-                        <Link href="/organs" className="opacity-80 hover:opacity-100 transition-opacity">Our Organs</Link>
-                        <Link href="/donate" className="opacity-80 hover:opacity-100 transition-opacity">Donate</Link>
-                        <Link href="/auth/signin" className="bg-white text-green-700 font-semibold px-4 py-1.5 rounded-full text-sm hover:bg-green-50 transition-colors">
-                            Login
-                        </Link>
-                    </nav>
-                </div>
-            </header>
+            <PublicNav />
 
             {/* ── Hero Banner ─────────────────────────────────────────── */}
             <section className="relative overflow-hidden bg-gradient-to-br from-green-900 via-green-700 to-teal-600 text-white" style={{ minHeight: "340px" }}>
