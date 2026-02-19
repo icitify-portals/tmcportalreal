@@ -30,6 +30,7 @@ import {
   Scroll,
   HeartHandshake,
   Home,
+  BookOpen,
 } from "lucide-react"
 import { signOut } from "next-auth/react"
 import { Button } from "@/components/ui/button"
@@ -50,6 +51,7 @@ const adminNavItems = [
   { href: "/dashboard/admin/finance/analytics", label: "Finance Analytics", icon: BarChart3 },
   { href: "/dashboard/admin/assets", label: "Assets", icon: Box },
   { href: "/dashboard/admin/programmes", label: "Programmes & Events", icon: Calendar },
+  { href: "/dashboard/admin/tmc-programmes", label: "Our Programmes", icon: BookOpen },
   { href: "/dashboard/admin/reports", label: "Activity Reports", icon: FileText },
   { href: "/dashboard/admin/special-programmes", label: "Special Resource Archive", icon: Library },
   { href: "/dashboard/admin/planner", label: "Year Planner", icon: Calendar },
@@ -58,6 +60,7 @@ const adminNavItems = [
   { href: "/dashboard/admin/galleries", label: "Galleries", icon: Image },
   { href: "/dashboard/admin/adhkar", label: "Adhkar Centres", icon: MapPin },
   { href: "/dashboard/admin/teskiyah", label: "Teskiyah Centres", icon: MapPin },
+  { href: "/dashboard/admin/organs", label: "Our Organs", icon: Building2 },
   { href: "/dashboard/admin/occasions", label: "Engagements & Occasions", icon: Handshake },
   { href: "/dashboard/admin/members", label: "Members", icon: Users },
   { href: "/dashboard/admin/officials", label: "Officials", icon: UserCheck },

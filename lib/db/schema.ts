@@ -1522,3 +1522,17 @@ export const organs = mysqlTable("organs", {
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
     updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
 });
+
+// ─── TMC Programmes ───────────────────────────────────────────────────────────
+// Evergreen institutional programme definitions (not dated events)
+export const tmcProgrammes = mysqlTable("tmc_programmes", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
+    title: varchar("title", { length: 255 }).notNull(),
+    description: text("description"),
+    iconName: varchar("iconName", { length: 100 }),   // lucide icon name
+    category: varchar("category", { length: 100 }),   // Spiritual, Social, Health, Economic, Humanitarian
+    order: int("order").default(0),
+    isActive: boolean("isActive").default(true),
+    createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+});
