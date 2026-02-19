@@ -5,6 +5,7 @@ import { eq, and, asc } from "drizzle-orm"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { PromotionWidget } from "@/components/public/ad-widget"
+import { PublicNav } from "@/components/layout/public-nav"
 
 export const dynamic = "force-dynamic"
 
@@ -42,45 +43,49 @@ export default async function JurisdictionLayout({
 
     return (
         <div className="min-h-screen bg-background flex flex-col">
-            {/* Header */}
-            <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-                <div className="container flex h-16 items-center px-4">
-                    <Link href={`/${jurisdiction}`} className="mr-6 flex items-center space-x-2">
-                        <span className="font-bold text-lg">{org.name}</span>
-                    </Link>
+            {/* Unified public nav */}
+            <PublicNav />
 
-                    <nav className="flex items-center space-x-6 text-sm font-medium">
-                        {menuTree.map(item => (
-                            <div key={item.id} className="relative group">
-                                {item.type === 'dropdown' ? (
-                                    <span className="cursor-pointer hover:text-foreground/80">{item.label}</span>
-                                ) : (
-                                    <Link
-                                        href={item.path?.startsWith('/') ? `/${jurisdiction}${item.path}` : item.path || '#'}
-                                        className="transition-colors hover:text-foreground/80"
-                                    >
-                                        {item.label}
-                                    </Link>
-                                )}
-
-                                {item.children.length > 0 && (
-                                    <div className="absolute top-full left-0 w-48 bg-popover border rounded-md shadow-md hidden group-hover:block p-2 z-50">
-                                        {item.children.map(child => (
-                                            <Link
-                                                key={child.id}
-                                                href={child.path?.startsWith('/') ? `/${jurisdiction}${child.path}` : child.path || '#'}
-                                                className="block px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground rounded-sm"
-                                            >
-                                                {child.label}
-                                            </Link>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        ))}
-                    </nav>
+            {/* Sub-nav: org-specific links (only shown if org has custom menu items) */}
+            {menuTree.length > 0 && (
+                <div className="bg-green-800 border-b border-green-700">
+                    <div className="container flex h-10 items-center px-4 gap-6 overflow-x-auto">
+                        <Link href={`/${jurisdiction}`} className="text-green-100 text-sm font-semibold hover:text-white transition-colors shrink-0">
+                            {org.name}
+                        </Link>
+                        <span className="text-green-600">|</span>
+                        <nav className="flex items-center gap-6 text-sm">
+                            {menuTree.map(item => (
+                                <div key={item.id} className="relative group">
+                                    {item.type === 'dropdown' ? (
+                                        <span className="cursor-pointer text-green-200 hover:text-white transition-colors">{item.label}</span>
+                                    ) : (
+                                        <Link
+                                            href={item.path?.startsWith('/') ? `/${jurisdiction}${item.path}` : item.path || '#'}
+                                            className="text-green-200 hover:text-white transition-colors"
+                                        >
+                                            {item.label}
+                                        </Link>
+                                    )}
+                                    {item.children.length > 0 && (
+                                        <div className="absolute top-full left-0 w-48 bg-popover border rounded-md shadow-md hidden group-hover:block p-2 z-50">
+                                            {item.children.map(child => (
+                                                <Link
+                                                    key={child.id}
+                                                    href={child.path?.startsWith('/') ? `/${jurisdiction}${child.path}` : child.path || '#'}
+                                                    className="block px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground rounded-sm"
+                                                >
+                                                    {child.label}
+                                                </Link>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </nav>
+                    </div>
                 </div>
-            </header>
+            )}
 
             <main className="flex-1">
                 {children}
