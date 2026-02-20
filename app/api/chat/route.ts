@@ -1,5 +1,5 @@
 
-import { streamText } from 'ai';
+import { streamText, convertToModelMessages } from 'ai';
 import { getModel } from '@/lib/ai/config';
 import { initialSystemPrompt } from '@/lib/ai/prompts';
 import { getAISettings } from '@/lib/actions/settings';
@@ -74,7 +74,7 @@ export async function POST(req: Request) {
         const result = await streamText({
             model: model,
             system: systemPrompt,
-            messages: messages.map((m: any) => ({ role: m.role, content: m.content })),
+            messages: await convertToModelMessages(messages.map((m: any) => ({ role: m.role, parts: m.parts ?? [{ type: 'text', text: m.content ?? '' }] }))),
             ...(isDeepSeek ? {} : {
                 tools: activeTools,
                 maxSteps: activeMaxSteps,
