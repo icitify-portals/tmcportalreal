@@ -208,7 +208,7 @@ export async function POST(request: NextRequest) {
 
         let errorMessage = "Failed to submit application. Please check your data and try again."
         if (error instanceof z.ZodError) {
-            errorMessage = "Validation error: " + error.errors.map(e => e.message).join(", ")
+            errorMessage = "Validation error: " + error.issues.map(e => e.message).join(", ")
         } else if (error.message) {
             errorMessage = error.message
         }
