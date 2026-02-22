@@ -81,24 +81,32 @@ export async function POST(request: NextRequest) {
         // 2. Get organization based on selection
         let organization = null;
 
-        // Try to find by Branch name
+        // Try to find EXACT Branch match first
         if (validData.branch) {
             organization = await db.query.organizations.findFirst({
-                where: (organizations, { eq, and, like, or }) =>
+                where: (organizations, { eq, and }) =>
                     and(
                         eq(organizations.level, "BRANCH"),
-                        or(
-                            eq(organizations.name, validData.branch),
-                            like(organizations.name, `%${validData.branch}%`)
-                        )
+                        eq(organizations.name, validData.branch)
                     )
             })
+
+            // If no exact match, try fuzzy branch (only if branch was provided)
+            if (!organization) {
+                organization = await db.query.organizations.findFirst({
+                    where: (organizations, { eq, and, like }) =>
+                        and(
+                            eq(organizations.level, "BRANCH"),
+                            like(organizations.name, `%${validData.branch}%`)
+                        )
+                })
+            }
         }
 
-        // If not found, try LGA
+        // If still no organization, try LGA
         if (!organization && validData.local_government_area) {
             organization = await db.query.organizations.findFirst({
-                where: (organizations, { eq, and, like, or }) =>
+                where: (organizations, { eq, and, or, like }) =>
                     and(
                         eq(organizations.level, "LOCAL_GOVERNMENT"),
                         or(
@@ -109,10 +117,10 @@ export async function POST(request: NextRequest) {
             })
         }
 
-        // If not found, try State
+        // If still no organization, try State
         if (!organization && validData.state) {
             organization = await db.query.organizations.findFirst({
-                where: (organizations, { eq, and, like, or }) =>
+                where: (organizations, { eq, and, or, like }) =>
                     and(
                         eq(organizations.level, "STATE"),
                         or(
@@ -123,43 +131,41 @@ export async function POST(request: NextRequest) {
             })
         }
 
-        // Fallback to National
+        // Fallback to National if nothing found
         if (!organization) {
             organization = await db.query.organizations.findFirst({
                 where: eq(organizations.level, "NATIONAL")
             })
         }
 
-        // Absolute fallback (just in case no National exists, though unlikely)
+        // Absolute fallback (just in case no National exists)
         if (!organization) {
             organization = await db.query.organizations.findFirst()
         }
 
         if (!organization) {
             return NextResponse.json(
-                { error: "Configuration Error: No organization found" },
+                { error: "Configuration Error: No organization found to link your membership." },
                 { status: 500 }
             )
         }
 
+        const now = new Date()
+
         await db.insert(members).values({
             userId: userId,
             organizationId: organization.id,
-            // memberId: memberId, // Generated on approval
             status: "PENDING",
             membershipType: "REGULAR",
-
-            // We don't have gender in the new biodataSchema from user snippet? 
-            // Wait, user snippet didn't show gender. But typically biodata has gender.
-            // My page.tsx refactor REMOVED gender if I followed snippet exactly? 
-            dateJoined: new Date(),
+            dateJoined: now,
             isActive: true, // Pending approval effectively
             dateOfBirth: new Date(validData.date_of_birth),
             occupation: validData.occupation,
-
             emergencyContact: validData.emergencyContactName,
             emergencyPhone: validData.emergencyContactPhone,
-            gender: "MALE", // Defaulting as discussed
+            gender: "MALE", // Defaulting as per current logic
+            createdAt: now,
+            updatedAt: now,
             metadata: {
                 fullName: validData.fullName,
                 country: validData.country,
@@ -188,12 +194,28 @@ export async function POST(request: NextRequest) {
             },
         })
 
-        return NextResponse.json({ success: true })
+        return NextResponse.json({
+            success: true,
+            status: "PENDING",
+            message: "Application submitted successfully"
+        })
     } catch (error: any) {
-        console.error("Application error:", error)
+        console.error("Application submission error details:", {
+            message: error.message,
+            stack: error.stack,
+            cause: error.cause
+        })
+
+        let errorMessage = "Failed to submit application. Please check your data and try again."
+        if (error instanceof z.ZodError) {
+            errorMessage = "Validation error: " + error.errors.map(e => e.message).join(", ")
+        } else if (error.message) {
+            errorMessage = error.message
+        }
+
         return NextResponse.json(
-            { error: error.message || "Failed to submit application" },
-            { status: 500 }
+            { error: errorMessage },
+            { status: error instanceof z.ZodError ? 400 : 500 }
         )
     }
 }

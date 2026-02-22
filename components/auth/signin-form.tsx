@@ -29,11 +29,14 @@ export function SignInForm() {
             })
 
             if (result?.error) {
-                if (result.error.includes("verify")) {
-                    toast.error("Please verify your email address before signing in.")
-                } else {
-                    toast.error("Invalid email or password")
-                }
+                // NextAuth wraps thrown errors in a 'CredentialsSignin' or similar string sometimes, 
+                // but usually the raw message is available if properly handled.
+                // In v5/beta, it might be in different places.
+                const errorMessage = result.error.includes("CredentialsSignin")
+                    ? "Invalid email or password"
+                    : result.error;
+
+                toast.error(errorMessage)
             } else {
                 toast.success("Signed in successfully")
                 router.push("/dashboard")

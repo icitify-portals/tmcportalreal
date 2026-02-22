@@ -114,13 +114,22 @@ export async function POST(request: NextRequest) {
       headers: { "Content-Type": "application/json" }
     })
   } catch (error: any) {
-    console.error("Signup error:", error)
+    console.error("Signup error details:", {
+      message: error.message,
+      stack: error.stack
+    })
 
-    // Always return JSON, never HTML
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: "Validation failed: " + error.errors.map(e => e.message).join(", ") },
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      )
+    }
+
+    // Handle generic errors
     return NextResponse.json(
       {
-        error: error.message || "Failed to create account",
-        details: process.env.NODE_ENV === "development" ? error.stack : undefined
+        error: error.message || "An unexpected error occurred during signup",
       },
       {
         status: 500,

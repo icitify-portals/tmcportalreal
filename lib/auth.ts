@@ -52,12 +52,12 @@ export const authConfig: NextAuthConfig = {
 
         if (!user) {
           console.log(`[DEBUG] User not found: ${email}`);
-          return null
+          throw new Error("User with this email not found. Please sign up if you don't have an account.")
         }
 
         if (!user.password) {
           console.log(`[DEBUG] User has no password: ${email}`);
-          return null
+          throw new Error("This account does not have a password set. Try another sign-in method.")
         }
 
         // Check if email is verified
@@ -74,7 +74,7 @@ export const authConfig: NextAuthConfig = {
 
         if (!isPasswordValid) {
           console.log(`[DEBUG] Invalid password for: ${email}`);
-          return null
+          throw new Error("Incorrect password. Please try again or reset your password.")
         }
 
         console.log(`[DEBUG] Login successful for: ${email}`);
