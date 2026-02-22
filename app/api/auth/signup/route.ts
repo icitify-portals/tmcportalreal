@@ -8,8 +8,6 @@ import { createAuditLog } from "@/lib/audit"
 import { z } from "zod"
 import crypto from "crypto"
 
-// ... imports remain the same except prisma
-
 // Ensure this is a route handler
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -138,4 +136,3 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-
