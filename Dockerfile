@@ -5,9 +5,9 @@ FROM node:20-bookworm-slim AS base
 
 WORKDIR /app
 
-# Install OpenSSL (required by Prisma)
+# Install OpenSSL (required by Prisma) and wget (for health checks)
 RUN apt-get update -y \
-  && apt-get install -y openssl ca-certificates \
+  && apt-get install -y openssl ca-certificates wget \
   && rm -rf /var/lib/apt/lists/*
 
 # ----------------------------
