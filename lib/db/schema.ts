@@ -50,7 +50,7 @@ export const programmeFrequencyEnum = mysqlEnum('frequency', ['WEEKLY', 'MONTHLY
 export const assetCategoryEnum = mysqlEnum('category', ['FURNITURE', 'ELECTRONICS', 'VEHICLE', 'PROPERTY', 'EQUIPMENT', 'OTHER']);
 export const assetConditionEnum = mysqlEnum('condition', ['NEW', 'GOOD', 'FAIR', 'POOR', 'DAMAGED', 'LOST']);
 export const assetStatusEnum = mysqlEnum('status', ['ACTIVE', 'IN_MAINTENANCE', 'DISPOSED', 'STOLEN', 'ARCHIVED']);
-export const specialProgrammeCategoryEnum = mysqlEnum('specialProgrammeCategory', ['TESKIYAH_WORKSHOP', 'FRIDAY_KHUTHBAH', 'PRESS_RELEASE', 'STATE_OF_THE_NATION', 'OTHER']);
+export const specialProgrammeCategoryEnum = mysqlEnum('category', ['TESKIYAH_WORKSHOP', 'FRIDAY_KHUTHBAH', 'PRESS_RELEASE', 'STATE_OF_THE_NATION', 'OTHER']);
 export const specialProgrammeFileTypeEnum = mysqlEnum('specialProgrammeFileType', ['AUDIO', 'VIDEO', 'DOCUMENT', 'OTHER']);
 export const maintenanceTypeEnum = mysqlEnum('maintenanceType', ['REPAIR', 'SERVICE', 'INSPECTION', 'UPGRADE']);
 // Unique asset enum names to avoid column name conflicts in Drizzle

@@ -27,6 +27,7 @@ const cmsSchema = z.object({
     whatsapp: z.string().optional(),
     officeHours: z.string().optional(),
     googleMapUrl: z.string().optional(),
+    address: z.string().optional(),
     sliderImages: z.array(z.object({
         url: z.string().optional(),
         title: z.string().optional(),
@@ -53,6 +54,7 @@ export default function CMSClientPage() {
             whatsapp: "",
             officeHours: "",
             googleMapUrl: "",
+            address: "",
             sliderImages: [],
         },
     })
@@ -80,6 +82,7 @@ export default function CMSClientPage() {
                         whatsapp: data.whatsapp || "",
                         officeHours: data.officeHours || "",
                         googleMapUrl: data.googleMapUrl || "",
+                        address: data.address || "",
                         sliderImages: Array.isArray(sliderImages) ? sliderImages : [],
                     })
                 }
@@ -471,6 +474,20 @@ export default function CMSClientPage() {
                                                         <Input placeholder="https://www.google.com/maps/embed?..." {...field} />
                                                     </FormControl>
                                                     <FormDescription>Copy the embed URL from Google Maps.</FormDescription>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="address"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Physical Address</FormLabel>
+                                                    <FormControl>
+                                                        <Textarea placeholder="123 Example Street..." {...field} />
+                                                    </FormControl>
+                                                    <FormDescription>Primary office address displayed on the website.</FormDescription>
                                                     <FormMessage />
                                                 </FormItem>
                                             )}

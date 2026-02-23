@@ -40,6 +40,7 @@ const cmsSchema = z.object({
     whatsapp: z.string().optional(),
     officeHours: z.string().optional(),
     googleMapUrl: z.string().optional(),
+    address: z.string().optional(),
     sliderImages: z.any().optional(), // Json
 })
 

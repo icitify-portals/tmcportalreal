@@ -12,8 +12,7 @@ import { eq } from "drizzle-orm"
 import { EmailConfigDialog } from "@/components/admin/settings/email-config-dialog"
 import { PushNotificationDialog } from "@/components/admin/settings/push-notification-dialog"
 import { EmailTemplatesDialog } from "@/components/admin/settings/email-templates-dialog"
-
-
+import { OrganizationProfileForm } from "@/components/admin/settings/organization-profile-form"
 import { AiSettingsCard } from "@/components/admin/settings/ai-settings-card"
 import { SecuritySettingsForm } from "@/components/admin/settings/security-settings-form"
 import { getAISettings, getMembershipSettings, getYearPlannerSettings } from "@/lib/actions/settings"
@@ -41,47 +40,19 @@ export default async function AdminSettingsPage() {
                         </h1>
                         <p className="text-muted-foreground">Configure global portal parameters and organization profile</p>
                     </div>
-                    <Button>
-                        <Save className="mr-2 h-4 w-4" />
-                        Save All Changes
-                    </Button>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div className="lg:col-span-2 space-y-6">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <Globe className="h-5 w-5" />
-                                    Organization Profile
-                                </CardTitle>
-                                <CardDescription>This information is visible on public pages and receipts</CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-bold uppercase text-muted-foreground">Portal Name</label>
-                                        <input className="w-full p-2 border rounded-md" defaultValue={nationalOrg?.name || "Muslim Congress"} />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-bold uppercase text-muted-foreground">Support Email</label>
-                                        <input className="w-full p-2 border rounded-md" defaultValue={nationalOrg?.email || "support@tmcportal.org"} />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-bold uppercase text-muted-foreground">Contact Phone</label>
-                                        <input className="w-full p-2 border rounded-md" defaultValue={nationalOrg?.phone || "+234..."} />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-bold uppercase text-muted-foreground">Website</label>
-                                        <input className="w-full p-2 border rounded-md" defaultValue={nationalOrg?.website || "https://..."} />
-                                    </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold uppercase text-muted-foreground">Welcome Message</label>
-                                    <textarea className="w-full p-2 border rounded-md h-24" defaultValue={nationalOrg?.welcomeMessage || ""} />
-                                </div>
-                            </CardContent>
-                        </Card>
+                        <OrganizationProfileForm
+                            initialData={{
+                                name: nationalOrg?.name || null,
+                                email: nationalOrg?.email || null,
+                                phone: nationalOrg?.phone || null,
+                                website: nationalOrg?.website || null,
+                                welcomeMessage: nationalOrg?.welcomeMessage || null
+                            }}
+                        />
 
                         <AiSettingsCard initialSettings={aiSettings} />
 

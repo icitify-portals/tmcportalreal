@@ -1,7 +1,7 @@
 "use server"
 
 import { db } from "@/lib/db"
-import { systemSettings } from "@/lib/db/schema"
+import { systemSettings, organizations } from "@/lib/db/schema"
 import { eq, and } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { getServerSession } from "@/lib/session"
@@ -194,6 +194,32 @@ export async function updateYearPlannerSettings(data: YearPlannerSettings) {
     await upsertSetting("year_planner_start", data.programYearStart.toISOString())
     await upsertSetting("year_planner_end", data.programYearEnd.toISOString())
     await upsertSetting("year_planner_deadline", data.submissionDeadline.toISOString())
+
+    revalidatePath("/dashboard/admin/settings")
+    return { success: true }
+}
+export async function updateOrganizationProfile(data: {
+    name: string,
+    email: string,
+    phone: string,
+    website: string,
+    welcomeMessage: string
+}) {
+    const session = await getServerSession()
+    if (!session?.user?.id) throw new Error("Unauthorized")
+    requireAdmin(session)
+
+    // Update the National Organization
+    await db.update(organizations)
+        .set({
+            name: data.name,
+            email: data.email,
+            phone: data.phone,
+            website: data.website,
+            welcomeMessage: data.welcomeMessage,
+            updatedAt: new Date()
+        })
+        .where(eq(organizations.level, "NATIONAL"))
 
     revalidatePath("/dashboard/admin/settings")
     return { success: true }
