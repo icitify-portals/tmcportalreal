@@ -60,7 +60,7 @@ export const assetStatusColEnum = mysqlEnum('assetStatus', ['ACTIVE', 'IN_MAINTE
 export const maintenanceTypeColEnum = mysqlEnum('maintenanceTypeCol', ['REPAIR', 'SERVICE', 'INSPECTION', 'UPGRADE']);
 export const campaignStatusEnum = mysqlEnum('status', ['PENDING', 'ACTIVE', 'PAUSED', 'COMPLETED', 'ARCHIVED']);
 export const reportTypeEnum = mysqlEnum('reportType', ['MONTHLY_ACTIVITY', 'QUARTERLY_STATE', 'ANNUAL_CONGRESS', 'FINANCIAL']);
-export const reportStatusEnum = mysqlEnum('reportStatus', ['DRAFT', 'SUBMITTED', 'APPROVED', 'REJECTED']);
+export const reportStatusEnum = mysqlEnum('status', ['DRAFT', 'SUBMITTED', 'APPROVED', 'REJECTED']);
 export const settingsCategoryEnum = mysqlEnum('category', ['EMAIL', 'NOTIFICATION', 'GENERAL', 'AI']);
 export const messageTypeEnum = mysqlEnum('type', ['TEXT', 'IMAGE', 'E2AE']); // Added E2AE for encrypted
 
