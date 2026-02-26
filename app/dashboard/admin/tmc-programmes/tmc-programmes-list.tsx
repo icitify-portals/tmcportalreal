@@ -82,7 +82,7 @@ export function TmcProgrammesList({ initialProgrammes }: TmcProgrammesListProps)
                     className="max-w-sm"
                 />
             </div>
-            <div className="border rounded-lg overflow-hidden">
+            <div className="overflow-x-auto border rounded-xl">
                 <Table>
                     <TableHeader>
                         <TableRow className="bg-muted/50">

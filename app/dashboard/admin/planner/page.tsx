@@ -26,39 +26,41 @@ async function PlannerTable() {
     }
 
     return (
-        <Table>
-            <TableHeader>
-                <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Time</TableHead>
-                    <TableHead>Activity</TableHead>
-                    <TableHead>Frequency</TableHead>
-                    <TableHead>Format</TableHead>
-                    <TableHead>Venue</TableHead>
-                    <TableHead>Budget</TableHead>
-                    <TableHead>Status</TableHead>
-                </TableRow>
-            </TableHeader>
-            <TableBody>
-                {items.map((item) => (
-                    <TableRow key={item.id}>
-                        <TableCell className="whitespace-nowrap">
-                            {format(new Date(item.startDate), "MMM d, yyyy")}
-                        </TableCell>
-                        <TableCell>{item.time}</TableCell>
-                        <TableCell className="max-w-[300px]">
-                            <div className="font-medium">{item.title}</div>
-                            {item.committee && <div className="text-xs text-muted-foreground">Comm: {item.committee}</div>}
-                        </TableCell>
-                        <TableCell><Badge variant="outline">{item.frequency}</Badge></TableCell>
-                        <TableCell><Badge variant="outline">{item.format}</Badge></TableCell>
-                        <TableCell>{item.venue}</TableCell>
-                        <TableCell>{formatCurrency(Number(item.budget))}</TableCell>
-                        <TableCell><Badge>{item.status}</Badge></TableCell>
+        <div className="overflow-x-auto border rounded-md">
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Time</TableHead>
+                        <TableHead>Activity</TableHead>
+                        <TableHead>Frequency</TableHead>
+                        <TableHead>Format</TableHead>
+                        <TableHead>Venue</TableHead>
+                        <TableHead>Budget</TableHead>
+                        <TableHead>Status</TableHead>
                     </TableRow>
-                ))}
-            </TableBody>
-        </Table>
+                </TableHeader>
+                <TableBody>
+                    {items.map((item) => (
+                        <TableRow key={item.id}>
+                            <TableCell className="whitespace-nowrap">
+                                {format(new Date(item.startDate), "MMM d, yyyy")}
+                            </TableCell>
+                            <TableCell>{item.time}</TableCell>
+                            <TableCell className="max-w-[300px]">
+                                <div className="font-medium">{item.title}</div>
+                                {item.committee && <div className="text-xs text-muted-foreground">Comm: {item.committee}</div>}
+                            </TableCell>
+                            <TableCell><Badge variant="outline">{item.frequency}</Badge></TableCell>
+                            <TableCell><Badge variant="outline">{item.format}</Badge></TableCell>
+                            <TableCell>{item.venue}</TableCell>
+                            <TableCell>{formatCurrency(Number(item.budget))}</TableCell>
+                            <TableCell><Badge>{item.status}</Badge></TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
+        </div>
     )
 }
 

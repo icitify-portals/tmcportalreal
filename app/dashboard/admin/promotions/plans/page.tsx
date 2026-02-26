@@ -43,51 +43,53 @@ export default async function PromotionPlansPage() {
                     <CardDescription>Manage your existing promotion packages.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Name</TableHead>
-                                <TableHead>Duration</TableHead>
-                                <TableHead>Price</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {plans.length === 0 ? (
+                    <div className="overflow-x-auto border rounded-md">
+                        <Table>
+                            <TableHeader>
                                 <TableRow>
-                                    <TableCell colSpan={5} className="text-center h-24 text-muted-foreground">
-                                        No promotion plans found. Create one to get started.
-                                    </TableCell>
+                                    <TableHead>Name</TableHead>
+                                    <TableHead>Duration</TableHead>
+                                    <TableHead>Price</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead className="text-right">Actions</TableHead>
                                 </TableRow>
-                            ) : (
-                                plans.map((plan) => (
-                                    <TableRow key={plan.id}>
-                                        <TableCell className="font-medium">
-                                            <div>{plan.name}</div>
-                                            {plan.description && (
-                                                <div className="text-xs text-muted-foreground truncate max-w-[200px]">
-                                                    {plan.description}
-                                                </div>
-                                            )}
-                                        </TableCell>
-                                        <TableCell>{plan.durationDays} Days</TableCell>
-                                        {/* Inline currency formatting if util missing */}
-                                        <TableCell>₦{parseFloat(plan.amount).toLocaleString()}</TableCell>
-                                        <TableCell>
-                                            <Badge variant={plan.isActive ? "default" : "secondary"}>
-                                                {plan.isActive ? "Active" : "Inactive"}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            {/* Add Edit/Toggle actions later */}
-                                            <Button variant="ghost" size="sm">Edit</Button>
+                            </TableHeader>
+                            <TableBody>
+                                {plans.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={5} className="text-center h-24 text-muted-foreground">
+                                            No promotion plans found. Create one to get started.
                                         </TableCell>
                                     </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
+                                ) : (
+                                    plans.map((plan) => (
+                                        <TableRow key={plan.id}>
+                                            <TableCell className="font-medium">
+                                                <div>{plan.name}</div>
+                                                {plan.description && (
+                                                    <div className="text-xs text-muted-foreground truncate max-w-[200px]">
+                                                        {plan.description}
+                                                    </div>
+                                                )}
+                                            </TableCell>
+                                            <TableCell>{plan.durationDays} Days</TableCell>
+                                            {/* Inline currency formatting if util missing */}
+                                            <TableCell>₦{parseFloat(plan.amount).toLocaleString()}</TableCell>
+                                            <TableCell>
+                                                <Badge variant={plan.isActive ? "default" : "secondary"}>
+                                                    {plan.isActive ? "Active" : "Inactive"}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                {/* Add Edit/Toggle actions later */}
+                                                <Button variant="ghost" size="sm">Edit</Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
                 </CardContent>
             </Card>
         </div>

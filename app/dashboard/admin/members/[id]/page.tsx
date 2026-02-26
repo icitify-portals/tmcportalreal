@@ -88,31 +88,31 @@ export default async function MemberDetailsPage({ params }: { params: Promise<{ 
                                 <CardTitle>Biographical Information</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div className="break-words">
                                         <span className="text-sm font-medium text-muted-foreground">Full Name</span>
                                         <p>{meta.fullName}</p>
                                     </div>
-                                    <div>
+                                    <div className="break-words">
                                         <span className="text-sm font-medium text-muted-foreground">App ID / Member ID</span>
-                                        <div className="flex items-center">
-                                            <p className="font-mono">{member.memberId}</p>
+                                        <div className="flex items-center flex-wrap">
+                                            <p className="font-mono break-all">{member.memberId}</p>
                                             <IdManager memberId={member.id} currentId={member.memberId} />
                                         </div>
                                     </div>
-                                    <div>
+                                    <div className="break-words">
                                         <span className="text-sm font-medium text-muted-foreground">Phone</span>
                                         <p>{member.user.phone || meta.phone}</p>
                                     </div>
-                                    <div>
+                                    <div className="break-words">
                                         <span className="text-sm font-medium text-muted-foreground">Email</span>
-                                        <p>{member.user.email}</p>
+                                        <p className="break-all">{member.user.email}</p>
                                     </div>
-                                    <div>
+                                    <div className="break-words">
                                         <span className="text-sm font-medium text-muted-foreground">Marital Status</span>
                                         <p>{meta.maritalStatus || "N/A"}</p>
                                     </div>
-                                    <div>
+                                    <div className="break-words">
                                         <span className="text-sm font-medium text-muted-foreground">Occupation</span>
                                         <p>{member.occupation}</p>
                                     </div>
@@ -129,7 +129,7 @@ export default async function MemberDetailsPage({ params }: { params: Promise<{ 
                                 <CardTitle>Professional Information</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
                                         <span className="text-sm font-medium text-muted-foreground">Occupation</span>
                                         <p>{member.occupation || meta.occupation || "N/A"}</p>
@@ -156,7 +156,7 @@ export default async function MemberDetailsPage({ params }: { params: Promise<{ 
                                 <CardTitle>Origin & Family</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
                                         <span className="text-sm font-medium text-muted-foreground">State of Origin</span>
                                         <p>{meta.state_of_origin || "N/A"}</p>
@@ -215,7 +215,7 @@ export default async function MemberDetailsPage({ params }: { params: Promise<{ 
                                 <CardTitle>Health & Emergency</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
                                         <span className="text-sm font-medium text-muted-foreground">Genotype</span>
                                         <p>{meta.genotype || "N/A"}</p>
@@ -224,11 +224,11 @@ export default async function MemberDetailsPage({ params }: { params: Promise<{ 
                                         <span className="text-sm font-medium text-muted-foreground">Blood Group</span>
                                         <p>{meta.blood_group || "N/A"}</p>
                                     </div>
-                                    <div className="col-span-2">
+                                    <div className="sm:col-span-2">
                                         <span className="text-sm font-medium text-muted-foreground">Specific Ailment</span>
                                         <p>{meta.specific_ailment || "None"}</p>
                                     </div>
-                                    <div className="col-span-2">
+                                    <div className="sm:col-span-2">
                                         <span className="text-sm font-medium text-muted-foreground">Primary Hospital</span>
                                         <p>{meta.hospital || "N/A"}</p>
                                     </div>
@@ -241,7 +241,7 @@ export default async function MemberDetailsPage({ params }: { params: Promise<{ 
                                         <p>{meta.doctorPhone || "N/A"}</p>
                                     </div>
 
-                                    <div className="col-span-2 pt-2 border-t mt-2">
+                                    <div className="sm:col-span-2 pt-2 border-t mt-2">
                                         <span className="text-sm font-medium text-muted-foreground block mb-1">Emergency Contact</span>
                                         <p className="font-medium">{member.emergencyContact}</p>
                                         <p className="text-sm text-muted-foreground">{member.emergencyPhone}</p>

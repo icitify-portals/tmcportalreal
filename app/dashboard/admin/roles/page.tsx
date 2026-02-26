@@ -38,7 +38,7 @@ async function RoleList() {
     const countsMap = new Map(roleCounts.map(r => [r.roleId, r.count]))
 
     return (
-        <div className="rounded-md border">
+        <div className="overflow-x-auto rounded-md border">
             <Table>
                 <TableHeader>
                     <TableRow>

@@ -17,94 +17,96 @@ async function RequestsTable() {
     const requests = await getAdminRequests() // Fetch all for now. Filter by Organization later if needed.
 
     return (
-        <Table>
-            <TableHeader>
-                <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Requester</TableHead>
-                    <TableHead>Venue</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Cert</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-            </TableHeader>
-            <TableBody>
-                {requests.length === 0 ? (
+        <div className="overflow-x-auto border rounded-md">
+            <Table>
+                <TableHeader>
                     <TableRow>
-                        <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                            No requests found.
-                        </TableCell>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Requester</TableHead>
+                        <TableHead>Venue</TableHead>
+                        <TableHead>Role</TableHead>
+                        <TableHead>Cert</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
-                ) : (
-                    requests.map((req) => {
-                        const hasCertificate = req.status === 'COMPLETED' && req.certificateNeeded
-                        const details = req.details as any || {}
-                        // Map data for certificate (Reused logic - should extract to helper)
-                        const certData = {
-                            type: req.type?.name || "Occasion",
-                            certificateNo: req.certificateNo || "PENDING",
-                            date: req.date,
-                            location: req.venue,
-                            husbandName: details.husbandName,
-                            wifeName: details.wifeName,
-                            dowry: details.dowry,
-                            babyName: details.babyName,
-                            fatherName: details.fatherName,
-                            motherName: details.motherName,
-                            dob: details.dob,
-                        }
+                </TableHeader>
+                <TableBody>
+                    {requests.length === 0 ? (
+                        <TableRow>
+                            <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                                No requests found.
+                            </TableCell>
+                        </TableRow>
+                    ) : (
+                        requests.map((req) => {
+                            const hasCertificate = req.status === 'COMPLETED' && req.certificateNeeded
+                            const details = req.details as any || {}
+                            // Map data for certificate (Reused logic - should extract to helper)
+                            const certData = {
+                                type: req.type?.name || "Occasion",
+                                certificateNo: req.certificateNo || "PENDING",
+                                date: req.date,
+                                location: req.venue,
+                                husbandName: details.husbandName,
+                                wifeName: details.wifeName,
+                                dowry: details.dowry,
+                                babyName: details.babyName,
+                                fatherName: details.fatherName,
+                                motherName: details.motherName,
+                                dob: details.dob,
+                            }
 
-                        return (
-                            <TableRow key={req.id}>
-                                <TableCell>{format(new Date(req.date), "MMM d, yyyy")}<div className="text-xs text-muted-foreground">{req.time}</div></TableCell>
-                                <TableCell>{req.type?.name}</TableCell>
-                                <TableCell>
-                                    <div className="font-medium">{req.user?.name}</div>
-                                    <div className="text-xs text-muted-foreground">{req.user?.email}</div>
-                                </TableCell>
-                                <TableCell>{req.venue}</TableCell>
-                                <TableCell><Badge variant="outline">{req.role}</Badge></TableCell>
-                                <TableCell>
-                                    {req.certificateNeeded ? (
-                                        <Badge variant={req.certificateNo ? "default" : "secondary"}>
-                                            {req.certificateNo || "Required"}
+                            return (
+                                <TableRow key={req.id}>
+                                    <TableCell>{format(new Date(req.date), "MMM d, yyyy")}<div className="text-xs text-muted-foreground">{req.time}</div></TableCell>
+                                    <TableCell>{req.type?.name}</TableCell>
+                                    <TableCell>
+                                        <div className="font-medium">{req.user?.name}</div>
+                                        <div className="text-xs text-muted-foreground">{req.user?.email}</div>
+                                    </TableCell>
+                                    <TableCell>{req.venue}</TableCell>
+                                    <TableCell><Badge variant="outline">{req.role}</Badge></TableCell>
+                                    <TableCell>
+                                        {req.certificateNeeded ? (
+                                            <Badge variant={req.certificateNo ? "default" : "secondary"}>
+                                                {req.certificateNo || "Required"}
+                                            </Badge>
+                                        ) : "-"}
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge variant={
+                                            req.status === 'COMPLETED' ? 'default' :
+                                                req.status === 'APPROVED' ? 'secondary' :
+                                                    req.status === 'REJECTED' ? 'destructive' : 'outline'
+                                        }>
+                                            {req.status}
                                         </Badge>
-                                    ) : "-"}
-                                </TableCell>
-                                <TableCell>
-                                    <Badge variant={
-                                        req.status === 'COMPLETED' ? 'default' :
-                                            req.status === 'APPROVED' ? 'secondary' :
-                                                req.status === 'REJECTED' ? 'destructive' : 'outline'
-                                    }>
-                                        {req.status}
-                                    </Badge>
-                                </TableCell>
-                                <TableCell className="text-right space-x-2">
-                                    {/* Actions */}
-                                    {req.status === 'PENDING' && (
-                                        <>
-                                            <RequestActionDialog request={req} mode="APPROVE" triggerText="Approve" />
-                                            <RequestActionDialog request={req} mode="REJECT" triggerText="Reject" />
-                                        </>
-                                    )}
-                                    {req.status === 'APPROVED' && (
-                                        <RequestActionDialog request={req} mode="COMPLETE" triggerText="Complete" />
-                                    )}
-                                    {req.status === 'COMPLETED' && req.certificateNeeded && (
-                                        <div className="inline-block">
-                                            <PDFDownloadButton data={certData} fileName={`Copy-${req.type?.name}.pdf`} />
-                                        </div>
-                                    )}
-                                </TableCell>
-                            </TableRow>
-                        )
-                    })
-                )}
-            </TableBody>
-        </Table>
+                                    </TableCell>
+                                    <TableCell className="text-right space-x-2">
+                                        {/* Actions */}
+                                        {req.status === 'PENDING' && (
+                                            <>
+                                                <RequestActionDialog request={req} mode="APPROVE" triggerText="Approve" />
+                                                <RequestActionDialog request={req} mode="REJECT" triggerText="Reject" />
+                                            </>
+                                        )}
+                                        {req.status === 'APPROVED' && (
+                                            <RequestActionDialog request={req} mode="COMPLETE" triggerText="Complete" />
+                                        )}
+                                        {req.status === 'COMPLETED' && req.certificateNeeded && (
+                                            <div className="inline-block">
+                                                <PDFDownloadButton data={certData} fileName={`Copy-${req.type?.name}.pdf`} />
+                                            </div>
+                                        )}
+                                    </TableCell>
+                                </TableRow>
+                            )
+                        })
+                    )}
+                </TableBody>
+            </Table>
+        </div>
     )
 
 }
@@ -120,24 +122,26 @@ async function SettingsTab() {
             <Card>
                 <CardHeader><CardTitle>Occasion Types</CardTitle></CardHeader>
                 <CardContent>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Name</TableHead>
-                                <TableHead>Fee</TableHead>
-                                <TableHead>Status</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {types.map(t => (
-                                <TableRow key={t.id}>
-                                    <TableCell>{t.name}</TableCell>
-                                    <TableCell>₦{t.certificateFee}</TableCell>
-                                    <TableCell><Badge>Active</Badge></TableCell>
+                    <div className="overflow-x-auto border rounded-md">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Name</TableHead>
+                                    <TableHead>Fee</TableHead>
+                                    <TableHead>Status</TableHead>
                                 </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
+                            </TableHeader>
+                            <TableBody>
+                                {types.map(t => (
+                                    <TableRow key={t.id}>
+                                        <TableCell>{t.name}</TableCell>
+                                        <TableCell>₦{t.certificateFee}</TableCell>
+                                        <TableCell><Badge>Active</Badge></TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
                 </CardContent>
             </Card>
         </div>

@@ -42,67 +42,69 @@ export default async function AdminMeetingDetailPage({ params }: AdminMeetingPag
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Member</TableHead>
-                                        <TableHead>Status</TableHead>
-                                        <TableHead>Joined At</TableHead>
-                                        <TableHead>Punctuality</TableHead>
-                                        <TableHead>Reports Submitted</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {meeting.attendees.map(a => {
-                                        if (!a.user) return null
-                                        let punctuality = "N/A"
-                                        let variant: "default" | "destructive" | "outline" | "secondary" = "outline"
+                            <div className="overflow-x-auto border rounded-md">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Member</TableHead>
+                                            <TableHead>Status</TableHead>
+                                            <TableHead>Joined At</TableHead>
+                                            <TableHead>Punctuality</TableHead>
+                                            <TableHead>Reports Submitted</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {meeting.attendees.map(a => {
+                                            if (!a.user) return null
+                                            let punctuality = "N/A"
+                                            let variant: "default" | "destructive" | "outline" | "secondary" = "outline"
 
-                                        if (a.joinedAt) {
-                                            const diff = differenceInMinutes(new Date(a.joinedAt), scheduledTime)
-                                            if (diff <= 0) {
-                                                punctuality = "On Time"
-                                                variant = "default"
-                                            } else {
-                                                punctuality = `Late by ${diff} mins`
-                                                variant = "destructive"
+                                            if (a.joinedAt) {
+                                                const diff = differenceInMinutes(new Date(a.joinedAt), scheduledTime)
+                                                if (diff <= 0) {
+                                                    punctuality = "On Time"
+                                                    variant = "default"
+                                                } else {
+                                                    punctuality = `Late by ${diff} mins`
+                                                    variant = "destructive"
+                                                }
                                             }
-                                        }
 
-                                        const reports = meeting.docs.filter(d => d.userId === a.user?.id && d.type === 'MEMBER_REPORT')
+                                            const reports = meeting.docs.filter(d => d.userId === a.user?.id && d.type === 'MEMBER_REPORT')
 
-                                        return (
-                                            <TableRow key={a.id}>
-                                                <TableCell>
-                                                    <div className="font-medium">{a.user?.name}</div>
-                                                    <div className="text-xs text-muted-foreground">{a.user?.email}</div>
-                                                </TableCell>
-                                                <TableCell><Badge variant="outline">{a.status}</Badge></TableCell>
-                                                <TableCell suppressHydrationWarning>{a.joinedAt ? format(new Date(a.joinedAt), "p") : "-"}</TableCell>
-                                                <TableCell>
-                                                    {a.joinedAt && <Badge variant={variant}>{punctuality}</Badge>}
-                                                </TableCell>
-                                                <TableCell>
-                                                    {reports.length > 0 ? (
-                                                        <div className="flex flex-col gap-1">
-                                                            {reports.map(r => (
-                                                                <div key={r.id} className="flex items-center gap-2">
-                                                                    <a href={r.url} target="_blank" className="text-xs text-blue-600 underline">
-                                                                        {r.title}
-                                                                    </a>
-                                                                    {(r as any).submissionStatus === 'LATE' && (
-                                                                        <Badge variant="destructive" className="h-4 px-1 text-[10px]">LATE</Badge>
-                                                                    )}
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    ) : "-"}
-                                                </TableCell>
-                                            </TableRow>
-                                        )
-                                    })}
-                                </TableBody>
-                            </Table>
+                                            return (
+                                                <TableRow key={a.id}>
+                                                    <TableCell>
+                                                        <div className="font-medium">{a.user?.name}</div>
+                                                        <div className="text-xs text-muted-foreground">{a.user?.email}</div>
+                                                    </TableCell>
+                                                    <TableCell><Badge variant="outline">{a.status}</Badge></TableCell>
+                                                    <TableCell suppressHydrationWarning>{a.joinedAt ? format(new Date(a.joinedAt), "p") : "-"}</TableCell>
+                                                    <TableCell>
+                                                        {a.joinedAt && <Badge variant={variant}>{punctuality}</Badge>}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        {reports.length > 0 ? (
+                                                            <div className="flex flex-col gap-1">
+                                                                {reports.map(r => (
+                                                                    <div key={r.id} className="flex items-center gap-2">
+                                                                        <a href={r.url} target="_blank" className="text-xs text-blue-600 underline">
+                                                                            {r.title}
+                                                                        </a>
+                                                                        {(r as any).submissionStatus === 'LATE' && (
+                                                                            <Badge variant="destructive" className="h-4 px-1 text-[10px]">LATE</Badge>
+                                                                        )}
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        ) : "-"}
+                                                    </TableCell>
+                                                </TableRow>
+                                            )
+                                        })}
+                                    </TableBody>
+                                </Table>
+                            </div>
                         </CardContent>
                     </Card>
 

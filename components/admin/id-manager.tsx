@@ -92,27 +92,30 @@ export function IdManager({ memberId, currentId }: IdManagerProps) {
                         />
                     </div>
                 </div>
-                <DialogFooter className="gap-2 sm:justify-between">
+                <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:justify-between">
                     <Button
                         variant="destructive"
                         onClick={handleDelete}
                         disabled={isLoading}
                         type="button"
+                        className="w-full sm:w-auto"
                     >
                         <Trash2 className="w-4 h-4 mr-2" />
                         Remove ID
                     </Button>
-                    <div className="flex gap-2">
+                    <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto mt-2 sm:mt-0">
                         <Button
                             variant="outline"
                             onClick={() => setIsOpen(false)}
                             disabled={isLoading}
+                            className="w-full sm:w-auto"
                         >
                             Cancel
                         </Button>
                         <Button
                             onClick={handleUpdate}
                             disabled={isLoading}
+                            className="w-full sm:w-auto"
                         >
                             Save Changes
                         </Button>

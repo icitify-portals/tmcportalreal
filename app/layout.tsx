@@ -19,6 +19,23 @@ import { AiChatWidget } from "@/components/ai/ai-chat-widget"
 export const metadata: Metadata = {
   title: "Muslim Congress - Membership Portal",
   description: "Enterprise membership and governance automation system",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "TMC Portal",
+  },
+  formatDetection: {
+    telephone: false,
+  },
+};
+
+export const viewport = {
+  themeColor: "#0f172a",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default async function RootLayout({

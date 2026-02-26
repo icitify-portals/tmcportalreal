@@ -70,46 +70,48 @@ export default async function TransactionsPage() {
                         <CardTitle>Transaction History</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Date</TableHead>
-                                    <TableHead>Type</TableHead>
-                                    <TableHead>Description</TableHead>
-                                    <TableHead>Performed By</TableHead>
-                                    <TableHead className="text-right">Amount</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {transactions.map(tx => (
-                                    <TableRow key={tx.id}>
-                                        <TableCell>{formatDate(tx.date)}</TableCell>
-                                        <TableCell>
-                                            <Badge variant={tx.type === 'INFLOW' ? 'outline' : 'secondary'} className={tx.type === 'INFLOW' ? 'border-green-500 text-green-600' : ''}>
-                                                {tx.type}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="font-medium">{tx.category}</div>
-                                            <div className="text-xs text-muted-foreground">{tx.description}</div>
-                                        </TableCell>
-                                        <TableCell className="text-xs text-muted-foreground">
-                                            {tx.performer?.name}
-                                        </TableCell>
-                                        <TableCell className={`text-right font-medium ${tx.type === 'INFLOW' ? 'text-green-600' : 'text-red-600'}`}>
-                                            {tx.type === 'INFLOW' ? '+' : '-'}{formatCurrency(tx.amount)}
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                                {transactions.length === 0 && (
+                        <div className="overflow-x-auto border rounded-md">
+                            <Table>
+                                <TableHeader>
                                     <TableRow>
-                                        <TableCell colSpan={5} className="text-center h-24 text-muted-foreground">
-                                            No transactions recorded yet.
-                                        </TableCell>
+                                        <TableHead>Date</TableHead>
+                                        <TableHead>Type</TableHead>
+                                        <TableHead>Description</TableHead>
+                                        <TableHead>Performed By</TableHead>
+                                        <TableHead className="text-right">Amount</TableHead>
                                     </TableRow>
-                                )}
-                            </TableBody>
-                        </Table>
+                                </TableHeader>
+                                <TableBody>
+                                    {transactions.map(tx => (
+                                        <TableRow key={tx.id}>
+                                            <TableCell>{formatDate(tx.date)}</TableCell>
+                                            <TableCell>
+                                                <Badge variant={tx.type === 'INFLOW' ? 'outline' : 'secondary'} className={tx.type === 'INFLOW' ? 'border-green-500 text-green-600' : ''}>
+                                                    {tx.type}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="font-medium">{tx.category}</div>
+                                                <div className="text-xs text-muted-foreground">{tx.description}</div>
+                                            </TableCell>
+                                            <TableCell className="text-xs text-muted-foreground">
+                                                {tx.performer?.name}
+                                            </TableCell>
+                                            <TableCell className={`text-right font-medium ${tx.type === 'INFLOW' ? 'text-green-600' : 'text-red-600'}`}>
+                                                {tx.type === 'INFLOW' ? '+' : '-'}{formatCurrency(tx.amount)}
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                    {transactions.length === 0 && (
+                                        <TableRow>
+                                            <TableCell colSpan={5} className="text-center h-24 text-muted-foreground">
+                                                No transactions recorded yet.
+                                            </TableCell>
+                                        </TableRow>
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </div>
                     </CardContent>
                 </Card>
             </div>

@@ -42,42 +42,44 @@ export default async function CouncilReportsPage() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Event Title</TableHead>
-                                    <TableHead>Date</TableHead>
-                                    <TableHead>Venue</TableHead>
-                                    <TableHead>Level</TableHead>
-                                    <TableHead className="text-right">Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {reportedEvents.length > 0 ? (
-                                    reportedEvents.map(({ programme, report }) => (
-                                        <TableRow key={report.id}>
-                                            <TableCell className="font-medium">{programme.title}</TableCell>
-                                            <TableCell>
-                                                {programme.startDate ? format(programme.startDate, 'PPP') : 'N/A'}
-                                            </TableCell>
-                                            <TableCell className="text-muted-foreground">{programme.venue}</TableCell>
-                                            <TableCell>
-                                                <Badge variant="outline">{programme.level}</Badge>
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                <ReportViewModal report={report} programme={programme} />
+                        <div className="overflow-x-auto border rounded-md">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Event Title</TableHead>
+                                        <TableHead>Date</TableHead>
+                                        <TableHead>Venue</TableHead>
+                                        <TableHead>Level</TableHead>
+                                        <TableHead className="text-right">Actions</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {reportedEvents.length > 0 ? (
+                                        reportedEvents.map(({ programme, report }) => (
+                                            <TableRow key={report.id}>
+                                                <TableCell className="font-medium">{programme.title}</TableCell>
+                                                <TableCell>
+                                                    {programme.startDate ? format(programme.startDate, 'PPP') : 'N/A'}
+                                                </TableCell>
+                                                <TableCell className="text-muted-foreground">{programme.venue}</TableCell>
+                                                <TableCell>
+                                                    <Badge variant="outline">{programme.level}</Badge>
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    <ReportViewModal report={report} programme={programme} />
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    ) : (
+                                        <TableRow>
+                                            <TableCell colSpan={5} className="text-center h-24 text-muted-foreground">
+                                                No reports found.
                                             </TableCell>
                                         </TableRow>
-                                    ))
-                                ) : (
-                                    <TableRow>
-                                        <TableCell colSpan={5} className="text-center h-24 text-muted-foreground">
-                                            No reports found.
-                                        </TableCell>
-                                    </TableRow>
-                                )}
-                            </TableBody>
-                        </Table>
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </div>
                     </CardContent>
                 </Card>
             </div>

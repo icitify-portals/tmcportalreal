@@ -18,61 +18,63 @@ async function MeetingsList() {
     const meetings = await getMeetings()
 
     return (
-        <Table>
-            <TableHeader>
-                <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Title</TableHead>
-                    <TableHead>Venue</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-            </TableHeader>
-            <TableBody>
-                {meetings.length === 0 ? (
+        <div className="overflow-x-auto border rounded-md">
+            <Table>
+                <TableHeader>
                     <TableRow>
-                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                            No meetings scheduled.
-                        </TableCell>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Title</TableHead>
+                        <TableHead>Venue</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
-                ) : (
-                    meetings.map((meeting) => (
-                        <TableRow key={meeting.id}>
-                            <TableCell suppressHydrationWarning>
-                                <div className="flex items-center">
-                                    <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
-                                    {format(new Date(meeting.scheduledAt), "PPP p")}
-                                </div>
-                            </TableCell>
-                            <TableCell className="font-medium">{meeting.title}</TableCell>
-                            <TableCell>
-                                {meeting.isOnline ? (
-                                    <div className="flex items-center"><Video className="mr-2 h-4 w-4" /> Online</div>
-                                ) : (
-                                    <div className="flex items-center"><MapPin className="mr-2 h-4 w-4" /> {meeting.venue}</div>
-                                )}
-                            </TableCell>
-                            <TableCell>
-                                <Badge variant={
-                                    meeting.status === 'SCHEDULED' ? 'outline' :
-                                        meeting.status === 'ONGOING' ? 'default' :
-                                            meeting.status === 'ENDED' ? 'secondary' : 'destructive'
-                                }>
-                                    {meeting.status}
-                                </Badge>
-                            </TableCell>
-                            <TableCell className="text-right">
-                                <Button variant="ghost" size="sm" asChild>
-                                    <Link href={`/dashboard/admin/meetings/${meeting.id}`}>
-                                        Manage
-                                    </Link>
-                                </Button>
+                </TableHeader>
+                <TableBody>
+                    {meetings.length === 0 ? (
+                        <TableRow>
+                            <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                                No meetings scheduled.
                             </TableCell>
                         </TableRow>
-                    ))
-                )}
-            </TableBody>
-        </Table>
+                    ) : (
+                        meetings.map((meeting) => (
+                            <TableRow key={meeting.id}>
+                                <TableCell suppressHydrationWarning>
+                                    <div className="flex items-center">
+                                        <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
+                                        {format(new Date(meeting.scheduledAt), "PPP p")}
+                                    </div>
+                                </TableCell>
+                                <TableCell className="font-medium">{meeting.title}</TableCell>
+                                <TableCell>
+                                    {meeting.isOnline ? (
+                                        <div className="flex items-center"><Video className="mr-2 h-4 w-4" /> Online</div>
+                                    ) : (
+                                        <div className="flex items-center"><MapPin className="mr-2 h-4 w-4" /> {meeting.venue}</div>
+                                    )}
+                                </TableCell>
+                                <TableCell>
+                                    <Badge variant={
+                                        meeting.status === 'SCHEDULED' ? 'outline' :
+                                            meeting.status === 'ONGOING' ? 'default' :
+                                                meeting.status === 'ENDED' ? 'secondary' : 'destructive'
+                                    }>
+                                        {meeting.status}
+                                    </Badge>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                    <Button variant="ghost" size="sm" asChild>
+                                        <Link href={`/dashboard/admin/meetings/${meeting.id}`}>
+                                            Manage
+                                        </Link>
+                                    </Button>
+                                </TableCell>
+                            </TableRow>
+                        ))
+                    )}
+                </TableBody>
+            </Table>
+        </div>
     )
 }
 

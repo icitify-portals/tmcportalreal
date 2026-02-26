@@ -96,7 +96,7 @@ async function UserList({ searchParams }: { searchParams: { q?: string } }) {
             {/* Simple client-side search or form submission for search */}
             {/* Implementing proper search component later, for now just list */}
 
-            <div className="rounded-md border">
+            <div className="overflow-x-auto border rounded-md">
                 <Table>
                     <TableHeader>
                         <TableRow>

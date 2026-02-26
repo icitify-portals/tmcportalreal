@@ -81,7 +81,7 @@ export function OrgansList({ initialOrgans }: OrgansListProps) {
                 />
             </div>
 
-            <div className="border rounded-lg overflow-hidden">
+            <div className="overflow-x-auto border rounded-xl">
                 <Table>
                     <TableHeader>
                         <TableRow className="bg-muted/50">
