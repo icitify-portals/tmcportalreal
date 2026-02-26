@@ -60,14 +60,16 @@ export function DonationWidget({
             return
         }
 
-        if (!scriptReady || !window.PaystackPop) {
+        if (!scriptReady || !(window as any).PaystackPop) {
             toast.error("Payment system is still loading. Please try again in a moment.")
             return
         }
 
         setIsLoading(true)
 
-        window.PaystackPop.newTransaction({
+        const paystack = new (window as any).PaystackPop()
+
+        paystack.newTransaction({
             key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY!,
             email,
             amount: finalAmount * 100, // kobo
