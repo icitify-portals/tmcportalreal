@@ -110,7 +110,7 @@ export async function verifyCampaignDonation(reference: string, campaignId: stri
 
         // 3. Create Payment Record
         const paymentId = crypto.randomUUID()
-        const amountInNaira = (paystackData.amount / 100).toString();
+        const amountInNaira = paystackData.amount.toString();
 
         await db.insert(payments).values({
             id: paymentId,
@@ -131,7 +131,7 @@ export async function verifyCampaignDonation(reference: string, campaignId: stri
         // 4. Update Campaign Raised Amount
         await db.update(fundraisingCampaigns)
             .set({
-                raisedAmount: sql`${fundraisingCampaigns.raisedAmount} + ${paystackData.amount / 100}`
+                raisedAmount: sql`${fundraisingCampaigns.raisedAmount} + ${paystackData.amount}`
             })
             .where(eq(fundraisingCampaigns.id, campaignId))
 
