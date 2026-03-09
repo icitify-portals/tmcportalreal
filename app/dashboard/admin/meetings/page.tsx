@@ -7,11 +7,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { format } from "date-fns"
 import { Calendar, MapPin, Video } from "lucide-react"
 import Link from "next/link"
 import { getAvailableOrganizations } from "@/lib/actions/occasions"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
+import { ClientDate } from "@/components/ui/client-date"
+
+import { DeleteMeetingButton } from "@/components/meetings/delete-meeting-button"
 
 
 async function MeetingsList() {
@@ -42,7 +44,7 @@ async function MeetingsList() {
                                 <TableCell suppressHydrationWarning>
                                     <div className="flex items-center">
                                         <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
-                                        {format(new Date(meeting.scheduledAt), "PPP p")}
+                                        <ClientDate date={meeting.scheduledAt} formatString="PPP p" />
                                     </div>
                                 </TableCell>
                                 <TableCell className="font-medium">{meeting.title}</TableCell>
@@ -63,11 +65,14 @@ async function MeetingsList() {
                                     </Badge>
                                 </TableCell>
                                 <TableCell className="text-right">
-                                    <Button variant="ghost" size="sm" asChild>
-                                        <Link href={`/dashboard/admin/meetings/${meeting.id}`}>
-                                            Manage
-                                        </Link>
-                                    </Button>
+                                    <div className="flex justify-end gap-2">
+                                        <Button variant="ghost" size="sm" asChild>
+                                            <Link href={`/dashboard/admin/meetings/${meeting.id}`}>
+                                                Manage
+                                            </Link>
+                                        </Button>
+                                        <DeleteMeetingButton meetingId={meeting.id} meetingTitle={meeting.title} />
+                                    </div>
                                 </TableCell>
                             </TableRow>
                         ))
@@ -78,6 +83,11 @@ async function MeetingsList() {
     )
 }
 
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { getMeetingGroups } from "@/lib/actions/meetings"
+import { GroupsList } from "@/components/meetings/groups-list"
+import { CreateMeetingGroupDialog } from "@/components/meetings/create-meeting-group-dialog"
+
 export default async function AdminMeetingsPage() {
     const members = await getAvailableMembers()
     const orgs = await getAvailableOrganizations()
@@ -86,24 +96,53 @@ export default async function AdminMeetingsPage() {
 
     return (
         <DashboardLayout>
-            <div className="flex-1 space-y-4 p-8 pt-6">
+            <div className="flex-1 space-y-4 p-8 pt-6" suppressHydrationWarning>
                 <div className="flex items-center justify-between">
-                    <h2 className="text-3xl font-bold tracking-tight">Meetings</h2>
-                    <CreateMeetingDialog members={members} currentOrgId={defaultOrgId} />
+                    <h2 className="text-3xl font-bold tracking-tight">Meetings & Groups</h2>
+                    <div className="flex items-center gap-2">
+                        <CreateMeetingGroupDialog availableMembers={members} currentOrgId={defaultOrgId} />
+                        <CreateMeetingDialog members={members} currentOrgId={defaultOrgId} />
+                    </div>
                 </div>
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Scheduled Meetings</CardTitle>
-                        <CardDescription>Manage organization meetings and invites.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <Suspense fallback={<div>Loading meetings...</div>}>
-                            <MeetingsList />
-                        </Suspense>
-                    </CardContent>
-                </Card>
+                <Tabs defaultValue="meetings" className="space-y-4" suppressHydrationWarning>
+                    <TabsList>
+                        <TabsTrigger value="meetings">Scheduled Meetings</TabsTrigger>
+                        <TabsTrigger value="groups">Meeting Groups</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="meetings" className="space-y-4">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Scheduled Meetings</CardTitle>
+                                <CardDescription>Manage organization meetings and invites.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <Suspense fallback={<div>Loading meetings...</div>}>
+                                    <MeetingsList />
+                                </Suspense>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+                    <TabsContent value="groups" className="space-y-4">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Meeting Groups</CardTitle>
+                                <CardDescription>Manage reusable attendee groups for faster scheduling.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <Suspense fallback={<div>Loading groups...</div>}>
+                                    <GroupsListWrapper orgId={defaultOrgId} availableMembers={members} />
+                                </Suspense>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+                </Tabs>
             </div>
         </DashboardLayout>
     )
+}
+
+async function GroupsListWrapper({ orgId, availableMembers }: { orgId: string, availableMembers: any[] }) {
+    const groups = await getMeetingGroups(orgId)
+    return <GroupsList groups={groups} availableMembers={availableMembers} />
 }

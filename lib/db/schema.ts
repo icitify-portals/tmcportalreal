@@ -61,7 +61,7 @@ export const maintenanceTypeColEnum = mysqlEnum('maintenanceTypeCol', ['REPAIR',
 export const campaignStatusEnum = mysqlEnum('status', ['PENDING', 'ACTIVE', 'PAUSED', 'COMPLETED', 'ARCHIVED']);
 export const reportTypeEnum = mysqlEnum('reportType', ['MONTHLY_ACTIVITY', 'QUARTERLY_STATE', 'ANNUAL_CONGRESS', 'FINANCIAL']);
 export const reportStatusEnum = mysqlEnum('status', ['DRAFT', 'SUBMITTED', 'APPROVED', 'REJECTED']);
-export const settingsCategoryEnum = mysqlEnum('category', ['EMAIL', 'NOTIFICATION', 'GENERAL', 'AI']);
+export const settingsCategoryEnum = mysqlEnum('category', ['EMAIL', 'NOTIFICATION', 'GENERAL', 'AI', 'INTEGRATION']);
 export const messageTypeEnum = mysqlEnum('type', ['TEXT', 'IMAGE', 'E2AE']); // Added E2AE for encrypted
 
 // Meeting / Broadcast Enums
@@ -869,6 +869,9 @@ export const meetings = mysqlTable("meetings", {
     venue: varchar("venue", { length: 255 }), // Physical or Online Link
     isOnline: boolean("isOnline").default(false),
     meetingLink: varchar("meetingLink", { length: 500 }),
+    virtualRoomId: varchar("virtualRoomId", { length: 500 }),
+    recordingUrl: varchar("recordingUrl", { length: 500 }),
+    groupId: varchar("groupId", { length: 255 }), // Link to a specific meeting group
 
     status: mysqlEnum('status', ['SCHEDULED', 'ONGOING', 'ENDED', 'CANCELLED']).default('SCHEDULED'),
     createdBy: varchar("createdBy", { length: 255 }).notNull().references(() => users.id),
@@ -876,6 +879,25 @@ export const meetings = mysqlTable("meetings", {
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
     updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
 });
+
+export const meetingGroups = mysqlTable("meeting_groups", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
+    organizationId: varchar("organizationId", { length: 255 }).notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    name: varchar("name", { length: 255 }).notNull(),
+    description: text("description"),
+    isActive: boolean("isActive").default(true),
+    createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+});
+
+export const meetingGroupMembers = mysqlTable("meeting_group_members", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
+    groupId: varchar("groupId", { length: 255 }).notNull().references(() => meetingGroups.id, { onDelete: "cascade" }),
+    userId: varchar("userId", { length: 255 }).notNull().references(() => users.id, { onDelete: "cascade" }),
+    createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+}, (t) => ({
+    unq: uniqueIndex("meeting_group_member_unique").on(t.groupId, t.userId),
+}));
 
 export const meetingAttendances = mysqlTable("meeting_attendances", {
     id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
@@ -1536,3 +1558,13 @@ export const tmcProgrammes = mysqlTable("tmc_programmes", {
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
     updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
 });
+
+export const meetingGroupsRelations = relations(meetingGroups, ({ one, many }) => ({
+    organization: one(organizations, { fields: [meetingGroups.organizationId], references: [organizations.id] }),
+    members: many(meetingGroupMembers),
+}));
+
+export const meetingGroupMembersRelations = relations(meetingGroupMembers, ({ one }) => ({
+    group: one(meetingGroups, { fields: [meetingGroupMembers.groupId], references: [meetingGroups.id] }),
+    user: one(users, { fields: [meetingGroupMembers.userId], references: [users.id] }),
+}));

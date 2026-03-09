@@ -65,8 +65,21 @@ export function RequestOccasionDialog({ types, organizations }: RequestDialogPro
     const form = useForm({
         resolver: zodResolver(formSchema),
         defaultValues: {
+            typeId: "",
+            organizationId: "",
+            date: "",
+            time: "",
+            venue: "",
+            address: "",
+            role: 'COORDINATING',
             certificateNeeded: false,
-            role: 'COORDINATING'
+            husbandName: "",
+            wifeName: "",
+            babyName: "",
+            dowry: "",
+            fatherName: "",
+            motherName: "",
+            dob: "",
         },
     })
 

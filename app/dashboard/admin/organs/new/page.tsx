@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Building2 } from "lucide-react"

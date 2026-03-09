@@ -1,14 +1,18 @@
 export const dynamic = 'force-dynamic'
 
 import { Suspense } from "react"
-import { getMeeting, uploadMinutes } from "@/lib/actions/meetings"
+import { getMeeting, uploadMinutes, getAvailableMembers } from "@/lib/actions/meetings"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { format, differenceInMinutes } from "date-fns"
 import { Button } from "@/components/ui/button"
 import { UploadMinutesForm } from "@/components/meetings/upload-minutes-form" // Need to create this
+import { ClientDate } from "@/components/ui/client-date"
+import { MeetingControlButtons } from "@/components/meetings/meeting-control-buttons"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
+import { EditMeetingDialog } from "@/components/meetings/edit-meeting-dialog"
+import { DeleteMeetingButton } from "@/components/meetings/delete-meeting-button"
 
 
 interface AdminMeetingPageProps {
@@ -20,25 +24,39 @@ export default async function AdminMeetingDetailPage({ params }: AdminMeetingPag
     const meeting = await getMeeting(id)
     if (!meeting) return <div>Not found</div>
 
+    const members = await getAvailableMembers()
     const scheduledTime = new Date(meeting.scheduledAt)
 
     return (
         <DashboardLayout>
-            <div className="flex-1 space-y-6 p-8 pt-6">
+            <div className="flex-1 space-y-6 p-8 pt-6" suppressHydrationWarning>
                 <div className="flex justify-between items-center">
                     <div>
                         <h2 className="text-3xl font-bold tracking-tight">{meeting.title}</h2>
-                        <p className="text-muted-foreground" suppressHydrationWarning>{format(scheduledTime, "PPP p")}</p>
+                        <p className="text-muted-foreground"><ClientDate date={meeting.scheduledAt} formatString="PPP p" /></p>
                     </div>
-                    <Badge>{meeting.status}</Badge>
+                    <div className="flex items-center gap-2">
+                        {meeting.isOnline && (
+                            <MeetingControlButtons meetingId={meeting.id} status={meeting.status as string} />
+                        )}
+                        <EditMeetingDialog meeting={meeting} members={members} />
+                        <DeleteMeetingButton meetingId={meeting.id} meetingTitle={meeting.title} redirect={true} />
+                        <Badge variant={
+                            meeting.status === 'SCHEDULED' ? 'outline' :
+                                meeting.status === 'ONGOING' ? 'default' :
+                                    meeting.status === 'ENDED' ? 'secondary' : 'destructive'
+                        }>
+                            {meeting.status}
+                        </Badge>
+                    </div>
                 </div>
 
-                <div className="grid gap-6 md:grid-cols-2">
+                <div className="grid gap-6 md:grid-cols-2" suppressHydrationWarning>
                     <Card className="md:col-span-2">
                         <CardHeader>
                             <CardTitle>Attendance & Punctuality Analysis</CardTitle>
                             <CardDescription>
-                                Scheduled Start: <span suppressHydrationWarning>{format(scheduledTime, "p")}</span>
+                                Scheduled Start: <span><ClientDate date={meeting.scheduledAt} formatString="p" /></span>
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -79,7 +97,7 @@ export default async function AdminMeetingDetailPage({ params }: AdminMeetingPag
                                                         <div className="text-xs text-muted-foreground">{a.user?.email}</div>
                                                     </TableCell>
                                                     <TableCell><Badge variant="outline">{a.status}</Badge></TableCell>
-                                                    <TableCell suppressHydrationWarning>{a.joinedAt ? format(new Date(a.joinedAt), "p") : "-"}</TableCell>
+                                                    <TableCell>{a.joinedAt ? <ClientDate date={a.joinedAt} formatString="p" /> : "-"}</TableCell>
                                                     <TableCell>
                                                         {a.joinedAt && <Badge variant={variant}>{punctuality}</Badge>}
                                                     </TableCell>

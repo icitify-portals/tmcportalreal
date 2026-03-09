@@ -15,14 +15,16 @@ import { EmailTemplatesDialog } from "@/components/admin/settings/email-template
 import { OrganizationProfileForm } from "@/components/admin/settings/organization-profile-form"
 import { AiSettingsCard } from "@/components/admin/settings/ai-settings-card"
 import { SecuritySettingsForm } from "@/components/admin/settings/security-settings-form"
-import { getAISettings, getMembershipSettings, getYearPlannerSettings } from "@/lib/actions/settings"
+import { getAISettings, getMembershipSettings, getYearPlannerSettings, getLiveKitSettings } from "@/lib/actions/settings"
 import { YearPlannerSettingsCard } from "@/components/admin/settings/year-planner-settings"
+import { LiveKitSettingsCard } from "@/components/admin/settings/livekit-settings-card"
 
 export default async function AdminSettingsPage() {
     const session = await getServerSession()
     const aiSettings = await getAISettings()
     const membershipSettings = await getMembershipSettings()
     const yearPlannerSettings = await getYearPlannerSettings()
+    const liveKitSettings = await getLiveKitSettings()
 
     // Fetch National Org as the "System Settings" source
     const nationalOrg = await db.query.organizations.findFirst({
@@ -55,6 +57,8 @@ export default async function AdminSettingsPage() {
                         />
 
                         <AiSettingsCard initialSettings={aiSettings} />
+
+                        <LiveKitSettingsCard initialSettings={liveKitSettings} />
 
                         <YearPlannerSettingsCard initialSettings={yearPlannerSettings} />
 

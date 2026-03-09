@@ -250,5 +250,39 @@ export const emailTemplates = {
       Visit our website for more details.
     `,
   }),
+  meetingInvitation: (name: string, title: string, date: string, venue: string, meetingUrl: string) => ({
+    subject: `Meeting Invitation: ${title}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h1 style="color: #166534;">Meeting Invitation</h1>
+        <p>Dear ${name},</p>
+        <p>You have been invited to an upcoming meeting:</p>
+        <div style="background-color: #f0fdf4; border-left: 4px solid #166534; padding: 15px; margin: 20px 0;">
+          <h2 style="margin: 0 0 10px 0; color: #166534;">${title}</h2>
+          <p style="margin: 5px 0;"><strong>📅 Date:</strong> ${date}</p>
+          <p style="margin: 5px 0;"><strong>📍 Venue:</strong> ${venue}</p>
+        </div>
+        <p>You can view the meeting details and join the session (if online) through your dashboard:</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${meetingUrl}" style="background-color: #166534; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">View Meeting</a>
+        </div>
+        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+        <p style="color: #666; font-size: 12px;">This is an automated message from TMC Connect.</p>
+      </div>
+    `,
+    text: `
+      Meeting Invitation: ${title}
+      
+      Dear ${name},
+      
+      You have been invited to an upcoming meeting:
+      
+      Title: ${title}
+      Date: ${date}
+      Venue: ${venue}
+      
+      View meeting details here: ${meetingUrl}
+    `,
+  }),
 }
 

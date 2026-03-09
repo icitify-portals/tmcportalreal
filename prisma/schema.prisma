@@ -619,6 +619,9 @@ model Meeting {
   venue          String?
   isOnline       Boolean  @default(false)
   meetingLink    String?  @db.VarChar(500)
+  virtualRoomId  String?  @db.VarChar(500)
+  recordingUrl   String?  @db.VarChar(500)
+  groupId        String?  @db.VarChar(255)
   status         String   @default("SCHEDULED") // SCHEDULED, ONGOING, ENDED, CANCELLED
   createdBy      String
   creator        User     @relation("MeetingCreator", fields: [createdBy], references: [id])
@@ -630,6 +633,34 @@ model Meeting {
 
   @@index([organizationId])
   @@map("meetings")
+}
+
+// Meeting Groups
+model MeetingGroup {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  description    String?  @db.Text
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  members        MeetingGroupMember[]
+
+  @@index([organizationId])
+  @@map("meeting_groups")
+}
+
+model MeetingGroupMember {
+  id        String   @id @default(cuid())
+  groupId   String
+  group     MeetingGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  userId    String
+  createdAt DateTime @default(now())
+
+  @@unique([groupId, userId])
+  @@map("meeting_group_members")
 }
 
 model MeetingAttendance {
@@ -1340,9 +1371,39 @@ model Report {
   @@map("reports")
 }
 
-enum SettingsCategory {
-  EMAIL
   NOTIFICATION
   GENERAL
   AI
+  INTEGRATION
+}
+
+// Institutional Organs
+model Organ {
+  id          String   @id @default(cuid())
+  name        String
+  description String?  @db.Text
+  websiteUrl  String?  @db.VarChar(500)
+  logoUrl     String?  @db.VarChar(500)
+  category    String?  @db.VarChar(100)
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("organs")
+}
+
+// TMC Programmes (Evergreen)
+model TmcProgramme {
+  id          String   @id @default(cuid())
+  title       String
+  description String?  @db.Text
+  iconName    String?  @db.VarChar(100)
+  category    String?  @db.VarChar(100)
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("tmc_programmes")
 }

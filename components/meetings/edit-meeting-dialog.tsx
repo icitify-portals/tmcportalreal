@@ -26,10 +26,12 @@ import {
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
-import { createMeeting } from "@/lib/actions/meetings"
+import { Edit } from "lucide-react"
+import { updateMeeting } from "@/lib/actions/meetings"
 import { toast } from "sonner"
 import { Loader2 } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { format } from "date-fns"
 
 const formSchema = z.object({
     title: z.string().min(1, "Title is required"),
@@ -44,9 +46,9 @@ const formSchema = z.object({
     previousMinutesUrl: z.string().optional(),
 })
 
-interface CreateMeetingDialogProps {
+interface EditMeetingDialogProps {
+    meeting: any // The existing meeting object
     members: { id: string, name: string | null }[]
-    currentOrgId: string // Admin's org
 }
 
 import {
@@ -60,34 +62,51 @@ import { getMeetingGroups } from "@/lib/actions/meetings"
 import { useEffect } from "react"
 import { Upload } from "lucide-react"
 
-export function CreateMeetingDialog({ members, currentOrgId }: CreateMeetingDialogProps) {
+export function EditMeetingDialog({ meeting, members }: EditMeetingDialogProps) {
     const [open, setOpen] = useState(false)
     const [isPending, setIsPending] = useState(false)
     const [groups, setGroups] = useState<{ id: string, name: string }[]>([])
     const [minutesFile, setMinutesFile] = useState<File | null>(null)
+    const [mounted, setMounted] = useState(false)
+
+    useEffect(() => {
+        setMounted(true)
+    }, [])
 
     useEffect(() => {
         if (open) {
-            getMeetingGroups(currentOrgId).then(setGroups)
+            getMeetingGroups(meeting.organizationId).then(setGroups)
             setMinutesFile(null)
         }
-    }, [open, currentOrgId])
+    }, [open, meeting.organizationId])
 
     const form = useForm({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            title: "",
-            description: "",
+            title: meeting.title || "",
+            description: meeting.description || "",
             scheduledAt: "",
             time: "",
-            venue: "",
-            groupId: "",
-            meetingLink: "",
-            isOnline: false,
-            attendees: [],
+            venue: meeting.venue || "",
+            groupId: meeting.groupId || "",
+            meetingLink: meeting.meetingLink || "",
+            isOnline: meeting.isOnline || false,
+            attendees: meeting.attendees?.map((a: any) => a.user?.id).filter(Boolean) || [],
             previousMinutesUrl: ""
         },
     })
+
+    // Reset form values once mounted to use local timezone
+    useEffect(() => {
+        if (mounted && meeting.scheduledAt) {
+            const scheduledDate = new Date(meeting.scheduledAt)
+            form.reset({
+                ...form.getValues(),
+                scheduledAt: format(scheduledDate, "yyyy-MM-dd"),
+                time: format(scheduledDate, "HH:mm"),
+            })
+        }
+    }, [mounted, meeting.scheduledAt, form])
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
         setIsPending(true)
@@ -116,24 +135,23 @@ export function CreateMeetingDialog({ members, currentOrgId }: CreateMeetingDial
             const [hours, mins] = values.time.split(':')
             date.setHours(parseInt(hours), parseInt(mins))
 
-            const res = await createMeeting({
+            const res = await updateMeeting(meeting.id, {
                 ...values,
                 groupId: values.groupId === "none" ? undefined : values.groupId,
                 scheduledAt: date.toISOString(),
-                organizationId: currentOrgId,
+                organizationId: meeting.organizationId,
                 previousMinutesUrl: minuteUrl || undefined,
             })
 
             if (res.success) {
-                toast.success("Meeting scheduled and Notifications sent")
+                toast.success("Meeting updated and Members notified")
                 setOpen(false)
-                form.reset()
                 setMinutesFile(null)
             } else {
                 toast.error(res.error || "Failed")
             }
         } catch (error) {
-            toast.error("Error creating meeting")
+            toast.error("Error updating meeting")
         } finally {
             setIsPending(false)
         }
@@ -142,12 +160,15 @@ export function CreateMeetingDialog({ members, currentOrgId }: CreateMeetingDial
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button>Schedule Meeting</Button>
+                <Button variant="outline" size="sm">
+                    <Edit className="mr-2 h-4 w-4" />
+                    Edit Meeting
+                </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl">
                 <DialogHeader>
-                    <DialogTitle>Schedule New Meeting</DialogTitle>
-                    <DialogDescription>Create a meeting. Officials in this jurisdiction will be invited automatically.</DialogDescription>
+                    <DialogTitle>Edit Meeting</DialogTitle>
+                    <DialogDescription>Modify meeting details. Officials and invited members will be notified.</DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -282,7 +303,7 @@ export function CreateMeetingDialog({ members, currentOrgId }: CreateMeetingDial
                         <DialogFooter>
                             <Button type="submit" disabled={isPending}>
                                 {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Create Meeting
+                                Update Meeting
                             </Button>
                         </DialogFooter>
                     </form>
