@@ -595,6 +595,7 @@ export const usersRelations = relations(users, ({ one, many }) => ({
     messagesSent: many(messages),
     assets: many(assets),
     burialRequests: many(burialRequests),
+    competitionSubmissions: many(competitionSubmissions),
 }));
 
 export const organizationsRelations = relations(organizations, ({ one, many }) => ({
@@ -622,6 +623,7 @@ export const organizationsRelations = relations(organizations, ({ one, many }) =
     pages: many(pages),
     navigationItems: many(navigationItems),
     campaigns: many(fundraisingCampaigns),
+    competitions: many(competitions),
 }));
 
 export const galleriesRelations = relations(galleries, ({ one, many }) => ({
@@ -1567,4 +1569,50 @@ export const meetingGroupsRelations = relations(meetingGroups, ({ one, many }) =
 export const meetingGroupMembersRelations = relations(meetingGroupMembers, ({ one }) => ({
     group: one(meetingGroups, { fields: [meetingGroupMembers.groupId], references: [meetingGroups.id] }),
     user: one(users, { fields: [meetingGroupMembers.userId], references: [users.id] }),
+}));
+
+// ─── Competitions & Dynamic Questionnaires ──────────────────────────────────────
+export const competitionStatusEnum = mysqlEnum('competitionStatus', ['DRAFT', 'ACTIVE', 'CLOSED', 'COMPLETED']);
+
+export const competitions = mysqlTable("competitions", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
+    organizationId: varchar("organizationId", { length: 255 }).references(() => organizations.id, { onDelete: "cascade" }),
+    title: varchar("title", { length: 255 }).notNull(),
+    description: text("description"),
+    year: int("year").notNull(),
+    startDate: timestamp("startDate", { mode: "date", fsp: 3 }).notNull(),
+    endDate: timestamp("endDate", { mode: "date", fsp: 3 }).notNull(),
+    status: competitionStatusEnum.default('ACTIVE'),
+    fields: json("fields").notNull(), // Form schema
+    createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+});
+
+export const competitionSubmissions = mysqlTable("competition_submissions", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
+    competitionId: varchar("competitionId", { length: 255 }).notNull().references(() => competitions.id, { onDelete: "cascade" }),
+    userId: varchar("userId", { length: 255 }).references(() => users.id, { onDelete: "set null" }),
+    data: json("data").notNull(), // Form responses
+    status: varchar("status", { length: 50 }).default("SUBMITTED"),
+    submittedAt: timestamp("submittedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+});
+
+export const competitionsRelations = relations(competitions, ({ one, many }) => ({
+    organization: one(organizations, {
+        fields: [competitions.organizationId],
+        references: [organizations.id],
+    }),
+    submissions: many(competitionSubmissions),
+}));
+
+export const competitionSubmissionsRelations = relations(competitionSubmissions, ({ one }) => ({
+    competition: one(competitions, {
+        fields: [competitionSubmissions.competitionId],
+        references: [competitions.id],
+    }),
+    user: one(users, {
+        fields: [competitionSubmissions.userId],
+        references: [users.id],
+    }),
 }));

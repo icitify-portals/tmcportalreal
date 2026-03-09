@@ -31,6 +31,7 @@ import {
   HeartHandshake,
   Home,
   BookOpen,
+  Award,
 } from "lucide-react"
 import { signOut } from "next-auth/react"
 import { Button } from "@/components/ui/button"
@@ -62,6 +63,7 @@ const adminNavItems = [
   { href: "/dashboard/admin/teskiyah", label: "Teskiyah Centres", icon: MapPin },
   { href: "/dashboard/admin/organs", label: "Our Organs", icon: Building2 },
   { href: "/dashboard/admin/occasions", label: "Engagements & Occasions", icon: Handshake },
+  { href: "/dashboard/admin/competitions", label: "Competitions", icon: Award },
   { href: "/dashboard/admin/members", label: "Members", icon: Users },
   { href: "/dashboard/admin/officials", label: "Officials", icon: UserCheck },
   { href: "/dashboard/admin/organizations", label: "Organizations", icon: Building2 },

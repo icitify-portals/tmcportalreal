@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
     Home, Heart, Menu, Building2, BookOpen,
-    MapPin, ChevronDown, Info, FileText, LogIn, UserPlus
+    MapPin, ChevronDown, Info, FileText, LogIn, UserPlus, Award
 } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet"
 
@@ -143,6 +143,17 @@ export function PublicNav() {
                         Teskiyyah Centres
                     </Link>
 
+                    {/* Competitions */}
+                    <Link
+                        href="/competitions"
+                        className={cn(
+                            "px-3 py-2 rounded-md transition-colors hover:bg-white/10",
+                            pathname.startsWith("/competitions") ? "bg-white/20 font-semibold" : "text-white/85"
+                        )}
+                    >
+                        Competitions
+                    </Link>
+
                     {/* Donate */}
                     <Link
                         href="/donate"
@@ -243,6 +254,13 @@ export function PublicNav() {
                                     className={cn("flex items-center gap-3 px-6 py-3 text-sm font-medium transition-colors hover:bg-white/10", pathname.startsWith("/teskiyah") && "bg-white/15")}
                                 >
                                     <MapPin className="h-4 w-4 shrink-0" /> Teskiyyah Centres
+                                </Link>
+
+                                {/* Competitions */}
+                                <Link href="/competitions" onClick={() => setIsOpen(false)}
+                                    className={cn("flex items-center gap-3 px-6 py-3 text-sm font-medium transition-colors hover:bg-white/10", pathname.startsWith("/competitions") && "bg-white/15")}
+                                >
+                                    <Award className="h-4 w-4 shrink-0" /> Competitions
                                 </Link>
 
                                 {/* Donate */}

@@ -73,6 +73,7 @@ model User {
   feeAssignments     FeeAssignment[]
   reports            Report[]
   approvedReports    Report[] @relation("ReportApprover")
+  competitionSubmissions CompetitionSubmission[]
 
   @@map("users")
 }
@@ -186,6 +187,7 @@ model Organization {
   fees             Fee[]
   offices          Office[]
   reports          Report[]
+  competitions     Competition[]
 
   @@index([parentId])
   @@map("organizations")
@@ -1409,4 +1411,48 @@ model TmcProgramme {
   updatedAt   DateTime @updatedAt
 
   @@map("tmc_programmes")
+}
+
+// Competitions & Dynamic Questionnaires
+model Competition {
+  id             String   @id @default(cuid())
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  title          String   // e.g. "Ogun State Annual Spelling Bee 2026"
+  description    String?  @db.Text
+  year           Int
+  startDate      DateTime
+  endDate        DateTime
+  status         CompetitionStatus @default(ACTIVE)
+  fields         Json     // Array of form field definitions {label, type, required, options, etc.}
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  submissions    CompetitionSubmission[]
+
+  @@index([organizationId])
+  @@map("competitions")
+}
+
+model CompetitionSubmission {
+  id            String      @id @default(cuid())
+  competitionId String
+  competition   Competition @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+  userId        String?
+  user          User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  data          Json        // The submitted answers for the questionnaire
+  status        String      @default("SUBMITTED") // SUBMITTED, REVIEWED, APPROVED, REJECTED
+  submittedAt   DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([competitionId])
+  @@index([userId])
+  @@map("competition_submissions")
+}
+
+enum CompetitionStatus {
+  DRAFT
+  ACTIVE
+  CLOSED
+  COMPLETED
 }
