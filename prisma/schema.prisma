@@ -1371,6 +1371,8 @@ model Report {
   @@map("reports")
 }
 
+enum SettingsCategory {
+  EMAIL
   NOTIFICATION
   GENERAL
   AI
