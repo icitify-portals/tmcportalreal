@@ -176,6 +176,7 @@ model Organization {
   // New Relations
   occasionRequests OccasionRequest[]
   meetings         Meeting[]
+  meetingGroups    MeetingGroup[]
   programmes       Programme[]
   specialProgrammes SpecialProgramme[]
   assets           Asset[]
