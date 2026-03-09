@@ -638,10 +638,10 @@ model Meeting {
 
 // Meeting Groups
 model MeetingGroup {
-  id             String   @id @default(cuid())
-  organizationId String
+  id             String   @id @default(cuid()) @db.VarChar(255)
+  organizationId String   @db.VarChar(255)
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  name           String
+  name           String   @db.VarChar(255)
   description    String?  @db.Text
   isActive       Boolean  @default(true)
   createdAt      DateTime @default(now())
@@ -654,10 +654,10 @@ model MeetingGroup {
 }
 
 model MeetingGroupMember {
-  id        String   @id @default(cuid())
-  groupId   String
+  id        String   @id @default(cuid()) @db.VarChar(255)
+  groupId   String   @db.VarChar(255)
   group     MeetingGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  userId    String
+  userId    String   @db.VarChar(255)
   createdAt DateTime @default(now())
 
   @@unique([groupId, userId])
@@ -1382,8 +1382,8 @@ enum SettingsCategory {
 
 // Institutional Organs
 model Organ {
-  id          String   @id @default(cuid())
-  name        String
+  id          String   @id @default(cuid()) @db.VarChar(255)
+  name        String   @db.VarChar(255)
   description String?  @db.Text
   websiteUrl  String?  @db.VarChar(500)
   logoUrl     String?  @db.VarChar(500)
@@ -1398,8 +1398,8 @@ model Organ {
 
 // TMC Programmes (Evergreen)
 model TmcProgramme {
-  id          String   @id @default(cuid())
-  title       String
+  id          String   @id @default(cuid()) @db.VarChar(255)
+  title       String   @db.VarChar(255)
   description String?  @db.Text
   iconName    String?  @db.VarChar(100)
   category    String?  @db.VarChar(100)
