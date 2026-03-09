@@ -1,4 +1,4 @@
-﻿-- AlterTable
+-- AlterTable
 ALTER TABLE `meetings` ADD COLUMN `groupId` VARCHAR(255) NULL,
     ADD COLUMN `recordingUrl` VARCHAR(500) NULL,
     ADD COLUMN `virtualRoomId` VARCHAR(500) NULL;
