@@ -126,7 +126,7 @@ export default function NewCompetitionPage() {
                             value={title}
                             onChange={e => setTitle(e.target.value)}
                             required
-                            className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-green-500 focus:ring-1 focus:ring-green-500/20 outline-none"
+                            className="w-full rounded-lg border border-gray-300 bg-white text-gray-900 px-3 py-2.5 text-sm focus:border-green-500 focus:ring-1 focus:ring-green-500/20 outline-none"
                         />
                     </div>
                     <div>
@@ -135,7 +135,7 @@ export default function NewCompetitionPage() {
                             value={description}
                             onChange={e => setDescription(e.target.value)}
                             rows={3}
-                            className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-green-500 focus:ring-1 focus:ring-green-500/20 outline-none resize-none"
+                            className="w-full rounded-lg border border-gray-300 bg-white text-gray-900 px-3 py-2.5 text-sm focus:border-green-500 focus:ring-1 focus:ring-green-500/20 outline-none resize-none"
                         />
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -146,7 +146,7 @@ export default function NewCompetitionPage() {
                                 value={year}
                                 onChange={e => setYear(Number(e.target.value))}
                                 required
-                                className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-green-500 focus:ring-1 focus:ring-green-500/20 outline-none"
+                                className="w-full rounded-lg border border-gray-300 bg-white text-gray-900 px-3 py-2.5 text-sm focus:border-green-500 focus:ring-1 focus:ring-green-500/20 outline-none"
                             />
                         </div>
                         <div>
@@ -156,7 +156,7 @@ export default function NewCompetitionPage() {
                                 value={startDate}
                                 onChange={e => setStartDate(e.target.value)}
                                 required
-                                className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-green-500 focus:ring-1 focus:ring-green-500/20 outline-none"
+                                className="w-full rounded-lg border border-gray-300 bg-white text-gray-900 px-3 py-2.5 text-sm focus:border-green-500 focus:ring-1 focus:ring-green-500/20 outline-none"
                             />
                         </div>
                         <div>
@@ -166,7 +166,7 @@ export default function NewCompetitionPage() {
                                 value={endDate}
                                 onChange={e => setEndDate(e.target.value)}
                                 required
-                                className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-green-500 focus:ring-1 focus:ring-green-500/20 outline-none"
+                                className="w-full rounded-lg border border-gray-300 bg-white text-gray-900 px-3 py-2.5 text-sm focus:border-green-500 focus:ring-1 focus:ring-green-500/20 outline-none"
                             />
                         </div>
                     </div>
@@ -197,12 +197,12 @@ export default function NewCompetitionPage() {
                                         value={field.label}
                                         onChange={e => updateField(idx, { label: e.target.value })}
                                         placeholder="Field Label"
-                                        className="sm:col-span-5 rounded border border-gray-300 px-2.5 py-1.5 text-sm focus:border-green-500 outline-none"
+                                        className="sm:col-span-5 rounded border border-gray-300 bg-white text-gray-900 px-2.5 py-1.5 text-sm focus:border-green-500 outline-none"
                                     />
                                     <select
                                         value={field.type}
                                         onChange={e => updateField(idx, { type: e.target.value as CompetitionField["type"] })}
-                                        className="sm:col-span-3 rounded border border-gray-300 px-2 py-1.5 text-sm bg-white focus:border-green-500 outline-none"
+                                        className="sm:col-span-3 rounded border border-gray-300 bg-white text-gray-900 px-2 py-1.5 text-sm focus:border-green-500 outline-none"
                                     >
                                         <option value="text">Text</option>
                                         <option value="email">Email</option>

@@ -41,6 +41,7 @@ export async function createCompetition(data: CompetitionFormData) {
         organizationId: data.organizationId || null,
         fields: data.fields,
         status: "ACTIVE",
+        updatedAt: new Date(),
     }).$returningId()
 
     revalidatePath("/dashboard/admin/competitions")
