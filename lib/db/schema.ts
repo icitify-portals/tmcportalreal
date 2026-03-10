@@ -1572,7 +1572,7 @@ export const meetingGroupMembersRelations = relations(meetingGroupMembers, ({ on
 }));
 
 // ─── Competitions & Dynamic Questionnaires ──────────────────────────────────────
-export const competitionStatusEnum = mysqlEnum('competitionStatus', ['DRAFT', 'ACTIVE', 'CLOSED', 'COMPLETED']);
+export const competitionStatusEnum = mysqlEnum('status', ['DRAFT', 'ACTIVE', 'CLOSED', 'COMPLETED']);
 
 export const competitions = mysqlTable("competitions", {
     id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
