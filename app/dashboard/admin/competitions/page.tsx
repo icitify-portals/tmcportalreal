@@ -46,7 +46,7 @@ export default async function AdminCompetitionsPage() {
                     </Link>
                 </div>
             ) : (
-                <div className="bg-white rounded-xl border overflow-hidden">
+                <div className="bg-white rounded-xl border sm:overflow-visible overflow-auto">
                     <table className="w-full text-sm">
                         <thead>
                             <tr className="bg-gray-50 text-gray-600 text-left">
