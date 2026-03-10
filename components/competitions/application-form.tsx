@@ -91,7 +91,7 @@ export function CompetitionApplicationForm({ competitionId, fields }: Props) {
                             value={formData[field.id] || ""}
                             onChange={(e) => handleChange(field.id, e.target.value)}
                             required={field.required}
-                            className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-green-500 focus:ring-2 focus:ring-green-500/20 outline-none transition-all bg-white"
+                            className="w-full rounded-lg border border-gray-300 bg-white text-gray-900 px-3 py-2.5 text-sm focus:border-green-500 focus:ring-2 focus:ring-green-500/20 outline-none transition-all"
                         >
                             <option value="">{field.placeholder || `Select ${field.label}`}</option>
                             {field.options?.map(opt => (
@@ -106,7 +106,7 @@ export function CompetitionApplicationForm({ competitionId, fields }: Props) {
                             required={field.required}
                             placeholder={field.placeholder}
                             rows={3}
-                            className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-green-500 focus:ring-2 focus:ring-green-500/20 outline-none transition-all resize-none"
+                            className="w-full rounded-lg border border-gray-300 bg-white text-gray-900 px-3 py-2.5 text-sm focus:border-green-500 focus:ring-2 focus:ring-green-500/20 outline-none transition-all resize-none"
                         />
                     ) : (
                         <input
@@ -116,7 +116,7 @@ export function CompetitionApplicationForm({ competitionId, fields }: Props) {
                             onChange={(e) => handleChange(field.id, e.target.value)}
                             required={field.required}
                             placeholder={field.placeholder}
-                            className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-green-500 focus:ring-2 focus:ring-green-500/20 outline-none transition-all"
+                            className="w-full rounded-lg border border-gray-300 bg-white text-gray-900 px-3 py-2.5 text-sm focus:border-green-500 focus:ring-2 focus:ring-green-500/20 outline-none transition-all"
                         />
                     )}
                 </div>
