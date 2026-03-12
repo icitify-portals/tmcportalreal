@@ -154,11 +154,14 @@ export async function submitCompetitionApplication(competitionId: string, data: 
         return { success: false, error: "Registration deadline has passed" }
     }
 
+    const now = new Date()
     const [result] = await db.insert(competitionSubmissions).values({
         competitionId,
         userId,
         data,
         status: "SUBMITTED",
+        submittedAt: now,
+        updatedAt: now,
     }).$returningId()
 
     return { success: true, submissionId: result.id }
