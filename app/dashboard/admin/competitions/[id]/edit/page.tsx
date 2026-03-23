@@ -243,6 +243,17 @@ export default function EditCompetitionPage() {
                                         />
                                         Required
                                     </label>
+                                    {field.type === "select" && (
+                                        <div className="sm:col-span-12 mt-2">
+                                            <input
+                                                type="text"
+                                                value={field.options?.join(", ") || ""}
+                                                onChange={e => updateField(idx, { options: e.target.value.split(",").map(s => s.trim()).filter(Boolean) })}
+                                                placeholder="Enter options separated by commas (e.g. Option 1, Option 2)"
+                                                className="w-full rounded border border-gray-300 bg-white text-gray-900 px-2.5 py-1.5 text-sm focus:border-green-500 outline-none"
+                                            />
+                                        </div>
+                                    )}
                                 </div>
                                 <button
                                     type="button"
