@@ -22,20 +22,28 @@ export const STATE_CODES: Record<string, string> = {
 };
 
 export function getCountryCode(countryName: string): string {
-    return COUNTRY_CODES[countryName] || "99"; // 99 as fallback/unknown
+    if (!countryName) return "99";
+    const clean = countryName.trim().toLowerCase();
+    
+    // Direct or case-insensitive match
+    const normalized = Object.keys(COUNTRY_CODES).find(k => k.toLowerCase() === clean);
+    return normalized ? COUNTRY_CODES[normalized] : "99";
 }
 
 export function getStateCode(stateName: string): string {
+    if (!stateName) return "99";
+    const clean = stateName.trim().toLowerCase();
+
     // Handle "Abuja" or "FCT"
-    if (stateName.toLowerCase().includes("abuja") || stateName.toLowerCase().includes("fct")) {
+    if (clean.includes("abuja") || clean.includes("fct")) {
         return "09";
     }
 
-    // Try direct match
-    const code = STATE_CODES[stateName];
-    if (code) return code;
-
-    // Try simpler match (ignore case)
-    const normalized = Object.keys(STATE_CODES).find(k => k.toLowerCase() === stateName.toLowerCase());
+    // Try robust match (ignore case, handle words like "State", e.g. "Lagos State" -> "Lagos")
+    const normalized = Object.keys(STATE_CODES).find(k => {
+        const stateKey = k.toLowerCase();
+        return clean === stateKey || clean === `${stateKey} state` || clean.includes(stateKey);
+    });
+    
     return normalized ? STATE_CODES[normalized] : "99"; // 99 for unknown
 }
