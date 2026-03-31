@@ -28,7 +28,8 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { updateProgramme, getOffices } from "@/lib/actions/programmes"
 import { toast } from "sonner"
-import { Loader2, Edit } from "lucide-react"
+import { Loader2, Edit, AlertCircle, XCircle } from "lucide-react"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 const ProgrammeSchema = z.object({
     title: z.string().min(1, "Title is required"),
@@ -129,6 +130,16 @@ export function EditProgrammeDialog({ programme, open, onOpenChange }: EditProgr
                         Update the details for this programme.
                     </DialogDescription>
                 </DialogHeader>
+
+                {programme.status === 'REJECTED' && programme.rejectionReason && (
+                    <Alert variant="destructive" className="my-4 bg-red-50 border-red-200">
+                        <XCircle className="h-4 w-4 text-red-600" />
+                        <AlertTitle className="text-red-800 text-xs font-bold uppercase tracking-wider">Reason for Rejection</AlertTitle>
+                        <AlertDescription className="text-red-700 text-sm">
+                            {programme.rejectionReason}
+                        </AlertDescription>
+                    </Alert>
+                )}
 
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -310,7 +321,7 @@ export function EditProgrammeDialog({ programme, open, onOpenChange }: EditProgr
                             </Button>
                             <Button type="submit" disabled={isSubmitting}>
                                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Save Changes
+                                {programme.status === 'REJECTED' ? "Save & Re-submit" : "Save Changes"}
                             </Button>
                         </DialogFooter>
                     </form>

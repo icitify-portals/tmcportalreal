@@ -1,4 +1,4 @@
-﻿import {
+import {
     mysqlTable,
     varchar,
     timestamp,
@@ -980,6 +980,7 @@ export const programmes = mysqlTable("programmes", {
     paymentRequired: boolean("paymentRequired").default(false),
     amount: decimal("amount", { precision: 10, scale: 2 }).default("0.00"),
     hasCertificate: boolean("hasCertificate").default(false),
+    rejectionReason: text("rejectionReason"),
 
     createdBy: varchar("createdBy", { length: 255 }).notNull().references(() => users.id),
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),

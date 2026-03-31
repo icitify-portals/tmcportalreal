@@ -11,6 +11,7 @@ import { members } from "@/lib/db/schema"
 import { desc } from "drizzle-orm"
 import Link from "next/link"
 import { Plus } from "lucide-react"
+import { MemberStatsDialog } from "@/components/admin/members/member-stats-dialog"
 
 
 export default async function MembersPage() {
@@ -51,12 +52,15 @@ export default async function MembersPage() {
             <h1 className="text-3xl font-bold">Members</h1>
             <p className="text-muted-foreground">Manage organization members</p>
           </div>
-          <Link href="/dashboard/admin/members/new">
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Member
-            </Button>
-          </Link>
+          <div className="flex gap-2">
+            <MemberStatsDialog />
+            <Link href="/dashboard/admin/members/new">
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Member
+              </Button>
+            </Link>
+          </div>
         </div>
 
         <Card>

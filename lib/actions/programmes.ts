@@ -163,6 +163,25 @@ export async function approveProgrammeNational(programmeId: string) {
     }
 }
 
+export async function rejectProgramme(programmeId: string, reason: string) {
+    try {
+        const session = await getServerSession()
+        if (!session?.user?.id) return { success: false, error: "Unauthorized" }
+
+        await db.update(programmes).set({
+            status: 'REJECTED',
+            rejectionReason: reason,
+            updatedAt: new Date(),
+        }).where(eq(programmes.id, programmeId))
+
+        revalidatePath("/dashboard/admin/programmes")
+        return { success: true }
+    } catch (error) {
+        console.error("Reject Programme Error:", error)
+        return { success: false, error: "Rejection failed" }
+    }
+}
+
 // Public/Listing Filter
 export async function getProgrammes(filters?: { level?: string, state?: string, status?: string }) {
     // Explicit joins for compatibility query
@@ -361,6 +380,28 @@ export async function updateProgramme(programmeId: string, data: Partial<z.infer
 
         const validData = ProgrammeSchema.partial().parse(data)
 
+        const [current] = await db.select().from(programmes).where(eq(programmes.id, programmeId))
+        if (!current) return { success: false, error: "Programme not found" }
+
+        // Determine if this is a re-submission
+        let newStatus = current.status
+        let rejectionReason = current.rejectionReason
+
+        if (current.status === 'REJECTED') {
+            // Fetch organization level to determine re-submission status
+            const [org] = await db.select().from(organizations).where(eq(organizations.id, current.organizationId))
+            if (org) {
+                if (org.level === 'BRANCH' || org.level === 'LOCAL_GOVERNMENT') {
+                    newStatus = 'PENDING_STATE'
+                } else if (org.level === 'STATE') {
+                    newStatus = 'PENDING_NATIONAL'
+                } else if (org.level === 'NATIONAL') {
+                    newStatus = 'APPROVED'
+                }
+            }
+            rejectionReason = null // Clear reason on re-submission
+        }
+
         await db.update(programmes).set({
             title: validData.title,
             description: validData.description,
@@ -372,6 +413,8 @@ export async function updateProgramme(programmeId: string, data: Partial<z.infer
             paymentRequired: validData.paymentRequired,
             amount: validData.amount !== undefined ? validData.amount.toString() : undefined,
             organizingOfficeId: validData.organizingOfficeId,
+            status: newStatus,
+            rejectionReason,
             updatedAt: new Date()
         }).where(eq(programmes.id, programmeId))
 

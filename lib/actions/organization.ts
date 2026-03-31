@@ -34,6 +34,8 @@ export async function createOrganization(formData: FormData) {
             phone: rawData.phone,
             sliderImages: rawData.sliderImages,
             country: 'Nigeria', // Default
+            createdAt: new Date(),
+            updatedAt: new Date(),
         })
 
         revalidatePath("/dashboard/admin/organizations")
@@ -98,6 +100,7 @@ export async function updateOrganization(orgId: string, formData: FormData) {
             email: rawData.email,
             phone: rawData.phone,
             sliderImages: rawData.sliderImages,
+            updatedAt: new Date(),
         }).where(eq(organizations.id, orgId))
 
         revalidatePath("/dashboard/admin/organizations")

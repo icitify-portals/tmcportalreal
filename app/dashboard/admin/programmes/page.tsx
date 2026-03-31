@@ -5,12 +5,14 @@ import { redirect } from "next/navigation"
 import { getAdminProgrammes, approveProgrammeState, approveProgrammeNational } from "@/lib/actions/programmes"
 import { CreateProgrammeDialog } from "@/components/admin/programmes/create-programme-dialog"
 import { SubmitReportDialog } from "@/components/admin/programmes/submit-report-dialog"
+import { ReviewActions } from "@/components/admin/programmes/review-actions"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { CheckCircle2, AlertCircle } from "lucide-react"
+import { CheckCircle2, AlertCircle, XCircle } from "lucide-react"
 import { format } from "date-fns"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { db } from "@/lib/db"
 import { organizations, userRoles, roles } from "@/lib/db/schema"
 import { eq, and } from "drizzle-orm"
@@ -67,8 +69,19 @@ async function ProgrammeList({ type, orgId }: { type: 'MY_PROGRAMMES' | 'TO_APPR
                             </div>
                         </div>
                     </CardHeader>
-                    <CardContent className="space-y-2">
+                    <CardContent className="space-y-4">
                         <p className="text-sm text-gray-600 line-clamp-2">{p.description}</p>
+                        
+                        {p.status === 'REJECTED' && p.rejectionReason && (
+                            <Alert variant="destructive" className="bg-red-50/50 border-red-200">
+                                <XCircle className="h-4 w-4 text-red-600" />
+                                <AlertTitle className="text-red-800 text-xs font-bold uppercase tracking-wider">Rejection Reason</AlertTitle>
+                                <AlertDescription className="text-red-700 text-sm">
+                                    {p.rejectionReason}
+                                </AlertDescription>
+                            </Alert>
+                        )}
+
                         <div className="flex justify-between items-center text-sm text-muted-foreground pt-2">
                             <span>Target: {p.targetAudience}</span>
                             <span>{p.paymentRequired ? `₦${p.amount}` : "Free"}</span>
@@ -76,18 +89,7 @@ async function ProgrammeList({ type, orgId }: { type: 'MY_PROGRAMMES' | 'TO_APPR
 
                         {/* Approval Actions */}
                         {type === 'TO_APPROVE' && (
-                            <div className="flex gap-2 mt-4 pt-4 border-t">
-                                <form action={async () => {
-                                    "use server"
-                                    if (p.status === 'PENDING_STATE') await approveProgrammeState(p.id)
-                                    if (p.status === 'PENDING_NATIONAL') await approveProgrammeNational(p.id)
-                                }}>
-                                    <Button size="sm" className="bg-green-600 hover:bg-green-700">
-                                        <CheckCircle2 className="mr-2 h-4 w-4" />
-                                        Approve
-                                    </Button>
-                                </form>
-                            </div>
+                            <ReviewActions programmeId={p.id} status={p.status || ""} />
                         )}
 
                         {/* Reporting Action */}
