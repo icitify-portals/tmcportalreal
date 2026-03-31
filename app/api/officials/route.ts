@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { getServerSession } from "@/lib/session"
 import { db } from "@/lib/db"
+import { eq } from "drizzle-orm"
 import { officials, userRoles, roles } from "@/lib/db/schema"
 
 export async function POST(req: Request) {
