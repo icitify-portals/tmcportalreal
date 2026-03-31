@@ -93,8 +93,28 @@ export function OfficialAppointmentForm({ initialOrgId }: { initialOrgId?: strin
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!form.userId || !form.organizationId || !form.position || !form.positionLevel) {
-            toast.error("Please fill in all required fields")
+
+        // Debug log to help identify missing fields
+        console.log("Submitting form:", form)
+
+        if (!form.userId) {
+            toast.error("Please search and select a member first")
+            return
+        }
+        if (!form.positionLevel) {
+            toast.error("Please select an official level")
+            return
+        }
+        if (!form.organizationId) {
+            toast.error("Please select the specific organization/jurisdiction")
+            return
+        }
+        if (!form.position) {
+            toast.error("Please enter the position title")
+            return
+        }
+        if (!form.termStart) {
+            toast.error("Please select the term start date")
             return
         }
 
