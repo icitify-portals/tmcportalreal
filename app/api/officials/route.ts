@@ -29,7 +29,19 @@ export async function POST(req: Request) {
             return NextResponse.json({ message: "Missing required fields" }, { status: 400 })
         }
 
-        // Multi-step transaction or sequential operations
+        // Check if user is already an official (since userId is UNIQUE in schema)
+        const existingOfficial = await db.query.officials.findFirst({
+            where: eq(officials.userId, userId)
+        })
+
+        if (existingOfficial) {
+            return NextResponse.json({ 
+                message: "This member is already recorded as an official. Each member can currently only hold one official profile." 
+            }, { status: 400 })
+        }
+
+        const now = new Date()
+
         // 1. Add Official
         const newOfficial = await db.insert(officials).values({
             userId,
@@ -41,13 +53,15 @@ export async function POST(req: Request) {
             image,
             bio,
             isActive: true,
+            createdAt: now,
+            updatedAt: now
         })
 
         // 2. Auto-Assign Role based on Position
         const roleMapping: Record<string, string[]> = {
             "Amir": ["ORG_ADMIN"],
             "President": ["ORG_ADMIN"],
-            "Secretary": ["ORG_ADMIN", "SECRETARY"], // Assuming SECRETARY role exists or just ADMIN
+            "Secretary": ["ORG_ADMIN", "SECRETARY"],
             "General Secretary": ["ORG_ADMIN"],
             "Treasurer": ["FINANCE_ADMIN"],
             "Financial Secretary": ["FINANCE_ADMIN"],
@@ -55,27 +69,19 @@ export async function POST(req: Request) {
             "Publicity Secretary": ["CONTENT_MANAGER"]
         }
 
-        // Normalize position to find matches (simple partial match or exact)
-        // For now, let's use the exact keys or checking if the position string contains key words
         let targetRoleCodes: string[] = []
-
         Object.keys(roleMapping).forEach(key => {
             if (position.toLowerCase().includes(key.toLowerCase())) {
                 targetRoleCodes.push(...roleMapping[key])
             }
         })
 
-        // If no specific match, maybe assign a base "OFFICIAL" role if it exists? 
-        // For now, only assign privileges if matched high-level roles.
-
         if (targetRoleCodes.length > 0) {
-            // Find these roles in DB
             const rolesToAssign = await db.query.roles.findMany({
                 where: (roles, { inArray }) => inArray(roles.code, targetRoleCodes)
             })
 
             for (const role of rolesToAssign) {
-                // Check if user already has this role for this org
                 const existing = await db.query.userRoles.findFirst({
                     where: (ur, { and, eq }) => and(
                         eq(ur.userId, userId),
@@ -90,15 +96,24 @@ export async function POST(req: Request) {
                         roleId: role.id,
                         organizationId,
                         assignedBy: session.user.id,
+                        assignedAt: now,
                         isActive: true
                     })
                 }
             }
         }
 
-        return NextResponse.json({ message: "Official added and roles assigned successfully", official: newOfficial })
-    } catch (error) {
+        return NextResponse.json({ 
+            message: "Official added and roles assigned successfully", 
+            official: newOfficial 
+        })
+    } catch (error: any) {
         console.error("Official creation error:", error)
-        return NextResponse.json({ message: "Internal Server Error" }, { status: 500 })
+        // Check for specific DB errors if possible
+        const errorMessage = error.message || "Unknown error"
+        return NextResponse.json({ 
+            message: `Internal Server Error: ${errorMessage}`,
+            error: process.env.NODE_ENV === 'development' ? error : undefined
+        }, { status: 500 })
     }
 }
