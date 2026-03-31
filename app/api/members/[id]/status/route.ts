@@ -64,7 +64,9 @@ export async function PATCH(
                 userId: member.userId,
                 title: "Application Recommended",
                 message: "Your application has been recommended by the branch/state admin and is awaiting final approval.",
-                type: "INFO"
+                type: "INFO",
+                createdAt: new Date(),
+                updatedAt: new Date()
             })
 
             return NextResponse.json({ success: true, message: "Application recommended" })
@@ -113,7 +115,9 @@ export async function PATCH(
                 userId: member.userId,
                 title: "Membership Approved",
                 message: `Congratulations! Your membership has been approved. Your Member ID is ${newId}.`,
-                type: "SUCCESS"
+                type: "SUCCESS",
+                createdAt: new Date(),
+                updatedAt: new Date()
             })
 
             // Send Email
@@ -148,7 +152,9 @@ export async function PATCH(
                 title: "Application Rejected",
                 message: `Your application needs attention: ${reason}`,
                 type: "ERROR",
-                actionUrl: "/dashboard/member/apply"
+                actionUrl: "/dashboard/member/apply",
+                createdAt: new Date(),
+                updatedAt: new Date()
             })
 
             // Send Email

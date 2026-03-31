@@ -87,7 +87,9 @@ async function processWeeklyNotifications() {
                     title: "Programme Reminder",
                     message: `Reminder: ${prog.title} is coming up on ${prog.startDate.toDateString()}.`,
                     type: "INFO",
-                    actionUrl: "/dashboard/programmes"
+                    actionUrl: "/dashboard/programmes",
+                    createdAt: new Date(),
+                    updatedAt: new Date()
                 });
 
                 console.log(`Queued reminder for officer: ${creator.email}`);
@@ -136,7 +138,9 @@ async function processWeeklyNotifications() {
                 title: "Weekly Programme Digest",
                 message: `There are ${digestEvents.length} upcoming events this week. Check them out!`,
                 type: "INFO",
-                actionUrl: "/programmes"
+                actionUrl: "/programmes",
+                createdAt: new Date(),
+                updatedAt: new Date()
             });
         }
 

@@ -23,8 +23,11 @@ export const STATE_CODES: Record<string, string> = {
 
 export function getCountryCode(countryName: string): string {
     if (!countryName) return "99";
-    const clean = countryName.trim().toLowerCase();
+    let clean = countryName.trim().toLowerCase();
     
+    // Normalize aliases
+    if (clean === "ng") clean = "nigeria";
+
     // Direct or case-insensitive match
     const normalized = Object.keys(COUNTRY_CODES).find(k => k.toLowerCase() === clean);
     return normalized ? COUNTRY_CODES[normalized] : "99";

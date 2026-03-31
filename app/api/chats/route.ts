@@ -256,7 +256,9 @@ export async function POST(request: NextRequest) {
 
         const newChatResult = await db.insert(chats).values({
             name: body.isGroup ? body.name || "New Group" : null,
-            isGroup: body.isGroup
+            isGroup: body.isGroup,
+            createdAt: new Date(),
+            updatedAt: new Date()
         }).$returningId()
 
         const newChatId = newChatResult[0].id

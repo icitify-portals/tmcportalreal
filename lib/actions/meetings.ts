@@ -47,7 +47,9 @@ export async function createMeeting(data: z.infer<typeof CreateMeetingSchema>) {
         meetingLink: data.meetingLink,
         virtualRoomId: virtualRoomId, // Assign randomly generated room ID for LiveKit
         status: 'SCHEDULED',
-        createdBy: session.user.id
+        createdBy: session.user.id,
+        createdAt: new Date(),
+        updatedAt: new Date()
     }).$returningId()
 
     // 0. Handle Previous Minutes if provided
@@ -101,7 +103,9 @@ export async function createMeeting(data: z.infer<typeof CreateMeetingSchema>) {
                 title: "Meeting Invitation",
                 message: `You have been invited to: ${data.title} scheduled for ${format(new Date(data.scheduledAt), "PPP p")}${data.previousMinutesUrl ? " (Previous minutes attached)" : ""}`,
                 type: 'INFO' as const,
-                actionUrl: `/dashboard/member/meetings/${meeting.id}`
+                actionUrl: `/dashboard/member/meetings/${meeting.id}`,
+                createdAt: new Date(),
+                updatedAt: new Date()
             }))
         )
 
@@ -204,14 +208,15 @@ export async function updateMeeting(id: string, data: z.infer<typeof CreateMeeti
                 status: 'INVITED' as const
             }))
         )
-        // Notify only new ones
         await db.insert(notifications).values(
             attendeesToAdd.map(userId => ({
                 userId: userId,
                 title: "New Meeting Invitation",
                 message: `You have been added to: ${data.title}`,
                 type: 'INFO' as const,
-                actionUrl: `/dashboard/member/meetings/${id}`
+                actionUrl: `/dashboard/member/meetings/${id}`,
+                createdAt: new Date(),
+                updatedAt: new Date()
             }))
         )
 

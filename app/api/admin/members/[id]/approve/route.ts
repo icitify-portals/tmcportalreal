@@ -49,7 +49,9 @@ export async function POST(
                 title: "Membership Approved",
                 message: `Congratulations! Your membership has been approved. Your Member ID is ${newId}.`,
                 type: "SUCCESS",
-                actionUrl: "/dashboard"
+                actionUrl: "/dashboard",
+                createdAt: new Date(),
+                updatedAt: new Date()
             })
 
             // 3. Send Email
