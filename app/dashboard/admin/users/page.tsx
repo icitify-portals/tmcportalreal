@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Search, UserCog, Shield } from "lucide-react"
-import { desc, or, ilike, eq, inArray, and } from "drizzle-orm"
+import { desc, or, ilike, eq, inArray, and, sql } from "drizzle-orm"
 import { redirect } from "next/navigation"
 import { format } from "date-fns"
 
