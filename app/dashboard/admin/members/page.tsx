@@ -7,22 +7,48 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { db } from "@/lib/db"
-import { members } from "@/lib/db/schema"
-import { desc } from "drizzle-orm"
+import { members, users, organizations } from "@/lib/db/schema"
+import { desc, and, eq, sql } from "drizzle-orm"
 import Link from "next/link"
-import { Plus } from "lucide-react"
+import { Plus, Search, Filter } from "lucide-react"
 import { MemberStatsDialog } from "@/components/admin/members/member-stats-dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { locationData } from "@/lib/location-data"
 
 
-export default async function MembersPage() {
+export default async function MembersPage({
+  searchParams
+}: {
+  searchParams: { state?: string; lga?: string; branch?: string; search?: string }
+}) {
   const session = await getServerSession()
   requirePermission(session, "members:read")
 
-  // Fetch members without relations to avoid LATERAL JOIN issues
-  const rawMembers = await db.query.members.findMany({
-    orderBy: [desc(members.createdAt)],
-    limit: 50,
-  })
+  const stateFilter = searchParams.state
+  const lgaFilter = searchParams.lga
+  const branchFilter = searchParams.branch
+  const searchQuery = searchParams.search
+
+  let conditions = []
+
+  if (stateFilter && stateFilter !== "all") {
+    conditions.push(sql`JSON_UNQUOTE(JSON_EXTRACT(${members.metadata}, '$.state')) = ${stateFilter}`)
+  }
+  if (lgaFilter && lgaFilter !== "all") {
+    conditions.push(sql`JSON_UNQUOTE(JSON_EXTRACT(${members.metadata}, '$.lga')) = ${lgaFilter}`)
+  }
+  if (branchFilter && branchFilter !== "all") {
+    conditions.push(sql`JSON_UNQUOTE(JSON_EXTRACT(${members.metadata}, '$.branch')) = ${branchFilter}`)
+  }
+
+  // Fetch members
+  const rawMembers = await db.select()
+    .from(members)
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .orderBy(desc(members.createdAt))
+    .limit(100)
 
   // Manually fetch related data
   const userIds = [...new Set(rawMembers.map(m => m.userId).filter(Boolean))] as string[]
@@ -62,6 +88,64 @@ export default async function MembersPage() {
             </Link>
           </div>
         </div>
+
+        <Card className="bg-green-50/50 border-green-100">
+          <CardContent className="pt-6">
+            <form className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="space-y-2">
+                <Label className="text-xs">State</Label>
+                <Select name="state" defaultValue={stateFilter || "all"}>
+                  <SelectTrigger className="bg-white">
+                    <SelectValue placeholder="All States" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All States</SelectItem>
+                    {Object.keys(locationData).map(s => (
+                      <SelectItem key={s} value={s}>{s}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs">LGA</Label>
+                <Select name="lga" defaultValue={lgaFilter || "all"} disabled={!stateFilter || stateFilter === "all"}>
+                  <SelectTrigger className="bg-white">
+                    <SelectValue placeholder="All LGAs" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All LGAs</SelectItem>
+                    {stateFilter && stateFilter !== "all" && (locationData as any)[stateFilter]?.lgas.map((l: any) => (
+                      <SelectItem key={l.name} value={l.name}>{l.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs">Branch Keyword</Label>
+                <Input
+                  name="branch"
+                  placeholder="Filter branch..."
+                  defaultValue={branchFilter}
+                  className="bg-white"
+                />
+              </div>
+
+              <div className="flex items-end gap-2">
+                <Button type="submit" className="flex-1 bg-green-700 hover:bg-green-800 text-white">
+                  <Search className="mr-2 h-4 w-4" />
+                  Filter
+                </Button>
+                {(stateFilter || lgaFilter || branchFilter) && (
+                  <Link href="/dashboard/admin/members">
+                    <Button variant="outline" type="button">Reset</Button>
+                  </Link>
+                )}
+              </div>
+            </form>
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader>

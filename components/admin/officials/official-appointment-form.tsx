@@ -39,22 +39,41 @@ export function OfficialAppointmentForm({ initialOrgId }: { initialOrgId?: strin
         bio: "",
     })
 
-    // Fetch authorized organizations for the current user
+    const [treeData, setTreeData] = useState<any[]>([])
+    const [selectedStateId, setSelectedStateId] = useState<string>("")
+    const [selectedLgaId, setSelectedLgaId] = useState<string>("")
+
+    // Fetch organization tree
     useEffect(() => {
         setMounted(true)
-        const fetchOrgs = async () => {
+        const fetchTree = async () => {
             try {
-                const res = await fetch("/api/organizations/authorized")
+                const res = await fetch("/api/organizations/tree")
                 if (res.ok) {
                     const data = await res.json()
-                    setOrganizations(data)
+                    setTreeData(data)
                 }
             } catch (error) {
-                console.error("Failed to fetch organizations:", error)
+                console.error("Failed to fetch organization tree:", error)
             }
         }
-        fetchOrgs()
+        fetchTree()
     }, [])
+
+    // Update organizationId when selections change
+    useEffect(() => {
+        if (!form.positionLevel) return;
+
+        if (form.positionLevel === "NATIONAL" && treeData.length > 0) {
+            setForm(prev => ({ ...prev, organizationId: treeData[0].id }))
+        } else if (form.positionLevel === "STATE" && selectedStateId) {
+            setForm(prev => ({ ...prev, organizationId: selectedStateId }))
+        } else if (form.positionLevel === "LOCAL_GOVERNMENT" && selectedLgaId) {
+            setForm(prev => ({ ...prev, organizationId: selectedLgaId }))
+        } else if (form.positionLevel === "BRANCH" && form.organizationId) {
+            // Already set by branch selector
+        }
+    }, [form.positionLevel, selectedStateId, selectedLgaId, treeData])
 
     const searchUsers = async () => {
         if (!searchQuery.trim()) return
@@ -158,20 +177,104 @@ export function OfficialAppointmentForm({ initialOrgId }: { initialOrgId?: strin
                 </CardHeader>
                 <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                        <Label>Organization / Jurisdiction</Label>
-                        <Select value={form.organizationId} onValueChange={(v) => setForm({ ...form, organizationId: v })}>
+                        <Label>Official Level / Jurisdiction Type</Label>
+                        <Select
+                            value={form.positionLevel}
+                            onValueChange={(v) => {
+                                setForm({ ...form, positionLevel: v, organizationId: "" })
+                                setSelectedStateId("")
+                                setSelectedLgaId("")
+                            }}
+                        >
                             <SelectTrigger>
-                                <SelectValue placeholder="Select Organization" />
+                                <SelectValue placeholder="Select Level" />
                             </SelectTrigger>
                             <SelectContent>
-                                {organizations.map((org) => (
-                                    <SelectItem key={org.id} value={org.id}>
-                                        {org.name} ({org.level})
-                                    </SelectItem>
-                                ))}
+                                <SelectItem value="NATIONAL">National</SelectItem>
+                                <SelectItem value="STATE">State</SelectItem>
+                                <SelectItem value="LOCAL_GOVERNMENT">Local Government (LGA)</SelectItem>
+                                <SelectItem value="BRANCH">Branch</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
+
+                    {form.positionLevel === "NATIONAL" && treeData.length > 0 && (
+                        <div className="space-y-2">
+                            <Label>National Organization</Label>
+                            <Input value={treeData[0].name} disabled className="bg-muted" />
+                        </div>
+                    )}
+
+                    {(form.positionLevel === "STATE" || form.positionLevel === "LOCAL_GOVERNMENT" || form.positionLevel === "BRANCH") && (
+                        <div className="space-y-2">
+                            <Label>State</Label>
+                            <Select
+                                value={selectedStateId}
+                                onValueChange={(v) => {
+                                    setSelectedStateId(v)
+                                    setSelectedLgaId("")
+                                    if (form.positionLevel === "STATE") setForm(prev => ({ ...prev, organizationId: v }))
+                                }}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select State" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {treeData[0]?.states?.map((state: any) => (
+                                        <SelectItem key={state.id} value={state.id}>{state.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    )}
+
+                    {(form.positionLevel === "LOCAL_GOVERNMENT" || form.positionLevel === "BRANCH") && (
+                        <div className="space-y-2">
+                            <Label>Local Government (LGA)</Label>
+                            <Select
+                                value={selectedLgaId}
+                                disabled={!selectedStateId}
+                                onValueChange={(v) => {
+                                    setSelectedLgaId(v)
+                                    if (form.positionLevel === "LOCAL_GOVERNMENT") setForm(prev => ({ ...prev, organizationId: v }))
+                                }}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select LGA" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {treeData[0]?.states
+                                        ?.find((s: any) => s.id === selectedStateId)
+                                        ?.lgas?.map((lga: any) => (
+                                            <SelectItem key={lga.id} value={lga.id}>{lga.name}</SelectItem>
+                                        ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    )}
+
+                    {form.positionLevel === "BRANCH" && (
+                        <div className="space-y-2">
+                            <Label>Branch</Label>
+                            <Select
+                                value={form.organizationId}
+                                disabled={!selectedLgaId}
+                                onValueChange={(v) => setForm(prev => ({ ...prev, organizationId: v }))}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select Branch" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {treeData[0]?.states
+                                        ?.find((s: any) => s.id === selectedStateId)
+                                        ?.lgas?.find((l: any) => l.id === selectedLgaId)
+                                        ?.branches?.map((branch: any) => (
+                                            <SelectItem key={branch.id} value={branch.id}>{branch.name}</SelectItem>
+                                        ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    )}
 
                     <div className="space-y-2">
                         <Label>Position Title</Label>
@@ -180,21 +283,6 @@ export function OfficialAppointmentForm({ initialOrgId }: { initialOrgId?: strin
                             value={form.position}
                             onChange={(e) => setForm({ ...form, position: e.target.value })}
                         />
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label>Official Level</Label>
-                        <Select value={form.positionLevel} onValueChange={(v) => setForm({ ...form, positionLevel: v })}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select Level" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="NATIONAL">National</SelectItem>
-                                <SelectItem value="STATE">State</SelectItem>
-                                <SelectItem value="LOCAL_GOVERNMENT">Local Government</SelectItem>
-                                <SelectItem value="BRANCH">Branch</SelectItem>
-                            </SelectContent>
-                        </Select>
                     </div>
 
                     <div className="space-y-2">
@@ -210,7 +298,7 @@ export function OfficialAppointmentForm({ initialOrgId }: { initialOrgId?: strin
                                 >
                                     <CalendarIcon className="mr-2 h-4 w-4" />
                                     <span suppressHydrationWarning>
-                                        {form.termStart && mounted ? format(form.termStart, "PPP") : <span>Pick a date</span>}
+                                        {form.termStart && mounted ? format(form.termStart, "PPP") : <span>Pick term start</span>}
                                     </span>
                                 </Button>
                             </PopoverTrigger>
@@ -218,8 +306,42 @@ export function OfficialAppointmentForm({ initialOrgId }: { initialOrgId?: strin
                                 <Calendar
                                     mode="single"
                                     selected={form.termStart}
-                                    onSelect={(date) => setForm({ ...form, termStart: date || new Date() })}
+                                    onSelect={(date) => setForm({ ...form, termStart: date })}
                                     initialFocus
+                                    captionLayout="dropdown"
+                                    startMonth={new Date(2000, 0)}
+                                    endMonth={new Date(2040, 11)}
+                                />
+                            </PopoverContent>
+                        </Popover>
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label>Term End Date (Optional)</Label>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                        "w-full justify-start text-left font-normal",
+                                        !form.termEnd && "text-muted-foreground"
+                                    )}
+                                >
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    <span suppressHydrationWarning>
+                                        {form.termEnd && mounted ? format(form.termEnd, "PPP") : <span>Pick term end (leave for present)</span>}
+                                    </span>
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0">
+                                <Calendar
+                                    mode="single"
+                                    selected={form.termEnd}
+                                    onSelect={(date) => setForm({ ...form, termEnd: date })}
+                                    initialFocus
+                                    captionLayout="dropdown"
+                                    startMonth={new Date(2000, 0)}
+                                    endMonth={new Date(2040, 11)}
                                 />
                             </PopoverContent>
                         </Popover>

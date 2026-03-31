@@ -7,9 +7,10 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
     Home, Heart, Menu, Building2, BookOpen,
-    MapPin, ChevronDown, Info, FileText, LogIn, UserPlus, Award
+    MapPin, ChevronDown, Info, FileText, LogIn, UserPlus, Award, LayoutDashboard
 } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet"
+import { useSession } from "next-auth/react"
 
 const aboutItems = [
     { title: "About Us", href: "/about", icon: Info },
@@ -32,6 +33,7 @@ export function PublicNav() {
     const [mobileAboutOpen, setMobileAboutOpen] = useState(false)
     const aboutRef = useRef<HTMLDivElement>(null)
     const pathname = usePathname()
+    const { data: session, status } = useSession()
 
     useEffect(() => { setMounted(true) }, [])
 
@@ -168,21 +170,33 @@ export function PublicNav() {
                     {/* Divider */}
                     <div className="w-px h-5 bg-white/25 mx-1" />
 
-                    {/* Sign Up / Login */}
-                    <Link
-                        href="/auth/signin"
-                        className="flex items-center gap-1.5 bg-white text-green-700 font-semibold px-4 py-1.5 rounded-full text-sm hover:bg-green-50 transition-colors"
-                    >
-                        <LogIn className="h-3.5 w-3.5" />
-                        Login
-                    </Link>
-                    <Link
-                        href="/auth/signup"
-                        className="flex items-center gap-1.5 border border-white/50 text-white px-4 py-1.5 rounded-full text-sm hover:bg-white/10 transition-colors ml-1"
-                    >
-                        <UserPlus className="h-3.5 w-3.5" />
-                        Sign Up
-                    </Link>
+                    {/* Sign Up / Login / Dashboard */}
+                    {status === "authenticated" ? (
+                        <Link
+                            href="/dashboard"
+                            className="flex items-center gap-1.5 bg-white text-green-700 font-semibold px-4 py-1.5 rounded-full text-sm hover:bg-green-50 transition-colors"
+                        >
+                            <LayoutDashboard className="h-3.5 w-3.5" />
+                            Dashboard
+                        </Link>
+                    ) : (
+                        <>
+                            <Link
+                                href="/auth/signin"
+                                className="flex items-center gap-1.5 bg-white text-green-700 font-semibold px-4 py-1.5 rounded-full text-sm hover:bg-green-50 transition-colors"
+                            >
+                                <LogIn className="h-3.5 w-3.5" />
+                                Login
+                            </Link>
+                            <Link
+                                href="/auth/signup"
+                                className="flex items-center gap-1.5 border border-white/50 text-white px-4 py-1.5 rounded-full text-sm hover:bg-white/10 transition-colors ml-1"
+                            >
+                                <UserPlus className="h-3.5 w-3.5" />
+                                Sign Up
+                            </Link>
+                        </>
+                    )}
                 </div>
 
                 {/* ── Mobile Nav ─────────────────────────────────────────── */}
@@ -272,16 +286,26 @@ export function PublicNav() {
 
                                 {/* Auth */}
                                 <div className="mt-4 px-6 pt-4 border-t border-green-700 space-y-2">
-                                    <Link href="/auth/signin" onClick={() => setIsOpen(false)}
-                                        className="flex items-center justify-center gap-2 w-full bg-white text-green-700 font-semibold py-2 rounded-full text-sm hover:bg-green-50 transition-colors"
-                                    >
-                                        <LogIn className="h-4 w-4" /> Login
-                                    </Link>
-                                    <Link href="/auth/signup" onClick={() => setIsOpen(false)}
-                                        className="flex items-center justify-center gap-2 w-full border border-white/40 text-white py-2 rounded-full text-sm hover:bg-white/10 transition-colors"
-                                    >
-                                        <UserPlus className="h-4 w-4" /> Sign Up
-                                    </Link>
+                                    {status === "authenticated" ? (
+                                        <Link href="/dashboard" onClick={() => setIsOpen(false)}
+                                            className="flex items-center justify-center gap-2 w-full bg-white text-green-700 font-semibold py-2 rounded-full text-sm hover:bg-green-50 transition-colors"
+                                        >
+                                            <LayoutDashboard className="h-4 w-4" /> Dashboard
+                                        </Link>
+                                    ) : (
+                                        <>
+                                            <Link href="/auth/signin" onClick={() => setIsOpen(false)}
+                                                className="flex items-center justify-center gap-2 w-full bg-white text-green-700 font-semibold py-2 rounded-full text-sm hover:bg-green-50 transition-colors"
+                                            >
+                                                <LogIn className="h-4 w-4" /> Login
+                                            </Link>
+                                            <Link href="/auth/signup" onClick={() => setIsOpen(false)}
+                                                className="flex items-center justify-center gap-2 w-full border border-white/40 text-white py-2 rounded-full text-sm hover:bg-white/10 transition-colors"
+                                            >
+                                                <UserPlus className="h-4 w-4" /> Sign Up
+                                            </Link>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         </SheetContent>

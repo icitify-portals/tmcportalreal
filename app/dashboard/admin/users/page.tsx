@@ -3,12 +3,14 @@ import { Suspense } from "react"
 import Link from "next/link"
 import { getServerSession } from "@/lib/session"
 import { db } from "@/lib/db"
-import { users, userRoles, roles } from "@/lib/db/schema"
+import { users, userRoles, roles, members as membersTable } from "@/lib/db/schema"
 import { requirePermission } from "@/lib/rbac-v2"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
     Table,
     TableBody,
@@ -27,7 +29,9 @@ import { format } from "date-fns"
 // However, reusing API keeps logic centralized? 
 // For dashboard pages, direct DB access is standard in Next.js Server Components.
 
-async function UserList({ searchParams }: { searchParams: { q?: string } }) {
+async function UserList({ searchParams }: {
+    searchParams: { q?: string; state?: string; lga?: string; branch?: string }
+}) {
     // Need to dynamically import to use searchParams in Server Component correctly in Next 15+? 
     // Actually props are fine.
 
@@ -44,15 +48,37 @@ async function UserList({ searchParams }: { searchParams: { q?: string } }) {
 
     // Fetch data
     const query = searchParams?.q || ""
+    const stateFilter = searchParams?.state
+    const lgaFilter = searchParams?.lga
+    const branchFilter = searchParams?.branch
 
-    // Using fetch to API or Direct DB?
     // Direct DB is faster and avoids self-request issues in some environments.
 
-    // 1. Fetch Users
-    console.log("Fetching users manually to avoid LATERAL JOIN...");
-    const rawUsers = await db.select()
+    const conditions = []
+    if (query) {
+        conditions.push(or(ilike(users.name, `%${query}%`), ilike(users.email, `%${query}%`)))
+    }
+    if (stateFilter && stateFilter !== "all") {
+        conditions.push(sql`JSON_UNQUOTE(JSON_EXTRACT(${membersTable.metadata}, '$.state')) = ${stateFilter}`)
+    }
+    if (lgaFilter && lgaFilter !== "all") {
+        conditions.push(sql`JSON_UNQUOTE(JSON_EXTRACT(${membersTable.metadata}, '$.lga')) = ${lgaFilter}`)
+    }
+    if (branchFilter && branchFilter !== "all") {
+        // Partial match for branch as it's a string input usually
+        conditions.push(sql`JSON_UNQUOTE(JSON_EXTRACT(${membersTable.metadata}, '$.branch')) LIKE ${`%${branchFilter}%`}`)
+    }
+
+    // 1. Fetch Users joined with members to access jurisdiction
+    const rawUsers = await db.select({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        createdAt: users.createdAt,
+    })
         .from(users)
-        .where(query ? or(ilike(users.name, `%${query}%`), ilike(users.email, `%${query}%`)) : undefined)
+        .leftJoin(membersTable, eq(users.id, membersTable.userId))
+        .where(conditions.length > 0 ? and(...conditions) : undefined)
         .orderBy(desc(users.createdAt))
         .limit(50);
 
@@ -156,8 +182,16 @@ async function UserList({ searchParams }: { searchParams: { q?: string } }) {
     )
 }
 
-export default async function UsersPage(props: { searchParams: Promise<{ q?: string }> }) {
+export default async function UsersPage(props: {
+    searchParams: Promise<{ q?: string; state?: string; lga?: string; branch?: string }>
+}) {
     const searchParams = await props.searchParams;
+
+    const stateFilter = searchParams.state;
+    const lgaFilter = searchParams.lga;
+    const branchFilter = searchParams.branch;
+
+    const states = Object.keys(require("@/lib/location-data").locationData);
 
     return (
         <DashboardLayout>
@@ -169,15 +203,52 @@ export default async function UsersPage(props: { searchParams: Promise<{ q?: str
                     </p>
                 </div>
 
-                <div className="flex items-center gap-2 max-w-sm">
-                    {/* Search Form would go here, effectively pushing to URL */}
-                    <Input placeholder="Search users by name or email..." name="q"
-                    // Simplified: In real app, bind to URL search params via client component
-                    />
-                    <Button variant="secondary">
-                        <Search className="h-4 w-4" />
-                    </Button>
-                </div>
+                <Card className="bg-green-50/50 border-green-100">
+                    <CardContent className="pt-6">
+                        <form className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                            <div className="md:col-span-1">
+                                <Input placeholder="Search name/email..." name="q" defaultValue={searchParams.q} />
+                            </div>
+                            <div>
+                                <Select name="state" defaultValue={stateFilter || "all"}>
+                                    <SelectTrigger className="bg-white">
+                                        <SelectValue placeholder="State" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">All States</SelectItem>
+                                        {states.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div>
+                                <Select name="lga" defaultValue={lgaFilter || "all"} disabled={!stateFilter || stateFilter === "all"}>
+                                    <SelectTrigger className="bg-white">
+                                        <SelectValue placeholder="LGA" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">All LGAs</SelectItem>
+                                        {stateFilter && stateFilter !== "all" && (require("@/lib/location-data").locationData as any)[stateFilter]?.lgas.map((l: any) => (
+                                            <SelectItem key={l.name} value={l.name}>{l.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div>
+                                <Input name="branch" placeholder="Branch..." defaultValue={branchFilter} className="bg-white" />
+                            </div>
+                            <div className="flex gap-2">
+                                <Button type="submit" className="bg-green-700 hover:bg-green-800 text-white flex-1">
+                                    <Search className="h-4 w-4 mr-2" /> Filter
+                                </Button>
+                                {(searchParams.q || stateFilter || lgaFilter || branchFilter) && (
+                                    <Link href="/dashboard/admin/users">
+                                        <Button variant="outline" type="button">Reset</Button>
+                                    </Link>
+                                )}
+                            </div>
+                        </form>
+                    </CardContent>
+                </Card>
 
                 <Card>
                     <CardHeader>

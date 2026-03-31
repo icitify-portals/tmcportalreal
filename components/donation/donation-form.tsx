@@ -55,7 +55,7 @@ export default function DonationForm() {
         const config = {
             key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || 'pk_test_xxxxxxxxxxxxxxxxxxxx',
             email: email,
-            amount: (parseFloat(amount || "0") * 100),
+            amount: (parseFloat(amount?.toString().replace(/,/g, '') || "0") * 100),
             currency: 'NGN',
             metadata: {
                 custom_fields: [

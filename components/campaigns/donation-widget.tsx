@@ -54,7 +54,7 @@ export function DonationWidget({
             return
         }
 
-        const finalAmount = mode === "preset" ? amount : parseFloat(customAmount)
+        const finalAmount = mode === "preset" ? amount : parseFloat(customAmount.replace(/,/g, ''))
         if (!finalAmount || finalAmount < 100) {
             toast.error("Minimum donation is ₦100")
             return
