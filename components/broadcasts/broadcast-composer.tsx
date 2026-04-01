@@ -16,7 +16,15 @@ import { sendBroadcast } from "@/lib/actions/broadcasts"
 import { searchUsers } from "@/lib/actions/users"
 import { useRouter } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
-import { debounce } from "lodash"
+
+// Simple debounce implementation to avoid lodash dependency
+function debounce<T extends (...args: any[]) => any>(func: T, wait: number) {
+  let timeout: NodeJS.Timeout | null = null;
+  return function(this: any, ...args: Parameters<T>) {
+    if (timeout) clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(this, args), wait);
+  };
+}
 
 const formSchema = z.object({
     title: z.string().min(1, "Title is required"),
