@@ -1,6 +1,4 @@
-"use client"
-
-import { useState } from "react"
+import { useEffect, useCallback } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -11,15 +9,21 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
-import { Loader2, Plus, Trash2, Image as ImageIcon, Music, Video, Send } from "lucide-react"
+import { Loader2, Plus, Trash2, Image as ImageIcon, Music, Video, Send, Users, User, X } from "lucide-react"
 import { sendBroadcast } from "@/lib/actions/broadcasts"
+import { searchUsers } from "@/lib/actions/users"
 import { useRouter } from "next/navigation"
+import { Badge } from "@/components/ui/badge"
+import { debounce } from "lodash"
 
 const formSchema = z.object({
     title: z.string().min(1, "Title is required"),
     content: z.string().min(1, "Content is required"),
-    targetLevel: z.enum(['NATIONAL', 'STATE', 'LOCAL_GOVERNMENT', 'BRANCH']),
+    targetType: z.enum(['ALL', 'OFFICIALS_ONLY', 'INDIVIDUALS', 'JURISDICTION_MEMBERS']),
+    targetLevel: z.enum(['NATIONAL', 'STATE', 'LOCAL_GOVERNMENT', 'BRANCH']).optional(),
+    targetOfficialLevel: z.enum(['NATIONAL', 'STATE', 'LOCAL_GOVERNMENT', 'BRANCH']).optional(),
     targetId: z.string().nullable(),
+    recipientIds: z.array(z.string()).optional(),
     media: z.array(z.object({
         type: z.enum(['image', 'audio', 'video']),
         url: z.string()
@@ -31,6 +35,10 @@ type BroadcastFormValues = z.infer<typeof formSchema>;
 export function BroadcastComposer({ organizations, currentUserOrg, isSuperAdmin }: { organizations: any[], currentUserOrg?: any, isSuperAdmin?: boolean }) {
     const [isPending, setIsPending] = useState(false)
     const [uploading, setUploading] = useState(false)
+    const [userSearchQuery, setUserSearchQuery] = useState("")
+    const [searchResults, setSearchResults] = useState<any[]>([])
+    const [searching, setSearching] = useState(false)
+    const [selectedUsers, setSelectedUsers] = useState<any[]>([])
     const router = useRouter()
 
     const form = useForm<BroadcastFormValues>({
@@ -38,8 +46,11 @@ export function BroadcastComposer({ organizations, currentUserOrg, isSuperAdmin 
         defaultValues: {
             title: "",
             content: "",
+            targetType: "JURISDICTION_MEMBERS",
             targetLevel: (currentUserOrg?.level as any) || (isSuperAdmin ? "NATIONAL" : "NATIONAL"),
+            targetOfficialLevel: undefined,
             targetId: currentUserOrg?.id || null,
+            recipientIds: [],
             media: []
         },
     })
@@ -70,13 +81,40 @@ export function BroadcastComposer({ organizations, currentUserOrg, isSuperAdmin 
         }
     }
 
+    const performSearch = useCallback(
+        debounce(async (query: string) => {
+            if (query.length < 2) {
+                setSearchResults([])
+                return
+            }
+            setSearching(true)
+            try {
+                const results = await searchUsers(query)
+                setSearchResults(results)
+            } finally {
+                setSearching(false)
+            }
+        }, 300),
+        []
+    )
+
+    useEffect(() => {
+        performSearch(userSearchQuery)
+    }, [userSearchQuery, performSearch])
+
     async function onSubmit(values: z.infer<typeof formSchema>) {
         setIsPending(true)
         try {
-            const res = await sendBroadcast(values)
+            // Include recipient IDs from state
+            const payload = {
+                ...values,
+                recipientIds: selectedUsers.map(u => u.id)
+            }
+            const res = await sendBroadcast(payload)
             if (res.success) {
                 toast.success("Broadcast sent successfully")
                 form.reset()
+                setSelectedUsers([])
                 router.refresh()
             } else {
                 toast.error(res.error)
@@ -88,7 +126,18 @@ export function BroadcastComposer({ organizations, currentUserOrg, isSuperAdmin 
         }
     }
 
+    const targetType = form.watch("targetType")
     const selectedLevel = form.watch("targetLevel")
+
+    const toggleUser = (user: any) => {
+        if (selectedUsers.some(u => u.id === user.id)) {
+            setSelectedUsers(prev => prev.filter(u => u.id !== user.id))
+        } else {
+            setSelectedUsers(prev => [...prev, user])
+        }
+        setUserSearchQuery("")
+        setSearchResults([])
+    }
 
     return (
         <Card>
@@ -108,48 +157,136 @@ export function BroadcastComposer({ organizations, currentUserOrg, isSuperAdmin 
                         )} />
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <FormField control={form.control} name="targetLevel" render={({ field }) => (
+                            <FormField control={form.control} name="targetType" render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Target Audience Level</FormLabel>
+                                    <FormLabel>Target Audience</FormLabel>
                                     <Select onValueChange={(val) => {
                                         field.onChange(val)
-                                        form.setValue("targetId", null)
                                     }} value={field.value}>
                                         <FormControl>
-                                            <SelectTrigger><SelectValue placeholder="Select Level" /></SelectTrigger>
+                                            <SelectTrigger><SelectValue placeholder="Select Target" /></SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                            <SelectItem value="NATIONAL">National (All)</SelectItem>
-                                            <SelectItem value="STATE">State Level</SelectItem>
-                                            <SelectItem value="LOCAL_GOVERNMENT">LGA Level</SelectItem>
-                                            <SelectItem value="BRANCH">Branch Level</SelectItem>
+                                            {isSuperAdmin && <SelectItem value="ALL">All Users (National)</SelectItem>}
+                                            <SelectItem value="JURISDICTION_MEMBERS">Members in Jurisdiction</SelectItem>
+                                            <SelectItem value="OFFICIALS_ONLY">Officials Only</SelectItem>
+                                            <SelectItem value="INDIVIDUALS">Selected Individuals</SelectItem>
                                         </SelectContent>
                                     </Select>
                                     <FormMessage />
                                 </FormItem>
                             )} />
 
-                            {selectedLevel !== "NATIONAL" && (
-                                <FormField control={form.control} name="targetId" render={({ field }) => (
+                            {(targetType === 'JURISDICTION_MEMBERS' || targetType === 'OFFICIALS_ONLY') ? (
+                                <FormField control={form.control} name="targetLevel" render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Specific Organization</FormLabel>
-                                        <Select onValueChange={field.onChange} value={field.value || ""}>
+                                        <FormLabel>Jurisdiction Level</FormLabel>
+                                        <Select onValueChange={(val) => {
+                                            field.onChange(val)
+                                            form.setValue("targetId", null)
+                                        }} value={field.value}>
                                             <FormControl>
-                                                <SelectTrigger><SelectValue placeholder="Select Organization" /></SelectTrigger>
+                                                <SelectTrigger><SelectValue placeholder="Select Level" /></SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
-                                                {organizations
-                                                    .filter(o => o.level === selectedLevel)
-                                                    .map(o => (
-                                                        <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>
-                                                    ))}
+                                                <SelectItem value="NATIONAL">National</SelectItem>
+                                                <SelectItem value="STATE">State Level</SelectItem>
+                                                <SelectItem value="LOCAL_GOVERNMENT">LGA Level</SelectItem>
+                                                <SelectItem value="BRANCH">Branch Level</SelectItem>
                                             </SelectContent>
                                         </Select>
                                         <FormMessage />
                                     </FormItem>
                                 )} />
-                            )}
+                            ) : null}
                         </div>
+
+                        {(targetType === 'JURISDICTION_MEMBERS' || targetType === 'OFFICIALS_ONLY') && selectedLevel !== "NATIONAL" && (
+                            <FormField control={form.control} name="targetId" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Specific Organization</FormLabel>
+                                    <Select onValueChange={field.onChange} value={field.value || ""}>
+                                        <FormControl>
+                                            <SelectTrigger><SelectValue placeholder="Select Organization" /></SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {organizations
+                                                .filter(o => o.level === selectedLevel)
+                                                .map(o => (
+                                                    <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>
+                                                ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            )} />
+                        )}
+
+                        {targetType === 'OFFICIALS_ONLY' && (
+                            <FormField control={form.control} name="targetOfficialLevel" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Target Official Level (Optional)</FormLabel>
+                                    <Select onValueChange={field.onChange} value={field.value || ""}>
+                                        <FormControl>
+                                            <SelectTrigger><SelectValue placeholder="All Official Levels" /></SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            <SelectItem value="NATIONAL">National Officials</SelectItem>
+                                            <SelectItem value="STATE">State Officials</SelectItem>
+                                            <SelectItem value="LOCAL_GOVERNMENT">LGA Officials</SelectItem>
+                                            <SelectItem value="BRANCH">Branch Officials</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <FormDescription className="text-[10px]">Leave empty to send to all officials in the selected jurisdiction.</FormDescription>
+                                    <FormMessage />
+                                </FormItem>
+                            )} />
+                        )}
+
+                        {targetType === 'INDIVIDUALS' && (
+                            <div className="space-y-4 pt-2 border-t mt-2">
+                                <FormLabel>Select Recipients</FormLabel>
+                                <div className="flex flex-wrap gap-2 mb-2">
+                                    {selectedUsers.map(user => (
+                                        <Badge key={user.id} variant="secondary" className="pl-1 pr-1 py-0.5 flex items-center gap-1">
+                                            <User className="h-3 w-3" />
+                                            {user.name}
+                                            <button type="button" onClick={() => toggleUser(user)} className="hover:text-destructive">
+                                                <X className="h-3 w-3" />
+                                            </button>
+                                        </Badge>
+                                    ))}
+                                </div>
+                                <div className="relative">
+                                    <Input
+                                        placeholder="Search by name or email..."
+                                        value={userSearchQuery}
+                                        onChange={(e) => setUserSearchQuery(e.target.value)}
+                                    />
+                                    {searching && <Loader2 className="absolute right-3 top-2.5 h-4 w-4 animate-spin text-muted-foreground" />}
+                                    
+                                    {searchResults.length > 0 && (
+                                        <Card className="absolute top-full left-0 right-0 z-50 mt-1 shadow-lg max-h-[200px] overflow-y-auto">
+                                            <CardContent className="p-0">
+                                                {searchResults.map(user => (
+                                                    <div
+                                                        key={user.id}
+                                                        className="px-4 py-2 hover:bg-muted cursor-pointer flex items-center justify-between border-b last:border-0"
+                                                        onClick={() => toggleUser(user)}
+                                                    >
+                                                        <div>
+                                                            <p className="text-sm font-medium">{user.name}</p>
+                                                            <p className="text-xs text-muted-foreground">{user.email}</p>
+                                                        </div>
+                                                        <Plus className="h-4 w-4 text-muted-foreground" />
+                                                    </div>
+                                                ))}
+                                            </CardContent>
+                                        </Card>
+                                    )}
+                                </div>
+                            </div>
+                        )}
 
                         <FormField control={form.control} name="content" render={({ field }) => (
                             <FormItem>
@@ -201,3 +338,5 @@ export function BroadcastComposer({ organizations, currentUserOrg, isSuperAdmin 
         </Card>
     )
 }
+
+import { FormDescription } from "@/components/ui/form"

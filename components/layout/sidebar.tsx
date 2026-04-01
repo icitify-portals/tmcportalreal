@@ -32,6 +32,7 @@ import {
   Home,
   BookOpen,
   Award,
+  Database,
 } from "lucide-react"
 import { signOut } from "next-auth/react"
 import { Button } from "@/components/ui/button"
@@ -79,6 +80,7 @@ const adminNavItems = [
   { href: "/dashboard/admin/promotions", label: "Promotions", icon: Megaphone },
   { href: "/dashboard/admin/analytics", label: "Site Analytics", icon: LayoutDashboard },
   { href: "/dashboard/admin/settings", label: "Settings", icon: Settings },
+  { href: "/dashboard/admin/backups", label: "Backups", icon: Database },
 ]
 
 const memberNavItems = [

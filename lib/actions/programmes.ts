@@ -242,10 +242,23 @@ export async function getAdminProgrammes(organizationId: string, type: 'MY_PROGR
         let condition = sql`1=0` // Default fail
 
         if (myOrg.level === 'STATE') {
-            // Need to find programmes where status is PENDING_STATE and org.parentId = myId OR org is in my state
-            // For simplicity, let's assume hierarchy: Org Parent ID linkage
-            condition = eq(programmes.status, 'PENDING_STATE')
+            // State officials should see programmes from their own state organization
+            // and from all child organizations (LGAs and Branches) where status is PENDING_STATE.
+            condition = and(
+                eq(programmes.status, 'PENDING_STATE'),
+                or(
+                    eq(programmes.organizationId, organizationId),
+                    eq(org.parentId, organizationId),
+                    // Also check if the programme's organization is a descendant (LGA -> Branch)
+                    // For simplified efficiency, we often use parentId check or hierarchical paths.
+                    // If the schema supports direct parent link, eq(org.parentId, organizationId) covers one level.
+                    // If we need the whole tree, we'd need a more complex recursive or path-based query.
+                    // Given the prompt "cascade to other jurisdiction level", let's ensure it's robust.
+                    sql`${org.parentId} IN (SELECT id FROM organizations WHERE parentId = ${organizationId} OR id = ${organizationId})`
+                )
+            )
         } else if (myOrg.level === 'NATIONAL') {
+            // National officials see all PENDING_NATIONAL programmes from any state/organization.
             condition = eq(programmes.status, 'PENDING_NATIONAL')
         }
 

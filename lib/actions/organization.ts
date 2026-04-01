@@ -6,6 +6,8 @@ import { eq, and } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 
+import { sql } from "drizzle-orm"
+
 export async function createOrganization(formData: FormData) {
     const rawData = {
         name: formData.get("name") as string,
@@ -34,14 +36,17 @@ export async function createOrganization(formData: FormData) {
             phone: rawData.phone,
             sliderImages: rawData.sliderImages,
             country: 'Nigeria', // Default
-            createdAt: new Date(),
-            updatedAt: new Date(),
+            createdAt: sql`CURRENT_TIMESTAMP(3)`,
+            updatedAt: sql`CURRENT_TIMESTAMP(3)`,
         })
 
         revalidatePath("/dashboard/admin/organizations")
         return { success: true }
     } catch (error: any) {
         console.error("Failed to create organization:", error)
+        if (error.code === 'ER_DUP_ENTRY') {
+            return { success: false, error: "Organization code already exists" }
+        }
         return { success: false, error: error.message || "Failed to create organization" }
     }
 }

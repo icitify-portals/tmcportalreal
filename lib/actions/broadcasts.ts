@@ -10,8 +10,11 @@ import { z } from "zod"
 const broadcastSchema = z.object({
     title: z.string().min(1, "Title is required"),
     content: z.string().min(1, "Content is required"),
-    targetLevel: z.enum(['NATIONAL', 'STATE', 'LOCAL_GOVERNMENT', 'BRANCH']),
+    targetType: z.enum(['ALL', 'OFFICIALS_ONLY', 'INDIVIDUALS', 'JURISDICTION_MEMBERS']),
+    targetLevel: z.enum(['NATIONAL', 'STATE', 'LOCAL_GOVERNMENT', 'BRANCH']).nullable().optional(),
+    targetOfficialLevel: z.enum(['NATIONAL', 'STATE', 'LOCAL_GOVERNMENT', 'BRANCH']).nullable().optional(),
     targetId: z.string().nullable(),
+    recipientIds: z.array(z.string()).optional(), // For INDIVIDUALS
     media: z.array(z.object({
         type: z.enum(['image', 'audio', 'video']),
         url: z.string()
@@ -25,41 +28,43 @@ export async function sendBroadcast(payload: any) {
     try {
         const validated = broadcastSchema.parse(payload)
 
-        // Check permissions: Fetch official profile
-        // Refactored to avoid LATERAL JOIN
         const officialRows = await db.select().from(officials)
             .leftJoin(organizations, eq(officials.organizationId, organizations.id))
             .where(eq(officials.userId, session.user.id))
             .limit(1)
 
         const official = officialRows[0] ? { ...officialRows[0].officials, organization: officialRows[0].organizations } : null
-        const isSuperAdmin = session.user.roles?.some((r: any) => r.jurisdictionLevel === 'SYSTEM') || session.user.isSuperAdmin
+        const isSuperAdmin = session.user.isSuperAdmin
 
         if (!official && !isSuperAdmin) {
-            return { success: false, error: "Only officials can send broadcasts" }
+            return { success: false, error: "Only officials or superadmins can send broadcasts" }
         }
 
         const userOrg = official?.organization
 
-        // National can target anything. Others must target child of their own org.
-        // Superadmin is treated as National
-        if (userOrg && userOrg.level !== 'NATIONAL' && !isSuperAdmin) {
-            if (validated.targetId && validated.targetId !== userOrg.id) {
-                // Simplified checks - ideally we check hierarchy here.
-                // For now, assuming UI filters correctly, but backend should enforce.
-                // Strict enforcement: targetId must be descendant.
-                // Skipping strict check for brevity as per instructions, assuming UI is primary gate for friendly users.
-            }
-        }
-
+        // Insert broadcast
+        const broadcastId = crypto.randomUUID()
         await db.insert(broadcasts).values({
+            id: broadcastId,
             senderId: session.user.id,
             title: validated.title,
             content: validated.content,
-            targetLevel: validated.targetLevel,
-            targetId: validated.targetId || (userOrg?.id ?? null), // Use userOrg if available, else null (for superadmin/national)
+            targetType: validated.targetType,
+            targetLevel: validated.targetLevel || (userOrg?.level ?? 'NATIONAL'),
+            targetOfficialLevel: validated.targetOfficialLevel || null,
+            targetId: validated.targetId || (userOrg?.id ?? null),
             media: validated.media || []
         })
+
+        // If targetType is INDIVIDUALS, add recipients
+        if (validated.targetType === 'INDIVIDUALS' && validated.recipientIds && validated.recipientIds.length > 0) {
+            const recipientValues = validated.recipientIds.map(userId => ({
+                broadcastId,
+                userId
+            }))
+            // @ts-ignore
+            await db.insert(broadcastRecipients).values(recipientValues)
+        }
 
         revalidatePath("/dashboard/broadcasts")
         return { success: true }
@@ -74,44 +79,36 @@ export async function getBroadcasts() {
     if (!session || !session.user) return []
 
     try {
-        // 1. Find user's organization (either as member or official)
-        // Refactored to avoid LATERAL JOIN
+        // 1. Get user's org info
         const memberRows = await db.select().from(members)
             .leftJoin(organizations, eq(members.organizationId, organizations.id))
             .where(eq(members.userId, session.user.id))
             .limit(1)
-
         const memberProfile = memberRows[0] ? { ...memberRows[0].members, organization: memberRows[0].organizations } : null
 
         const officialRows = await db.select().from(officials)
             .leftJoin(organizations, eq(officials.organizationId, organizations.id))
             .where(eq(officials.userId, session.user.id))
             .limit(1)
-
         const officialProfile = officialRows[0] ? { ...officialRows[0].officials, organization: officialRows[0].organizations } : null
 
         const organization = memberProfile?.organization || officialProfile?.organization
-        if (!organization) return []
+        const isOfficial = !!officialProfile
+        const officialLevel = officialProfile?.positionLevel
 
-        // 2. Fetch ancestors
-        const ancestors: string[] = [organization.id]
-        let currentId = organization.parentId
-        while (currentId) {
-            ancestors.push(currentId)
-            // Simple query, no relations needing fix here usually, but let's be safe if we were using findingFirst with relations
-            // db.query.organizations.findFirst is safe if NO relations are used.
-            // Using select to be 100% consistent.
-            const parentRows = await db.select({ parentId: organizations.parentId })
-                .from(organizations)
-                .where(eq(organizations.id, currentId))
-                .limit(1)
-
-            const parent = parentRows[0]
-            currentId = parent?.parentId ?? null;
+        // 2. Fetch ancestors if in an org
+        const ancestors: string[] = []
+        if (organization) {
+            ancestors.push(organization.id)
+            let currParentId = organization.parentId
+            while (currParentId) {
+                ancestors.push(currParentId)
+                const parent = await db.select({ parentId: organizations.parentId }).from(organizations).where(eq(organizations.id, currParentId)).limit(1)
+                currParentId = parent[0]?.parentId ?? null
+            }
         }
 
-        // 3. Find broadcasts
-        // Refactored to avoid LATERAL JOIN
+        // 3. Main Query
         const broadcastRows = await db.select({
             broadcasts: broadcasts,
             senderName: users.name,
@@ -121,22 +118,32 @@ export async function getBroadcasts() {
             .from(broadcasts)
             .leftJoin(users, eq(broadcasts.senderId, users.id))
             .leftJoin(organizations, eq(broadcasts.targetId, organizations.id))
+            .leftJoin(broadcastRecipients, and(eq(broadcastRecipients.broadcastId, broadcasts.id), eq(broadcastRecipients.userId, session.user.id)))
             .where(or(
-                inArray(broadcasts.targetId, ancestors),
-                eq(broadcasts.targetLevel, 'NATIONAL') // Global broadcasts
+                eq(broadcasts.targetType, 'ALL'),
+                // Individual target
+                and(eq(broadcasts.targetType, 'INDIVIDUALS'), sql`${broadcastRecipients.userId} IS NOT NULL`),
+                // Jurisdiction members
+                and(
+                    eq(broadcasts.targetType, 'JURISDICTION_MEMBERS'),
+                    ancestors.length > 0 ? inArray(broadcasts.targetId, ancestors) : eq(broadcasts.targetLevel, 'NATIONAL')
+                ),
+                // Officials only
+                and(
+                    eq(broadcasts.targetType, 'OFFICIALS_ONLY'),
+                    isOfficial ? (
+                        broadcasts.targetOfficialLevel ? eq(broadcasts.targetOfficialLevel, officialLevel as any) : sql`1=1`
+                    ) : sql`1=0`,
+                    ancestors.length > 0 ? inArray(broadcasts.targetId, ancestors) : sql`1=1`
+                )
             ))
             .orderBy(desc(broadcasts.createdAt))
 
-        const results = broadcastRows.map(row => ({
+        return broadcastRows.map(row => ({
             ...row.broadcasts,
-            sender: {
-                name: row.senderName,
-                image: row.senderImage
-            },
+            sender: { name: row.senderName, image: row.senderImage },
             targetOrganization: row.targetOrganization
         }))
-
-        return results
     } catch (error) {
         console.error("Error fetching broadcasts:", error)
         return []

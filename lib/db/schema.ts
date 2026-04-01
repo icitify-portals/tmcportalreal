@@ -517,20 +517,33 @@ export const messages = mysqlTable("messages", {
 });
 
 // Broadcast Messages
+export const targetTypeEnum = mysqlEnum('target_type', ['ALL', 'OFFICIALS_ONLY', 'INDIVIDUALS', 'JURISDICTION_MEMBERS']);
+
 export const broadcasts = mysqlTable("broadcasts", {
     id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
     senderId: varchar("senderId", { length: 255 }).notNull().references(() => users.id, { onDelete: "cascade" }),
     title: varchar("title", { length: 255 }).notNull(),
     content: text("content").notNull(),
     media: json("media"), // Array of { type: 'image' | 'audio' | 'video', url: string }
-    targetLevel: orgLevelEnum.notNull(),
-    targetId: varchar("targetId", { length: 255 }), // Organization ID. If National && targetLevel=National, targetId might be the National Org ID.
+    targetType: targetTypeEnum.default('JURISDICTION_MEMBERS'),
+    targetLevel: orgLevelEnum, // Optional if targetType is INDIVIDUALS
+    targetOfficialLevel: orgLevelEnum, // For OFFICIALS_ONLY
+    targetId: varchar("targetId", { length: 255 }), // Organization ID
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
     updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
 });
 
+export const broadcastRecipients = mysqlTable("broadcast_recipients", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
+    broadcastId: varchar("broadcastId", { length: 255 }).notNull().references(() => broadcasts.id, { onDelete: "cascade" }),
+    userId: varchar("userId", { length: 255 }).notNull().references(() => users.id, { onDelete: "cascade" }),
+    status: mysqlEnum('status', ['DELIVERED', 'READ']).default('DELIVERED'),
+    deliveredAt: timestamp("deliveredAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+    readAt: timestamp("readAt", { mode: "date", fsp: 3 }),
+});
+
 // Broadcast Relations
-export const broadcastsRelations = relations(broadcasts, ({ one }) => ({
+export const broadcastsRelations = relations(broadcasts, ({ one, many }) => ({
     sender: one(users, {
         fields: [broadcasts.senderId],
         references: [users.id],
@@ -538,6 +551,18 @@ export const broadcastsRelations = relations(broadcasts, ({ one }) => ({
     targetOrganization: one(organizations, {
         fields: [broadcasts.targetId],
         references: [organizations.id],
+    }),
+    recipients: many(broadcastRecipients),
+}));
+
+export const broadcastRecipientsRelations = relations(broadcastRecipients, ({ one }) => ({
+    broadcast: one(broadcasts, {
+        fields: [broadcastRecipients.broadcastId],
+        references: [broadcasts.id],
+    }),
+    user: one(users, {
+        fields: [broadcastRecipients.userId],
+        references: [users.id],
     }),
 }));
 
@@ -551,6 +576,19 @@ export const chatsRelations = relations(chats, ({ many }) => ({
     messages: many(messages),
 }));
 
+export const backups = mysqlTable("backups", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
+    name: varchar("name", { length: 255 }).notNull(),
+    type: mysqlEnum('type', ['MANUAL', 'AUTOMATED']).default('MANUAL'),
+    databaseUrl: varchar("databaseUrl", { length: 500 }), // S3 URL
+    filesUrl: varchar("filesUrl", { length: 500 }), // S3 URL
+    size: bigint("size", { mode: "number" }), // Total size in bytes
+    status: mysqlEnum('status', ['PENDING', 'COMPLETED', 'FAILED']).default('PENDING'),
+    error: text("error"),
+    createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+    createdBy: varchar("createdBy", { length: 255 }).references(() => users.id),
+});
+
 export const chatParticipantsRelations = relations(chatParticipants, ({ one }) => ({
     chat: one(chats, {
         fields: [chatParticipants.chatId],
@@ -558,6 +596,13 @@ export const chatParticipantsRelations = relations(chatParticipants, ({ one }) =
     }),
     user: one(users, {
         fields: [chatParticipants.userId],
+        references: [users.id],
+    }),
+}));
+
+export const backupsRelations = relations(backups, ({ one }) => ({
+    creator: one(users, {
+        fields: [backups.createdBy],
         references: [users.id],
     }),
 }));
