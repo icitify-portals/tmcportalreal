@@ -161,10 +161,16 @@ export default function BackupsPage() {
                                                 <Badge variant="outline" className="text-[10px]">{b.type}</Badge>
                                             </td>
                                             <td className="px-6 py-4 text-muted-foreground">{formatSize(b.size)}</td>
-                                            <td className="px-6 py-4">
-                                                <Badge variant={b.status === 'COMPLETED' ? 'success' : b.status === 'FAILED' ? 'destructive' : 'secondary'} className="text-[10px]">
-                                                    {b.status}
-                                                </Badge>
+                                            <td className="px-6 py-4 text-[10px]">
+                                                {b.status === 'COMPLETED' ? (
+                                                    <span className="inline-flex items-center rounded-full border px-2 py-0.5 font-medium bg-green-100 text-green-800 border-transparent dark:bg-green-900/30 dark:text-green-400">
+                                                        COMPLETED
+                                                    </span>
+                                                ) : b.status === 'FAILED' ? (
+                                                    <Badge variant="destructive">FAILED</Badge>
+                                                ) : (
+                                                    <Badge variant="secondary">{b.status}</Badge>
+                                                )}
                                             </td>
                                             <td className="px-6 py-4 text-xs text-muted-foreground">{new Date(b.createdAt).toLocaleString()}</td>
                                             <td className="px-6 py-4 text-right space-x-2">
