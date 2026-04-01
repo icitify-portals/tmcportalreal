@@ -52,10 +52,10 @@ export function ManageTypesDialog() {
                 setOpen(false)
                 form.reset()
             } else {
-                toast.error(res.error || "Failed")
+                toast.error(res.error || "Failed to create occasion type")
             }
         } catch (error) {
-            toast.error("Error creating type")
+            toast.error("An unexpected error occurred. Please try again.")
         } finally {
             setIsPending(false)
         }

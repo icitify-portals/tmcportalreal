@@ -12,16 +12,31 @@ import { OccasionTypeSchema, RequestSchema } from "@/lib/validators"
 // --- Occasion Types ---
 
 export async function createOccasionType(data: z.infer<typeof OccasionTypeSchema>) {
-    // Check admin...
     const session = await getServerSession()
     if (!session?.user?.id) return { success: false, error: "Unauthorized" }
 
-    await db.insert(occasionTypes).values({
-        name: data.name,
-        certificateFee: data.certificateFee.toString(),
-    })
-    revalidatePath("/dashboard/admin/occasions")
-    return { success: true }
+    // Check if user is SuperAdmin or has permission to manage occasions
+    const isSuperAdmin = session.user.isSuperAdmin
+    const hasPerm = session.user.permissions?.includes('MANAGE_OCCASIONS')
+
+    if (!isSuperAdmin && !hasPerm) {
+        return { success: false, error: "Forbidden: You don't have permission to create occasion types." }
+    }
+
+    try {
+        await db.insert(occasionTypes).values({
+            name: data.name,
+            certificateFee: data.certificateFee.toFixed(2), // Convert number to 2-decimal string for MySQL decimal
+        })
+        revalidatePath("/dashboard/admin/occasions")
+        return { success: true }
+    } catch (error: any) {
+        console.error("Error creating occasion type:", error)
+        if (error.code === 'ER_DUP_ENTRY') {
+            return { success: false, error: "An occasion type with this name already exists." }
+        }
+        return { success: false, error: "Failed to create occasion type. Please try again." }
+    }
 }
 
 export async function getOccasionTypes() {

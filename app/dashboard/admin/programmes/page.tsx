@@ -136,7 +136,7 @@ export default async function ProgrammesPage() {
     }
 
     if (!organizationId) {
-        // 3. Final Fallback: National Org
+        // 3. Final Fallback: National Org or allow SuperAdmin to see all
         const nationalOrg = await db.select({ id: organizations.id })
             .from(organizations)
             .where(eq(organizations.level, 'NATIONAL'))
@@ -145,7 +145,11 @@ export default async function ProgrammesPage() {
         organizationId = nationalOrg[0]?.id
     }
 
-    if (!organizationId) {
+    // Special case for SuperAdmin: if still no org found (shouldn't happen with National fallback), 
+    // but at least don't show the "Not Found" error if they are SYSTEM level.
+    const isSuperAdmin = session.user.isSuperAdmin
+
+    if (!organizationId && !isSuperAdmin) {
         return (
             <DashboardLayout>
                 <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
