@@ -35,9 +35,9 @@ export async function createOrganization(formData: FormData) {
             email: rawData.email,
             phone: rawData.phone,
             sliderImages: rawData.sliderImages,
-            country: 'Nigeria', // Default
-            createdAt: sql`CURRENT_TIMESTAMP(3)`,
-            updatedAt: sql`CURRENT_TIMESTAMP(3)`,
+            country: 'Nigeria',
+            createdAt: new Date(),
+            updatedAt: new Date(),
         })
 
         revalidatePath("/dashboard/admin/organizations")

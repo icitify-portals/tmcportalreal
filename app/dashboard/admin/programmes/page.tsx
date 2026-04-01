@@ -170,7 +170,7 @@ export default async function ProgrammesPage() {
                 <div className="flex items-center justify-between space-y-2">
                     <h2 className="text-3xl font-bold tracking-tight">Programmes</h2>
                     <div className="flex items-center space-x-2">
-                        <CreateProgrammeDialog organizationId={organizationId} />
+                        <CreateProgrammeDialog organizationId={organizationId || ""} />
                     </div>
                 </div>
 
@@ -182,13 +182,13 @@ export default async function ProgrammesPage() {
 
                     <TabsContent value="my-programmes" className="space-y-4">
                         <Suspense fallback={<div>Loading...</div>}>
-                            <ProgrammeList type="MY_PROGRAMMES" orgId={organizationId} />
+                            <ProgrammeList type="MY_PROGRAMMES" orgId={organizationId || ""} />
                         </Suspense>
                     </TabsContent>
-
+ 
                     <TabsContent value="approvals" className="space-y-4">
                         <Suspense fallback={<div>Loading...</div>}>
-                            <ProgrammeList type="TO_APPROVE" orgId={organizationId} />
+                            <ProgrammeList type="TO_APPROVE" orgId={organizationId || ""} />
                         </Suspense>
                     </TabsContent>
                 </Tabs>

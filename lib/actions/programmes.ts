@@ -242,7 +242,16 @@ export async function getAdminProgrammes(organizationId: string, type: 'MY_PROGR
 
         let condition: any = sql`1=0`
 
-        if (myOrg.level === 'STATE') {
+        const session = await getServerSession()
+        const isSuperAdmin = session?.user?.isSuperAdmin
+
+        if (isSuperAdmin) {
+            // SuperAdmins see all pending programmes (State and National level)
+            condition = or(
+                eq(programmes.status, 'PENDING_STATE'),
+                eq(programmes.status, 'PENDING_NATIONAL')
+            )
+        } else if (myOrg.level === 'STATE') {
             condition = and(
                 eq(programmes.status, 'PENDING_STATE'),
                 or(
