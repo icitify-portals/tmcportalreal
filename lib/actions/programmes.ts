@@ -231,19 +231,18 @@ export async function getAdminProgrammes(organizationId: string, type: 'MY_PROGR
     }
 
     if (type === 'TO_APPROVE') {
-        // Complex logic:
-        // If I am state, I see PENDING_STATE from my child branches (or all branches in my state)
-        // If I am national, I see PENDING_NATIONAL from states
-        // National -> APPROVED
-
-        const orgResults = await db.select().from(organizations).where(eq(organizations.id, organizationId)).limit(1)
-        const myOrg = orgResults[0]
-        if (!myOrg) return []
-
-        let condition: any = sql`1=0`
-
         const session = await getServerSession()
         const isSuperAdmin = session?.user?.isSuperAdmin
+
+        let myOrg = null
+        if (organizationId) {
+            const orgResults = await db.select().from(organizations).where(eq(organizations.id, organizationId)).limit(1)
+            myOrg = orgResults[0]
+        }
+
+        if (!myOrg && !isSuperAdmin) return []
+
+        let condition: any = sql`1=0`
 
         if (isSuperAdmin) {
             // SuperAdmins see all pending programmes (State and National level)
@@ -251,7 +250,7 @@ export async function getAdminProgrammes(organizationId: string, type: 'MY_PROGR
                 eq(programmes.status, 'PENDING_STATE'),
                 eq(programmes.status, 'PENDING_NATIONAL')
             )
-        } else if (myOrg.level === 'STATE') {
+        } else if (myOrg && myOrg.level === 'STATE') {
             condition = and(
                 eq(programmes.status, 'PENDING_STATE'),
                 or(
@@ -260,7 +259,7 @@ export async function getAdminProgrammes(organizationId: string, type: 'MY_PROGR
                     sql`${org.parentId} IN (SELECT id FROM organizations WHERE parentId = ${organizationId} OR id = ${organizationId})`
                 )
             )
-        } else if (myOrg.level === 'NATIONAL') {
+        } else if (myOrg && myOrg.level === 'NATIONAL') {
             condition = eq(programmes.status, 'PENDING_NATIONAL')
         }
 

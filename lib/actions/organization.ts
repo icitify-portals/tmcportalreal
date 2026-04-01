@@ -27,6 +27,7 @@ export async function createOrganization(formData: FormData) {
 
     try {
         await db.insert(organizations).values({
+            id: crypto.randomUUID(),
             name: rawData.name,
             level: rawData.level,
             parentId: rawData.parentId,
