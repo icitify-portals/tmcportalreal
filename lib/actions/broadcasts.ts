@@ -1,7 +1,7 @@
 'use server'
 
 import { db } from "@/lib/db"
-import { broadcasts, organizations, users, officials, members } from "@/lib/db/schema"
+import { broadcasts, organizations, users, officials, members, broadcast_recipients } from "@/lib/db/schema"
 import { eq, and, desc, sql, inArray, or, isNull } from "drizzle-orm"
 import { getServerSession } from "@/lib/session"
 import { revalidatePath } from "next/cache"
@@ -62,8 +62,7 @@ export async function sendBroadcast(payload: any) {
                 broadcastId,
                 userId
             }))
-            // @ts-ignore
-            await db.insert(broadcastRecipients).values(recipientValues)
+            await db.insert(broadcast_recipients).values(recipientValues)
         }
 
         revalidatePath("/dashboard/broadcasts")
@@ -118,11 +117,11 @@ export async function getBroadcasts() {
             .from(broadcasts)
             .leftJoin(users, eq(broadcasts.senderId, users.id))
             .leftJoin(organizations, eq(broadcasts.targetId, organizations.id))
-            .leftJoin(broadcastRecipients, and(eq(broadcastRecipients.broadcastId, broadcasts.id), eq(broadcastRecipients.userId, session.user.id)))
+            .leftJoin(broadcast_recipients, and(eq(broadcast_recipients.broadcastId, broadcasts.id), eq(broadcast_recipients.userId, session.user.id)))
             .where(or(
                 eq(broadcasts.targetType, 'ALL'),
                 // Individual target
-                and(eq(broadcasts.targetType, 'INDIVIDUALS'), sql`${broadcastRecipients.userId} IS NOT NULL`),
+                and(eq(broadcasts.targetType, 'INDIVIDUALS'), sql`${broadcast_recipients.userId} IS NOT NULL`),
                 // Jurisdiction members
                 and(
                     eq(broadcasts.targetType, 'JURISDICTION_MEMBERS'),
