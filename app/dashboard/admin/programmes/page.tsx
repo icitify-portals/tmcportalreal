@@ -89,7 +89,7 @@ async function ProgrammeList({ type, orgId }: { type: 'MY_PROGRAMMES' | 'TO_APPR
                         <div className="flex justify-between items-center text-sm text-muted-foreground pt-2">
                             <span>Target: {p.targetAudience}</span>
                             {p.paymentRequired ? (
-                                <ClientCurrency amount={p.amount} />
+                                <ClientCurrency amount={p.amount || 0} />
                             ) : (
                                 <span>Free</span>
                             )}
