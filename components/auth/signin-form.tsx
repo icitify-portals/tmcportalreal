@@ -81,7 +81,12 @@ export function SignInForm() {
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="password" className="text-white">Password</Label>
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="password" className="text-white">Password</Label>
+                                <a href="/auth/forgot-password" className="text-xs text-green-200 hover:text-white hover:underline px-0 font-normal">
+                                    Forgot password?
+                                </a>
+                            </div>
                             <Input
                                 id="password"
                                 type="password"
