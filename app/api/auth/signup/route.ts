@@ -118,8 +118,10 @@ export async function POST(request: NextRequest) {
     })
 
     if (error instanceof z.ZodError) {
+      const errorMessage = "Validation failed: " + error.issues.map(e => e.message).join(", ")
+      console.error("Signup validation error:", error.issues)
       return NextResponse.json(
-        { error: "Validation failed: " + error.issues.map(e => e.message).join(", ") },
+        { error: errorMessage },
         { status: 400, headers: { "Content-Type": "application/json" } }
       )
     }

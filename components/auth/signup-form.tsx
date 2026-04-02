@@ -95,7 +95,15 @@ export function SignUpForm() {
                 }),
             })
 
-            const data = await response.json()
+            const contentType = response.headers.get("content-type")
+            let data: any = {}
+            if (contentType && contentType.includes("application/json")) {
+                data = await response.json()
+            } else {
+                const text = await response.text()
+                console.error("Non-JSON response:", text)
+                data = { error: "Something went wrong on the server. Please try again later." }
+            }
 
             if (!response.ok) {
                 toast.error(data.error || "Signup failed")
