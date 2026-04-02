@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
-export default async function VirtualMeetingRoomPage({ params }: { params: { id: string } }) {
+export default async function VirtualMeetingRoomPage(props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     const session = await getServerSession();
     if (!session?.user) {
         redirect("/login");

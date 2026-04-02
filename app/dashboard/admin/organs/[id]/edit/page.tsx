@@ -11,10 +11,11 @@ import Link from "next/link"
 import { OrganForm } from "../../organ-form"
 
 interface EditOrganPageProps {
-    params: { id: string }
+    params: Promise<{ id: string }>
 }
 
-export default async function EditOrganPage({ params }: EditOrganPageProps) {
+export default async function EditOrganPage(props: EditOrganPageProps) {
+    const params = await props.params;
     const organ = await db.query.organs.findFirst({
         where: eq(organs.id, params.id),
     })

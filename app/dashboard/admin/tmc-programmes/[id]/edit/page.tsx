@@ -11,10 +11,11 @@ import Link from "next/link"
 import { TmcProgrammeForm } from "../../tmc-programme-form"
 
 interface EditTmcProgrammePageProps {
-    params: { id: string }
+    params: Promise<{ id: string }>
 }
 
-export default async function EditTmcProgrammePage({ params }: EditTmcProgrammePageProps) {
+export default async function EditTmcProgrammePage(props: EditTmcProgrammePageProps) {
+    const params = await props.params;
     const programme = await db.query.tmcProgrammes.findFirst({
         where: eq(tmcProgrammes.id, params.id),
     })

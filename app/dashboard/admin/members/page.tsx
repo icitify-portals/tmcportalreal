@@ -18,11 +18,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { locationData } from "@/lib/location-data"
 
 
-export default async function MembersPage({
-  searchParams
-}: {
-  searchParams: { state?: string; lga?: string; branch?: string; search?: string }
+export default async function MembersPage(props: {
+  searchParams: Promise<{ state?: string; lga?: string; branch?: string; search?: string }>
 }) {
+  const searchParams = await props.searchParams
   const session = await getServerSession()
   requirePermission(session, "members:read")
 
