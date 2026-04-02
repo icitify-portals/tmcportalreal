@@ -51,8 +51,10 @@ async function ProgrammeList({ type, orgId }: { type: 'MY_PROGRAMMES' | 'TO_APPR
                         <div className="flex justify-between items-start">
                             <div className="space-y-1">
                                 <CardTitle className="text-xl">{p.title}</CardTitle>
-                                <CardDescription suppressHydrationWarning>
-                                    {format(new Date(p.startDate), 'PPP')} @ {p.venue}
+                                <CardDescription>
+                                    <span suppressHydrationWarning>
+                                        {format(new Date(p.startDate), 'PPP')}
+                                    </span> @ {p.venue}
                                 </CardDescription>
                                 {p.office && (
                                     <Badge variant="outline" className="mt-1">
@@ -64,7 +66,9 @@ async function ProgrammeList({ type, orgId }: { type: 'MY_PROGRAMMES' | 'TO_APPR
                                 {p.isLateSubmission && (
                                     <Badge variant="destructive" className="animate-pulse">LATE</Badge>
                                 )}
-                                <Badge className={getStatusColor(p.status || "")}>{p.status?.replace('_', ' ')}</Badge>
+                                <Badge className={getStatusColor(p.status || "")} suppressHydrationWarning>
+                                    {p.status?.replace('_', ' ')}
+                                </Badge>
                                 <ProgrammeActions programme={p} />
                             </div>
                         </div>
@@ -84,7 +88,9 @@ async function ProgrammeList({ type, orgId }: { type: 'MY_PROGRAMMES' | 'TO_APPR
 
                         <div className="flex justify-between items-center text-sm text-muted-foreground pt-2">
                             <span>Target: {p.targetAudience}</span>
-                            <span>{p.paymentRequired ? `₦${p.amount}` : "Free"}</span>
+                            <span suppressHydrationWarning>
+                                {p.paymentRequired ? `₦${Number(p.amount).toLocaleString()}` : "Free"}
+                            </span>
                         </div>
 
                         {/* Approval Actions */}

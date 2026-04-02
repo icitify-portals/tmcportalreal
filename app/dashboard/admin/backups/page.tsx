@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
 import { Loader2, Download, Trash2, Database, ShieldAlert, History, UploadCloud, RefreshCw } from "lucide-react"
 import { getBackups, createBackup, deleteBackup } from "@/lib/actions/backup"
+import { DashboardLayout } from "@/components/layout/dashboard-layout"
+import { ClientDate } from "@/components/ui/client-date"
 
 export default function BackupsPage() {
     const [backups, setBackups] = useState<any[]>([])
@@ -71,7 +73,8 @@ export default function BackupsPage() {
     }
 
     return (
-        <div className="p-6 space-y-6">
+        <DashboardLayout>
+            <div className="p-6 space-y-6">
             <div className="flex justify-between items-center">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Backup & Disaster Recovery</h1>
@@ -172,7 +175,9 @@ export default function BackupsPage() {
                                                     <Badge variant="secondary">{b.status}</Badge>
                                                 )}
                                             </td>
-                                            <td className="px-6 py-4 text-xs text-muted-foreground">{new Date(b.createdAt).toLocaleString()}</td>
+                                            <td className="px-6 py-4 text-xs text-muted-foreground">
+                                                <ClientDate date={b.createdAt} />
+                                            </td>
                                             <td className="px-6 py-4 text-right space-x-2">
                                                 {(b.databaseUrl || b.filesUrl) ? (
                                                     <Button variant="ghost" size="sm" className="h-8 w-8 p-0" title="Download">
@@ -191,6 +196,7 @@ export default function BackupsPage() {
                     )}
                 </CardContent>
             </Card>
-        </div>
+            </div>
+        </DashboardLayout>
     )
 }

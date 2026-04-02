@@ -75,9 +75,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             <div className="hidden md:flex justify-end mb-4">
               {mounted && <NotificationBell />}
             </div>
-            {children}
+            {mounted && children}
           </div>
-          <Toaster />
+          {mounted && <Toaster />}
           {mounted && <NotificationListener />}
         </main>
       </div>

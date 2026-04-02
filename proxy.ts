@@ -4,12 +4,12 @@ import { NextResponse } from "next/server"
 
 const { auth } = NextAuth(authConfig)
 
-export default auth((req) => {
+export const proxy = auth((req) => {
   const session = req.auth
   const path = req.nextUrl.pathname
 
   // Debug logging
-  console.log(`Middleware: ${req.method} ${path}`, { hasToken: !!session })
+  console.log(`Proxy: ${req.method} ${path}`, { hasToken: !!session })
 
   // Only protect dashboard routes
   const isDashboardRoute = path.startsWith("/dashboard")
@@ -41,6 +41,8 @@ export default auth((req) => {
 
   return NextResponse.next()
 })
+
+export default proxy
 
 export const config = {
   matcher: [

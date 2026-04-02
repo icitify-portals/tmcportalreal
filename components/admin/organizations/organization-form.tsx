@@ -64,12 +64,11 @@ export function OrganizationForm({ organizations, initialData, onSuccess, isModa
         },
     })
 
-    if (!mounted) return null
-
     // Watch level to filter parents
     const selectedLevel = form.watch("level")
+    const [uploading, setUploading] = useState(false)
 
-    const filteredParents = organizations.filter(org => {
+    const filteredParents = organizations.filter((org: any) => {
         // Prevent selecting self as parent (if hierarchy loop check needed, but basic ID check is good start)
         if (initialData && org.id === initialData.id) return false;
 
@@ -79,7 +78,7 @@ export function OrganizationForm({ organizations, initialData, onSuccess, isModa
         return false
     })
 
-    const [uploading, setUploading] = useState(false)
+    if (!mounted) return null
 
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
@@ -210,7 +209,7 @@ export function OrganizationForm({ organizations, initialData, onSuccess, isModa
                                     </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                    {filteredParents.map(org => (
+                                    {filteredParents.map((org: any) => (
                                         <SelectItem key={org.id} value={org.id}>{org.name}</SelectItem>
                                     ))}
                                 </SelectContent>
