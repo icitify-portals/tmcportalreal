@@ -29,7 +29,21 @@ async function main() {
             const [postsCols] = await connection.execute('DESCRIBE posts');
             console.log("Posts columns:", postsCols);
         } catch (e) {
-            console.log("Could not describe posts table (probably doesn't exist).");
+            console.log("Could not describe posts table.");
+        }
+
+        try {
+            const [progCols] = await connection.execute('DESCRIBE programmes');
+            console.log("Programmes columns:", progCols);
+        } catch (e) {
+            console.log("Could not describe programmes table.");
+        }
+
+        try {
+            const [assetCols] = await connection.execute('DESCRIBE assets');
+            console.log("Assets columns:", assetCols);
+        } catch (e) {
+            console.log("Could not describe assets table.");
         }
 
     } catch (error) {
