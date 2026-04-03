@@ -24,6 +24,7 @@ import { Search, UserCog, Shield } from "lucide-react"
 import { desc, or, ilike, eq, inArray, and, sql } from "drizzle-orm"
 import { redirect } from "next/navigation"
 import { format } from "date-fns"
+import { ImpersonateButton } from "@/components/admin/users/impersonate-button"
 
 // Reusing query logic from API essentially, but Server Component pattern is often direct DB access.
 // However, reusing API keeps logic centralized? 
@@ -161,7 +162,8 @@ async function UserList({ searchParams }: {
                                     <TableCell>
                                         {user.createdAt ? format(new Date(user.createdAt), 'PP') : "-"}
                                     </TableCell>
-                                    <TableCell className="text-right">
+                                    <TableCell className="text-right flex justify-end gap-2">
+                                        <ImpersonateButton targetUserId={user.id} isSuperAdmin={session?.user?.isSuperAdmin || false} />
                                         <Link href={`/dashboard/admin/users/${user.id}`}>
                                             <Button variant="ghost" size="sm">
                                                 <UserCog className="h-4 w-4 mr-2" />

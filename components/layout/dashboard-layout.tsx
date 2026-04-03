@@ -10,14 +10,20 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/s
 import { Button } from "@/components/ui/button"
 import { Menu } from "lucide-react"
 import { NotificationListener } from "@/components/dashboard/notification-listener"
+import { ImpersonationBanner } from "./impersonation-banner"
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const { data: session, status } = useSession()
   const [mounted, setMounted] = useState(false)
+  const [overrideRole, setOverrideRole] = useState<"admin" | "member" | "official" | "council" | null>(null)
 
   useEffect(() => {
     setMounted(true)
+    const savedMode = localStorage.getItem('tmc_view_mode') as "admin" | "member" | "official" | "council" | null
+    if (savedMode) {
+      setOverrideRole(savedMode)
+    }
   }, [])
 
   // Determine role based on session data
@@ -25,7 +31,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const isCouncil = session?.user?.roles?.some((r: any) => r.code === "COUNCIL");
   const isOfficial = !!session?.user?.officialId;
 
-  const userRole = isAdmin
+  const baseUserRole = isAdmin
     ? "admin"
     : isCouncil
       ? "council"
@@ -33,12 +39,27 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         ? "official"
         : "member"
 
+  const userRole = overrideRole || baseUserRole
+
+  const handleViewModeChange = (mode: "admin" | "member" | "official" | "council") => {
+    setOverrideRole(mode)
+    localStorage.setItem('tmc_view_mode', mode)
+    setIsMobileMenuOpen(false)
+  }
+
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex flex-col h-screen overflow-hidden">
+      {mounted && <ImpersonationBanner />}
+      <div className="flex flex-1 overflow-hidden">
       {/* Desktop Sidebar */}
       <div className="hidden md:flex">
         {mounted && (
-          <Sidebar userRole={userRole} adminLevel={session?.user?.isSuperAdmin ? "SUPER_ADMIN" : session?.user?.roles?.[0]?.jurisdictionLevel} />
+          <Sidebar 
+            userRole={userRole} 
+            isRealAdmin={isAdmin} 
+            adminLevel={session?.user?.isSuperAdmin ? "SUPER_ADMIN" : session?.user?.roles?.[0]?.jurisdictionLevel} 
+            onViewModeChange={handleViewModeChange}
+          />
         )}
       </div>
 
@@ -57,9 +78,11 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
               {mounted && (
                 <Sidebar
                   userRole={userRole}
+                  isRealAdmin={isAdmin}
                   adminLevel={session?.user?.isSuperAdmin ? "SUPER_ADMIN" : session?.user?.roles?.[0]?.jurisdictionLevel}
                   className="w-full h-full border-none"
                   onNavigate={() => setIsMobileMenuOpen(false)}
+                  onViewModeChange={handleViewModeChange}
                 />
               )}
             </SheetContent>
@@ -80,6 +103,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           {mounted && <Toaster />}
           {mounted && <NotificationListener />}
         </main>
+      </div>
       </div>
       {mounted && <AiChatWidget />}
     </div>

@@ -40,7 +40,9 @@ import { ThemeToggle, ColorSwitcher } from "@/components/theme-components"
 
 interface SidebarProps {
   userRole: "admin" | "member" | "official" | "council"
+  isRealAdmin?: boolean
   adminLevel?: string
+  onViewModeChange?: (mode: "admin" | "member" | "official" | "council") => void
 }
 
 const adminNavItems = [
@@ -120,7 +122,7 @@ const councilNavItems = [
   { href: "/dashboard/messages", label: "Messages", icon: MessageSquare },
 ]
 
-export function Sidebar({ userRole, adminLevel, className, onNavigate }: SidebarProps & { className?: string; onNavigate?: () => void }) {
+export function Sidebar({ userRole, isRealAdmin, adminLevel, className, onNavigate, onViewModeChange }: SidebarProps & { className?: string; onNavigate?: () => void }) {
   const pathname = usePathname()
 
   const navItems =
@@ -162,6 +164,23 @@ export function Sidebar({ userRole, adminLevel, className, onNavigate }: Sidebar
         })}
       </nav>
       <div className="border-t p-4 space-y-4">
+        {isRealAdmin && (
+          <div className="space-y-2">
+            <span className="text-sm font-medium text-muted-foreground block">View Mode</span>
+            <Button
+              variant="outline"
+              className="w-full justify-start text-sm"
+              onClick={() => {
+                if (onViewModeChange) {
+                  onViewModeChange(userRole === "admin" ? "member" : "admin")
+                }
+              }}
+            >
+              <Briefcase className="mr-2 h-4 w-4" />
+              {userRole === "admin" ? "Switch to Member View" : "Switch to Admin View"}
+            </Button>
+          </div>
+        )}
         <div className="flex items-center justify-between">
           <span className="text-sm font-medium text-muted-foreground">Theme</span>
           <ThemeToggle />

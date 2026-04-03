@@ -37,6 +37,7 @@ declare module "next-auth" {
       role?: string
       organizationId?: string
       country?: string
+      impersonatorId?: string
     } & DefaultSession["user"]
   }
 
@@ -48,6 +49,7 @@ declare module "next-auth" {
     role?: string
     organizationId?: string
     country?: string
+    impersonatorId?: string
   }
 }
 
@@ -63,6 +65,7 @@ declare module "next-auth/jwt" {
     officialId?: string
     officialOrganizationId?: string
     officialLevel?: string
+    impersonatorId?: string
   }
 }
 
