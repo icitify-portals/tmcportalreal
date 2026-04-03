@@ -498,39 +498,58 @@ export async function getMeetingGroups(organizationId: string) {
 }
 
 export async function createMeetingGroup(name: string, organizationId: string, userIds: string[]) {
-    const [group] = await db.insert(meetingGroups).values({
-        name,
-        organizationId
-    }).$returningId()
+    try {
+        const id = crypto.randomUUID()
+        await db.insert(meetingGroups).values({
+            id,
+            name,
+            organizationId,
+            createdAt: new Date(),
+            updatedAt: new Date()
+        })
 
-    if (userIds.length > 0) {
-        await db.insert(meetingGroupMembers).values(
-            userIds.map(userId => ({
-                groupId: group.id,
-                userId
-            }))
-        )
+        if (userIds.length > 0) {
+            await db.insert(meetingGroupMembers).values(
+                userIds.map(userId => ({
+                    id: crypto.randomUUID(),
+                    groupId: id,
+                    userId,
+                    createdAt: new Date()
+                }))
+            )
+        }
+
+        return { success: true, groupId: id }
+    } catch (error: any) {
+        console.error("Error creating meeting group:", error)
+        return { success: false, error: error.message || "Failed to create meeting group" }
     }
-
-    return { success: true, groupId: group.id }
 }
 
 export async function updateMeetingGroup(id: string, name: string, userIds: string[]) {
-    await db.update(meetingGroups).set({ name, updatedAt: new Date() }).where(eq(meetingGroups.id, id))
+    try {
+        await db.update(meetingGroups).set({ name, updatedAt: new Date() }).where(eq(meetingGroups.id, id))
 
-    // Replace members: Delete all existing then insert new
-    await db.delete(meetingGroupMembers).where(eq(meetingGroupMembers.groupId, id))
+        // Replace members: Delete all existing then insert new
+        await db.delete(meetingGroupMembers).where(eq(meetingGroupMembers.groupId, id))
 
-    if (userIds.length > 0) {
-        await db.insert(meetingGroupMembers).values(
-            userIds.map(userId => ({
-                groupId: id,
-                userId
-            }))
-        )
+        if (userIds.length > 0) {
+            await db.insert(meetingGroupMembers).values(
+                userIds.map(userId => ({
+                    id: crypto.randomUUID(),
+                    groupId: id,
+                    userId,
+                    createdAt: new Date()
+                }))
+            )
+        }
+
+        revalidatePath(`/dashboard/admin/meetings`)
+        return { success: true }
+    } catch (error: any) {
+        console.error("Error updating meeting group:", error)
+        return { success: false, error: error.message || "Failed to update meeting group" }
     }
-
-    return { success: true }
 }
 
 export async function deleteMeetingGroup(id: string) {
