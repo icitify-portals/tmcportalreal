@@ -29,7 +29,7 @@ export default async function NewFeePage() {
 
     const organizationId = userRole[0]?.organizationId
 
-    if (!organizationId) {
+    if (!organizationId && !session.user.isSuperAdmin) {
         return (
             <div className="flex-1 space-y-4 p-8 pt-6">
                 <div className="flex items-center justify-between space-y-2">
@@ -46,7 +46,7 @@ export default async function NewFeePage() {
                 <h2 className="text-3xl font-bold tracking-tight">Finance Management</h2>
             </div>
 
-            <FinanceNav organizationId={organizationId} />
+            <FinanceNav organizationId={organizationId || ""} />
 
             <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
                 <Card>
@@ -57,7 +57,7 @@ export default async function NewFeePage() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <FeeForm organizationId={organizationId} />
+                        <FeeForm organizationId={organizationId || ""} />
                     </CardContent>
                 </Card>
 

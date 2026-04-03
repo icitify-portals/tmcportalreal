@@ -37,8 +37,8 @@ export default async function CMSPagesList() {
     }) : null
 
     // If no organization (e.g. system admin checking generally, or error), we might pass undefined or handle it.
-    // For now we assume pages belong to an org.
-    const { data: pages } = organizationId ? await getAllPages(organizationId) : { data: [] }
+    // For superadmin, they can see all.
+    const { data: pages } = organizationId || session?.user?.isSuperAdmin ? await getAllPages(organizationId || undefined) : { data: [] }
 
     async function handleDelete(id: string) {
         "use server"

@@ -50,7 +50,7 @@ export default async function CampaignsPage() {
     const organizationId = userOrgLink?.organizationId;
     const organizationCode = userOrgLink?.organization?.code;
 
-    if (!organizationId) {
+    if (!organizationId && !session.user.isSuperAdmin) {
         return (
             <DashboardLayout>
                 <div className="p-4">You do not have an organization assigned.</div>
@@ -59,7 +59,7 @@ export default async function CampaignsPage() {
     }
 
     const campaigns = await db.query.fundraisingCampaigns.findMany({
-        where: eq(fundraisingCampaigns.organizationId, organizationId),
+        where: organizationId ? eq(fundraisingCampaigns.organizationId, organizationId) : undefined,
         orderBy: [desc(fundraisingCampaigns.createdAt)]
     });
 
@@ -71,7 +71,7 @@ export default async function CampaignsPage() {
                         <h1 className="text-3xl font-bold tracking-tight">Fundraising Campaigns</h1>
                         <p className="text-muted-foreground">Manage your fundraising efforts and track donations.</p>
                     </div>
-                    <CreateCampaignDialog organizationId={organizationId} />
+                    <CreateCampaignDialog organizationId={organizationId || ""} />
                 </div>
 
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

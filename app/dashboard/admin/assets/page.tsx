@@ -155,7 +155,7 @@ export default async function AssetsPage() {
         organizationId = nationalOrg[0]?.id
     }
 
-    if (!organizationId) {
+    if (!organizationId && !session.user.isSuperAdmin) {
         return <div className="p-8">Unauthorized: No Organization Assigned</div>
     }
 

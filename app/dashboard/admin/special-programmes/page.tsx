@@ -47,10 +47,10 @@ export default async function SpecialProgrammesAdminPage() {
         organizationId = nationalOrg[0]?.id
     }
 
-    if (!organizationId) redirect("/dashboard")
+    if (!organizationId && !session.user.isSuperAdmin) redirect("/dashboard")
 
     const items = await db.select().from(specialProgrammes)
-        .where(eq(specialProgrammes.organizationId, organizationId))
+        .where(organizationId ? eq(specialProgrammes.organizationId, organizationId) : undefined)
         .orderBy(desc(specialProgrammes.year), desc(specialProgrammes.createdAt))
 
     return (

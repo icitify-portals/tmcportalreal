@@ -29,7 +29,7 @@ export default async function EditPage({ params }: { params: Promise<{ id: strin
         organizationId = nationalOrg?.id
     }
 
-    if (!organizationId) {
+    if (!organizationId && !session?.user?.isSuperAdmin) {
         return <div>Unauthorized or no organization associated</div>
     }
 
@@ -37,7 +37,7 @@ export default async function EditPage({ params }: { params: Promise<{ id: strin
     if (id === 'new') {
         return (
             <DashboardLayout>
-                <PageEditor organizationId={organizationId} />
+                <PageEditor organizationId={organizationId || ""} />
             </DashboardLayout>
         )
     }
@@ -53,7 +53,7 @@ export default async function EditPage({ params }: { params: Promise<{ id: strin
     // Convert keys to satisfy types if needed, or pass directly
     return (
         <DashboardLayout>
-            <PageEditor pageId={page.id} initialData={page} organizationId={organizationId} />
+            <PageEditor pageId={page.id} initialData={page} organizationId={organizationId || ""} />
         </DashboardLayout>
     )
 }

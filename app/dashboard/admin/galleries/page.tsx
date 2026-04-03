@@ -23,7 +23,7 @@ async function GalleriesList({ organizationId }: { organizationId: string }) {
                 <ImageIcon className="h-10 w-10 text-muted-foreground mb-4" />
                 <h3 className="text-lg font-medium">No Galleries</h3>
                 <p className="text-muted-foreground text-sm mb-4">Create your first gallery to start adding photos.</p>
-                <CreateGalleryDialog organizationId={organizationId} />
+                <CreateGalleryDialog organizationId={organizationId || ""} />
             </div>
         )
     }
@@ -119,7 +119,7 @@ export default async function GalleriesPage() {
         organizationId = nationalOrg[0]?.id
     }
 
-    if (!organizationId) {
+    if (!organizationId && !session.user.isSuperAdmin) {
         return <div className="p-8">Unauthorized: No Organization Assigned</div>
     }
 
@@ -128,11 +128,11 @@ export default async function GalleriesPage() {
             <div className="flex-1 space-y-4 p-8 pt-6">
                 <div className="flex items-center justify-between space-y-2">
                     <h2 className="text-3xl font-bold tracking-tight">Galleries</h2>
-                    <CreateGalleryDialog organizationId={organizationId} />
+                    <CreateGalleryDialog organizationId={organizationId || ""} />
                 </div>
 
                 <Suspense fallback={<div>Loading galleries...</div>}>
-                    <GalleriesList organizationId={organizationId} />
+                    <GalleriesList organizationId={organizationId || ""} />
                 </Suspense>
             </div>
         </DashboardLayout>

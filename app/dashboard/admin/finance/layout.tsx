@@ -46,8 +46,8 @@ export default async function FinanceLayout({
         organizationId = session.user.organizationId
     }
 
-    // Access Check: Must have a role OR be an official
-    if (!hasRole && !isOfficial) {
+    // Access Check: Must have a role OR be an official OR be a superadmin
+    if (!hasRole && !isOfficial && !session.user.isSuperAdmin) {
         return (
             <div className="flex-1 space-y-4 p-8 pt-6">
                 <h2 className="text-3xl font-bold tracking-tight">Access Denied</h2>
@@ -56,7 +56,7 @@ export default async function FinanceLayout({
         )
     }
 
-    if (!organizationId) {
+    if (!organizationId && !session.user.isSuperAdmin) {
         return (
             <div className="flex-1 space-y-4 p-8 pt-6">
                 <h2 className="text-3xl font-bold tracking-tight">Organization Context Missing</h2>
@@ -76,7 +76,7 @@ export default async function FinanceLayout({
             <Separator className="my-6" />
             <div className="flex flex-col space-y-8 lg:flex-row lg:space-x-12 lg:space-y-0">
                 <div className="flex-1 lg:max-w-full">
-                    <FinanceNav organizationId={organizationId} />
+                    <FinanceNav organizationId={organizationId || ""} />
                     {children}
                 </div>
             </div>

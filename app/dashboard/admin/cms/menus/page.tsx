@@ -32,18 +32,17 @@ export default async function CMSMenusPage() {
         organizationId = nationalOrg?.id
     }
 
-    if (!organizationId) {
+    if (!organizationId && !session?.user?.isSuperAdmin) {
         return (
-            <DashboardLayout>
-                <div className="p-8 text-center">
-                    <h2 className="text-xl font-bold text-destructive">Organization Context Missing</h2>
-                    <p className="text-muted-foreground">You must be assigned to an organization to manage menus.</p>
-                </div>
-            </DashboardLayout>
+            <div className="p-8 text-center">
+                <h2 className="text-xl font-bold text-destructive">Organization Context Missing</h2>
+                <p className="text-muted-foreground">You must be assigned to an organization to manage menus.</p>
+            </div>
         )
     }
 
-    const { data: items } = await getNavigationItems(organizationId, true)
+    // Default fetch for superadmin uses undefined to catch anything if no org is specifically assigned
+    const { data: items } = await getNavigationItems(organizationId || undefined, true)
 
     async function handleDelete(id: string) {
         "use server"
@@ -63,7 +62,7 @@ export default async function CMSMenusPage() {
                         <h2 className="text-3xl font-bold tracking-tight">Menu Management</h2>
                         <p className="text-muted-foreground">Manage navigation links for your jurisdiction site.</p>
                     </div>
-                    <CreateMenuItemDialog organizationId={organizationId} />
+                    <CreateMenuItemDialog organizationId={organizationId || ""} />
                 </div>
 
                 <div className="grid gap-6">

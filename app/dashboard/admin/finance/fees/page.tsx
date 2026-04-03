@@ -33,7 +33,7 @@ export default async function FeesAdminPage() {
 
     const organizationId = userRole[0]?.organizationId
 
-    if (!organizationId) {
+    if (!organizationId && !session.user.isSuperAdmin) {
         return (
             <div className="flex-1 space-y-4 p-8 pt-6">
                 <h2 className="text-3xl font-bold tracking-tight">Access Denied</h2>
@@ -44,7 +44,7 @@ export default async function FeesAdminPage() {
 
     // Fetch existing fees
     const orgFees = await db.select().from(fees)
-        .where(eq(fees.organizationId, organizationId))
+        .where(organizationId ? eq(fees.organizationId, organizationId) : undefined)
         .orderBy(desc(fees.createdAt))
 
     // For each fee, get simple stats
@@ -77,7 +77,7 @@ export default async function FeesAdminPage() {
                 </div>
             </div>
 
-            <FinanceNav organizationId={organizationId} />
+            <FinanceNav organizationId={organizationId || ""} />
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {feesWithStats.length === 0 ? (

@@ -122,7 +122,7 @@ export default async function ReportsPage() {
         organizationId = nationalOrg[0]?.id
     }
 
-    if (!organizationId) {
+    if (!organizationId && !session.user.isSuperAdmin) {
         return (
             <DashboardLayout>
                 <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
@@ -134,7 +134,7 @@ export default async function ReportsPage() {
         )
     }
 
-    const offices = await getOffices(organizationId)
+    const offices = organizationId ? await getOffices(organizationId) : []
 
     return (
         <DashboardLayout>
@@ -153,7 +153,7 @@ export default async function ReportsPage() {
                                 </Button>
                             </form>
                         )}
-                        <ReportSubmissionDialog organizationId={organizationId} offices={offices} />
+                        <ReportSubmissionDialog organizationId={organizationId || ""} offices={offices} />
                     </div>
                 </div>
 
@@ -167,13 +167,13 @@ export default async function ReportsPage() {
 
                     <TabsContent value="my-reports" className="space-y-4">
                         <Suspense fallback={<div>Loading...</div>}>
-                            <ReportList type="MY_REPORTS" orgId={organizationId} />
+                            <ReportList type="MY_REPORTS" orgId={organizationId || ""} />
                         </Suspense>
                     </TabsContent>
 
                     <TabsContent value="approvals" className="space-y-4">
                         <Suspense fallback={<div>Loading...</div>}>
-                            <ReportList type="APPROVALS" orgId={organizationId} />
+                            <ReportList type="APPROVALS" orgId={organizationId || ""} />
                         </Suspense>
                     </TabsContent>
                 </Tabs>

@@ -31,10 +31,10 @@ export async function getPageBySlug(slug: string, organizationId: string) {
     }
 }
 
-export async function getAllPages(organizationId: string) {
+export async function getAllPages(organizationId?: string) {
     try {
         const allPages = await db.query.pages.findMany({
-            where: eq(pages.organizationId, organizationId),
+            where: organizationId ? eq(pages.organizationId, organizationId) : undefined,
             orderBy: [desc(pages.updatedAt)],
         })
         return { success: true, data: allPages }
