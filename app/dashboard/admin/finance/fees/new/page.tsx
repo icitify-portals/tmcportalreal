@@ -5,15 +5,25 @@ import { eq, and } from "drizzle-orm"
 import { redirect } from "next/navigation"
 import { FeeForm } from "@/components/admin/finance/fee-form"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { FinanceNav } from "@/components/admin/finance/finance-nav"
 
 export const dynamic = 'force-dynamic'
 
-export default async function NewFeePage() {
+import { OrganizationSelector } from "@/components/admin/organization-selector"
+import { getAvailableOrganizations } from "@/lib/actions/occasions"
+
+export default async function NewFeePage({
+    searchParams
+}: {
+    searchParams: Promise<{ orgId?: string }>
+}) {
+    const { orgId } = await searchParams
     const session = await getServerSession()
     if (!session?.user?.id) redirect("/login")
 
-    // Find the organization where the user is a Financial Officer or Admin
+    // Get organizations for selector
+    const orgs = await getAvailableOrganizations()
+
+    // Find the organization context
     const userRole = await db.select({
         organizationId: userRoles.organizationId
     })
@@ -27,26 +37,22 @@ export default async function NewFeePage() {
         )
         .limit(1)
 
-    const organizationId = userRole[0]?.organizationId
-
-    if (!organizationId && !session.user.isSuperAdmin) {
-        return (
-            <div className="flex-1 space-y-4 p-8 pt-6">
-                <div className="flex items-center justify-between space-y-2">
-                    <h2 className="text-3xl font-bold tracking-tight">Access Denied</h2>
-                </div>
-                <p>You do not have administrative access to any organization.</p>
-            </div>
-        )
-    }
+    const isSuperAdmin = session.user.isSuperAdmin
+    const userOrgId = userRole[0]?.organizationId
+    const selectedOrgId = orgId || (isSuperAdmin ? "" : userOrgId || "")
 
     return (
-        <div className="flex-1 space-y-4 p-8 pt-6">
-            <div className="flex items-center justify-between space-y-2">
-                <h2 className="text-3xl font-bold tracking-tight">Finance Management</h2>
+        <div className="space-y-4">
+            <div className="flex items-center justify-between">
+                <div>
+                    {isSuperAdmin && (
+                        <OrganizationSelector 
+                            organizations={orgs} 
+                            currentOrgId={selectedOrgId} 
+                        />
+                    )}
+                </div>
             </div>
-
-            <FinanceNav organizationId={organizationId || ""} />
 
             <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
                 <Card>
@@ -57,7 +63,13 @@ export default async function NewFeePage() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <FeeForm organizationId={organizationId || ""} />
+                        {selectedOrgId ? (
+                            <FeeForm organizationId={selectedOrgId} />
+                        ) : (
+                            <div className="p-8 text-center text-muted-foreground border rounded-md border-dashed">
+                                Please select a jurisdiction (Organization) from the selector above to create a fee.
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
 

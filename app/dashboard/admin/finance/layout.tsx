@@ -5,6 +5,7 @@ import { db } from "@/lib/db"
 import { userRoles, roles, officials } from "@/lib/db/schema"
 import { eq, and } from "drizzle-orm"
 import { redirect } from "next/navigation"
+import { DashboardLayout } from "@/components/layout/dashboard-layout"
 
 export default async function FinanceLayout({
     children,
@@ -49,38 +50,35 @@ export default async function FinanceLayout({
     // Access Check: Must have a role OR be an official OR be a superadmin
     if (!hasRole && !isOfficial && !session.user.isSuperAdmin) {
         return (
-            <div className="flex-1 space-y-4 p-8 pt-6">
-                <h2 className="text-3xl font-bold tracking-tight">Access Denied</h2>
-                <p>You do not have administrative access to any organization.</p>
-            </div>
-        )
-    }
-
-    if (!organizationId && !session.user.isSuperAdmin) {
-        return (
-            <div className="flex-1 space-y-4 p-8 pt-6">
-                <h2 className="text-3xl font-bold tracking-tight">Organization Context Missing</h2>
-                <p>Could not determine the organization for your session.</p>
-            </div>
+            <DashboardLayout>
+                <div className="flex-1 space-y-4 p-8 pt-6">
+                    <h2 className="text-3xl font-bold tracking-tight">Access Denied</h2>
+                    <p>You do not have administrative access to any organization.</p>
+                </div>
+            </DashboardLayout>
         )
     }
 
     return (
-        <div className="space-y-6 p-10 pb-16 block">
-            <div className="space-y-0.5">
-                <h2 className="text-2xl font-bold tracking-tight">Finance Management</h2>
-                <p className="text-muted-foreground">
-                    Manage budgets, fund requests, and view financial reports.
-                </p>
-            </div>
-            <Separator className="my-6" />
-            <div className="flex flex-col space-y-8 lg:flex-row lg:space-x-12 lg:space-y-0">
-                <div className="flex-1 lg:max-w-full">
-                    <FinanceNav organizationId={organizationId || ""} />
-                    {children}
+        <DashboardLayout>
+            <div className="flex-1 space-y-4 p-8 pt-6">
+                <div className="space-y-0.5">
+                    <h2 className="text-2xl font-bold tracking-tight">Finance Management</h2>
+                    <p className="text-muted-foreground">
+                        Manage budgets, fund requests, and view financial reports.
+                    </p>
+                </div>
+                
+                <FinanceNav organizationId={organizationId || ""} />
+                
+                <Separator className="my-6" />
+                <div className="flex flex-col space-y-8 lg:flex-row lg:space-x-12 lg:space-y-0">
+                    <div className="flex-1 lg:max-w-full">
+                        {children}
+                    </div>
                 </div>
             </div>
-        </div>
+        </DashboardLayout>
     )
 }
 

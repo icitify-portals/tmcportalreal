@@ -1,6 +1,5 @@
 export const dynamic = 'force-dynamic'
 import { cn } from "@/lib/utils"
-import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { getFinanceAnalytics, getAvailableJurisdictions } from "@/lib/actions/analytics"
 import {
     RevenueChart,
@@ -56,7 +55,6 @@ export default async function FinanceAnalyticsPage({
     const trendIconSymbol = currentRevenueTrend >= 0 ? "↑" : "↓"
 
     return (
-        <DashboardLayout>
             <div className="space-y-6">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
@@ -140,6 +138,5 @@ export default async function FinanceAnalyticsPage({
                     <CampaignProgressBoard campaigns={campaigns} />
                 </div>
             </div>
-        </DashboardLayout>
     )
 }

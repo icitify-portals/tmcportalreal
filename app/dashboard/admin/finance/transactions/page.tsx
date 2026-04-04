@@ -8,7 +8,6 @@ import { Badge } from "@/components/ui/badge"
 import { formatCurrency, formatDate } from "@/lib/utils"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ArrowUpRight, ArrowDownLeft } from "lucide-react"
-import { DashboardLayout } from "@/components/layout/dashboard-layout"
 
 
 export default async function TransactionsPage() {
@@ -21,7 +20,6 @@ export default async function TransactionsPage() {
     const summary = await getFinancialSummary(organizationId)
 
     return (
-        <DashboardLayout>
             <div className="space-y-6">
                 <div className="flex justify-between items-center">
                     <h3 className="text-lg font-medium">Financial Ledger</h3>
@@ -115,7 +113,6 @@ export default async function TransactionsPage() {
                     </CardContent>
                 </Card>
             </div>
-        </DashboardLayout>
     )
 }
 

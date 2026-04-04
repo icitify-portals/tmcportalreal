@@ -4,7 +4,6 @@ import { fees, userRoles, roles, feeAssignments } from "@/lib/db/schema"
 import { eq, and, desc, sql } from "drizzle-orm"
 import { redirect } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { FinanceNav } from "@/components/admin/finance/finance-nav"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { PlusCircle, Users, CheckCircle, Clock } from "lucide-react"
@@ -13,11 +12,22 @@ import { Badge } from "@/components/ui/badge"
 
 export const dynamic = 'force-dynamic'
 
-export default async function FeesAdminPage() {
+import { getAvailableOrganizations } from "@/lib/actions/occasions"
+import { OrganizationSelector } from "@/components/admin/organization-selector"
+
+export default async function FeesAdminPage({
+    searchParams
+}: {
+    searchParams: Promise<{ orgId?: string }>
+}) {
+    const { orgId } = await searchParams
     const session = await getServerSession()
     if (!session?.user?.id) redirect("/login")
 
-    // Find the organization where the user is an Admin/Financial Officer
+    // Get organizations for selector
+    const orgs = await getAvailableOrganizations()
+
+    // Find the organization context
     const userRole = await db.select({
         organizationId: userRoles.organizationId
     })
@@ -31,20 +41,13 @@ export default async function FeesAdminPage() {
         )
         .limit(1)
 
-    const organizationId = userRole[0]?.organizationId
+    const isSuperAdmin = session.user.isSuperAdmin
+    const userOrgId = userRole[0]?.organizationId
+    const selectedOrgId = orgId || (isSuperAdmin ? "" : userOrgId || "")
 
-    if (!organizationId && !session.user.isSuperAdmin) {
-        return (
-            <div className="flex-1 space-y-4 p-8 pt-6">
-                <h2 className="text-3xl font-bold tracking-tight">Access Denied</h2>
-                <p>You do not have administrative access to any organization.</p>
-            </div>
-        )
-    }
-
-    // Fetch existing fees
+    // Fetch existing fees based on selection
     const orgFees = await db.select().from(fees)
-        .where(organizationId ? eq(fees.organizationId, organizationId) : undefined)
+        .where(selectedOrgId ? eq(fees.organizationId, selectedOrgId) : undefined)
         .orderBy(desc(fees.createdAt))
 
     // For each fee, get simple stats
@@ -64,20 +67,25 @@ export default async function FeesAdminPage() {
     }))
 
     return (
-        <div className="flex-1 space-y-4 p-8 pt-6">
-            <div className="flex items-center justify-between space-y-2">
-                <h2 className="text-3xl font-bold tracking-tight">Fee Management</h2>
+        <div className="space-y-4">
+            <div className="flex items-center justify-between">
+                <div>
+                    {isSuperAdmin && (
+                        <OrganizationSelector 
+                            organizations={orgs} 
+                            currentOrgId={selectedOrgId} 
+                        />
+                    )}
+                </div>
                 <div className="flex items-center space-x-2">
                     <Button asChild>
-                        <Link href="/dashboard/admin/finance/fees/new">
+                        <Link href={`/dashboard/admin/finance/fees/new${selectedOrgId ? `?orgId=${selectedOrgId}` : ""}`}>
                             <PlusCircle className="mr-2 h-4 w-4" />
                             Create New Fee
                         </Link>
                     </Button>
                 </div>
             </div>
-
-            <FinanceNav organizationId={organizationId || ""} />
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {feesWithStats.length === 0 ? (

@@ -5,7 +5,6 @@ import { db } from "@/lib/db";
 import { fundraisingCampaigns, organizations, userRoles } from "@/lib/db/schema";
 import { desc, eq } from "drizzle-orm";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { CreateCampaignDialog } from "@/components/admin/finance/create-campaign-dialog";
 import { getServerSession } from "@/lib/session";
 import { redirect } from "next/navigation";
@@ -64,7 +63,6 @@ export default async function CampaignsPage() {
     });
 
     return (
-        <DashboardLayout>
             <div className="space-y-6">
                 <div className="flex items-center justify-between">
                     <div>
@@ -122,7 +120,6 @@ export default async function CampaignsPage() {
                     )}
                 </div>
             </div>
-        </DashboardLayout>
     );
 }
 

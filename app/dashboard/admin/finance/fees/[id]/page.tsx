@@ -36,12 +36,10 @@ export default async function FeeDetailPage({ params }: { params: Promise<{ id: 
     const pendingCount = totalCount - paidCount
 
     return (
-        <div className="flex-1 space-y-4 p-8 pt-6">
-            <div className="flex items-center justify-between space-y-2">
-                <h2 className="text-3xl font-bold tracking-tight">Fee Details</h2>
+        <div className="space-y-4">
+            <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold tracking-tight">Fee Analysis</h2>
             </div>
-
-            <FinanceNav organizationId={fee.organizationId} />
 
             <div className="grid gap-4 md:grid-cols-4 whitespace-nowrap overflow-x-auto">
                 <Card>

@@ -5,7 +5,6 @@ import { notFound } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Download } from "lucide-react"
-import { DashboardLayout } from "@/components/layout/dashboard-layout"
 
 
 export default async function ReportsPage() {
@@ -16,7 +15,6 @@ export default async function ReportsPage() {
     const summary = await getFinancialSummary(organizationId)
 
     return (
-        <DashboardLayout>
             <div className="space-y-6">
                 <div className="flex justify-between items-center">
                     <h3 className="text-lg font-medium">Financial Reports</h3>
@@ -66,7 +64,6 @@ export default async function ReportsPage() {
                     </Card>
                 </div>
             </div>
-        </DashboardLayout>
     )
 }
 

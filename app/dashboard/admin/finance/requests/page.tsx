@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { formatCurrency, formatDate } from "@/lib/utils"
 // import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { DashboardLayout } from "@/components/layout/dashboard-layout"
 
 
 export default async function RequestsPage() {
@@ -34,7 +33,6 @@ export default async function RequestsPage() {
     }
 
     return (
-        <DashboardLayout>
             <div className="space-y-6">
                 <div className="flex justify-between items-center">
                     <h3 className="text-lg font-medium">Fund Requests</h3>
@@ -132,7 +130,6 @@ export default async function RequestsPage() {
                     ))}
                 </Tabs>
             </div>
-        </DashboardLayout>
     )
 }
 

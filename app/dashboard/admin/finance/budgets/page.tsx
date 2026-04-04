@@ -8,7 +8,6 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { formatCurrency } from "@/lib/utils"
 // import { approveBudgetAction } from "./actions" // We can use a client component wrapper for actions or form actions
-import { DashboardLayout } from "@/components/layout/dashboard-layout"
 
 
 export default async function BudgetsPage() {
@@ -44,7 +43,6 @@ export default async function BudgetsPage() {
     const budgets = await getBudgets(organizationId) || []
 
     return (
-        <DashboardLayout>
             <div className="space-y-6">
                 <div className="flex justify-between items-center">
                     <h3 className="text-lg font-medium">Annual Budgets</h3>
@@ -99,7 +97,6 @@ export default async function BudgetsPage() {
                     ))}
                 </div>
             </div>
-        </DashboardLayout>
     )
 }
 
