@@ -30,11 +30,9 @@ export default async function FinanceAnalyticsPage({
 
     if (!response.success) {
         return (
-            <DashboardLayout>
-                <div className="flex items-center justify-center h-[50vh]">
-                    <p className="text-red-500 font-medium">Failed to load analytics: {response.error}</p>
-                </div>
-            </DashboardLayout>
+            <div className="flex items-center justify-center h-[50vh]">
+                <p className="text-red-500 font-medium">Failed to load analytics: {response.error}</p>
+            </div>
         )
     }
 

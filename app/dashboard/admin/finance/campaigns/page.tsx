@@ -51,9 +51,7 @@ export default async function CampaignsPage() {
 
     if (!organizationId && !session.user.isSuperAdmin) {
         return (
-            <DashboardLayout>
-                <div className="p-4">You do not have an organization assigned.</div>
-            </DashboardLayout>
+            <div className="p-4">You do not have an organization assigned.</div>
         )
     }
 
