@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic'
 import { getServerSession } from "@/lib/session"
 import { redirect } from "next/navigation"
 import { db } from "@/lib/db"
-import { occasionRequests, members, programmes, memberProgrammes } from "@/lib/db/schema"
+import { occasionRequests, members, programmes, programmeRegistrations } from "@/lib/db/schema"
 import { eq, and, desc } from "drizzle-orm"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -27,13 +27,13 @@ export default async function MemberDocumentsPage() {
     // Fetch certificates from programmes if they have been attended
     const attendedProgrammes = await db.select({
         programme: programmes,
-        registration: memberProgrammes
+        registration: programmeRegistrations
     })
-        .from(memberProgrammes)
-        .innerJoin(programmes, eq(memberProgrammes.programmeId, programmes.id))
+        .from(programmeRegistrations)
+        .innerJoin(programmes, eq(programmeRegistrations.programmeId, programmes.id))
         .where(and(
-            eq(memberProgrammes.userId, session.user.id),
-            eq(memberProgrammes.status, 'ATTENDED'),
+            eq(programmeRegistrations.userId, session.user.id),
+            eq(programmeRegistrations.status, 'ATTENDED'),
             eq(programmes.hasCertificate, true)
         ))
 
