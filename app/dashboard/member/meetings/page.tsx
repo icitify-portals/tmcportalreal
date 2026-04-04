@@ -72,14 +72,18 @@ async function MyMeetingsList() {
 
 }
 
+import { DashboardLayout } from "@/components/layout/dashboard-layout"
+
 export default function MemberMeetingsPage() {
     return (
-        <div className="flex-1 space-y-4 p-8 pt-6">
-            <h2 className="text-3xl font-bold tracking-tight">My Meetings</h2>
-            <Suspense fallback={<div>Loading meetings...</div>}>
-                <MyMeetingsList />
-            </Suspense>
-        </div>
+        <DashboardLayout>
+            <div className="flex-1 space-y-4">
+                <h2 className="text-3xl font-bold tracking-tight">My Meetings</h2>
+                <Suspense fallback={<div>Loading meetings...</div>}>
+                    <MyMeetingsList />
+                </Suspense>
+            </div>
+        </DashboardLayout>
     )
 }
 

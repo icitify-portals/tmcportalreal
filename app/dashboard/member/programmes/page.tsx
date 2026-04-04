@@ -69,13 +69,17 @@ async function MyProgrammesList() {
     )
 }
 
+import { DashboardLayout } from "@/components/layout/dashboard-layout"
+
 export default function MyProgrammesPage() {
     return (
-        <div className="flex-1 space-y-4 p-8 pt-6">
-            <h2 className="text-3xl font-bold tracking-tight">My Programmes</h2>
-            <Suspense fallback={<div>Loading...</div>}>
-                <MyProgrammesList />
-            </Suspense>
-        </div>
+        <DashboardLayout>
+            <div className="flex-1 space-y-4">
+                <h2 className="text-3xl font-bold tracking-tight">My Programmes</h2>
+                <Suspense fallback={<div>Loading...</div>}>
+                    <MyProgrammesList />
+                </Suspense>
+            </div>
+        </DashboardLayout>
     )
 }

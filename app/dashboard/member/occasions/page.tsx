@@ -83,20 +83,24 @@ async function OccasionsList() {
     )
 }
 
+import { DashboardLayout } from "@/components/layout/dashboard-layout"
+
 export default async function MemberOccasionsPage() {
     const types = await getOccasionTypes()
     const orgs = await getAvailableOrganizations()
 
     return (
-        <div className="flex-1 space-y-4 p-8 pt-6">
-            <div className="flex items-center justify-between">
-                <h2 className="text-3xl font-bold tracking-tight">My Occasions</h2>
-                <RequestOccasionDialog types={types} organizations={orgs} />
-            </div>
+        <DashboardLayout>
+            <div className="flex-1 space-y-4">
+                <div className="flex items-center justify-between">
+                    <h2 className="text-3xl font-bold tracking-tight">My Occasions</h2>
+                    <RequestOccasionDialog types={types} organizations={orgs} />
+                </div>
 
-            <Suspense fallback={<div>Loading...</div>}>
-                <OccasionsList />
-            </Suspense>
-        </div>
+                <Suspense fallback={<div>Loading...</div>}>
+                    <OccasionsList />
+                </Suspense>
+            </div>
+        </DashboardLayout>
     )
 }
