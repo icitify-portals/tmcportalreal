@@ -24,28 +24,34 @@ import {
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { createMeetingGroup } from "@/lib/actions/meetings"
+import { getOrganizations } from "@/lib/actions/organization"
 import { toast } from "sonner"
 import { Loader2, Users } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 const formSchema = z.object({
     name: z.string().min(1, "Group name is required"),
+    organizationId: z.string().min(1, "Organization is required"),
     members: z.array(z.string()),
 })
 
 interface CreateMeetingGroupDialogProps {
     availableMembers: { id: string, name: string | null }[]
     currentOrgId: string
+    isSuperAdmin?: boolean
 }
 
-export function CreateMeetingGroupDialog({ availableMembers, currentOrgId }: CreateMeetingGroupDialogProps) {
+export function CreateMeetingGroupDialog({ availableMembers, currentOrgId, isSuperAdmin }: CreateMeetingGroupDialogProps) {
     const [open, setOpen] = useState(false)
     const [isPending, setIsPending] = useState(false)
+    const [organizationsList, setOrganizationsList] = useState<any[]>([])
 
     const form = useForm({
         resolver: zodResolver(formSchema),
         defaultValues: {
             name: "",
+            organizationId: currentOrgId || "",
             members: [],
         },
     })
@@ -53,7 +59,7 @@ export function CreateMeetingGroupDialog({ availableMembers, currentOrgId }: Cre
     async function onSubmit(values: z.infer<typeof formSchema>) {
         setIsPending(true)
         try {
-            const res = await createMeetingGroup(values.name, currentOrgId, values.members)
+            const res = await createMeetingGroup(values.name, values.organizationId, values.members)
             if (res.success) {
                 toast.success("Meeting group created")
                 setOpen(false)
@@ -97,6 +103,30 @@ export function CreateMeetingGroupDialog({ availableMembers, currentOrgId }: Cre
                                 </FormItem>
                             )}
                         />
+
+                        {isSuperAdmin && (
+                            <FormField
+                                control={form.control}
+                                name="organizationId"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Jurisdiction / Organization</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select organization" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {organizationsList.map(org => (
+                                                    <SelectItem key={org.id} value={org.id}>{org.name} ({org.level})</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </FormItem>
+                                )}
+                            />
+                        )}
 
                         <div className="space-y-2">
                             <FormLabel>Select Members</FormLabel>

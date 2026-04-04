@@ -34,6 +34,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 const formSchema = z.object({
     title: z.string().min(1, "Title is required"),
     description: z.string().optional(),
+    organizationId: z.string().min(1, "Organization is required"),
     scheduledAt: z.string().min(1, "Date is required"),
     time: z.string().min(1, "Time is required"),
     venue: z.string().optional(),
@@ -47,6 +48,7 @@ const formSchema = z.object({
 interface CreateMeetingDialogProps {
     members: { id: string, name: string | null }[]
     currentOrgId: string // Admin's org
+    isSuperAdmin?: boolean
 }
 
 import {
@@ -57,27 +59,33 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { getMeetingGroups } from "@/lib/actions/meetings"
+import { getOrganizations } from "@/lib/actions/organization"
 import { useEffect } from "react"
 import { Upload } from "lucide-react"
 
-export function CreateMeetingDialog({ members, currentOrgId }: CreateMeetingDialogProps) {
+export function CreateMeetingDialog({ members, currentOrgId, isSuperAdmin }: CreateMeetingDialogProps) {
     const [open, setOpen] = useState(false)
     const [isPending, setIsPending] = useState(false)
     const [groups, setGroups] = useState<{ id: string, name: string }[]>([])
+    const [organizationsList, setOrganizationsList] = useState<any[]>([])
     const [minutesFile, setMinutesFile] = useState<File | null>(null)
 
     useEffect(() => {
         if (open) {
-            getMeetingGroups(currentOrgId).then(setGroups)
+            getMeetingGroups(selectedOrgId || currentOrgId).then(setGroups)
             setMinutesFile(null)
+            if (isSuperAdmin) {
+                getOrganizations().then(setOrganizationsList)
+            }
         }
-    }, [open, currentOrgId])
+    }, [open, currentOrgId, isSuperAdmin])
 
     const form = useForm({
         resolver: zodResolver(formSchema),
         defaultValues: {
             title: "",
             description: "",
+            organizationId: currentOrgId || "",
             scheduledAt: "",
             time: "",
             venue: "",
@@ -88,6 +96,14 @@ export function CreateMeetingDialog({ members, currentOrgId }: CreateMeetingDial
             previousMinutesUrl: ""
         },
     })
+
+    const selectedOrgId = form.watch("organizationId")
+
+    useEffect(() => {
+        if (open && selectedOrgId) {
+            getMeetingGroups(selectedOrgId).then(setGroups)
+        }
+    }, [open, selectedOrgId])
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
         setIsPending(true)
@@ -120,7 +136,7 @@ export function CreateMeetingDialog({ members, currentOrgId }: CreateMeetingDial
                 ...values,
                 groupId: values.groupId === "none" ? undefined : values.groupId,
                 scheduledAt: date.toISOString(),
-                organizationId: currentOrgId,
+                organizationId: values.organizationId,
                 previousMinutesUrl: minuteUrl || undefined,
             })
 
@@ -157,6 +173,31 @@ export function CreateMeetingDialog({ members, currentOrgId }: CreateMeetingDial
                                 <FormControl><Input placeholder="e.g. Monthly Exco Meeting" {...field} /></FormControl>
                             </FormItem>
                         )} />
+
+                        {isSuperAdmin && (
+                            <FormField
+                                control={form.control}
+                                name="organizationId"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Jurisdiction / Organization</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select organization" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {organizationsList.map(org => (
+                                                    <SelectItem key={org.id} value={org.id}>{org.name} ({org.level})</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        )}
 
                         <div className="grid grid-cols-2 gap-4">
                             <FormField control={form.control} name="groupId" render={({ field }) => (

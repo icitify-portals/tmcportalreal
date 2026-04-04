@@ -28,6 +28,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { createProgramme, getOffices } from "@/lib/actions/programmes"
+import { getOrganizations } from "@/lib/actions/organization"
 import { toast } from "sonner"
 import { Loader2, Plus } from "lucide-react"
 
@@ -35,6 +36,7 @@ const ProgrammeSchema = z.object({
     title: z.string().min(1, "Title is required"),
     description: z.string().min(10, "Description must be detailed"),
     venue: z.string().min(1, "Venue is required"),
+    organizationId: z.string().min(1, "Organization is required"),
     // Dates as strings for input "datetime-local" or "date" handling simplicity in this quick implementation
     // We will convert to Date objects before submission
     startDate: z.string().refine((val) => !isNaN(Date.parse(val)), "Invalid date"),
@@ -46,16 +48,11 @@ const ProgrammeSchema = z.object({
     organizingOfficeId: z.string().optional(),
 })
 
-export function CreateProgrammeDialog({ organizationId }: { organizationId: string }) {
+export function CreateProgrammeDialog({ organizationId, isSuperAdmin }: { organizationId: string; isSuperAdmin?: boolean }) {
     const [open, setOpen] = useState(false)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [offices, setOffices] = useState<any[]>([])
-
-    useEffect(() => {
-        if (open) {
-            getOffices(organizationId).then(setOffices)
-        }
-    }, [open, organizationId])
+    const [organizationsList, setOrganizationsList] = useState<any[]>([])
 
     const form = useForm({
         resolver: zodResolver(ProgrammeSchema),
@@ -63,6 +60,7 @@ export function CreateProgrammeDialog({ organizationId }: { organizationId: stri
             title: "",
             description: "",
             venue: "",
+            organizationId: organizationId || "",
             startDate: "",
             endDate: "",
             time: "",
@@ -72,6 +70,20 @@ export function CreateProgrammeDialog({ organizationId }: { organizationId: stri
             organizingOfficeId: "",
         },
     })
+
+    const selectedOrgId = form.watch("organizationId")
+
+    useEffect(() => {
+        if (open && selectedOrgId) {
+            getOffices(selectedOrgId).then(setOffices)
+        }
+    }, [open, selectedOrgId])
+
+    useEffect(() => {
+        if (open && isSuperAdmin) {
+            getOrganizations().then(setOrganizationsList)
+        }
+    }, [open, isSuperAdmin])
 
     async function onSubmit(data: z.infer<typeof ProgrammeSchema>) {
         setIsSubmitting(true)
@@ -84,12 +96,20 @@ export function CreateProgrammeDialog({ organizationId }: { organizationId: stri
                 hasCertificate: false,
             }
 
-            const result = await createProgramme(payload, organizationId)
+            const result = await createProgramme(payload, data.organizationId)
 
             if (result.success) {
                 toast.success("Programme created successfully")
                 setOpen(false)
-                form.reset()
+                form.reset({
+                    ...form.getValues(),
+                    title: "",
+                    description: "",
+                    venue: "",
+                    startDate: "",
+                    endDate: "",
+                    time: "",
+                })
             } else {
                 toast.error(result.error || "Failed to create programme")
             }
@@ -166,6 +186,31 @@ export function CreateProgrammeDialog({ organizationId }: { organizationId: stri
                                     </FormItem>
                                 )}
                             />
+
+                            {isSuperAdmin && (
+                                <FormField
+                                    control={form.control}
+                                    name="organizationId"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Jurisdiction / Organization</FormLabel>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <FormControl>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Select organization" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    {organizationsList.map(org => (
+                                                        <SelectItem key={org.id} value={org.id}>{org.name} ({org.level})</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            )}
 
                             <FormField
                                 control={form.control}

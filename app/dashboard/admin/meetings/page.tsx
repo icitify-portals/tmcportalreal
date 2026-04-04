@@ -16,8 +16,8 @@ import { ClientDate } from "@/components/ui/client-date"
 import { DeleteMeetingButton } from "@/components/meetings/delete-meeting-button"
 
 
-async function MeetingsList() {
-    const meetings = await getMeetings()
+async function MeetingsList({ orgId }: { orgId?: string }) {
+    const meetings = await getMeetings(orgId)
 
     return (
         <div className="overflow-x-auto border rounded-md">
@@ -83,25 +83,47 @@ async function MeetingsList() {
     )
 }
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { getMeetingGroups } from "@/lib/actions/meetings"
 import { GroupsList } from "@/components/meetings/groups-list"
 import { CreateMeetingGroupDialog } from "@/components/meetings/create-meeting-group-dialog"
+import { getServerSession } from "@/lib/session"
+import { redirect } from "next/navigation"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { OrganizationSelector } from "@/components/admin/organization-selector"
 
-export default async function AdminMeetingsPage() {
+export default async function AdminMeetingsPage({
+    searchParams
+}: {
+    searchParams: { orgId?: string }
+}) {
+    const session = await getServerSession()
+    if (!session?.user?.id) redirect("/login")
+
     const members = await getAvailableMembers()
     const orgs = await getAvailableOrganizations()
-    // Default org ID - first one for now or handle selection in UI
-    const defaultOrgId = orgs[0]?.id || ""
+    
+    const isSuperAdmin = session.user.isSuperAdmin
+    const selectedOrgId = searchParams.orgId || (isSuperAdmin ? "" : session.user.organizationId || orgs[0]?.id || "")
+    
+    // Default org ID for UI if none selected yet
+    const currentOrgId = selectedOrgId || orgs[0]?.id || ""
 
     return (
         <DashboardLayout>
             <div className="flex-1 space-y-4 p-8 pt-6" suppressHydrationWarning>
-                <div className="flex items-center justify-between">
-                    <h2 className="text-3xl font-bold tracking-tight">Meetings & Groups</h2>
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h2 className="text-3xl font-bold tracking-tight">Meetings & Groups</h2>
+                        {isSuperAdmin && (
+                            <p className="text-muted-foreground">Showing data for all or selected jurisdiction.</p>
+                        )}
+                    </div>
                     <div className="flex items-center gap-2">
-                        <CreateMeetingGroupDialog availableMembers={members} currentOrgId={defaultOrgId} />
-                        <CreateMeetingDialog members={members} currentOrgId={defaultOrgId} />
+                        {isSuperAdmin && (
+                            <OrganizationSelector currentOrgId={selectedOrgId} organizations={orgs} />
+                        )}
+                        <CreateMeetingGroupDialog availableMembers={members} currentOrgId={currentOrgId} isSuperAdmin={isSuperAdmin} />
+                        <CreateMeetingDialog members={members} currentOrgId={currentOrgId} isSuperAdmin={isSuperAdmin} />
                     </div>
                 </div>
 
@@ -118,7 +140,7 @@ export default async function AdminMeetingsPage() {
                             </CardHeader>
                             <CardContent>
                                 <Suspense fallback={<div>Loading meetings...</div>}>
-                                    <MeetingsList />
+                                    <MeetingsList orgId={selectedOrgId} />
                                 </Suspense>
                             </CardContent>
                         </Card>
@@ -131,7 +153,7 @@ export default async function AdminMeetingsPage() {
                             </CardHeader>
                             <CardContent>
                                 <Suspense fallback={<div>Loading groups...</div>}>
-                                    <GroupsListWrapper orgId={defaultOrgId} availableMembers={members} />
+                                    <GroupsListWrapper orgId={selectedOrgId} availableMembers={members} />
                                 </Suspense>
                             </CardContent>
                         </Card>

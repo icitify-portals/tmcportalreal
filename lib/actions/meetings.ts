@@ -497,8 +497,14 @@ export async function getAvailableMembers() {
 
 // --- Meeting Groups ---
 
-export async function getMeetingGroups(organizationId: string) {
-    const groups = await db.select().from(meetingGroups).where(eq(meetingGroups.organizationId, organizationId))
+export async function getMeetingGroups(organizationId?: string) {
+    let query = db.select().from(meetingGroups).$dynamic()
+    
+    if (organizationId) {
+        query = query.where(eq(meetingGroups.organizationId, organizationId))
+    }
+    
+    const groups = await query
     if (groups.length === 0) return []
 
     const groupIds = groups.map(g => g.id)

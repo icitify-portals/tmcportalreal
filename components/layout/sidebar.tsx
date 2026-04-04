@@ -96,7 +96,7 @@ const memberNavItems = [
   { href: "/dashboard/member/meetings", label: "Meetings", icon: Users },
   { href: "/dashboard/messages", label: "Messages", icon: MessageSquare },
   { href: "/dashboard/member/payments", label: "Payments", icon: CreditCard },
-  { href: "/dashboard/finance", label: "Levies & Dues", icon: Banknote },
+  { href: "/dashboard/member/finance", label: "Levies & Dues", icon: Banknote },
   { href: "/dashboard/member/documents", label: "Documents", icon: FileText },
   { href: "/dashboard/user/promotions", label: "My Promotions", icon: Megaphone },
   { href: "/dashboard/burial", label: "Burial Requests", icon: HeartHandshake },

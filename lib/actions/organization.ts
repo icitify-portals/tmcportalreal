@@ -132,3 +132,12 @@ export async function updateOrganizationPlanningSettings(orgId: string, month: n
         return { success: false, error: "Failed to update settings" }
     }
 }
+
+export async function getOrganizations() {
+    try {
+        return await db.select().from(organizations).orderBy(organizations.name)
+    } catch (error) {
+        console.error("Failed to fetch organizations:", error)
+        return []
+    }
+}

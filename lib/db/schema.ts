@@ -26,7 +26,7 @@ export const officialLevelEnum = mysqlEnum('positionLevel', ['NATIONAL', 'STATE'
 export const jurisdictionLevelEnum = mysqlEnum('jurisdictionLevel', ['SYSTEM', 'NATIONAL', 'STATE', 'LOCAL_GOVERNMENT', 'BRANCH']);
 export const paymentStatusEnum = mysqlEnum('status', ['PENDING', 'SUCCESS', 'FAILED', 'CANCELLED', 'REFUNDED']);
 export const paymentTypeEnum = mysqlEnum('paymentType', ['MEMBERSHIP_FEE', 'RENEWAL', 'DONATION', 'EVENT_FEE', 'BURIAL_FEE', 'LEVY', 'OTHER']);
-export const feeTargetEnum = mysqlEnum('feeTarget', ['ALL_MEMBERS', 'OFFICIALS']);
+export const feeTargetEnum = mysqlEnum('targetType', ['ALL_MEMBERS', 'OFFICIALS']);
 
 // Burial Enums
 export const burialRequestStatusEnum = mysqlEnum('status', ['PENDING', 'APPROVED_UNPAID', 'PAID', 'BURIAL_DONE', 'REJECTED']);

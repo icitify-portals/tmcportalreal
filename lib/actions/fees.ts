@@ -257,7 +257,7 @@ export async function recordFeePayment(assignmentId: string, amount: number, pay
             });
         }
 
-        revalidatePath("/dashboard/finance")
+        revalidatePath("/dashboard/member/finance")
         return { success: true }
     } catch (error: any) {
         console.error("Record Fee Payment Error:", error)
