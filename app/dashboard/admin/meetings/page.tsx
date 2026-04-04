@@ -83,6 +83,7 @@ async function MeetingsList({ orgId }: { orgId?: string }) {
     )
 }
 
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { getMeetingGroups } from "@/lib/actions/meetings"
 import { GroupsList } from "@/components/meetings/groups-list"
 import { CreateMeetingGroupDialog } from "@/components/meetings/create-meeting-group-dialog"
