@@ -11,6 +11,7 @@ import { Calendar, MapPin, Video, Clock } from "lucide-react"
 import Link from "next/link"
 import { getServerSession } from "@/lib/session"
 import { format } from "date-fns"
+import { DashboardLayout } from "@/components/layout/dashboard-layout"
 
 async function MyMeetingsList() {
     const session = await getServerSession()
@@ -72,7 +73,6 @@ async function MyMeetingsList() {
 
 }
 
-import { DashboardLayout } from "@/components/layout/dashboard-layout"
 
 export default function MemberMeetingsPage() {
     return (

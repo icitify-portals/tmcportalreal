@@ -7,8 +7,9 @@ import { getServerSession } from "@/lib/session"
 import { getUserBurialRequests } from "@/lib/actions/burial"
 import { format } from "date-fns"
 import { Badge } from "@/components/ui/badge"
-
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
+
+
 
 export default async function BurialPage() {
     const session = await getServerSession()

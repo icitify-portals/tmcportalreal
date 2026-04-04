@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { Calendar, MapPin } from "lucide-react"
 import { CertificateDownloadButton } from "@/components/programme/certificate-download-button"
 import { format } from "date-fns"
+import { DashboardLayout } from "@/components/layout/dashboard-layout"
 
 export const dynamic = "force-dynamic"
 
@@ -69,7 +70,6 @@ async function MyProgrammesList() {
     )
 }
 
-import { DashboardLayout } from "@/components/layout/dashboard-layout"
 
 export default function MyProgrammesPage() {
     return (

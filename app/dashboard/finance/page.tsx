@@ -8,10 +8,11 @@ import { Badge } from "@/components/ui/badge"
 import { format } from "date-fns"
 import { CreditCard, CheckCircle, Clock, AlertCircle } from "lucide-react"
 import { FeePaymentButton } from "@/components/finance/fee-payment-button"
+import { DashboardLayout } from "@/components/layout/dashboard-layout"
 
 export const dynamic = 'force-dynamic'
 
-import { DashboardLayout } from "@/components/layout/dashboard-layout"
+
 
 export default async function MemberFinancePage() {
     const session = await getServerSession()

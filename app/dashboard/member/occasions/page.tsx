@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge"
 import { format } from "date-fns"
 import { PDFDownloadButton } from "@/components/occasions/pdf-download-button"
+import { DashboardLayout } from "@/components/layout/dashboard-layout"
 
 export const dynamic = "force-dynamic"
 
@@ -83,7 +84,6 @@ async function OccasionsList() {
     )
 }
 
-import { DashboardLayout } from "@/components/layout/dashboard-layout"
 
 export default async function MemberOccasionsPage() {
     const types = await getOccasionTypes()
