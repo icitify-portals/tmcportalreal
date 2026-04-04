@@ -94,8 +94,9 @@ import { OrganizationSelector } from "@/components/admin/organization-selector"
 export default async function AdminMeetingsPage({
     searchParams
 }: {
-    searchParams: { orgId?: string }
+    searchParams: Promise<{ orgId?: string }>
 }) {
+    const { orgId } = await searchParams
     const session = await getServerSession()
     if (!session?.user?.id) redirect("/login")
 
@@ -103,7 +104,7 @@ export default async function AdminMeetingsPage({
     const orgs = await getAvailableOrganizations()
     
     const isSuperAdmin = session.user.isSuperAdmin
-    const selectedOrgId = searchParams.orgId || (isSuperAdmin ? "" : session.user.organizationId || orgs[0]?.id || "")
+    const selectedOrgId = orgId || (isSuperAdmin ? "" : session.user.organizationId || orgs[0]?.id || "")
     
     // Default org ID for UI if none selected yet
     const currentOrgId = selectedOrgId || orgs[0]?.id || ""
