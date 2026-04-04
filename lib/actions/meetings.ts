@@ -9,6 +9,7 @@ import { getServerSession } from "@/lib/session"
 import { redirect } from "next/navigation"
 import { sendEmail, emailTemplates } from "@/lib/email"
 import { v4 as uuidv4 } from "uuid"
+import { subDays, isAfter } from "date-fns"
 
 // Schemas
 const CreateMeetingSchema = z.object({
