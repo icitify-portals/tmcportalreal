@@ -1,7 +1,7 @@
 "use server"
 
 import { db } from "@/lib/db"
-import { meetings, meetingAttendances, meetingDocs, users, organizations, officials, meetingGroups, meetingGroupMembers, notifications } from "@/lib/db/schema"
+import { meetings, meetingAttendances, meetingDocs, users, organizations, officials, meetingGroups, meetingGroupMembers, notifications, members } from "@/lib/db/schema"
 import { eq, and, desc, asc, inArray, sql } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
