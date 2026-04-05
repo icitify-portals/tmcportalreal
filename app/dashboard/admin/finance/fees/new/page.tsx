@@ -8,8 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 
 export const dynamic = 'force-dynamic'
 
-import { OrganizationSelector } from "@/components/admin/organization-selector"
-import { getAvailableOrganizations } from "@/lib/actions/occasions"
+import { getOrganizations } from "@/lib/actions/organization"
+import { JurisdictionSelector } from "@/components/admin/finance/jurisdiction-selector"
 
 export default async function NewFeePage({
     searchParams
@@ -21,7 +21,7 @@ export default async function NewFeePage({
     if (!session?.user?.id) redirect("/login")
 
     // Get organizations for selector
-    const orgs = await getAvailableOrganizations()
+    const orgs = await getOrganizations()
 
     // Find the organization context
     const userRole = await db.select({
@@ -46,7 +46,7 @@ export default async function NewFeePage({
             <div className="flex items-center justify-between">
                 <div>
                     {isSuperAdmin && (
-                        <OrganizationSelector 
+                        <JurisdictionSelector 
                             organizations={orgs} 
                             currentOrgId={selectedOrgId} 
                         />

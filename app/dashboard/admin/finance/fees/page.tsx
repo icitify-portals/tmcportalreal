@@ -12,8 +12,8 @@ import { Badge } from "@/components/ui/badge"
 
 export const dynamic = 'force-dynamic'
 
-import { getAvailableOrganizations } from "@/lib/actions/occasions"
-import { OrganizationSelector } from "@/components/admin/organization-selector"
+import { getOrganizations } from "@/lib/actions/organization"
+import { JurisdictionSelector } from "@/components/admin/finance/jurisdiction-selector"
 
 export default async function FeesAdminPage({
     searchParams
@@ -25,7 +25,7 @@ export default async function FeesAdminPage({
     if (!session?.user?.id) redirect("/login")
 
     // Get organizations for selector
-    const orgs = await getAvailableOrganizations()
+    const orgs = await getOrganizations()
 
     // Find the organization context
     const userRole = await db.select({
@@ -71,7 +71,7 @@ export default async function FeesAdminPage({
             <div className="flex items-center justify-between">
                 <div>
                     {isSuperAdmin && (
-                        <OrganizationSelector 
+                        <JurisdictionSelector 
                             organizations={orgs} 
                             currentOrgId={selectedOrgId} 
                         />
