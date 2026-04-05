@@ -47,7 +47,7 @@ export async function createFee(data: z.infer<typeof FeeSchema>, organizationId:
             description: validData.description,
             amount: validData.amount.toString(),
             targetType: validData.targetType,
-            dueDate: validData.dueDate,
+            dueDate: validData.dueDate || null,
         }).$returningId()
 
         if (!newFee?.id) throw new Error("Failed to create fee")
