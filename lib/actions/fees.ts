@@ -34,29 +34,40 @@ async function getDescendantOrgIds(parentId: string): Promise<string[]> {
     return orgIds;
 }
 
+import { v4 as uuidv4 } from "uuid"
+
 export async function createFee(data: z.infer<typeof FeeSchema>, organizationId: string) {
     try {
         const session = await getServerSession()
         if (!session?.user?.id) return { success: false, error: "Unauthorized" }
 
         const validData = FeeSchema.parse(data)
+        const id = uuidv4()
 
-        const [newFee] = await db.insert(fees).values({
+        console.log(`[createFee] Attempting to create fee ${id} for org ${organizationId}`)
+
+        await db.insert(fees).values({
+            id,
             organizationId,
             title: validData.title,
             description: validData.description,
             amount: validData.amount.toString(),
             targetType: validData.targetType,
             dueDate: validData.dueDate || null,
-        }).$returningId()
+        })
 
-        if (!newFee?.id) throw new Error("Failed to create fee")
+        console.log(`[createFee] Fee ${id} created successfully. Triggering assignment...`)
 
         // Trigger assignment logic
-        await assignFee(newFee.id)
+        const assignResult = await assignFee(id)
+        if (!assignResult.success) {
+            console.error(`[createFee] Assignment failed for fee ${id}:`, assignResult.error)
+            // We still created the fee, so we might want to return success but warn, 
+            // or return failure. Given the UI flow, let's return success but with a warning in logs.
+        }
 
         revalidatePath("/dashboard/admin/finance/fees")
-        return { success: true, feeId: newFee.id }
+        return { success: true, feeId: id }
     } catch (error: any) {
         console.error("Create Fee Error:", error)
         return { success: false, error: error.message || "Failed to create fee" }
