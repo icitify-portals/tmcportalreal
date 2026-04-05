@@ -54,6 +54,7 @@ export async function createFee(data: z.infer<typeof FeeSchema>, organizationId:
             amount: validData.amount.toString(),
             targetType: validData.targetType,
             dueDate: validData.dueDate || null,
+            updatedAt: new Date(),
         })
 
         console.log(`[createFee] Fee ${id} created successfully. Triggering assignment...`)
