@@ -36,7 +36,9 @@ ENV NEXT_TELEMETRY_DISABLED=1
 # Generate Prisma Client (Ensures client is up to date with the latest schema)
 # Dummy database URL to satisfy validation during build
 ARG DATABASE_URL
+ARG NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY
 ENV DATABASE_URL="mysql://dummy:dummy@localhost:3306/dummy"
+ENV NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY=$NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY
 RUN echo "DEBUG: DATABASE_URL is set to $DATABASE_URL"
 RUN npx prisma generate
 

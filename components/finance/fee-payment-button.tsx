@@ -40,13 +40,9 @@ export function FeePaymentButton({ minAmount, email, assignmentId, title, subacc
             return
         }
 
-        const paystack = (window as any).PaystackPop;
-        if (!paystack) {
-            toast.error("Payment system failed to load");
-            return;
-        }
-
-        const config = {
+        const paystack = new (window as any).PaystackPop();
+        
+        paystack.newTransaction({
             key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || 'pk_test_xxxxxxxxxxxxxxxxxxxx',
             email: email,
             amount: amount * 100, // Kobo
@@ -58,15 +54,15 @@ export function FeePaymentButton({ minAmount, email, assignmentId, title, subacc
                     { display_name: "Assignment ID", variable_name: "assignment_id", value: assignmentId },
                 ]
             },
-            onClose: () => {
+            onCancel: () => {
                 toast("Payment cancelled");
             },
-            callback: async (response: any) => {
+            onSuccess: async (transaction: any) => {
                 setLoading(true);
                 toast.info("Recording payment...");
 
                 try {
-                    const result = await recordFeePayment(assignmentId, amount, response.reference);
+                    const result = await recordFeePayment(assignmentId, amount, transaction.reference);
                     if (result.success) {
                         toast.success("Payment successful!");
                         router.refresh();
@@ -79,15 +75,13 @@ export function FeePaymentButton({ minAmount, email, assignmentId, title, subacc
                     setLoading(false);
                 }
             }
-        };
-
-        paystack.setup(config).openIframe();
+        });
     };
 
     return (
         <div className="space-y-4">
             <Script
-                src="https://js.paystack.co/v1/inline.js"
+                src="https://js.paystack.co/v2/inline.js"
                 onLoad={() => setScriptLoaded(true)}
                 strategy="lazyOnload"
             />
