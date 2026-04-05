@@ -40,9 +40,13 @@ export function FeePaymentButton({ minAmount, email, assignmentId, title, subacc
             return
         }
 
-        const paystack = new (window as any).PaystackPop();
-        
-        paystack.newTransaction({
+        const paystack = (window as any).PaystackPop;
+        if (!paystack) {
+            toast.error("Payment system failed to load");
+            return;
+        }
+
+        const config = {
             key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || 'pk_test_xxxxxxxxxxxxxxxxxxxx',
             email: email,
             amount: amount * 100, // Kobo
@@ -54,34 +58,40 @@ export function FeePaymentButton({ minAmount, email, assignmentId, title, subacc
                     { display_name: "Assignment ID", variable_name: "assignment_id", value: assignmentId },
                 ]
             },
-            onCancel: () => {
+            onClose: () => {
                 toast("Payment cancelled");
             },
-            onSuccess: async (transaction: any) => {
+            callback: (response: any) => {
                 setLoading(true);
                 toast.info("Recording payment...");
 
-                try {
-                    const result = await recordFeePayment(assignmentId, amount, transaction.reference);
-                    if (result.success) {
-                        toast.success("Payment successful!");
-                        router.refresh();
-                    } else {
-                        toast.error(result.error || "Failed to record payment");
-                    }
-                } catch (error) {
-                    toast.error("An error occurred during recording");
-                } finally {
-                    setLoading(false);
-                }
+                // Call async recording logic
+                recordFeePayment(assignmentId, amount, response.reference)
+                    .then(result => {
+                        if (result.success) {
+                            toast.success("Payment successful!");
+                            router.refresh();
+                        } else {
+                            toast.error(result.error || "Failed to record payment");
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Recording error:", error);
+                        toast.error("An error occurred during recording");
+                    })
+                    .finally(() => {
+                        setLoading(false);
+                    });
             }
-        });
+        };
+
+        paystack.setup(config).openIframe();
     };
 
     return (
         <div className="space-y-4">
             <Script
-                src="https://js.paystack.co/v2/inline.js"
+                src="https://js.paystack.co/v1/inline.js"
                 onLoad={() => setScriptLoaded(true)}
                 strategy="lazyOnload"
             />
