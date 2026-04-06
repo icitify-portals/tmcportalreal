@@ -241,6 +241,10 @@ export default async function MembersPage(props: {
                     </tbody>
                   </table>
                 </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-64 text-muted-foreground border rounded-md">
+                  No members found matching your search.
+                </div>
               )}
             </div>
             <Pagination 
