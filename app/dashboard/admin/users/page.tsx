@@ -25,13 +25,15 @@ import { desc, or, ilike, eq, inArray, and, sql } from "drizzle-orm"
 import { redirect } from "next/navigation"
 import { format } from "date-fns"
 import { ImpersonateButton } from "@/components/admin/users/impersonate-button"
+import { Pagination } from "@/components/admin/shared/pagination"
+import { ExportCSV } from "@/components/admin/shared/export-csv"
 
 // Reusing query logic from API essentially, but Server Component pattern is often direct DB access.
 // However, reusing API keeps logic centralized? 
 // For dashboard pages, direct DB access is standard in Next.js Server Components.
 
 async function UserList({ searchParams }: {
-    searchParams: { q?: string; state?: string; lga?: string; branch?: string }
+    searchParams: { q?: string; state?: string; lga?: string; branch?: string; page?: string; limit?: string }
 }) {
     // Need to dynamically import to use searchParams in Server Component correctly in Next 15+? 
     // Actually props are fine.
@@ -52,6 +54,9 @@ async function UserList({ searchParams }: {
     const stateFilter = searchParams?.state
     const lgaFilter = searchParams?.lga
     const branchFilter = searchParams?.branch
+    const page = parseInt(searchParams?.page || "1")
+    const limit = parseInt(searchParams?.limit || "50")
+    const offset = (page - 1) * limit
 
     // Direct DB is faster and avoids self-request issues in some environments.
 
@@ -70,6 +75,14 @@ async function UserList({ searchParams }: {
         conditions.push(sql`JSON_UNQUOTE(JSON_EXTRACT(${membersTable.metadata}, '$.branch')) LIKE ${`%${branchFilter}%`}`)
     }
 
+    // 0. Fetch Total Count for pagination
+    const [totalRes] = await db.select({ count: sql<number>`count(*)` })
+        .from(users)
+        .leftJoin(membersTable, eq(users.id, membersTable.userId))
+        .where(conditions.length > 0 ? and(...conditions) : undefined);
+    
+    const totalCount = Number(totalRes?.count || 0);
+
     // 1. Fetch Users joined with members to access jurisdiction
     const rawUsers = await db.select({
         id: users.id,
@@ -81,7 +94,8 @@ async function UserList({ searchParams }: {
         .leftJoin(membersTable, eq(users.id, membersTable.userId))
         .where(conditions.length > 0 ? and(...conditions) : undefined)
         .orderBy(desc(users.createdAt))
-        .limit(50);
+        .limit(limit)
+        .offset(offset);
 
     // 2. Fetch User Roles for these users
     const userIds = rawUsers.map(u => u.id);
@@ -127,6 +141,7 @@ async function UserList({ searchParams }: {
                 <Table>
                     <TableHeader>
                         <TableRow>
+                            <TableHead className="w-12">S/N</TableHead>
                             <TableHead>Name</TableHead>
                             <TableHead>Email</TableHead>
                             <TableHead>Roles</TableHead>
@@ -137,13 +152,14 @@ async function UserList({ searchParams }: {
                     <TableBody>
                         {usersData.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={5} className="h-24 text-center">
-                                    No users found.
+                                <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                                    No users found matching your filters.
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            usersData.map((user) => (
+                            usersData.map((user, index) => (
                                 <TableRow key={user.id}>
+                                    <TableCell className="text-muted-foreground text-xs">{offset + index + 1}</TableCell>
                                     <TableCell className="font-medium">{user.name}</TableCell>
                                     <TableCell>{user.email}</TableCell>
                                     <TableCell>
@@ -177,15 +193,19 @@ async function UserList({ searchParams }: {
                     </TableBody>
                 </Table>
             </div>
-            <div className="text-xs text-muted-foreground">
-                Showing top 50 recent users.
-            </div>
+            <Pagination 
+                total={totalCount} 
+                page={page} 
+                limit={limit} 
+                baseUrl="/dashboard/admin/users" 
+                searchParams={{ q: searchParams.q, state: stateFilter, lga: lgaFilter, branch: branchFilter }} 
+            />
         </div>
     )
 }
 
 export default async function UsersPage(props: {
-    searchParams: Promise<{ q?: string; state?: string; lga?: string; branch?: string }>
+    searchParams: Promise<{ q?: string; state?: string; lga?: string; branch?: string; page?: string; limit?: string }>
 }) {
     const searchParams = await props.searchParams;
 
@@ -253,8 +273,13 @@ export default async function UsersPage(props: {
                 </Card>
 
                 <Card>
-                    <CardHeader>
-                        <CardTitle>Registered Users</CardTitle>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                        <div>
+                            <CardTitle>Registered Users</CardTitle>
+                        </div>
+                        <Suspense fallback={<Button variant="outline" size="sm" disabled>Exporting...</Button>}>
+                            <UserExportWrapper searchParams={searchParams} />
+                        </Suspense>
                     </CardHeader>
                     <CardContent>
                         <Suspense fallback={<div>Loading users...</div>}>
@@ -265,5 +290,43 @@ export default async function UsersPage(props: {
             </div>
         </DashboardLayout>
     )
+}async function UserExportWrapper({ searchParams }: { searchParams: any }) {
+    // We need to fetch ALL matching users for CSV export if we want the full dataset
+    // But usually client-side export only exports what's loaded. 
+    // If the user wants the WHOLE list, we need to fetch it.
+    // For now, let's fetch matching users for export up to a reasonable limit (e.g. 1000)
+    
+    const conditions = []
+    if (searchParams.q) {
+        conditions.push(or(ilike(users.name, `%${searchParams.q}%`), ilike(users.email, `%${searchParams.q}%`)))
+    }
+    if (searchParams.state && searchParams.state !== "all") {
+        conditions.push(sql`JSON_UNQUOTE(JSON_EXTRACT(${membersTable.metadata}, '$.state')) = ${searchParams.state}`)
+    }
+    if (searchParams.lga && searchParams.lga !== "all") {
+        conditions.push(sql`JSON_UNQUOTE(JSON_EXTRACT(${membersTable.metadata}, '$.lga')) = ${searchParams.lga}`)
+    }
+    if (searchParams.branch && searchParams.branch !== "all") {
+        conditions.push(sql`JSON_UNQUOTE(JSON_EXTRACT(${membersTable.metadata}, '$.branch')) LIKE ${`%${searchParams.branch}%`}`)
+    }
+
+    const exportData = await db.select({
+        name: users.name,
+        email: users.email,
+        createdAt: users.createdAt,
+    })
+        .from(users)
+        .leftJoin(membersTable, eq(users.id, membersTable.userId))
+        .where(conditions.length > 0 ? and(...conditions) : undefined)
+        .orderBy(desc(users.createdAt))
+        .limit(1000);
+
+    const headers = [
+        { key: 'name', label: 'Name' },
+        { key: 'email', label: 'Email' },
+        { key: 'createdAt', label: 'Joined' },
+    ]
+
+    return <ExportCSV data={exportData} filename="users" headers={headers} />
 }
 

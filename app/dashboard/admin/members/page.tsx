@@ -16,10 +16,13 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { locationData } from "@/lib/location-data"
+import { Pagination } from "@/components/admin/shared/pagination"
+import { ExportCSV } from "@/components/admin/shared/export-csv"
+import { Suspense } from "react"
 
 
 export default async function MembersPage(props: {
-  searchParams: Promise<{ state?: string; lga?: string; branch?: string; search?: string }>
+  searchParams: Promise<{ state?: string; lga?: string; branch?: string; search?: string; page?: string; limit?: string }>
 }) {
   const searchParams = await props.searchParams
   const session = await getServerSession()
@@ -29,6 +32,9 @@ export default async function MembersPage(props: {
   const lgaFilter = searchParams.lga
   const branchFilter = searchParams.branch
   const searchQuery = searchParams.search
+  const page = parseInt(searchParams.page || "1")
+  const limit = parseInt(searchParams.limit || "50")
+  const offset = (page - 1) * limit
 
   let conditions = []
 
@@ -41,13 +47,25 @@ export default async function MembersPage(props: {
   if (branchFilter && branchFilter !== "all") {
     conditions.push(sql`JSON_UNQUOTE(JSON_EXTRACT(${members.metadata}, '$.branch')) = ${branchFilter}`)
   }
+  if (searchQuery) {
+    // Basic search on name/email would require join, for now let's skip or implement if needed
+    // The user had 'search' in params but it wasn't used in the original code's conditions
+  }
+
+  // 0. Fetch Total Count for pagination
+  const [totalRes] = await db.select({ count: sql<number>`count(*)` })
+    .from(members)
+    .where(conditions.length > 0 ? and(...conditions) : undefined);
+  
+  const totalCount = Number(totalRes?.count || 0);
 
   // Fetch members
   const rawMembers = await db.select()
     .from(members)
     .where(conditions.length > 0 ? and(...conditions) : undefined)
     .orderBy(desc(members.createdAt))
-    .limit(100)
+    .limit(limit)
+    .offset(offset)
 
   // Manually fetch related data
   const userIds = [...new Set(rawMembers.map(m => m.userId).filter(Boolean))] as string[]
@@ -147,9 +165,14 @@ export default async function MembersPage(props: {
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>All Members</CardTitle>
-            <CardDescription>List of all registered members</CardDescription>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <div>
+              <CardTitle>All Members</CardTitle>
+              <CardDescription>List of all registered members</CardDescription>
+            </div>
+            <Suspense fallback={<Button variant="outline" size="sm" disabled>Exporting...</Button>}>
+              <MemberExportWrapper searchParams={searchParams} />
+            </Suspense>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -158,6 +181,7 @@ export default async function MembersPage(props: {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b">
+                        <th className="text-left p-2 w-12 text-muted-foreground text-xs font-normal">S/N</th>
                         <th className="text-left p-2">Member ID</th>
                         <th className="text-left p-2">Name</th>
                         <th className="text-left p-2">State</th>
@@ -168,10 +192,11 @@ export default async function MembersPage(props: {
                       </tr>
                     </thead>
                     <tbody>
-                      {membersList.map((member) => {
+                      {membersList.map((member, index) => {
                         const metadata = member.metadata as any || {}
                         return (
                           <tr key={member.id} className="border-b">
+                            <td className="p-2 text-muted-foreground text-xs">{offset + index + 1}</td>
                             <td className="p-2 font-mono text-sm">{member.memberId || "Pending"}</td>
                             <td className="p-2">
                               <div>{member.user.name}</div>
@@ -216,10 +241,15 @@ export default async function MembersPage(props: {
                     </tbody>
                   </table>
                 </div>
-              ) : (
-                <p className="text-center text-muted-foreground py-8">No members found</p>
               )}
             </div>
+            <Pagination 
+                total={totalCount} 
+                page={page} 
+                limit={limit} 
+                baseUrl="/dashboard/admin/members" 
+                searchParams={{ state: stateFilter, lga: lgaFilter, branch: branchFilter }} 
+            />
           </CardContent>
         </Card>
       </div>
@@ -227,3 +257,59 @@ export default async function MembersPage(props: {
   )
 }
 
+}
+
+async function MemberExportWrapper({ searchParams }: { searchParams: any }) {
+    let conditions = []
+
+    if (searchParams.state && searchParams.state !== "all") {
+        conditions.push(sql`JSON_UNQUOTE(JSON_EXTRACT(${members.metadata}, '$.state')) = ${searchParams.state}`)
+    }
+    if (searchParams.lga && searchParams.lga !== "all") {
+        conditions.push(sql`JSON_UNQUOTE(JSON_EXTRACT(${members.metadata}, '$.lga')) = ${searchParams.lga}`)
+    }
+    if (searchParams.branch && searchParams.branch !== "all") {
+        conditions.push(sql`JSON_UNQUOTE(JSON_EXTRACT(${members.metadata}, '$.branch')) = ${searchParams.branch}`)
+    }
+
+    const rawExport = await db.select()
+        .from(members)
+        .where(conditions.length > 0 ? and(...conditions) : undefined)
+        .orderBy(desc(members.createdAt))
+        .limit(1000);
+
+    // Fetch user details for export
+    const userIds = rawExport.map(m => m.userId).filter(Boolean) as string[]
+    const usersData = userIds.length > 0 ? await db.query.users.findMany({
+        where: (u, { inArray }) => inArray(u.id, userIds),
+        columns: { id: true, name: true, email: true }
+    }) : []
+
+    const exportData = rawExport.map(m => {
+        const user = usersData.find(u => u.id === m.userId)
+        const meta = m.metadata as any || {}
+        return {
+            memberId: m.memberId || "PENDING",
+            name: user?.name || "Unknown",
+            email: user?.email || "",
+            state: meta.state || "",
+            lga: meta.lga || "",
+            branch: meta.branch || "",
+            status: m.status,
+            createdAt: m.createdAt
+        }
+    })
+
+    const headers = [
+        { key: 'memberId', label: 'Member ID' },
+        { key: 'name', label: 'Name' },
+        { key: 'email', label: 'Email' },
+        { key: 'state', label: 'State' },
+        { key: 'lga', label: 'LGA' },
+        { key: 'branch', label: 'Branch' },
+        { key: 'status', label: 'Status' },
+        { key: 'createdAt', label: 'Joined' },
+    ]
+
+    return <ExportCSV data={exportData} filename="members" headers={headers} />
+}
