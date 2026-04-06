@@ -257,8 +257,6 @@ export default async function MembersPage(props: {
   )
 }
 
-}
-
 async function MemberExportWrapper({ searchParams }: { searchParams: any }) {
     let conditions = []
 
