@@ -24,7 +24,7 @@ export const membershipTypeEnum = mysqlEnum('membershipType', ['REGULAR', 'ASSOC
 export const genderEnum = mysqlEnum('gender', ['MALE', 'FEMALE']);
 export const officialLevelEnum = mysqlEnum('positionLevel', ['NATIONAL', 'STATE', 'LOCAL_GOVERNMENT', 'BRANCH']);
 export const jurisdictionLevelEnum = mysqlEnum('jurisdictionLevel', ['SYSTEM', 'NATIONAL', 'STATE', 'LOCAL_GOVERNMENT', 'BRANCH']);
-export const paymentStatusEnum = mysqlEnum('paymentStatus', ['PENDING', 'SUCCESS', 'FAILED', 'CANCELLED', 'REFUNDED']);
+export const paymentStatusEnum = mysqlEnum('status', ['PENDING', 'SUCCESS', 'FAILED', 'CANCELLED', 'REFUNDED']);
 export const paymentTypeEnum = mysqlEnum('paymentType', ['MEMBERSHIP_FEE', 'RENEWAL', 'DONATION', 'EVENT_FEE', 'BURIAL_FEE', 'LEVY', 'OTHER']);
 export const feeTargetEnum = mysqlEnum('targetType', ['ALL_MEMBERS', 'OFFICIALS']);
 
