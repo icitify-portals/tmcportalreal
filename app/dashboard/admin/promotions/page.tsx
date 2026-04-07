@@ -11,8 +11,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { format } from "date-fns"
 import Image from "next/image"
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
-import { Check, X, Eye } from "lucide-react"
+import { Check, X, Eye, Settings } from "lucide-react"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
+import Link from "next/link"
 
 // Server Action Wrapper for buttons (or client component)
 // For simplicity, I'll make this a Server Component that renders Client Components for actions if needed.
@@ -38,6 +39,12 @@ export default async function AdminPromotionsPage() {
                         <h1 className="text-3xl font-bold tracking-tight">Promotion Requests</h1>
                         <p className="text-muted-foreground">Review and manage user advertisement requests.</p>
                     </div>
+                    <Link href="/dashboard/admin/promotions/plans">
+                        <Button variant="outline">
+                            <Settings className="w-4 h-4 mr-2" />
+                            Manage Plans
+                        </Button>
+                    </Link>
                 </div>
 
                 <Tabs defaultValue="pending" className="w-full">

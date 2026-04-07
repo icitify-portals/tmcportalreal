@@ -9,13 +9,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import { PlanForm } from "@/components/admin/promotions/plan-form"
 import { getPromotionPlans } from "@/lib/actions/promotions"
-import { formatCurrency } from "@/lib/utils" // Assuming this exists, otherwise I'll inline checks
+import { formatCurrency } from "@/lib/utils"
+import { DashboardLayout } from "@/components/layout/dashboard-layout"
 
 export default async function PromotionPlansPage() {
     const plans = await getPromotionPlans(true)
 
     return (
-        <div className="space-y-6">
+        <DashboardLayout>
+            <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Promotion Plans</h1>
@@ -92,6 +94,7 @@ export default async function PromotionPlansPage() {
                     </div>
                 </CardContent>
             </Card>
-        </div>
+            </div>
+        </DashboardLayout>
     )
 }
