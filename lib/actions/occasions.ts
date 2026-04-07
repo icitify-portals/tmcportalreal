@@ -19,19 +19,11 @@ export async function createOccasionType(data: z.infer<typeof OccasionTypeSchema
     const isSuperAdmin = session.user.isSuperAdmin
     const hasPerm = session.user.permissions?.includes('MANAGE_OCCASIONS')
 
-    console.log("[DEBUG] createOccasionType session:", { 
-        userId: session?.user?.id, 
-        isSuperAdmin: session?.user?.isSuperAdmin, 
-        permissions: session?.user?.permissions 
-    })
-
     if (!isSuperAdmin && !hasPerm) {
-        console.warn("[DEBUG] createOccasionType: Forbidden")
         return { success: false, error: "Forbidden: You don't have permission to create occasion types." }
     }
 
     try {
-        console.log("[DEBUG] createOccasionType inserting:", data)
         await db.insert(occasionTypes).values({
             name: data.name,
             certificateFee: data.certificateFee?.toFixed(2) || "0.00", // Convert number to 2-decimal string for MySQL decimal
@@ -39,7 +31,6 @@ export async function createOccasionType(data: z.infer<typeof OccasionTypeSchema
         revalidatePath("/dashboard/admin/occasions")
         return { success: true }
     } catch (error: any) {
-        console.error("[DEBUG] Error creating occasion type:", error)
         if (error.code === 'ER_DUP_ENTRY') {
             return { success: false, error: "An occasion type with this name already exists." }
         }
@@ -61,8 +52,6 @@ export async function requestOccasion(data: z.infer<typeof RequestSchema>) {
     const session = await getServerSession()
     if (!session?.user?.id) return { success: false, error: "Unauthorized" }
 
-    console.log("[DEBUG] requestOccasion session:", { userId: session.user.id, data })
-
     try {
         // Logic: If certificateNeeded, calculate initial amount (maybe 0 until approved, or set now)
         // For now, let's just save.
@@ -74,7 +63,6 @@ export async function requestOccasion(data: z.infer<typeof RequestSchema>) {
             if (type && type.certificateFee) amount = type.certificateFee
         }
 
-        console.log("[DEBUG] requestOccasion inserting into DB")
         const [inserted] = await db.insert(occasionRequests).values({
             userId: session.user.id,
             typeId: data.typeId,
@@ -90,11 +78,9 @@ export async function requestOccasion(data: z.infer<typeof RequestSchema>) {
             status: 'PENDING'
         }).$returningId()
 
-        console.log("[DEBUG] requestOccasion success, id:", inserted.id)
         revalidatePath("/dashboard/member/occasions")
         return { success: true, requestId: inserted.id }
     } catch (error: any) {
-        console.error("[DEBUG] Error requesting occasion:", error)
         return { success: false, error: `Failed to submit request: ${error.message || 'Unknown error'}` }
     }
 }

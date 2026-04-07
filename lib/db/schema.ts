@@ -24,7 +24,7 @@ export const membershipTypeEnum = mysqlEnum('membershipType', ['REGULAR', 'ASSOC
 export const genderEnum = mysqlEnum('gender', ['MALE', 'FEMALE']);
 export const officialLevelEnum = mysqlEnum('positionLevel', ['NATIONAL', 'STATE', 'LOCAL_GOVERNMENT', 'BRANCH']);
 export const jurisdictionLevelEnum = mysqlEnum('jurisdictionLevel', ['SYSTEM', 'NATIONAL', 'STATE', 'LOCAL_GOVERNMENT', 'BRANCH']);
-export const paymentStatusEnum = mysqlEnum('status', ['PENDING', 'SUCCESS', 'FAILED', 'CANCELLED', 'REFUNDED']);
+export const paymentStatusEnum = mysqlEnum('paymentStatus', ['PENDING', 'SUCCESS', 'FAILED', 'CANCELLED', 'REFUNDED']);
 export const paymentTypeEnum = mysqlEnum('paymentType', ['MEMBERSHIP_FEE', 'RENEWAL', 'DONATION', 'EVENT_FEE', 'BURIAL_FEE', 'LEVY', 'OTHER']);
 export const feeTargetEnum = mysqlEnum('targetType', ['ALL_MEMBERS', 'OFFICIALS']);
 
@@ -586,7 +586,7 @@ export const backups = mysqlTable("backups", {
     databaseUrl: varchar("databaseUrl", { length: 500 }), // S3 URL
     filesUrl: varchar("filesUrl", { length: 500 }), // S3 URL
     size: bigint("size", { mode: "number" }), // Total size in bytes
-    status: mysqlEnum('status', ['PENDING', 'COMPLETED', 'FAILED']).default('PENDING'),
+    status: mysqlEnum('backupStatus', ['PENDING', 'COMPLETED', 'FAILED']).default('PENDING'),
     error: text("error"),
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
     createdBy: varchar("createdBy", { length: 255 }).references(() => users.id),
