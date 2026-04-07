@@ -61,33 +61,42 @@ export async function requestOccasion(data: z.infer<typeof RequestSchema>) {
     const session = await getServerSession()
     if (!session?.user?.id) return { success: false, error: "Unauthorized" }
 
-    // Logic: If certificateNeeded, calculate initial amount (maybe 0 until approved, or set now)
-    // For now, let's just save.
+    console.log("[DEBUG] requestOccasion session:", { userId: session.user.id, data })
 
-    // Get fee if needed
-    let amount = "0.00"
-    if (data.certificateNeeded) {
-        const [type] = await db.select().from(occasionTypes).where(eq(occasionTypes.id, data.typeId))
-        if (type && type.certificateFee) amount = type.certificateFee
+    try {
+        // Logic: If certificateNeeded, calculate initial amount (maybe 0 until approved, or set now)
+        // For now, let's just save.
+
+        // Get fee if needed
+        let amount = "0.00"
+        if (data.certificateNeeded) {
+            const [type] = await db.select().from(occasionTypes).where(eq(occasionTypes.id, data.typeId))
+            if (type && type.certificateFee) amount = type.certificateFee
+        }
+
+        console.log("[DEBUG] requestOccasion inserting into DB")
+        const [inserted] = await db.insert(occasionRequests).values({
+            userId: session.user.id,
+            typeId: data.typeId,
+            organizationId: data.organizationId,
+            date: data.date,
+            time: data.time,
+            venue: data.venue,
+            address: data.address,
+            role: data.role,
+            certificateNeeded: data.certificateNeeded,
+            amount: amount,
+            details: JSON.stringify(data.details),
+            status: 'PENDING'
+        }).$returningId()
+
+        console.log("[DEBUG] requestOccasion success, id:", inserted.id)
+        revalidatePath("/dashboard/member/occasions")
+        return { success: true, requestId: inserted.id }
+    } catch (error: any) {
+        console.error("[DEBUG] Error requesting occasion:", error)
+        return { success: false, error: `Failed to submit request: ${error.message || 'Unknown error'}` }
     }
-
-    const [req] = await db.insert(occasionRequests).values({
-        userId: session.user.id,
-        typeId: data.typeId,
-        organizationId: data.organizationId,
-        date: data.date,
-        time: data.time,
-        venue: data.venue,
-        address: data.address,
-        role: data.role,
-        certificateNeeded: data.certificateNeeded,
-        amount: amount,
-        details: JSON.stringify(data.details),
-        status: 'PENDING'
-    }).$returningId()
-
-    revalidatePath("/dashboard/member/occasions")
-    return { success: true, requestId: req.id }
 }
 
 export async function getAdminRequests(organizationId?: string) {
