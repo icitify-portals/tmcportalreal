@@ -34,8 +34,8 @@ export const documentTypeEnum = mysqlEnum('documentType', ['ID_CARD', 'CERTIFICA
 export const emailStatusEnum = mysqlEnum('status', ['PENDING', 'SENT', 'FAILED', 'BOUNCED']);
 export const notificationTypeEnum = mysqlEnum('type', ['INFO', 'SUCCESS', 'WARNING', 'ERROR']);
 export const postTypeEnum = mysqlEnum('postType', ['NEWS', 'EVENT', 'ANNOUNCEMENT']);
-export const occasionRequestStatusEnum = mysqlEnum('occasionRequestStatus', ['PENDING', 'APPROVED', 'COMPLETED', 'REJECTED']);
-export const occasionRoleEnum = mysqlEnum('occasionRole', ['COORDINATING', 'WITNESS']);
+export const occasionRequestStatusEnum = mysqlEnum('status', ['PENDING', 'APPROVED', 'COMPLETED', 'REJECTED']); // Object name unique, internal name restored
+export const occasionRoleEnum = mysqlEnum('role', ['COORDINATING', 'WITNESS']); // Object name unique, internal name restored
 
 // Finance Enums
 export const budgetStatusEnum = mysqlEnum('status', ['DRAFT', 'SUBMITTED', 'APPROVED', 'REJECTED']);
