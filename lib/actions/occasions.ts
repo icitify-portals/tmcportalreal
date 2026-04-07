@@ -15,6 +15,10 @@ export async function createOccasionType(data: z.infer<typeof OccasionTypeSchema
     const session = await getServerSession()
     if (!session?.user?.id) return { success: false, error: "Unauthorized" }
 
+    // Check if user is SuperAdmin or has permission to manage occasions
+    const isSuperAdmin = session.user.isSuperAdmin
+    const hasPerm = session.user.permissions?.includes('MANAGE_OCCASIONS')
+
     console.log("[DEBUG] createOccasionType session:", { 
         userId: session?.user?.id, 
         isSuperAdmin: session?.user?.isSuperAdmin, 
