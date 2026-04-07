@@ -1345,8 +1345,8 @@ export const navigationItemsRelations = relations(navigationItems, ({ one, many 
 
 // Promotion Plans
 export const promotionPlans = mysqlTable("promotion_plans", {
-    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
-    name: varchar("name", { length: 255 }).notNull(), // e.g. "1 Week"
+    id: varchar("id", { length: 191 }).primaryKey().$defaultFn(() => uuidv4()),
+    name: varchar("name", { length: 191 }).notNull(), // e.g. "1 Week"
     durationDays: int("durationDays").notNull(),
     amount: decimal("amount", { precision: 15, scale: 2 }).notNull(),
     description: text("description"),
