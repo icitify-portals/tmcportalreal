@@ -24,7 +24,7 @@ export const membershipTypeEnum = mysqlEnum('membershipType', ['REGULAR', 'ASSOC
 export const genderEnum = mysqlEnum('gender', ['MALE', 'FEMALE']);
 export const officialLevelEnum = mysqlEnum('positionLevel', ['NATIONAL', 'STATE', 'LOCAL_GOVERNMENT', 'BRANCH']);
 export const jurisdictionLevelEnum = mysqlEnum('jurisdictionLevel', ['SYSTEM', 'NATIONAL', 'STATE', 'LOCAL_GOVERNMENT', 'BRANCH']);
-export const paymentStatusEnum = mysqlEnum('status', ['PENDING', 'SUCCESS', 'FAILED', 'CANCELLED', 'REFUNDED']);
+export const paymentStatusEnum = mysqlEnum('paymentStatus', ['PENDING', 'SUCCESS', 'FAILED', 'CANCELLED', 'REFUNDED']);
 export const paymentTypeEnum = mysqlEnum('paymentType', ['MEMBERSHIP_FEE', 'RENEWAL', 'DONATION', 'EVENT_FEE', 'BURIAL_FEE', 'LEVY', 'OTHER']);
 export const feeTargetEnum = mysqlEnum('targetType', ['ALL_MEMBERS', 'OFFICIALS']);
 
@@ -34,6 +34,8 @@ export const documentTypeEnum = mysqlEnum('documentType', ['ID_CARD', 'CERTIFICA
 export const emailStatusEnum = mysqlEnum('status', ['PENDING', 'SENT', 'FAILED', 'BOUNCED']);
 export const notificationTypeEnum = mysqlEnum('type', ['INFO', 'SUCCESS', 'WARNING', 'ERROR']);
 export const postTypeEnum = mysqlEnum('postType', ['NEWS', 'EVENT', 'ANNOUNCEMENT']);
+export const occasionRequestStatusEnum = mysqlEnum('occasionRequestStatus', ['PENDING', 'APPROVED', 'COMPLETED', 'REJECTED']);
+export const occasionRoleEnum = mysqlEnum('occasionRole', ['COORDINATING', 'WITNESS']);
 
 // Finance Enums
 export const budgetStatusEnum = mysqlEnum('status', ['DRAFT', 'SUBMITTED', 'APPROVED', 'REJECTED']);
@@ -890,10 +892,10 @@ export const occasionRequests = mysqlTable("occasion_requests", {
     venue: varchar("venue", { length: 255 }).notNull(),
     address: text("address").notNull(),
 
-    role: mysqlEnum('role', ['COORDINATING', 'WITNESS']).notNull(),
+    role: occasionRoleEnum.notNull(),
     certificateNeeded: boolean("certificateNeeded").default(false),
 
-    status: mysqlEnum('status', ['PENDING', 'APPROVED', 'COMPLETED', 'REJECTED']).default('PENDING'),
+    status: occasionRequestStatusEnum.default('PENDING'),
     paymentStatus: paymentStatusEnum.default('PENDING'),
     amount: decimal("amount", { precision: 10, scale: 2 }).default("0.00"), // Fee to pay
 
