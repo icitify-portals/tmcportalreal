@@ -15,27 +15,31 @@ export async function createOccasionType(data: z.infer<typeof OccasionTypeSchema
     const session = await getServerSession()
     if (!session?.user?.id) return { success: false, error: "Unauthorized" }
 
-    // Check if user is SuperAdmin or has permission to manage occasions
-    const isSuperAdmin = session.user.isSuperAdmin
-    const hasPerm = session.user.permissions?.includes('MANAGE_OCCASIONS')
+    console.log("[DEBUG] createOccasionType session:", { 
+        userId: session?.user?.id, 
+        isSuperAdmin: session?.user?.isSuperAdmin, 
+        permissions: session?.user?.permissions 
+    })
 
     if (!isSuperAdmin && !hasPerm) {
+        console.warn("[DEBUG] createOccasionType: Forbidden")
         return { success: false, error: "Forbidden: You don't have permission to create occasion types." }
     }
 
     try {
+        console.log("[DEBUG] createOccasionType inserting:", data)
         await db.insert(occasionTypes).values({
             name: data.name,
-            certificateFee: data.certificateFee.toFixed(2), // Convert number to 2-decimal string for MySQL decimal
+            certificateFee: data.certificateFee?.toFixed(2) || "0.00", // Convert number to 2-decimal string for MySQL decimal
         })
         revalidatePath("/dashboard/admin/occasions")
         return { success: true }
     } catch (error: any) {
-        console.error("Error creating occasion type:", error)
+        console.error("[DEBUG] Error creating occasion type:", error)
         if (error.code === 'ER_DUP_ENTRY') {
             return { success: false, error: "An occasion type with this name already exists." }
         }
-        return { success: false, error: "Failed to create occasion type. Please try again." }
+        return { success: false, error: `Failed to create occasion type: ${error.message || 'Unknown error'}` }
     }
 }
 
