@@ -42,7 +42,6 @@ export async function createPromotionPlan(formData: FormData) {
             durationDays,
             amount: amount.toString(),
             description,
-            isActive: true
         });
         revalidatePath("/dashboard/admin/finance/promotions");
         return { success: true };
