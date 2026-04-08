@@ -16,9 +16,12 @@ export const STATE_CODES: Record<string, string> = {
     "Ondo": "07",
     "Ekiti": "08",
     "Abuja": "09",
-    // "Kwara": "10", // Duplicate handled by ignoring or specialized logic if clarified. 
-    // Assuming 10 is reserved or potentially another state like Kogi.
-    // For now, mapping knowns.
+    "Kogi": "10",
+    "Niger": "11",
+    "Kano": "12",
+    "Kaduna": "13",
+    "Katsina": "14",
+    "Bauchi": "15",
 };
 
 export function getCountryCode(countryName: string): string {
