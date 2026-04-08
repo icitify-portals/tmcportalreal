@@ -18,9 +18,13 @@ const serwist = new Serwist({
     runtimeCaching: defaultCache,
 });
 
-// Intercept fetch to exclude Server Actions from being handled by Serwist defaultCache if they fail
+// Intercept fetch to exclude Server Actions and specific pages from being handled by Serwist defaultCache
 self.addEventListener("fetch", (event) => {
-    if (event.request.method === "POST" && event.request.headers.has("next-action")) {
+    const url = new URL(event.request.url);
+    if (
+        (event.request.method === "POST" && event.request.headers.has("next-action")) ||
+        url.pathname.includes("/dashboard/burial/new")
+    ) {
         return; // Let it fall through to network
     }
 });
