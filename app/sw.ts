@@ -18,4 +18,11 @@ const serwist = new Serwist({
     runtimeCaching: defaultCache,
 });
 
+// Intercept fetch to exclude Server Actions from being handled by Serwist defaultCache if they fail
+self.addEventListener("fetch", (event) => {
+    if (event.request.method === "POST" && event.request.headers.has("next-action")) {
+        return; // Let it fall through to network
+    }
+});
+
 serwist.addEventListeners();
