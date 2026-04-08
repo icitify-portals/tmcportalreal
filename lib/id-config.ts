@@ -16,12 +16,7 @@ export const STATE_CODES: Record<string, string> = {
     "Ondo": "07",
     "Ekiti": "08",
     "Abuja": "09",
-    "Kogi": "10",
-    "Niger": "11",
-    "Kano": "12",
-    "Kaduna": "13",
-    "Katsina": "14",
-    "Bauchi": "15",
+    "Niger": "10",
 };
 
 export function getCountryCode(countryName: string): string {
