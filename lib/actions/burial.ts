@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { getServerSession } from "@/lib/session"
 import { hasPermission } from "@/lib/rbac-v2"
+import { v4 as uuidv4 } from "uuid"
 
 // Input Validation Schemas
 const BurialRequestSchema = z.object({
@@ -40,14 +41,16 @@ export async function createBurialRequest(data: z.infer<typeof BurialRequestSche
             return { success: false, error: "Invalid data provided" }
         }
 
-        const [request] = await db.insert(burialRequests).values({
+        const requestId = uuidv4()
+        await db.insert(burialRequests).values({
+            id: requestId,
             userId: session.user.id,
             ...validData.data,
             status: "PENDING",
-        }).$returningId()
+        })
 
         revalidatePath("/dashboard/burial")
-        return { success: true, requestId: request.id }
+        return { success: true, requestId }
     } catch (error) {
         console.error("Create Burial Request Error:", error)
         return { success: false, error: "Failed to create request" }
