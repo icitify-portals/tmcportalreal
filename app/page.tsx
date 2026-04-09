@@ -91,7 +91,11 @@ async function NationalContent() {
             ? sliderImgs
             : (nationalOrg.welcomeImageUrl ? [{ url: nationalOrg.welcomeImageUrl }] : []);
 
-          return <HeroSlider images={images as any[]} title={nationalOrg.name} />;
+          return (
+            <ClientOnly>
+              <HeroSlider images={images as any[]} title={nationalOrg.name} />
+            </ClientOnly>
+          );
         })()}
       </div>
 
@@ -125,12 +129,13 @@ async function NationalContent() {
                     <Newspaper className="h-6 w-6" />
                   </span>
                   Latest National Updates
-                </h3>
                 <Link href="#" className="hidden sm:flex items-center text-sm font-medium text-green-600 hover:text-green-700 hover:underline">
                   View All Posts <ArrowRight className="h-4 w-4 ml-1" />
                 </Link>
               </div>
-              <NewsFeed organizationId={nationalOrg.id} />
+              <ClientOnly>
+                <NewsFeed organizationId={nationalOrg.id} />
+              </ClientOnly>
               <div className="mt-6 sm:hidden text-center">
                 <Link href="#" className="text-sm font-medium text-green-600 hover:underline">View All Posts &rarr;</Link>
               </div>
@@ -138,7 +143,9 @@ async function NationalContent() {
 
             {/* Explore Community (Children Orgs) */}
             <Separator />
-            <ExploreCommunity communityData={communityData} />
+            <ClientOnly>
+              <ExploreCommunity communityData={communityData} />
+            </ClientOnly>
           </div>
 
           {/* Sidebar Column */}
