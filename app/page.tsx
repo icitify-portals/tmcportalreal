@@ -129,6 +129,7 @@ async function NationalContent() {
                     <Newspaper className="h-6 w-6" />
                   </span>
                   Latest National Updates
+                </h3>
                 <Link href="#" className="hidden sm:flex items-center text-sm font-medium text-green-600 hover:text-green-700 hover:underline">
                   View All Posts <ArrowRight className="h-4 w-4 ml-1" />
                 </Link>
