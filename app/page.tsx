@@ -1,4 +1,5 @@
 import { Suspense } from "react"
+import { ClientOnly } from "@/components/shared/client-only"
 import Link from "next/link"
 import { db } from "@/lib/db"
 import { getOrganizationTree } from "@/lib/org-helper"
@@ -277,7 +278,7 @@ async function NationalContent() {
         </div>
         <Separator className="bg-green-900 mb-8" />
         <div className="container mx-auto px-4 text-center text-sm text-green-400/60">
-          <p>&copy; <span suppressHydrationWarning>{new Date().getFullYear()}</span> The Muslim Congress (National). All rights reserved.</p>
+          <p>&copy; <ClientOnly><span>{new Date().getFullYear()}</span></ClientOnly> The Muslim Congress (National). All rights reserved.</p>
         </div>
       </footer>
     </div>
