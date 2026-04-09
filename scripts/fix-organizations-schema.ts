@@ -47,6 +47,26 @@ async function main() {
 
         // 2. Fix Payments Table
         console.log("\n--- Checking Payments Table ---");
+        
+        // A. Handle potential rename of 'status' to 'paymentStatus'
+        const [statusCols] = await connection.execute("SHOW COLUMNS FROM payments LIKE 'status'");
+        const [paymentStatusCols] = await connection.execute("SHOW COLUMNS FROM payments LIKE 'paymentStatus'");
+        
+        if ((statusCols as any[]).length > 0 && (paymentStatusCols as any[]).length === 0) {
+            console.log("Renaming payments.status to payments.paymentStatus...");
+            await connection.execute("ALTER TABLE payments CHANGE COLUMN status paymentStatus ENUM('PENDING', 'SUCCESS', 'FAILED', 'CANCELLED', 'REFUNDED') DEFAULT 'PENDING'");
+        }
+
+        // B. Handle 'type' to 'paymentType' rename if applicable
+        const [typeCols] = await connection.execute("SHOW COLUMNS FROM payments LIKE 'type'");
+        const [paymentTypeCols] = await connection.execute("SHOW COLUMNS FROM payments LIKE 'paymentType'");
+        
+        if ((typeCols as any[]).length > 0 && (paymentTypeCols as any[]).length === 0) {
+            console.log("Renaming payments.type to payments.paymentType...");
+             await connection.execute("ALTER TABLE payments CHANGE COLUMN type paymentType ENUM('MEMBERSHIP_FEE', 'DONATION', 'EVENT_REGISTRATION', 'BURIAL_FEE', 'OTHER') NOT NULL");
+        }
+
+        // C. Add other missing columns
         const paymentColumns = [
             { name: "paymentStatus", type: "ENUM('PENDING', 'SUCCESS', 'FAILED', 'CANCELLED', 'REFUNDED') DEFAULT 'PENDING'" },
             { name: "paymentType", type: "ENUM('MEMBERSHIP_FEE', 'DONATION', 'EVENT_REGISTRATION', 'BURIAL_FEE', 'OTHER') NOT NULL" },
@@ -55,30 +75,19 @@ async function main() {
         ];
 
         for (const col of paymentColumns) {
-            const [columns] = await connection.execute(
+             const [cols] = await connection.execute(
                 `SHOW COLUMNS FROM payments LIKE ?`,
                 [col.name]
             );
 
-            if ((columns as any[]).length === 0) {
+            if ((cols as any[]).length === 0) {
                 console.log(`Adding column: payments.${col.name}...`);
-                try {
-                   await connection.execute(
-                        `ALTER TABLE payments ADD COLUMN ${col.name} ${col.type}`
-                    );
-                } catch (e: any) {
-                    console.error(`Failed to add column ${col.name}: ${e.message}`);
-                }
+                await connection.execute(
+                    `ALTER TABLE payments ADD COLUMN ${col.name} ${col.type}`
+                );
             }
         }
 
-        // 2b. Check if 'status' exists, which might be the old name for 'paymentStatus'
-        // In the error, it looks like it's trying to select 'paymentStatus'
-        // Let's ensure both common names are handled or aliased if needed
-        // The schema.ts says 'status: paymentStatusEnum' which maps to 'status' column normally
-        // BUT the user's error says "Unknown column 'paymentStatus'". 
-        // This means Drizzle is expecting a column NAMED 'paymentStatus' in the DB.
-        
         // 3. Create Burial Requests Table
         console.log("\n--- Checking Burial Requests Table ---");
         const [brTable] = await connection.execute("SHOW TABLES LIKE 'burial_requests'");
