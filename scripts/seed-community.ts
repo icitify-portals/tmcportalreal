@@ -2,12 +2,10 @@
 import * as dotenv from "dotenv";
 import path from "path";
 import mysql from "mysql2/promise";
-import { v4 as uuidv4 } from 'uuid'; // We might need this if we don't depend on MySQL's UUID() effectively for return values
+import { v4 as uuidv4 } from 'uuid';
 
-// Load .env from project root
 dotenv.config({ path: path.resolve(process.cwd(), ".env") });
 
-// Helper to generate IDs if needed, or rely on SQL
 const genId = () => uuidv4();
 
 async function main() {
@@ -24,7 +22,6 @@ async function main() {
     console.log("Seeding Community Data...");
 
     try {
-        // 1. Get National Org ID
         const [nationalRows] = await connection.execute('SELECT id FROM organizations WHERE level = ?', ['NATIONAL']);
         const nationalOrgs = nationalRows as any[];
 
@@ -36,9 +33,6 @@ async function main() {
         const nationalId = nationalOrgs[0].id;
         console.log(`Found National Org ID: ${nationalId}`);
 
-        // 2. Define Data Hierarchy
-        // 2. Define Data Hierarchy
-        // Embedding data directly to avoid ESM/CommonJS import issues in seed script
         const locationData = {
   Lagos: {
     lgas: [
@@ -149,13 +143,13 @@ async function main() {
   },
   Edo: {
     lgas: [
-      { name: "Akoko-Edo", branches: [] },
-      { name: "Egor", branches: [] },
-      { name: "Esan Central", branches: [] },
-      { name: "Esan North-East", branches: [] },
-      { name: "Esan South-East", branches: [] },
-      { name: "Etsako Central", branches: [] },
-      { name: "Etsako East", branches: [] },
+      { name: "Akoko-Edo", branches: ["Akoko-Edo Branch"] },
+      { name: "Egor", branches: ["Egor Branch"] },
+      { name: "Esan Central", branches: ["Esan Central Branch"] },
+      { name: "Esan North-East", branches: ["Esan North-East Branch"] },
+      { name: "Esan South-East", branches: ["Esan South-East Branch"] },
+      { name: "Etsako Central", branches: ["Etsako Central Branch"] },
+      { name: "Etsako East", branches: ["Etsako East Branch"] },
       { name: "Benin", branches: ["Auchi Branch","Benin Main Branch","Ekpoma Branch"] },
     ],
   },
@@ -164,10 +158,10 @@ async function main() {
       { name: "Ado-Ekiti", branches: ["Ado-Ekiti Branch"] },
       { name: "Ikere", branches: ["Ikere Branch"] },
       { name: "Oye", branches: ["Oye Branch"] },
-      { name: "Ikole", branches: [] },
-      { name: "Ijero", branches: [] },
-      { name: "Ido-Osi", branches: [] },
-      { name: "Efon", branches: [] },
+      { name: "Ikole", branches: ["Ikole Branch"] },
+      { name: "Ijero", branches: ["Ijero Branch"] },
+      { name: "Ido-Osi", branches: ["Ido-Osi Branch"] },
+      { name: "Efon", branches: ["Efon Branch"] },
     ],
   },
   FCT: {
@@ -183,7 +177,7 @@ async function main() {
       { name: "Abeokuta North", branches: ["ALUBARIKA MOSQUE","Ijaiye","Kugba","Sabo"] },
       { name: "Abeokuta South", branches: ["IJAYE","KUGBA"] },
       { name: "Ado Odo Ota", branches: ["ATELE","Aparadija","Atan","IFO","IYANA-OYESI","Ijoko","Iyana Iyesi","OTA II","Ota","Owode","Sango"] },
-      { name: "Ifo", branches: [] },
+      { name: "Ifo", branches: ["Ifo Branch"] },
       { name: "Ijebu North", branches: ["AGO IWOYE","Ago-Iwoye","Ijebu Igbo","Mamu","ORU-AWA-ILAPORU II","Oru-Awa-Ilaporu"] },
       { name: "Ijebu North East", branches: ["Igbeba","Ilese"] },
       { name: "Ijebu Ode", branches: ["Ayesan","IGBEBA","ISIWO","Imepe","Imupa","ODO EGBO","ODOSENGOLU","OWODE JIHAD","TEMIDIRE","Temidere","Wulemotu"] },
@@ -196,26 +190,24 @@ async function main() {
   },
   Ondo: {
     lgas: [
-      { name: "Akoko North-East", branches: [] },
-      { name: "Akoko North-West", branches: [] },
-      { name: "Akoko South-West", branches: [] },
-      { name: "Akure North", branches: [] },
+      { name: "Akoko North-East", branches: ["Akoko North-East Branch"] },
+      { name: "Akoko North-West", branches: ["Akoko North-West Branch"] },
+      { name: "Akoko South-West", branches: ["Akoko South-West Branch"] },
+      { name: "Akure North", branches: ["Akure North Branch"] },
       { name: "Akure South", branches: ["Akure Main Branch"] },
-      { name: "Ese Odo", branches: [] },
+      { name: "Ese Odo", branches: ["Ese Odo Branch"] },
       { name: "Owo", branches: ["Owo Branch"] },
       { name: "Okitipupa", branches: ["Okitipupa Branch"] },
     ],
   },
 };
 
-        // 3. Insert Data
         for (const [stateName, data] of Object.entries(locationData)) {
             const stateData = data as any;
             const stateCode = stateName.substring(0, 3).toUpperCase();
 
             console.log(`Processing State: ${stateName}`);
 
-            // Check if State exists
             let stateId = genId();
             const [existingState] = await connection.execute('SELECT id FROM organizations WHERE name = ? AND level = ?', [stateName, 'STATE']);
 
@@ -224,15 +216,14 @@ async function main() {
                 console.log(`- State ${stateName} exists, using ID: ${stateId}`);
             } else {
                 await connection.execute(`
-                    INSERT INTO organizations (id, name, level, code, parentId, country, createdAt)
-                    VALUES (?, ?, 'STATE', ?, ?, 'Nigeria', NOW())
+                    INSERT INTO organizations (id, name, level, code, parentId, country, createdAt, updatedAt)
+                    VALUES (?, ?, 'STATE', ?, ?, 'Nigeria', NOW(), NOW())
                 `, [stateId, stateName, stateCode, nationalId]);
                 console.log(`- Created State: ${stateName}`);
             }
 
             for (const lga of stateData.lgas) {
                 const lgaName = lga.name;
-                // Generate a safer slug-based code to avoid collisions (e.g. LAG-IKO vs LAG-IKO)
                 const cleanLgaName = lgaName.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
                 const lgaCode = `${stateCode}-${cleanLgaName.substring(0, 10)}`;
 
@@ -244,16 +235,15 @@ async function main() {
                 } else {
                     try {
                         await connection.execute(`
-                            INSERT INTO organizations (id, name, level, code, parentId, country, createdAt)
-                            VALUES (?, ?, 'LOCAL_GOVERNMENT', ?, ?, 'Nigeria', NOW())
+                            INSERT INTO organizations (id, name, level, code, parentId, country, createdAt, updatedAt)
+                            VALUES (?, ?, 'LOCAL_GOVERNMENT', ?, ?, 'Nigeria', NOW(), NOW())
                         `, [lgaId, lgaName, lgaCode, stateId]);
                     } catch (e: any) {
                         if (e.code === 'ER_DUP_ENTRY') {
-                            // Fallback for LGA code collision
                             const fallbackCode = `${lgaCode}-${Math.floor(Math.random() * 1000)}`;
                             await connection.execute(`
-                                    INSERT INTO organizations (id, name, level, code, parentId, country, createdAt)
-                                    VALUES (?, ?, 'LOCAL_GOVERNMENT', ?, ?, 'Nigeria', NOW())
+                                    INSERT INTO organizations (id, name, level, code, parentId, country, createdAt, updatedAt)
+                                    VALUES (?, ?, 'LOCAL_GOVERNMENT', ?, ?, 'Nigeria', NOW(), NOW())
                                 `, [lgaId, lgaName, fallbackCode, stateId]);
                         } else {
                             throw e;
@@ -262,27 +252,23 @@ async function main() {
                 }
 
                 for (const branchName of lga.branches) {
-                    // Generate a safer slug-based code to avoid collisions (e.g. ORI vs ORI)
                     const cleanBranchName = branchName.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-                    // Use shortened LGA code + full branch name slug to ensure uniqueness
                     const branchCode = `${lgaCode}-${cleanBranchName.substring(0, 10)}`;
 
-                    // Check existence
                     const [existingBranch] = await connection.execute('SELECT id FROM organizations WHERE name = ? AND level = ? AND parentId = ?', [branchName, 'BRANCH', lgaId]);
 
                     if ((existingBranch as any[]).length === 0) {
                         try {
                             await connection.execute(`
-                                INSERT INTO organizations (id, name, level, code, parentId, country, createdAt)
-                                VALUES (?, ?, 'BRANCH', ?, ?, 'Nigeria', NOW())
+                                INSERT INTO organizations (id, name, level, code, parentId, country, createdAt, updatedAt)
+                                VALUES (?, ?, 'BRANCH', ?, ?, 'Nigeria', NOW(), NOW())
                             `, [genId(), branchName, branchCode, lgaId]);
                         } catch (e: any) {
                             if (e.code === 'ER_DUP_ENTRY') {
-                                // Fallback with random suffix if STILL duplicate (rare but possible if truncated same)
                                 const fallbackCode = `${branchCode}-${Math.floor(Math.random() * 1000)}`;
                                 await connection.execute(`
-                                    INSERT INTO organizations (id, name, level, code, parentId, country, createdAt)
-                                    VALUES (?, ?, 'BRANCH', ?, ?, 'Nigeria', NOW())
+                                    INSERT INTO organizations (id, name, level, code, parentId, country, createdAt, updatedAt)
+                                    VALUES (?, ?, 'BRANCH', ?, ?, 'Nigeria', NOW(), NOW())
                                 `, [genId(), branchName, fallbackCode, lgaId]);
                             } else {
                                 throw e;
