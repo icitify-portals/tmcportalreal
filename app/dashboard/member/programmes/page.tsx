@@ -6,6 +6,7 @@ import { Calendar, MapPin } from "lucide-react"
 import { CertificateDownloadButton } from "@/components/programme/certificate-download-button"
 import { format } from "date-fns"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
+import { ClientDate } from "@/components/ui/client-date"
 
 export const dynamic = "force-dynamic"
 
@@ -41,7 +42,7 @@ async function MyProgrammesList() {
                             <>
                                 <div className="flex items-center text-sm text-muted-foreground">
                                     <Calendar className="mr-2 h-4 w-4" />
-                                    {format(new Date(programme.startDate), "PPP")}
+                                    <ClientDate date={programme.startDate} formatString="PPP" />
                                 </div>
                                 <div className="flex items-center text-sm text-muted-foreground">
                                     <MapPin className="mr-2 h-4 w-4" />

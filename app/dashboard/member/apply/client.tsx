@@ -60,7 +60,7 @@ const biodataBase = z.object({
     country: z.string().min(1, "Country is required"),
     state: z.string().min(1, "State is required"),
     local_government_area: z.string().min(1, "LGA is required"),
-    branch: z.string().min(1, "Branch is required"),
+    branch: z.string().optional(),
     date_of_birth: z.string().min(1, "Date of birth is required"),
     state_of_origin: z.string().min(1, "State of origin is required"),
     lga_of_origin: z.string().min(1, "LGA of origin is required"),
@@ -651,19 +651,25 @@ export default function MembershipApplicationClientPage() {
                                                 name="branch"
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel>Branch</FormLabel>
+                                                        <FormLabel>Branch {branchesForSelectedLga.length === 0 && selectedLgaOfResidence && "(Optional)"}</FormLabel>
                                                         <Select onValueChange={field.onChange} value={field.value} disabled={!selectedLgaOfResidence || branchesForSelectedLga.length === 0}>
                                                             <FormControl>
                                                                 <SelectTrigger>
-                                                                    <SelectValue placeholder="Select branch" />
+                                                                    <SelectValue placeholder={branchesForSelectedLga.length === 0 && selectedLgaOfResidence ? "No branches available" : "Select branch"} />
                                                                 </SelectTrigger>
                                                             </FormControl>
                                                             <SelectContent>
-                                                                {branchesForSelectedLga.map((branch) => (
-                                                                    <SelectItem key={branch} value={branch}>
-                                                                        {branch}
+                                                                {branchesForSelectedLga.length > 0 ? (
+                                                                    branchesForSelectedLga.map((branch) => (
+                                                                        <SelectItem key={branch} value={branch}>
+                                                                            {branch}
+                                                                        </SelectItem>
+                                                                    ))
+                                                                ) : (
+                                                                    <SelectItem value="none" disabled>
+                                                                        No branches available
                                                                     </SelectItem>
-                                                                ))}
+                                                                )}
                                                             </SelectContent>
                                                         </Select>
                                                         <FormMessage />

@@ -13,7 +13,7 @@ const applySchema = z.object({
     country: z.string(),
     state: z.string(),
     local_government_area: z.string(),
-    branch: z.string(),
+    branch: z.string().optional(),
     date_of_birth: z.string(),
     state_of_origin: z.string(),
     lga_of_origin: z.string(),
