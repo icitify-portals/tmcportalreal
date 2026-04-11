@@ -83,11 +83,12 @@ export async function POST(request: NextRequest) {
 
         // Try to find EXACT Branch match first
         if (validData.branch) {
+            const branchName = validData.branch as string;
             organization = await db.query.organizations.findFirst({
                 where: (organizations, { eq, and }) =>
                     and(
                         eq(organizations.level, "BRANCH"),
-                        eq(organizations.name, validData.branch)
+                        eq(organizations.name, branchName)
                     )
             })
 
@@ -97,7 +98,7 @@ export async function POST(request: NextRequest) {
                     where: (organizations, { eq, and, like }) =>
                         and(
                             eq(organizations.level, "BRANCH"),
-                            like(organizations.name, `%${validData.branch}%`)
+                            like(organizations.name, `%${branchName}%`)
                         )
                 })
             }
