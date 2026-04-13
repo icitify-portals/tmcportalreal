@@ -64,19 +64,25 @@ async function runAutomatedBackup() {
 
         // 2. Database Dump
         const dbUrl = process.env.DATABASE_URL || ""
-        const match = dbUrl.match(/mysql:\/\/(.*):(.*)@(.*):(.*)\/(.*)/)
-        if (match) {
-            const [_, user, pass, host, port, dbName] = match
+        try {
+            const parsedUrl = new URL(dbUrl);
+            const user = parsedUrl.username;
+            const pass = parsedUrl.password;
+            const host = parsedUrl.hostname;
+            const port = parsedUrl.port || "3306";
+            const dbName = parsedUrl.pathname.substring(1);
+
             console.log(`Dumping database ${dbName}...`);
+            const passArg = pass ? `-p'${pass}'` : '';
             try {
-                await execAsync(`mysqldump -u ${user} -p'${pass}' -h ${host} -P ${port} ${dbName} > ${dbFile}`)
+                await execAsync(`mysqldump -u ${user} ${passArg} -h ${host} -P ${port} ${dbName} > ${dbFile}`)
                 console.log("Database dump successful.");
             } catch (err) {
                 console.error("mysqldump failed:", err)
                 await fs.writeFile(dbFile, "-- mysqldump failed")
             }
-        } else {
-            console.error("Invalid DATABASE_URL format.");
+        } catch (e) {
+            console.error("Invalid DATABASE_URL format or parsing error.");
         }
 
         // 3. Zip Uploads
@@ -167,7 +173,9 @@ async function runAutomatedBackup() {
     }
 }
 
-runAutomatedBackup().catch(err => {
+runAutomatedBackup().then(() => {
+    process.exit(0);
+}).catch(err => {
     console.error(err);
     process.exit(1);
 });

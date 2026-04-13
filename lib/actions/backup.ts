@@ -55,17 +55,25 @@ export async function createBackup() {
         // 1. Database Dump (MySQL)
         // Parse DATABASE_URL: mysql://user:pass@host:port/db
         const dbUrl = process.env.DATABASE_URL || ""
-        const match = dbUrl.match(/mysql:\/\/(.*):(.*)@(.*):(.*)\/(.*)/)
-        if (match) {
-            const [_, user, pass, host, port, dbName] = match
+        try {
+            const parsedUrl = new URL(dbUrl);
+            const user = parsedUrl.username;
+            const pass = parsedUrl.password;
+            const host = parsedUrl.hostname;
+            const port = parsedUrl.port || "3306";
+            const dbName = parsedUrl.pathname.substring(1);
+
+            const passArg = pass ? `-p'${pass}'` : '';
             try {
                 // Try mysqldump
-                await execAsync(`mysqldump -u ${user} -p'${pass}' -h ${host} -P ${port} ${dbName} > ${dbFile}`)
+                await execAsync(`mysqldump -u ${user} ${passArg} -h ${host} -P ${port} ${dbName} > ${dbFile}`)
             } catch (err) {
                 // Fallback or error
                 console.error("mysqldump failed:", err)
                 await fs.writeFile(dbFile, "-- mysqldump failed, manual backup needed or check server bin path")
             }
+        } catch (e) {
+            console.error("Invalid DATABASE_URL format or parsing error.", e);
         }
 
         // 2. Zip Files (public/uploads)
