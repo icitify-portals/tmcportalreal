@@ -5,9 +5,9 @@ FROM node:20-bookworm-slim AS base
 
 WORKDIR /app
 
-# Install OpenSSL (required by Prisma) and wget (for health checks)
+# Install OpenSSL (required by Prisma), wget, mysql-client and zip (for backups)
 RUN apt-get update -y \
-  && apt-get install -y openssl ca-certificates wget \
+  && apt-get install -y openssl ca-certificates wget default-mysql-client zip \
   && rm -rf /var/lib/apt/lists/*
 
 # ----------------------------
