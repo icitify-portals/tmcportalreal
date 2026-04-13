@@ -66,11 +66,11 @@ async function runAutomatedBackup() {
         const dbUrl = process.env.DATABASE_URL || ""
         try {
             const parsedUrl = new URL(dbUrl);
-            const user = parsedUrl.username;
-            const pass = parsedUrl.password;
+            const user = decodeURIComponent(parsedUrl.username);
+            const pass = decodeURIComponent(parsedUrl.password);
             const host = parsedUrl.hostname;
             const port = parsedUrl.port || "3306";
-            const dbName = parsedUrl.pathname.substring(1);
+            const dbName = decodeURIComponent(parsedUrl.pathname.substring(1));
 
             console.log(`Dumping database ${dbName}...`);
             const passArg = pass ? `-p'${pass}'` : '';
