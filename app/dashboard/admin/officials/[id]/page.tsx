@@ -18,9 +18,9 @@ import { format } from "date-fns"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { notFound } from "next/navigation"
 
-export default async function OfficialBioPage({ params }: { params: { id: string } }) {
+export default async function OfficialBioPage({ params }: { params: Promise<{ id: string }> }) {
     const session = await getServerSession()
-    const { id } = params
+    const { id } = await params
 
     // Fetch official with associated data
     const official = await db.query.officials.findFirst({
