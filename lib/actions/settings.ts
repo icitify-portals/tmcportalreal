@@ -286,3 +286,56 @@ export async function updateLiveKitSettings(data: LiveKitSettings) {
     revalidatePath("/dashboard/admin/settings")
     return { success: true }
 }
+
+export interface FinancialSettings {
+    burialVerificationFee: number
+}
+
+const DEFAULT_FINANCIAL_SETTINGS: FinancialSettings = {
+    burialVerificationFee: 10000
+}
+
+export async function getFinancialSettings(): Promise<FinancialSettings> {
+    const session = await getServerSession()
+    if (!session?.user) return DEFAULT_FINANCIAL_SETTINGS
+
+    try {
+        const settings = await db.select().from(systemSettings).where(eq(systemSettings.category, "GENERAL"))
+        const config: FinancialSettings = { ...DEFAULT_FINANCIAL_SETTINGS }
+
+        settings.forEach(s => {
+            if (s.settingKey === "burial_verification_fee") config.burialVerificationFee = parseFloat(s.settingValue as string)
+        })
+
+        return config
+    } catch (error) {
+        return DEFAULT_FINANCIAL_SETTINGS
+    }
+}
+
+export async function updateFinancialSettings(data: FinancialSettings) {
+    const session = await getServerSession()
+    if (!session?.user?.id) throw new Error("Unauthorized")
+    requireAdmin(session)
+
+    const upsertSetting = async (key: string, value: string) => {
+        const existing = await db.select().from(systemSettings).where(eq(systemSettings.settingKey, key))
+        if (existing.length > 0) {
+            await db.update(systemSettings)
+                .set({ settingValue: value, updatedBy: session.user.id })
+                .where(eq(systemSettings.settingKey, key))
+        } else {
+            await db.insert(systemSettings).values({
+                settingKey: key,
+                settingValue: value,
+                category: "GENERAL",
+                updatedBy: session.user.id
+            })
+        }
+    }
+
+    await upsertSetting("burial_verification_fee", String(data.burialVerificationFee))
+
+    revalidatePath("/dashboard/admin/settings")
+    return { success: true }
+}

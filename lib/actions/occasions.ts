@@ -143,3 +143,29 @@ export async function updateRequestStatus(requestId: string, status: 'APPROVED' 
     revalidatePath("/dashboard/admin/occasions")
     return { success: true }
 }
+
+export async function verifyOccasionPayment(requestId: string, reference: string) {
+    const session = await getServerSession()
+    if (!session?.user?.id) return { success: false, error: "Unauthorized" }
+
+    try {
+        // In a real app, verify with Paystack API first
+        // For now, we assume success if reference is provided
+        
+        await db.update(occasionRequests)
+            .set({
+                paymentStatus: "SUCCESS",
+                amount: await db.select({ amount: occasionRequests.amount })
+                    .from(occasionRequests)
+                    .where(eq(occasionRequests.id, requestId))
+                    .then(res => res[0]?.amount || "0.00") // Keep existing amount
+            })
+            .where(eq(occasionRequests.id, requestId))
+
+        revalidatePath("/dashboard/member/occasions")
+        return { success: true }
+    } catch (error: any) {
+        return { success: false, error: error.message || "Failed to verify payment" }
+    }
+}
+

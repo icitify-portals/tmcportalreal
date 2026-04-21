@@ -74,8 +74,10 @@ model User {
   reports            Report[]
   approvedReports    Report[] @relation("ReportApprover")
   competitionSubmissions CompetitionSubmission[]
+  backups                Backup[]
 
   @@map("users")
+
 }
 
 // NextAuth required models
@@ -402,7 +404,8 @@ model Payment {
   campaign        FundraisingCampaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
   amount          Decimal       @db.Decimal(10, 2)
   currency        String        @default("NGN")
-  status          PaymentStatus @default(PENDING)
+  status          PaymentStatus @default(PENDING) @map("paymentStatus")
+
   paymentType     PaymentType
   paystackRef     String?       @unique
   paystackResponse Json?        // Store full Paystack response
@@ -416,6 +419,35 @@ model Payment {
 
   @@map("payments")
 }
+
+model Backup {
+  id          String   @id @default(cuid()) @db.VarChar(255)
+  name        String   @db.VarChar(255)
+  type        BackupType @default(MANUAL)
+  databaseUrl String?  @db.VarChar(500)
+  filesUrl    String?  @db.VarChar(500)
+  size        BigInt?
+  status      BackupStatus @default(PENDING) @map("backupStatus")
+  error       String?  @db.Text
+  createdAt   DateTime @default(now())
+  createdBy   String?  @db.VarChar(255)
+  user        User?    @relation(fields: [createdBy], references: [id])
+
+  @@map("backups")
+}
+
+
+enum BackupType {
+  MANUAL
+  AUTOMATED
+}
+
+enum BackupStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
 
 enum PaymentStatus {
   PENDING
@@ -712,6 +744,8 @@ model Programme {
   level              String   // orgLevelEnum
   targetAudience     String?  @default("PUBLIC")
   status             String   @default("DRAFT") // DRAFT, PENDING_STATE, PENDING_NATIONAL, APPROVED, REJECTED, etc.
+  rejectionReason    String?  @db.Text
+
   
   approvedStateBy    String?
   approvedStateAt    DateTime?
@@ -1047,6 +1081,7 @@ model BurialRequest {
   contactEmail    String
   status          String   @default("PENDING")
   rejectionReason String?  @db.Text
+  amount          Decimal  @db.Decimal(10, 2) @default(10000.00)
   paymentId       String?  @unique
   payment         Payment? @relation(fields: [paymentId], references: [id])
   createdAt       DateTime @default(now())

@@ -30,7 +30,12 @@ const formSchema = z.object({
     contactEmail: z.string().email("Invalid email address"),
 })
 
-export function BurialRequestForm() {
+interface BurialRequestFormProps {
+    defaultFee?: number
+}
+
+export function BurialRequestForm({ defaultFee }: BurialRequestFormProps) {
+
     const router = useRouter()
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -169,9 +174,20 @@ export function BurialRequestForm() {
                             />
                         </div>
 
+                        {defaultFee && (
+                            <div className="p-4 bg-muted rounded-lg flex justify-between items-center border border-primary/20 bg-primary/5">
+                                <div>
+                                    <p className="font-semibold text-primary">Total Verification Fee</p>
+                                    <p className="text-xs text-muted-foreground">Payable after admin approval</p>
+                                </div>
+                                <p className="text-2xl font-bold">₦{defaultFee.toLocaleString()}</p>
+                            </div>
+                        )}
+
                         <div className="flex justify-end">
                             <Button type="submit">Submit Request</Button>
                         </div>
+
                     </form>
                 </Form>
             </CardContent>

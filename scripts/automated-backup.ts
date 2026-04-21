@@ -1,8 +1,7 @@
-
 import { db } from "../lib/db"
-import { backups, users, roles, userRoles } from "../lib/db/schema"
+import { backups, roles, userRoles } from "../lib/db/schema"
 import { eq, desc } from "drizzle-orm"
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3"
+import { S3Client, PutObjectCommand, ListObjectsV2Command, DeleteObjectsCommand } from "@aws-sdk/client-s3"
 import { exec } from "child_process"
 import { promisify } from "util"
 import path from "path"
@@ -29,16 +28,71 @@ const s3Client = (S3_ACCESS_KEY && S3_SECRET_KEY)
     })
     : null
 
+async function cleanupOldBackups() {
+    console.log("Starting cleanup of old backups...");
+
+    // 1. Local Retention (5 Days)
+    const localArchiveDir = path.join(process.cwd(), 'backups', 'archive');
+    try {
+        const files = await fs.readdir(localArchiveDir);
+        const now = Date.now();
+        const localRetentionMs = 5 * 24 * 60 * 60 * 1000;
+
+        for (const file of files) {
+            const filePath = path.join(localArchiveDir, file);
+            const stats = await fs.stat(filePath);
+            if (now - stats.mtimeMs > localRetentionMs) {
+                console.log(`Deleting old local backup: ${file}`);
+                await fs.unlink(filePath);
+            }
+        }
+    } catch (e) {
+        console.warn("Local cleanup skipped or failed (likely no archive yet).");
+    }
+
+    // 2. Wasabi Retention (14 Days)
+    if (s3Client && S3_BUCKET) {
+        try {
+            const now = new Date();
+            const cloudRetentionMs = 14 * 24 * 60 * 60 * 1000;
+            
+            const listResponse = await s3Client.send(new ListObjectsV2Command({
+                Bucket: S3_BUCKET,
+                Prefix: "backups/"
+            }));
+
+            if (listResponse.Contents && listResponse.Contents.length > 0) {
+                const objectsToDelete = listResponse.Contents
+                    .filter(obj => {
+                        if (!obj.LastModified) return false;
+                        return (now.getTime() - obj.LastModified.getTime()) > cloudRetentionMs;
+                    })
+                    .map(obj => ({ Key: obj.Key }));
+
+                if (objectsToDelete.length > 0) {
+                    console.log(`Deleting ${objectsToDelete.length} old objects from Wasabi...`);
+                    await s3Client.send(new DeleteObjectsCommand({
+                        Bucket: S3_BUCKET,
+                        Delete: { Objects: objectsToDelete }
+                    }));
+                }
+            }
+        } catch (e) {
+            console.error("Wasabi cleanup failed:", e);
+        }
+    }
+}
+
 async function runAutomatedBackup() {
     console.log("Starting automated backup...");
     
-    // 1. Identify a Superadmin to associate the backup with
+    // 1. Identify a Superadmin
     const superAdminRole = await db.query.roles.findFirst({
         where: eq(roles.code, "SUPER_ADMIN")
     });
 
     if (!superAdminRole) {
-        console.error("SUPER_ADMIN role not found in database.");
+        console.error("SUPER_ADMIN role not found.");
         process.exit(1);
     }
 
@@ -54,119 +108,113 @@ async function runAutomatedBackup() {
     const superAdminId = firstSuperAdminRelation.userId;
 
     const timestamp = Date.now()
-    const backupName = `auto-backup-${timestamp}`
-    const tempDir = path.join(process.cwd(), 'tmp', backupName)
-    const dbFile = path.join(tempDir, 'database.sql')
-    const zipFile = path.join(tempDir, 'files.zip')
+    const backupId = `auto-${timestamp}`
+    const tempDir = path.join(process.cwd(), 'tmp', backupId)
+    const dbFile = path.join(tempDir, `db-${timestamp}.sql`)
+    const zipFile = path.join(tempDir, `files-${timestamp}.zip`)
+    
+    const localArchiveDir = path.join(process.cwd(), 'backups', 'archive');
 
     try {
-        await fs.mkdir(tempDir, { recursive: true })
+        await fs.mkdir(tempDir, { recursive: true });
+        await fs.mkdir(localArchiveDir, { recursive: true });
 
         // 2. Database Dump
         const dbUrl = process.env.DATABASE_URL || ""
-        try {
-            const parsedUrl = new URL(dbUrl);
-            const user = decodeURIComponent(parsedUrl.username);
-            const pass = decodeURIComponent(parsedUrl.password);
-            const host = parsedUrl.hostname;
-            const port = parsedUrl.port || "3306";
-            const dbName = decodeURIComponent(parsedUrl.pathname.substring(1));
+        const parsedUrl = new URL(dbUrl);
+        const user = decodeURIComponent(parsedUrl.username);
+        const pass = decodeURIComponent(parsedUrl.password);
+        const host = parsedUrl.hostname;
+        const port = parsedUrl.port || "3306";
+        const dbName = decodeURIComponent(parsedUrl.pathname.substring(1));
 
-            console.log(`Dumping database ${dbName}...`);
-            const passArg = pass ? `-p'${pass}'` : '';
-            try {
-                await execAsync(`mysqldump -u ${user} ${passArg} -h ${host} -P ${port} ${dbName} > ${dbFile}`)
-                console.log("Database dump successful.");
-            } catch (err) {
-                console.error("mysqldump failed:", err)
-                await fs.writeFile(dbFile, "-- mysqldump failed")
-            }
-        } catch (e) {
-            console.error("Invalid DATABASE_URL format or parsing error.");
-        }
+        console.log(`Dumping database ${dbName}...`);
+        const passArg = pass ? `-p'${pass}'` : '';
+        await execAsync(`mysqldump -u ${user} ${passArg} -h ${host} -P ${port} ${dbName} > ${dbFile}`);
+        console.log("Database dump successful.");
 
         // 3. Zip Uploads
         const uploadsDir = path.join(process.cwd(), 'public', 'uploads')
         console.log("Zipping uploads directory...");
         try {
-            // Check if uploads dir exists
             await fs.access(uploadsDir);
             await execAsync(`zip -r ${zipFile} ${uploadsDir}`)
-            console.log("Files zipped successful.");
+            console.log("Files zipped successfully.");
         } catch (err) {
-            console.warn("Uploads directory not found or zip failed, creating empty zip file.");
-            await fs.writeFile(zipFile, "empty or failed zip");
+            console.warn("Uploads directory missing or zip failed, sending info as files.zip");
+            await fs.writeFile(zipFile, "uploads missing or zip failed at " + new Date().toISOString());
         }
 
-        // 4. Upload to S3/Wasabi
+        // 4. Persistence & Upload
         let databaseUrl = ""
         let filesUrl = ""
 
+        // Copy to local archive (Persistent)
+        const persistentDbPath = path.join(localArchiveDir, `db-${timestamp}.sql`);
+        const persistentZipPath = path.join(localArchiveDir, `files-${timestamp}.zip`);
+        await fs.copyFile(dbFile, persistentDbPath);
+        await fs.copyFile(zipFile, persistentZipPath);
+        console.log(`Local backup archived to ${localArchiveDir}`);
+
+        // Upload to Cloud
         if (s3Client && S3_BUCKET) {
-            console.log("Uploading to Cloud Storage...");
+            console.log("Uploading to Wasabi...");
             const dbBuffer = await fs.readFile(dbFile)
             const zipBuffer = await fs.readFile(zipFile)
 
             await s3Client.send(new PutObjectCommand({
                 Bucket: S3_BUCKET,
-                Key: `backups/${backupName}/database.sql`,
+                Key: `backups/${backupId}/database.sql`,
                 Body: dbBuffer,
                 ACL: 'private'
             }))
             
             await s3Client.send(new PutObjectCommand({
                 Bucket: S3_BUCKET,
-                Key: `backups/${backupName}/files.zip`,
+                Key: `backups/${backupId}/files.zip`,
                 Body: zipBuffer,
                 ACL: 'private'
             }))
 
-            databaseUrl = `s3://${S3_BUCKET}/backups/${backupName}/database.sql`
-            filesUrl = `s3://${S3_BUCKET}/backups/${backupName}/files.zip`
+            databaseUrl = `s3://${S3_BUCKET}/backups/${backupId}/database.sql`
+            filesUrl = `s3://${S3_BUCKET}/backups/${backupId}/files.zip`
             console.log("Cloud upload successful.");
-        } else {
-            console.log("Cloud storage not configured, keeping local copy in temporary directory (will be cleaned up).");
         }
 
-        // 5. Save Record to DB
-        console.log("Saving backup record to database...");
-        
-        let totalSize = 0;
-        try {
-            const dbStat = await fs.stat(dbFile).catch(() => ({ size: 0 }));
-            const zipStat = await fs.stat(zipFile).catch(() => ({ size: 0 }));
-            totalSize = dbStat.size + zipStat.size;
-        } catch (e) {}
+        // 5. Cleanup Old Backups (Retention)
+        await cleanupOldBackups();
 
+        // 6. Save Record to DB
+        console.log("Saving backup record to database...");
+        const dbStat = await fs.stat(dbFile);
+        const zipStat = await fs.stat(zipFile);
+        
         await db.insert(backups).values({
-            name: backupName,
+            name: `backup-${timestamp}`,
             type: 'AUTOMATED',
             databaseUrl,
             filesUrl,
             status: 'COMPLETED',
-            size: totalSize,
+            size: dbStat.size + zipStat.size,
             createdBy: superAdminId
         })
 
         console.log("Automated backup completed successfully!");
     } catch (error) {
         console.error("CRITICAL: Backup process failed:", error)
-        
-        // Log failure to DB if possible
         try {
             await db.insert(backups).values({
-                name: backupName,
+                name: `failed-backup-${timestamp}`,
                 type: 'AUTOMATED',
                 status: 'FAILED',
                 size: 0,
                 createdBy: superAdminId
             })
         } catch (e) {}
-        
         process.exit(1);
     } finally {
         // Cleanup temp files
-        console.log("Cleaning up temporary files...");
+        console.log("Cleaning up temporary work directory...");
         try {
             await fs.rm(tempDir, { recursive: true, force: true })
         } catch (e) {}

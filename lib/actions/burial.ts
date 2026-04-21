@@ -8,6 +8,8 @@ import { z } from "zod"
 import { getServerSession } from "@/lib/session"
 import { hasPermission } from "@/lib/rbac-v2"
 import { v4 as uuidv4 } from "uuid"
+import { getFinancialSettings } from "./settings"
+
 
 // Input Validation Schemas
 const BurialRequestSchema = z.object({
@@ -22,8 +24,10 @@ const BurialRequestSchema = z.object({
 
 const StatusUpdateSchema = z.object({
     status: z.enum(['PENDING', 'APPROVED_UNPAID', 'PAID', 'BURIAL_DONE', 'REJECTED']),
-    rejectionReason: z.string().optional().nullable()
+    rejectionReason: z.string().optional().nullable(),
+    amount: z.number().optional()
 })
+
 
 const PaymentVerificationSchema = z.object({
     reference: z.string().min(1)
@@ -41,13 +45,17 @@ export async function createBurialRequest(data: z.infer<typeof BurialRequestSche
             return { success: false, error: "Invalid data provided" }
         }
 
+        const { burialVerificationFee } = await getFinancialSettings()
+
         const requestId = uuidv4()
         await db.insert(burialRequests).values({
             id: requestId,
             userId: session.user.id,
             ...validData.data,
             status: "PENDING",
+            amount: burialVerificationFee.toString(), // Store initial fee
         })
+
 
         revalidatePath("/dashboard/burial")
         return { success: true, requestId }
@@ -182,8 +190,10 @@ export async function getBurialRequests() {
 export async function updateBurialRequestStatus(
     requestId: string,
     status: 'PENDING' | 'APPROVED_UNPAID' | 'PAID' | 'BURIAL_DONE' | 'REJECTED',
-    rejectionReason?: string
+    rejectionReason?: string,
+    amount?: number
 ) {
+
     try {
         const session = await getServerSession()
         if (!session?.user?.id) return { success: false, error: "Unauthorized" }
@@ -192,15 +202,22 @@ export async function updateBurialRequestStatus(
             return { success: false, error: "Insufficient permissions" }
         }
 
-        const validStatus = StatusUpdateSchema.safeParse({ status, rejectionReason })
+        const validStatus = StatusUpdateSchema.safeParse({ status, rejectionReason, amount })
         if (!validStatus.success) return { success: false, error: "Invalid status parameters" }
 
+        const updateData: any = {
+            status: validStatus.data.status,
+            rejectionReason: validStatus.data.rejectionReason || null
+        }
+
+        if (validStatus.data.amount) {
+            updateData.amount = validStatus.data.amount.toString()
+        }
+
         await db.update(burialRequests)
-            .set({
-                status: validStatus.data.status,
-                rejectionReason: validStatus.data.rejectionReason || null
-            })
+            .set(updateData)
             .where(eq(burialRequests.id, requestId))
+
 
         revalidatePath(`/dashboard/admin/burials`)
         revalidatePath(`/dashboard/burial`)
@@ -261,3 +278,26 @@ export async function markBurialRequestAsPaid(requestId: string, reference: stri
         return { success: false, error: "Failed to update payment status" }
     }
 }
+
+export async function verifyBurialPayment(requestId: string, reference: string) {
+    const session = await getServerSession()
+    if (!session?.user?.id) return { success: false, error: "Unauthorized" }
+
+    try {
+        // In a real app, verify with Paystack API first
+        // For now, we update status to PAID
+        await db.update(burialRequests)
+            .set({
+                status: 'PAID'
+                // paymentId: link to a newly created Payment record
+            })
+            .where(eq(burialRequests.id, requestId))
+
+        revalidatePath(`/dashboard/burial/request/${requestId}`)
+        revalidatePath(`/dashboard/admin/burials`)
+        return { success: true }
+    } catch (error: any) {
+        return { success: false, error: error.message || "Failed to verify payment" }
+    }
+}
+

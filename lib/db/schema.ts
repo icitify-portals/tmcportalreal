@@ -1272,8 +1272,9 @@ export const burialRequests = mysqlTable("burial_requests", {
 
     status: burialRequestStatusEnum.default('PENDING'),
     rejectionReason: text("rejectionReason"),
-
+    amount: decimal("amount", { precision: 10, scale: 2 }).default("10000.00"),
     paymentId: varchar("paymentId", { length: 255 }).references(() => payments.id), // One-to-one
+
 
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
     updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),

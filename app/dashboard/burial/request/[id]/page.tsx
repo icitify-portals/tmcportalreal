@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { format } from "date-fns"
 import { FileText, CreditCard, CheckCircle } from "lucide-react"
+import { BurialPaymentButton } from "@/components/burial/burial-payment-button"
+
 
 export default async function RequestDetailsPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
@@ -79,11 +81,15 @@ export default async function RequestDetailsPage({ params }: { params: Promise<{
                     </CardHeader>
                     <CardContent className="space-y-4 flex flex-col">
                         {request.status === 'APPROVED_UNPAID' && (
-                            <Button className="w-full">
-                                <CreditCard className="mr-2 h-4 w-4" />
-                                Pay Verification Fee
-                            </Button>
+                            <BurialPaymentButton 
+                                requestId={id}
+                                amount={parseFloat(request.amount?.toString() || "10000")}
+
+                                email={request.contactEmail || session.user.email || ""}
+                                deceasedName={request.deceasedName}
+                            />
                         )}
+
 
                         {(request.status === 'PAID' || request.status === 'BURIAL_DONE') && (
                             <div className="p-4 bg-muted rounded-lg flex items-center gap-3">

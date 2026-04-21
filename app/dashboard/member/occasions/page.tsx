@@ -6,11 +6,15 @@ import { Badge } from "@/components/ui/badge"
 import { format } from "date-fns"
 import { PDFDownloadButton } from "@/components/occasions/pdf-download-button"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
+import { OccasionPaymentButton } from "@/components/occasions/occasion-payment-button"
+import { auth } from "@/auth"
+
 
 export const dynamic = "force-dynamic"
 
-async function OccasionsList() {
+async function OccasionsList({ userEmail }: { userEmail: string }) {
     const requests = await getUserRequests()
+
 
     if (requests.length === 0) {
         return (
@@ -65,18 +69,28 @@ async function OccasionsList() {
                                 <p className="text-xs text-muted-foreground mt-2">Certificate requested {req.amount && `(Fee: ${req.amount})`}</p>
                             )}
                         </CardContent>
-                        <CardFooter>
+                        <CardFooter className="flex flex-col gap-2">
                             {hasCertificate ? (
                                 <PDFDownloadButton
                                     data={certData}
                                     fileName={`${req.type?.name}-Certificate.pdf`}
                                 />
+                            ) : req.status === 'APPROVED' && req.paymentStatus !== "SUCCESS" && req.certificateNeeded && parseFloat(req.amount?.toString() || "0") > 0 ? (
+                                <OccasionPaymentButton
+                                    amount={parseFloat(req.amount?.toString() || "0")}
+                                    email={userEmail}
+                                    requestId={req.id}
+                                    occasionType={req.type?.name || "Occasion"}
+                                />
                             ) : (
-                                <span className="text-xs text-muted-foreground italic">
-                                    {req.status === 'COMPLETED' ? "No certificate" : "Processing..."}
+                                <span className="text-xs text-muted-foreground italic text-center w-full">
+                                    {req.status === 'COMPLETED' ? "No certificate" :
+                                        req.status === 'APPROVED' ? (req.certificateNeeded ? "Awaiting Payment" : "Approved") :
+                                            "Processing..."}
                                 </span>
                             )}
                         </CardFooter>
+
                     </Card>
                 )
             })}
@@ -86,8 +100,10 @@ async function OccasionsList() {
 
 
 export default async function MemberOccasionsPage() {
+    const session = await auth()
     const types = await getOccasionTypes()
     const orgs = await getAvailableOrganizations()
+
 
     return (
         <DashboardLayout>
@@ -98,8 +114,9 @@ export default async function MemberOccasionsPage() {
                 </div>
 
                 <Suspense fallback={<div>Loading...</div>}>
-                    <OccasionsList />
+                    <OccasionsList userEmail={session?.user?.email || ""} />
                 </Suspense>
+
             </div>
         </DashboardLayout>
     )

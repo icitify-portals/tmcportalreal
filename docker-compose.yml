@@ -22,6 +22,9 @@ services:
       sh -c "prisma migrate deploy || echo 'Migration check failed (likely existing DB), starting app...' && node server.js"
     volumes:
       - ./uploads:/app/public/uploads
+      - ./backups:/app/backups
+      - ./scripts:/app/scripts
+
     networks:
       - app_network
     depends_on:

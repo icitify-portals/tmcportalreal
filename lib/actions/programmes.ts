@@ -95,7 +95,7 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
         } else if (org.level === 'STATE') {
             initialStatus = 'PENDING_NATIONAL'
         } else if (org.level === 'NATIONAL') {
-            initialStatus = 'APPROVED'
+            initialStatus = 'PENDING_NATIONAL'
         }
 
         const [newProgramme] = await db.insert(programmes).values({
@@ -149,6 +149,12 @@ export async function approveProgrammeNational(programmeId: string) {
     try {
         const session = await getServerSession()
         if (!session?.user?.id) return { success: false, error: "Unauthorized" }
+
+        // Prevent self-approval for National programmes
+        const [prog] = await db.select().from(programmes).where(eq(programmes.id, programmeId)).limit(1)
+        if (prog && prog.createdBy === session.user.id && !session.user.isSuperAdmin) {
+            return { success: false, error: "Self-approval is not allowed. Must be approved by another admin or assigned officer." }
+        }
 
         await db.update(programmes).set({
             status: 'APPROVED',

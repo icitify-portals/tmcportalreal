@@ -181,12 +181,19 @@ export async function importYearPlannerData(data: PlannerPreviewItem[]) {
             // If officeId is still null, we might have issues if DB enforces it.
             // Let's assume most rows have offices.
 
+            let initialStatus: 'PENDING_STATE' | 'PENDING_NATIONAL' | 'APPROVED' = 'APPROVED'
+            if (userOrg.level === 'BRANCH' || userOrg.level === 'LOCAL_GOVERNMENT') {
+                initialStatus = 'PENDING_STATE'
+            } else if (userOrg.level === 'STATE' || userOrg.level === 'NATIONAL') {
+                initialStatus = 'PENDING_NATIONAL'
+            }
+
             await db.insert(programmes).values({
                 organizationId,
                 title: item.title,
                 description: item.title,
                 level: userOrg.level,
-                status: 'APPROVED',
+                status: initialStatus,
                 venue: item.venue,
                 startDate: new Date(item.startDate), // Ensure Date object
                 time: item.time,
