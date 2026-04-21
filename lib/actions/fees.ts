@@ -1,5 +1,4 @@
 "use server"
-
 import { db } from "@/lib/db"
 import {
     fees, feeAssignments, organizations, members, officials, users,
@@ -203,7 +202,7 @@ export async function recordFeePayment(assignmentId: string, amount: number, pay
             .from(feeAssignments)
             .innerJoin(fees, eq(feeAssignments.feeId, fees.id))
             .where(eq(feeAssignments.id, assignmentId))
-
+        
         if (!assignment) return { success: false, error: "Assignment not found" }
 
         const stipulatedAmount = parseFloat(assignment.fee.amount.toString())

@@ -102,4 +102,75 @@ describe('RBAC v2 Logic', () => {
             expect(result).toBe(mockSession)
         })
     })
+
+    describe('canAccessOrganization', () => {
+        it('should return true for direct organization match', async () => {
+            // Mock User Roles
+            mockSelectResponse([
+                {
+                    userRole: { id: 'ur1', userId: 'u1', organizationId: 'org1' },
+                    role: { id: 'r1', name: 'Admin', code: 'ADMIN', jurisdictionLevel: 'NATIONAL' },
+                }
+            ])
+
+            // Mock target organization lookup
+            ;(dbMod.db.query.organizations.findFirst as any).mockResolvedValue({
+                id: 'org1',
+                level: 'NATIONAL'
+            })
+
+            const result = await canAccessOrganization('u1', 'org1')
+            expect(result).toBe(true)
+        })
+
+        it('should return true if target is a child of user organization', async () => {
+             // Admin of Lagos State
+            mockSelectResponse([
+                {
+                    userRole: { id: 'ur1', userId: 'u1', organizationId: 'lagos-org' },
+                    role: { id: 'r1', name: 'State Admin', code: 'STATE_ADMIN', jurisdictionLevel: 'STATE' },
+                }
+            ])
+
+            // Mock DB lookup for target organization (a branch in Lagos)
+            ;(dbMod.db.query.organizations.findFirst as any).mockResolvedValue({
+                id: 'branch-org',
+                level: 'BRANCH',
+                parent: {
+                    id: 'lga-org',
+                    parent: {
+                        id: 'lagos-org'
+                    }
+                }
+            })
+
+            const result = await canAccessOrganization('u1', 'branch-org')
+            expect(result).toBe(true)
+        })
+
+        it('should return false if target is in a different state', async () => {
+             // Admin of Lagos State
+            mockSelectResponse([
+                {
+                    userRole: { id: 'ur1', userId: 'u1', organizationId: 'lagos-org' },
+                    role: { id: 'r1', name: 'State Admin', code: 'STATE_ADMIN', jurisdictionLevel: 'STATE' },
+                }
+            ])
+
+            // Mock DB lookup for target organization (a branch in Oyo)
+            ;(dbMod.db.query.organizations.findFirst as any).mockResolvedValue({
+                id: 'oyo-branch',
+                level: 'BRANCH',
+                parent: {
+                    id: 'oyo-lga',
+                    parent: {
+                        id: 'oyo-state'
+                    }
+                }
+            })
+
+            const result = await canAccessOrganization('u1', 'oyo-branch')
+            expect(result).toBe(false)
+        })
+    })
 })

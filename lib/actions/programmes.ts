@@ -85,6 +85,11 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
                 if (!['STATE', 'LOCAL_GOVERNMENT', 'BRANCH'].includes(targetLevel)) {
                     return { success: false, error: "State admins can only create for State, LGA, or Branch levels" }
                 }
+                // Admin must be from the same state
+                const userState = (session.user as any).state
+                if (userState && org.state && userState !== org.state) {
+                    return { success: false, error: `You can only create programmes for your state (${userState})` }
+                }
             }
             if (userLevel === 'LOCAL_GOVERNMENT' && targetLevel !== 'LOCAL_GOVERNMENT') {
                 return { success: false, error: "LGA admins can only create for LGA level" }

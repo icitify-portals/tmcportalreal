@@ -101,9 +101,11 @@ async function populateTokenData(userId: string, token: any) {
   const officialProfileData = await db.select({
     id: officials.id,
     organizationId: officials.organizationId,
-    positionLevel: officials.positionLevel
+    positionLevel: officials.positionLevel,
+    state: organizations.state
   })
     .from(officials)
+    .leftJoin(organizations, eq(officials.organizationId, organizations.id))
     .where(eq(officials.userId, userId))
     .limit(1)
 
@@ -112,6 +114,7 @@ async function populateTokenData(userId: string, token: any) {
     token.officialId = profile.id
     token.officialOrganizationId = profile.organizationId
     token.officialLevel = profile.positionLevel
+    token.state = profile.state || undefined
   }
 
   return token
@@ -229,6 +232,7 @@ export const authConfig: NextAuthConfig = {
           session.user.officialOrganizationId = token.officialOrganizationId as string | undefined
           session.user.officialLevel = token.officialLevel as string | undefined
           session.user.country = token.country as string | undefined
+          session.user.state = token.state as string | undefined
           session.user.impersonatorId = token.impersonatorId as string | undefined
         }
         return session
