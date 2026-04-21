@@ -43,10 +43,6 @@ async function seedNicto() {
 
     const officeIds: Record<string, string> = {};
 
-    for (const off of niccttoOffices) { // will fix the typo in the loop var below
-    }
-    
-    // Actually, I'll rewrite standardizing the names
     for (const off of nictoOffices) {
         let [existing] = await db.select().from(offices).where(
             and(
@@ -174,9 +170,9 @@ async function seedNicto() {
     console.log("Seeding Completed Successfully.");
 }
 
-seedNiccto().catch(error => { // fixed name in call too
+seedNicto().catch(error => {
     console.error("Seeding Failed:", error);
     process.exit(1);
 }).finally(() => process.exit(0));
 
-function seedNiccto() { return seedNicto(); } // alias to keep it safe if any references exist
+function seedNiccto() { return seedNicto(); }
