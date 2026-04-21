@@ -27,7 +27,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { createProgramme, getOffices } from "@/lib/actions/programmes"
+import { createProgramme, getOffices, getOfficials } from "@/lib/actions/programmes"
 import { getOrganizations } from "@/lib/actions/organization"
 import { toast } from "sonner"
 import { Loader2, Plus } from "lucide-react"
@@ -46,12 +46,14 @@ const ProgrammeSchema = z.object({
     paymentRequired: z.boolean().default(false),
     amount: z.string().default("0"), // Input as string, parse to number
     organizingOfficeId: z.string().optional(),
+    organizingOfficialId: z.string().optional(),
 })
 
 export function CreateProgrammeDialog({ organizationId, isSuperAdmin }: { organizationId: string; isSuperAdmin?: boolean }) {
     const [open, setOpen] = useState(false)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [offices, setOffices] = useState<any[]>([])
+    const [officials, setOfficials] = useState<any[]>([])
     const [organizationsList, setOrganizationsList] = useState<any[]>([])
 
     const form = useForm({
@@ -68,6 +70,7 @@ export function CreateProgrammeDialog({ organizationId, isSuperAdmin }: { organi
             paymentRequired: false,
             amount: "0",
             organizingOfficeId: "",
+            organizingOfficialId: "",
         },
     })
 
@@ -76,6 +79,7 @@ export function CreateProgrammeDialog({ organizationId, isSuperAdmin }: { organi
     useEffect(() => {
         if (open && selectedOrgId) {
             getOffices(selectedOrgId).then(setOffices)
+            getOfficials(selectedOrgId).then(setOfficials)
         }
     }, [open, selectedOrgId])
 
@@ -217,7 +221,7 @@ export function CreateProgrammeDialog({ organizationId, isSuperAdmin }: { organi
                                 name="organizingOfficeId"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Organizing Office</FormLabel>
+                                        <FormLabel>Organizing Office (Department)</FormLabel>
                                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                                             <FormControl>
                                                 <SelectTrigger>
@@ -225,8 +229,33 @@ export function CreateProgrammeDialog({ organizationId, isSuperAdmin }: { organi
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
+                                                <SelectItem value="none">None</SelectItem>
                                                 {offices.map(office => (
                                                     <SelectItem key={office.id} value={office.id}>{office.name}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="organizingOfficialId"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Organizing Officer (Person)</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select official" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="none">None</SelectItem>
+                                                {officials.map(official => (
+                                                    <SelectItem key={official.id} value={official.id}>{official.name} ({official.position})</SelectItem>
                                                 ))}
                                             </SelectContent>
                                         </Select>

@@ -1015,6 +1015,7 @@ export const programmes = mysqlTable("programmes", {
     approvedNationalAt: timestamp("approvedNationalAt", { mode: "date", fsp: 3 }),
 
     organizingOfficeId: varchar("organizingOfficeId", { length: 255 }).references(() => offices.id),
+    organizingOfficialId: varchar("organizingOfficialId", { length: 255 }).references(() => officials.id),
     // Year Planner Fields
     format: programmeFormatEnum.default('PHYSICAL'),
     frequency: programmeFrequencyEnum.default('ONCE'),

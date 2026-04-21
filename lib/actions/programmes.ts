@@ -4,7 +4,7 @@ import { db } from "@/lib/db"
 import {
     programmes, programmeRegistrations, programmeReports,
     programmeStatusEnum, registrationStatusEnum,
-    users, organizations, offices
+    users, organizations, offices, officials
 } from "@/lib/db/schema"
 import { getYearPlannerSettings } from "@/lib/actions/settings"
 import { eq, desc, and, or, aliasedTable, inArray, sql } from "drizzle-orm"
@@ -15,6 +15,22 @@ import { getServerSession } from "@/lib/session"
 export async function getOffices(organizationId: string) {
     try {
         return await db.select().from(offices).where(eq(offices.organizationId, organizationId))
+    } catch (error) {
+        return []
+    }
+}
+
+export async function getOfficials(organizationId: string) {
+    try {
+        const results = await db.select({
+            id: officials.id,
+            position: officials.position,
+            name: users.name
+        })
+            .from(officials)
+            .innerJoin(users, eq(officials.userId, users.id))
+            .where(eq(officials.organizationId, organizationId))
+        return results
     } catch (error) {
         return []
     }
@@ -32,7 +48,8 @@ const ProgrammeSchema = z.object({
     paymentRequired: z.boolean().default(false),
     amount: z.number().nonnegative().default(0),
     hasCertificate: z.boolean().default(false),
-    organizingOfficeId: z.string().optional(),
+    organizingOfficeId: z.string().optional().nullable(),
+    organizingOfficialId: z.string().optional().nullable(),
 })
 
 const ReportSchema = z.object({
@@ -55,6 +72,27 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
         // Fetch creator's organization to determine flow
         const [org] = await db.select().from(organizations).where(eq(organizations.id, organizationId))
         if (!org) return { success: false, error: "Organization not found" }
+
+        // Hierarchical Permission Check
+        if (!session.user.isSuperAdmin) {
+            const userLevel = session.user.officialLevel as string
+            const targetLevel = org.level
+
+            if (userLevel === 'NATIONAL' && targetLevel !== 'NATIONAL') {
+                return { success: false, error: "National admins can only create programmes for National level" }
+            }
+            if (userLevel === 'STATE') {
+                if (!['STATE', 'LOCAL_GOVERNMENT', 'BRANCH'].includes(targetLevel)) {
+                    return { success: false, error: "State admins can only create for State, LGA, or Branch levels" }
+                }
+            }
+            if (userLevel === 'LOCAL_GOVERNMENT' && targetLevel !== 'LOCAL_GOVERNMENT') {
+                return { success: false, error: "LGA admins can only create for LGA level" }
+            }
+            if (userLevel === 'BRANCH' && targetLevel !== 'BRANCH') {
+                return { success: false, error: "Branch admins can only create for Branch level" }
+            }
+        }
 
         const validData = ProgrammeSchema.parse(data)
 
@@ -111,7 +149,8 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
             paymentRequired: validData.paymentRequired,
             amount: validData.amount.toString(),
             hasCertificate: validData.hasCertificate,
-            organizingOfficeId: validData.organizingOfficeId,
+            organizingOfficeId: (validData.organizingOfficeId && validData.organizingOfficeId !== "none") ? validData.organizingOfficeId : null,
+            organizingOfficialId: (validData.organizingOfficialId && validData.organizingOfficialId !== "none") ? validData.organizingOfficialId : null,
             isLateSubmission,
             status: initialStatus,
             createdBy: session.user.id,
@@ -220,20 +259,31 @@ export async function getAdminProgrammes(organizationId: string, type: 'MY_PROGR
     const creator = aliasedTable(users, "creator")
     const org = aliasedTable(organizations, "org")
     const office = aliasedTable(offices, "office")
+    const official = aliasedTable(officials, "official")
+    const officialUser = aliasedTable(users, "officialUser")
 
     if (type === 'MY_PROGRAMMES') {
         const results = await db.select({
             programme: programmes,
             creator: creator,
-            office: office
+            office: office,
+            official: official,
+            officialUser: officialUser
         })
             .from(programmes)
             .leftJoin(creator, eq(programmes.createdBy, creator.id))
             .leftJoin(office, eq(programmes.organizingOfficeId, office.id))
+            .leftJoin(official, eq(programmes.organizingOfficialId, official.id))
+            .leftJoin(officialUser, eq(official.userId, officialUser.id))
             .where(eq(programmes.organizationId, organizationId))
             .orderBy(desc(programmes.createdAt))
 
-        return results.map(r => ({ ...r.programme, creator: r.creator, office: r.office }))
+        return results.map(r => ({ 
+            ...r.programme, 
+            creator: r.creator, 
+            office: r.office,
+            official: r.official ? { ...r.official, user: r.officialUser } : null
+        }))
     }
 
     if (type === 'TO_APPROVE') {
@@ -273,16 +323,26 @@ export async function getAdminProgrammes(organizationId: string, type: 'MY_PROGR
             programme: programmes,
             creator: creator,
             org: org,
-            office: office
+            office: office,
+            official: official,
+            officialUser: officialUser
         })
             .from(programmes)
             .leftJoin(creator, eq(programmes.createdBy, creator.id))
             .leftJoin(org, eq(programmes.organizationId, org.id))
             .leftJoin(office, eq(programmes.organizingOfficeId, office.id))
+            .leftJoin(official, eq(programmes.organizingOfficialId, official.id))
+            .leftJoin(officialUser, eq(official.userId, officialUser.id))
             .where(condition)
             .orderBy(desc(programmes.createdAt))
 
-        return results.map(r => ({ ...r.programme, creator: r.creator, organization: r.org, office: r.office }))
+        return results.map(r => ({ 
+            ...r.programme, 
+            creator: r.creator, 
+            organization: r.org, 
+            office: r.office,
+            official: r.official ? { ...r.official, user: r.officialUser } : null
+        }))
     }
 }
 

@@ -1,0 +1,1 @@
+﻿0 0,12 * * * cd /var/www/tmcportal && docker exec tmcportal npx tsx scripts/automated-backup.ts >> /var/log/tmc-backup.log 2>&1

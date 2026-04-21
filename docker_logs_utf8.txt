@@ -1,0 +1,50 @@
+﻿tmcportal  | Fetching settings...
+tmcportal  | AI Settings fetched: true
+tmcportal  | Getting model for provider: deepseek
+tmcportal  | Creating tools...
+tmcportal  | Tools created
+tmcportal  | Streaming response with RAG tools... { temperature: 0.7, maxTokens: 2000 }
+tmcportal  | Streaming response (Provider: deepseek, Tools Enabled: false)... { temperature: 0.7, maxTokens: 2000 }
+tmcportal  | Error in /api/chat: TypeError: (intermediate value).toDataStreamResponse is not a function
+tmcportal  |     at iB (.next/server/app/api/chat/route.js:71:2344)
+tmcportal  |     at async p (.next/server/app/api/chat/route.js:71:5533)
+tmcportal  |     at async g (.next/server/app/api/chat/route.js:71:6553)
+tmcportal  |     at async Module.iH (.next/server/app/api/chat/route.js:71:7627)
+tmcportal  | Proxy: GET /connect/Lagos/Surulere/Randle { hasToken: false }
+tmcportal  | Proxy: GET /manifest.webmanifest { hasToken: false }
+tmcportal  | Proxy: GET /EDO { hasToken: false }
+tmcportal  | Proxy: GET /EDO { hasToken: false }
+tmcportal  | Proxy: GET /EKI { hasToken: false }
+tmcportal  | Proxy: GET /EKI { hasToken: false }
+tmcportal  | Proxy: GET /FCT { hasToken: false }
+tmcportal  | Proxy: GET /KWA { hasToken: false }
+tmcportal  | Proxy: GET /LAG { hasToken: false }
+tmcportal  | Proxy: GET /FCT { hasToken: false }
+tmcportal  | Proxy: GET /KWA { hasToken: false }
+tmcportal  | Proxy: GET /LAG { hasToken: false }
+tmcportal  | Proxy: GET /NIG { hasToken: false }
+tmcportal  | Proxy: GET /OGU { hasToken: false }
+tmcportal  | Proxy: GET /OND { hasToken: false }
+tmcportal  | Proxy: GET /NIG { hasToken: false }
+tmcportal  | Proxy: GET /OGU { hasToken: false }
+tmcportal  | Proxy: GET /OSU { hasToken: false }
+tmcportal  | Proxy: GET /OND { hasToken: false }
+tmcportal  | Proxy: GET /OSU { hasToken: false }
+tmcportal  | Proxy: GET /OYO { hasToken: false }
+tmcportal  | Proxy: GET /OYO { hasToken: false }
+tmcportal  | Proxy: GET /FCT-KUJE { hasToken: false }
+tmcportal  | Proxy: GET /FCT-AMAC { hasToken: false }
+tmcportal  | Proxy: GET /FCT-BWARI { hasToken: false }
+tmcportal  | Proxy: GET /FCT-GWAGWALADA { hasToken: false }
+tmcportal  | Proxy: GET /FCT-KUJE { hasToken: false }
+tmcportal  | Proxy: GET /FCT-AMAC { hasToken: false }
+tmcportal  | Proxy: GET /FCT-BWARI { hasToken: false }
+tmcportal  | Proxy: GET /FCT-GWAGWALADA { hasToken: false }
+tmcportal  | Proxy: GET /FCT-BWARI { hasToken: false }
+tmcportal  | Proxy: GET /manifest.webmanifest { hasToken: false }
+tmcportal  | Proxy: GET /FCT-BWARI-BWARI { hasToken: false }
+tmcportal  | Proxy: GET /FCT-BWARI-BWARI { hasToken: false }
+tmcportal  | Proxy: GET /FCT-BWARI-JULIUSBERG { hasToken: false }
+tmcportal  | Proxy: GET /FCT-BWARI-DUTSEALHAJ { hasToken: false }
+tmcportal  | Proxy: GET /FCT-BWARI-JULIUSBERG { hasToken: false }
+tmcportal  | Proxy: GET /FCT-BWARI-DUTSEALHAJ { hasToken: false }

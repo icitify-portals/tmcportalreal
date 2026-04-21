@@ -1,0 +1,1 @@
+mysql -h 172.17.0.1 -u tmc_user -p'Tmcportal123#' -D tmc_portal -e "UPDATE users SET password = '\$2b\$10\$/JyvBpQVHHeLTKkCIz5pD.qd5DUL0i2g8H8gsFpzjcKDYsKZlyra6', emailVerified = NOW() WHERE email = 'rojibsalman@gmail.com';"
