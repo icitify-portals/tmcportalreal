@@ -113,7 +113,9 @@ export default async function AdminRequestDetailsPage({ params }: { params: Prom
                                     requestId={request.id}
                                     status={request.status || 'PENDING'}
                                     userId={session.user.id}
+                                    currentAmount={parseFloat(request.amount?.toString() || "10000")}
                                 />
+
                             </CardContent>
                         </Card>
 

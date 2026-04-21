@@ -4,9 +4,14 @@ import { BurialRequestForm } from "@/components/burial/burial-request-form"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { ChevronLeft } from "lucide-react"
+import { getFinancialSettings } from "@/lib/actions/settings"
 
-export default function NewBurialRequestPage() {
+
+export default async function NewBurialRequestPage() {
+    const { burialVerificationFee } = await getFinancialSettings()
+
     return (
+
         <div className="container mx-auto py-8 space-y-8 max-w-3xl">
             <div className="flex items-center gap-4">
                 <Link href="/dashboard/burial">
@@ -20,7 +25,8 @@ export default function NewBurialRequestPage() {
                 </div>
             </div>
 
-            <BurialRequestForm />
+            <BurialRequestForm defaultFee={burialVerificationFee} />
+
         </div>
     )
 }
