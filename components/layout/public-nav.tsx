@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
     Home, Heart, Menu, Building2, BookOpen,
-    MapPin, ChevronDown, Info, FileText, LogIn, UserPlus, Award, LayoutDashboard, Activity, Calendar
+    MapPin, ChevronDown, Info, FileText, LogIn, UserPlus, Award, LayoutDashboard, Activity, Calendar, ClipboardList
 } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet"
 import { useSession } from "next-auth/react"
@@ -146,7 +146,7 @@ export function PublicNav() {
                         Teskiyyah Centres
                     </Link>
 
-                    {/* Competitions */}
+                    {/* Applications */}
                     <Link
                         href="/competitions"
                         className={cn(
@@ -154,7 +154,7 @@ export function PublicNav() {
                             pathname.startsWith("/competitions") ? "bg-white/20 font-semibold" : "text-white/85"
                         )}
                     >
-                        Competitions
+                        Applications
                     </Link>
 
                     {/* Donate */}
@@ -271,11 +271,11 @@ export function PublicNav() {
                                     <MapPin className="h-4 w-4 shrink-0" /> Teskiyyah Centres
                                 </Link>
 
-                                {/* Competitions */}
+                                {/* Applications */}
                                 <Link href="/competitions" onClick={() => setIsOpen(false)}
                                     className={cn("flex items-center gap-3 px-6 py-3 text-sm font-medium transition-colors hover:bg-white/10", pathname.startsWith("/competitions") && "bg-white/15")}
                                 >
-                                    <Award className="h-4 w-4 shrink-0" /> Competitions
+                                    <ClipboardList className="h-4 w-4 shrink-0" /> Applications
                                 </Link>
 
                                 {/* Donate */}
