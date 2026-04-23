@@ -116,62 +116,50 @@ export default async function ProgrammesPage({ searchParams }: { searchParams: P
             <div className="container mx-auto px-4 max-w-7xl">
                 {/* Filter Bar */}
                 <div className="bg-white border rounded-xl p-4 mb-8 shadow-sm">
-                    <div className="flex flex-col md:flex-row items-end gap-4">
+                    <form action="/programmes" method="GET" className="flex flex-col md:flex-row items-end gap-4 w-full">
                         <div className="w-full md:w-48">
                             <label className="text-xs font-bold uppercase text-gray-500 mb-1.5 block">Organization Level</label>
-                            <form action="/programmes" method="GET" className="w-full">
-                                {filters.state && <input type="hidden" name="state" value={filters.state} />}
-                                <Select name="level" defaultValue={filters.level || "ALL"}>
-                                    <SelectTrigger className="w-full">
-                                        <SelectValue placeholder="All Levels" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="ALL">All Levels</SelectItem>
-                                        <SelectItem value="NATIONAL">National</SelectItem>
-                                        <SelectItem value="STATE">State</SelectItem>
-                                        <SelectItem value="LOCAL_GOVERNMENT">LGA</SelectItem>
-                                        <SelectItem value="BRANCH">Branch</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                <button type="submit" className="hidden" />
-                            </form>
+                            <Select name="level" defaultValue={filters.level || "ALL"}>
+                                <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="All Levels" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="ALL">All Levels</SelectItem>
+                                    <SelectItem value="NATIONAL">National</SelectItem>
+                                    <SelectItem value="STATE">State</SelectItem>
+                                    <SelectItem value="LOCAL_GOVERNMENT">LGA</SelectItem>
+                                    <SelectItem value="BRANCH">Branch</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
 
                         <div className="w-full md:w-56">
                             <label className="text-xs font-bold uppercase text-gray-500 mb-1.5 block">State / Jurisdiction</label>
-                            <form action="/programmes" method="GET" className="w-full">
-                                {filters.level && <input type="hidden" name="level" value={filters.level} />}
-                                <Select name="state" defaultValue={filters.state || "ALL"}>
-                                    <SelectTrigger className="w-full">
-                                        <SelectValue placeholder="All States" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="ALL">All States</SelectItem>
-                                        {NIGERIAN_STATES.map(state => (
-                                            <SelectItem key={state} value={state}>{state}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                <button type="submit" className="hidden" />
-                            </form>
+                            <Select name="state" defaultValue={filters.state || "ALL"}>
+                                <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="All States" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="ALL">All States</SelectItem>
+                                    {NIGERIAN_STATES.map(state => (
+                                        <SelectItem key={state} value={state}>{state}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
 
                         <div className="flex gap-2 w-full md:w-auto">
                             <Button asChild variant="outline" className="flex-1 md:flex-none">
                                 <Link href="/programmes">
-                                    Clear Filters
+                                    Clear
                                 </Link>
                             </Button>
-                            <Button className="flex-1 md:flex-none bg-green-700 hover:bg-green-800" onClick={() => {
-                                // Since we use forms with hidden inputs, buttons are more for visual clarity
-                                // but we can add a manual trigger if needed.
-                                (document.activeElement as HTMLElement)?.blur();
-                            }}>
+                            <Button type="submit" className="flex-1 md:flex-none bg-green-700 hover:bg-green-800">
                                 <Filter className="mr-2 h-4 w-4" />
-                                Apply
+                                Filter
                             </Button>
                         </div>
-                    </div>
+                    </form>
                 </div>
 
                 <Suspense key={JSON.stringify(filters)} fallback={
