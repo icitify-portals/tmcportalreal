@@ -5,17 +5,28 @@ import { RegisterForProgrammeDialog } from "@/components/programmes/register-dia
 import { PublicNav } from "@/components/layout/public-nav"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { CalendarIcon, MapPinIcon, ClockIcon, UsersIcon } from "lucide-react"
+import { CalendarIcon, MapPinIcon, ClockIcon, UsersIcon, Filter } from "lucide-react"
 import { format } from "date-fns"
 import { Metadata } from "next"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
 
 export const metadata: Metadata = {
-    title: "Programmes & Events | TMC Portal",
-    description: "Browse and register for upcoming TMC programmes and events.",
+    title: "Upcoming Programmes | TMC Portal",
+    description: "Browse and register for upcoming TMC programmes and events across all jurisdictions.",
 }
 
-async function ProgrammeGrid() {
-    const programmes = await getProgrammes({ status: 'APPROVED' }) || []
+const NIGERIAN_STATES = [
+    "Abia", "Adamawa", "Akwa Ibom", "Anambra", "Bauchi", "Bayelsa", "Benue", "Borno", 
+    "Cross River", "Delta", "Ebonyi", "Edo", "Ekiti", "Enugu", "FCT", "Gombe", 
+    "Imo", "Jigawa", "Kaduna", "Kano", "Katsina", "Kebbi", "Kogi", "Kwara", 
+    "Lagos", "Nasarawa", "Niger", "Ogun", "Ondo", "Osun", "Oyo", "Plateau", 
+    "Rivers", "Sokoto", "Taraba", "Yobe", "Zamfara"
+];
+
+async function ProgrammeGrid({ level, state }: { level?: string, state?: string }) {
+    const programmes = await getProgrammes({ status: 'APPROVED', level, state }) || []
 
     if (programmes.length === 0) {
         return (
@@ -23,8 +34,8 @@ async function ProgrammeGrid() {
                 <div className="rounded-full bg-gray-100 p-3 mb-4">
                     <CalendarIcon className="h-6 w-6 text-gray-400" />
                 </div>
-                <h3 className="text-lg font-semibold">No Upcoming Programmes</h3>
-                <p className="text-muted-foreground mt-1">Check back later for new events and activities.</p>
+                <h3 className="text-lg font-semibold">No Programmes Found</h3>
+                <p className="text-muted-foreground mt-1">Try adjusting your filters or check back later.</p>
             </div>
         )
     }
@@ -41,7 +52,7 @@ async function ProgrammeGrid() {
                                 <Badge variant={isPaid ? "default" : "secondary"} className="mb-2">
                                     {isPaid ? "Paid Event" : "Free Entry"}
                                 </Badge>
-                                <Badge variant="outline">{p.targetAudience}</Badge>
+                                <Badge variant="outline">{p.organization?.name || p.level}</Badge>
                             </div>
                             <CardTitle className="line-clamp-2">{p.title}</CardTitle>
                             <CardDescription className="flex items-center mt-1">
@@ -67,7 +78,7 @@ async function ProgrammeGrid() {
                                 )}
                                 <div className="flex items-center">
                                     <UsersIcon className="mr-2 h-4 w-4 text-primary" />
-                                    <span>Open to: {p.targetAudience}</span>
+                                    <span>Target: {p.targetAudience}</span>
                                 </div>
                             </div>
                         </CardContent>
@@ -85,20 +96,95 @@ async function ProgrammeGrid() {
     )
 }
 
-export default function ProgrammesPage() {
+export default async function ProgrammesPage({ searchParams }: { searchParams: Promise<{ level?: string, state?: string }> }) {
+    const filters = await searchParams;
+
     return (
-        <div className="min-h-screen bg-background">
+        <div className="min-h-screen bg-background pb-12">
             <PublicNav />
-            <div className="container mx-auto py-8 px-4 max-w-7xl">
-                <div className="mb-8 space-y-2">
-                    <h1 className="text-3xl font-bold tracking-tight lg:text-4xl">Upcoming Programmes</h1>
-                    <p className="text-muted-foreground text-lg">
-                        Discover and participate in events organized by TMC across various levels.
+            
+            {/* Hero Section */}
+            <div className="bg-green-700 text-white py-12 mb-8">
+                <div className="container mx-auto px-4 max-w-7xl">
+                    <h1 className="text-3xl font-bold tracking-tight lg:text-5xl mb-4">Upcoming Programmes</h1>
+                    <p className="text-green-50 text-lg max-w-2xl">
+                        Explore activities and events happening across our National, State, and Local jurisdictions.
                     </p>
                 </div>
+            </div>
 
-                <Suspense fallback={<div className="grid grid-cols-1 md:grid-cols-3 gap-6">{[1, 2, 3].map(i => <div key={i} className="h-64 bg-gray-100 rounded-lg animate-pulse" />)}</div>}>
-                    <ProgrammeGrid />
+            <div className="container mx-auto px-4 max-w-7xl">
+                {/* Filter Bar */}
+                <div className="bg-white border rounded-xl p-4 mb-8 shadow-sm">
+                    <div className="flex flex-col md:flex-row items-end gap-4">
+                        <div className="w-full md:w-48">
+                            <label className="text-xs font-bold uppercase text-gray-500 mb-1.5 block">Organization Level</label>
+                            <form action="/programmes" method="GET" className="w-full">
+                                {filters.state && <input type="hidden" name="state" value={filters.state} />}
+                                <Select name="level" defaultValue={filters.level || "ALL"}>
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue placeholder="All Levels" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="ALL">All Levels</SelectItem>
+                                        <SelectItem value="NATIONAL">National</SelectItem>
+                                        <SelectItem value="STATE">State</SelectItem>
+                                        <SelectItem value="LOCAL_GOVERNMENT">LGA</SelectItem>
+                                        <SelectItem value="BRANCH">Branch</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <button type="submit" className="hidden" />
+                            </form>
+                        </div>
+
+                        <div className="w-full md:w-56">
+                            <label className="text-xs font-bold uppercase text-gray-500 mb-1.5 block">State / Jurisdiction</label>
+                            <form action="/programmes" method="GET" className="w-full">
+                                {filters.level && <input type="hidden" name="level" value={filters.level} />}
+                                <Select name="state" defaultValue={filters.state || "ALL"}>
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue placeholder="All States" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="ALL">All States</SelectItem>
+                                        {NIGERIAN_STATES.map(state => (
+                                            <SelectItem key={state} value={state}>{state}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <button type="submit" className="hidden" />
+                            </form>
+                        </div>
+
+                        <div className="flex gap-2 w-full md:w-auto">
+                            <Button asChild variant="outline" className="flex-1 md:flex-none">
+                                <Link href="/programmes">
+                                    Clear Filters
+                                </Link>
+                            </Button>
+                            <Button className="flex-1 md:flex-none bg-green-700 hover:bg-green-800" onClick={() => {
+                                // Since we use forms with hidden inputs, buttons are more for visual clarity
+                                // but we can add a manual trigger if needed.
+                                (document.activeElement as HTMLElement)?.blur();
+                            }}>
+                                <Filter className="mr-2 h-4 w-4" />
+                                Apply
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+
+                <Suspense key={JSON.stringify(filters)} fallback={
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {[1, 2, 3, 4, 5, 6].map(i => (
+                            <div key={i} className="h-80 bg-gray-100 rounded-lg animate-pulse border" />
+                        ))}
+                    </div>
+                }>
+                    <ProgrammeGrid 
+                        level={filters.level === "ALL" ? undefined : filters.level} 
+                        state={filters.state === "ALL" ? undefined : filters.state} 
+                    />
                 </Suspense>
             </div>
         </div>

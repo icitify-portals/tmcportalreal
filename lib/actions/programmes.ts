@@ -253,6 +253,9 @@ export async function getProgrammes(filters?: { level?: string, state?: string, 
     if (filters?.level) {
         conditions.push(eq(programmes.level as any, filters.level))
     }
+    if (filters?.state) {
+        conditions.push(eq(org.state, filters.state))
+    }
     if (filters?.status) {
         // If admin viewing, might not just be approved
         conditions = [eq(programmes.status as any, filters.status)]

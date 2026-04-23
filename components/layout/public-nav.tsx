@@ -16,7 +16,7 @@ const aboutItems = [
     { title: "About Us", href: "/about", icon: Info },
     { title: "Constitution", href: "/constitution", icon: FileText },
     { title: "Our Organs", href: "/organs", icon: Building2 },
-    { title: "Our Programmes", href: "/our-programmes", icon: BookOpen },
+    { title: "Upcoming Programmes", href: "/programmes", icon: BookOpen },
 ]
 
 const topLevelItems = [
