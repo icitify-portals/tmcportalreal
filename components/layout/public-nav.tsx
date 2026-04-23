@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
     Home, Heart, Menu, Building2, BookOpen,
-    MapPin, ChevronDown, Info, FileText, LogIn, UserPlus, Award, LayoutDashboard
+    MapPin, ChevronDown, Info, FileText, LogIn, UserPlus, Award, LayoutDashboard, Activity, Calendar
 } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet"
 import { useSession } from "next-auth/react"
@@ -16,7 +16,8 @@ const aboutItems = [
     { title: "About Us", href: "/about", icon: Info },
     { title: "Constitution", href: "/constitution", icon: FileText },
     { title: "Our Organs", href: "/organs", icon: Building2 },
-    { title: "Upcoming Programmes", href: "/programmes", icon: BookOpen },
+    { title: "Our Activities", href: "/our-programmes", icon: BookOpen },
+    { title: "Upcoming Programmes", href: "/programmes", icon: Calendar },
 ]
 
 const topLevelItems = [
