@@ -3,6 +3,7 @@ import { notFound } from "next/navigation"
 import Link from "next/link"
 import { Award, ArrowLeft, Calendar, MapPin, Clock } from "lucide-react"
 import { CompetitionApplicationForm } from "@/components/competitions/application-form"
+import { PublicNav } from "@/components/layout/public-nav"
 
 export const dynamic = "force-dynamic"
 
@@ -35,6 +36,7 @@ export default async function ApplyPage({ params }: PageProps) {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50">
+            <PublicNav />
             {/* Hero */}
             <div className="bg-gradient-to-r from-green-700 via-green-600 to-emerald-600 text-white">
                 <div className="max-w-4xl mx-auto px-4 py-12">
@@ -42,12 +44,12 @@ export default async function ApplyPage({ params }: PageProps) {
                         href="/competitions"
                         className="inline-flex items-center gap-1.5 text-white/70 hover:text-white text-sm mb-4 transition-colors"
                     >
-                        <ArrowLeft className="h-4 w-4" /> Back to Competitions
+                        <ArrowLeft className="h-4 w-4" /> Back to Applications
                     </Link>
                     <div className="flex items-center gap-2 mb-3">
                         <span className="inline-flex items-center gap-1.5 bg-white/15 backdrop-blur-sm text-sm px-3 py-1 rounded-full">
                             <Award className="h-3.5 w-3.5" />
-                            {competition.year} Competition
+                            {competition.year} Application
                         </span>
                     </div>
                     <h1 className="text-3xl md:text-4xl font-bold mb-3">
@@ -87,7 +89,7 @@ export default async function ApplyPage({ params }: PageProps) {
                             href="/competitions"
                             className="inline-flex items-center gap-2 mt-4 text-green-600 hover:text-green-700 font-medium"
                         >
-                            <ArrowLeft className="h-4 w-4" /> View Other Competitions
+                            <ArrowLeft className="h-4 w-4" /> View Other Applications
                         </Link>
                     </div>
                 ) : (

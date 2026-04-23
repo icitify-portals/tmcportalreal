@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation"
 import Link from "next/link"
 import { Award, Calendar, Clock, ArrowLeft, MapPin } from "lucide-react"
 import { CompetitionApplicationForm } from "@/components/competitions/application-form"
+import { PublicNav } from "@/components/layout/public-nav"
 
 export const dynamic = "force-dynamic"
 
@@ -11,19 +12,20 @@ export default async function CompetitionsPage() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50">
+            <PublicNav />
 
             {/* Hero Banner */}
             <div className="bg-gradient-to-r from-green-700 via-green-600 to-emerald-600 text-white">
                 <div className="max-w-5xl mx-auto px-4 py-16 text-center">
                     <div className="inline-flex items-center gap-2 bg-white/15 backdrop-blur-sm rounded-full px-4 py-1.5 text-sm mb-6">
                         <Award className="h-4 w-4" />
-                        TMC Competitions
+                        TMC Applications
                     </div>
                     <h1 className="text-4xl md:text-5xl font-bold mb-4">
-                        Competitions & Events
+                        Applications & Events
                     </h1>
                     <p className="text-lg text-white/80 max-w-2xl mx-auto">
-                        Apply for ongoing competitions organised by The Muslim Congress.
+                        Apply for ongoing activities and opportunities organised by The Muslim Congress.
                         Register early to secure your spot!
                     </p>
                 </div>
