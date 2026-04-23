@@ -44,8 +44,8 @@ const ProgrammeSchema = z.object({
     organizingOfficeId: z.string().optional(),
     organizingOfficialId: z.string().optional(),
     // New fields
-    format: z.string().default("PHYSICAL"),
-    frequency: z.string().default("ONCE"),
+    format: z.enum(['PHYSICAL', 'VIRTUAL', 'HYBRID']).default('PHYSICAL'),
+    frequency: z.enum(['ONCE', 'WEEKLY', 'MONTHLY', 'QUARTERLY', 'BI-ANNUALLY', 'ANNUALLY']).default('ONCE'),
     budget: z.string().default("0"),
     objectives: z.string().optional(),
     committee: z.string().optional(),
