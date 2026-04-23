@@ -50,6 +50,12 @@ const ProgrammeSchema = z.object({
     hasCertificate: z.boolean().default(false),
     organizingOfficeId: z.string().optional().nullable(),
     organizingOfficialId: z.string().optional().nullable(),
+    // New Planner Fields
+    format: z.enum(['PHYSICAL', 'VIRTUAL', 'HYBRID']).default('PHYSICAL'),
+    frequency: z.enum(['ONCE', 'WEEKLY', 'MONTHLY', 'QUARTERLY', 'BI-ANNUALLY', 'ANNUALLY']).default('ONCE'),
+    budget: z.number().nonnegative().default(0),
+    objectives: z.string().optional(),
+    committee: z.string().optional(),
 })
 
 const ReportSchema = z.object({
@@ -156,6 +162,11 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
             hasCertificate: validData.hasCertificate,
             organizingOfficeId: (validData.organizingOfficeId && validData.organizingOfficeId !== "none") ? validData.organizingOfficeId : null,
             organizingOfficialId: (validData.organizingOfficialId && validData.organizingOfficialId !== "none") ? validData.organizingOfficialId : null,
+            format: validData.format,
+            frequency: validData.frequency,
+            budget: validData.budget.toString(),
+            objectives: validData.objectives,
+            committee: validData.committee,
             isLateSubmission,
             status: initialStatus,
             createdBy: session.user.id,
@@ -498,6 +509,12 @@ export async function updateProgramme(programmeId: string, data: Partial<z.infer
             paymentRequired: validData.paymentRequired,
             amount: validData.amount !== undefined ? validData.amount.toString() : undefined,
             organizingOfficeId: validData.organizingOfficeId,
+            organizingOfficialId: validData.organizingOfficialId,
+            format: validData.format,
+            frequency: validData.frequency,
+            budget: validData.budget !== undefined ? validData.budget.toString() : undefined,
+            objectives: validData.objectives,
+            committee: validData.committee,
             status: newStatus,
             rejectionReason,
             updatedAt: new Date()

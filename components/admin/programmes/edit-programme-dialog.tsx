@@ -42,6 +42,13 @@ const ProgrammeSchema = z.object({
     paymentRequired: z.boolean().default(false),
     amount: z.string().default("0"),
     organizingOfficeId: z.string().optional(),
+    organizingOfficialId: z.string().optional(),
+    // New fields
+    format: z.string().default("PHYSICAL"),
+    frequency: z.string().default("ONCE"),
+    budget: z.string().default("0"),
+    objectives: z.string().optional(),
+    committee: z.string().optional(),
 })
 
 interface EditProgrammeDialogProps {
@@ -73,6 +80,12 @@ export function EditProgrammeDialog({ programme, open, onOpenChange }: EditProgr
             paymentRequired: programme.paymentRequired,
             amount: programme.amount?.toString() || "0",
             organizingOfficeId: programme.organizingOfficeId || "",
+            organizingOfficialId: programme.organizingOfficialId || "",
+            format: programme.format || "PHYSICAL",
+            frequency: programme.frequency || "ONCE",
+            budget: programme.budget?.toString() || "0",
+            objectives: programme.objectives || "",
+            committee: programme.committee || "",
         },
     })
 
@@ -90,6 +103,12 @@ export function EditProgrammeDialog({ programme, open, onOpenChange }: EditProgr
                 paymentRequired: programme.paymentRequired,
                 amount: programme.amount?.toString() || "0",
                 organizingOfficeId: programme.organizingOfficeId || "",
+                organizingOfficialId: programme.organizingOfficialId || "",
+                format: programme.format || "PHYSICAL",
+                frequency: programme.frequency || "ONCE",
+                budget: programme.budget?.toString() || "0",
+                objectives: programme.objectives || "",
+                committee: programme.committee || "",
             })
         }
     }, [programme, form])
@@ -103,6 +122,7 @@ export function EditProgrammeDialog({ programme, open, onOpenChange }: EditProgr
                 startDate: new Date(data.startDate),
                 endDate: data.endDate ? new Date(data.endDate) : undefined,
                 amount: parseFloat(data.amount || "0"),
+                budget: parseFloat(data.budget || "0"),
             }
 
             const result = await updateProgramme(programme.id, payload)
@@ -231,7 +251,97 @@ export function EditProgrammeDialog({ programme, open, onOpenChange }: EditProgr
                                     </FormItem>
                                 )}
                             />
+
+                            <FormField
+                                control={form.control}
+                                name="format"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Format</FormLabel>
+                                        <Select onValueChange={field.onChange} value={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select format" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {['PHYSICAL', 'VIRTUAL', 'HYBRID'].map(fmt => (
+                                                    <SelectItem key={fmt} value={fmt}>{fmt}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="frequency"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Frequency (Occurrence)</FormLabel>
+                                        <Select onValueChange={field.onChange} value={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select frequency" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {['ONCE', 'WEEKLY', 'MONTHLY', 'QUARTERLY', 'BI-ANNUALLY', 'ANNUALLY'].map(freq => (
+                                                    <SelectItem key={freq} value={freq}>{freq}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                         </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField
+                                control={form.control}
+                                name="budget"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Estimated Budget (NGN)</FormLabel>
+                                        <FormControl>
+                                            <Input type="number" min="0" step="0.01" placeholder="0.00" {...field} value={field.value || ''} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="committee"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Organizing Committee</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="e.g. Planning Committee" {...field} value={field.value || ''} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+
+                        <FormField
+                            control={form.control}
+                            name="objectives"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Key Objectives</FormLabel>
+                                    <FormControl>
+                                        <Textarea placeholder="What are the goals of this programme?" {...field} value={field.value || ''} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <FormField
