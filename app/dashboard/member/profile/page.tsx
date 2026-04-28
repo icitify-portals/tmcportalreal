@@ -9,8 +9,8 @@ import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { format } from "date-fns"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { User, Mail, MapPin, Building, Calendar, IdCard } from "lucide-react"
+import { ProfileImageUpload } from "@/components/profile/image-upload"
 
 export default async function MemberProfilePage() {
     const session = await getServerSession()
@@ -51,14 +51,14 @@ export default async function MemberProfilePage() {
     return (
         <DashboardLayout>
             <div className="space-y-6">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div className="flex items-center gap-4">
-                        <Avatar className="h-20 w-20">
-                            <AvatarImage src={user.image || ""} alt={user.name || ""} />
-                            <AvatarFallback>{user.name?.charAt(0) || "U"}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                            <h1 className="text-3xl font-bold">{user.name}</h1>
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+                    <div className="flex flex-col md:flex-row items-center gap-6">
+                        <ProfileImageUpload 
+                            currentImage={user.image} 
+                            userName={user.name || "Member"} 
+                        />
+                        <div className="text-center md:text-left">
+                            <h1 className="text-3xl font-bold text-gray-900">{user.name}</h1>
                             <p className="text-muted-foreground flex items-center gap-1">
                                 <Mail className="h-4 w-4" /> {user.email}
                             </p>
