@@ -754,6 +754,9 @@ model Programme {
   
   organizingOfficeId String?
   organizingOffice   Office?  @relation(fields: [organizingOfficeId], references: [id])
+
+  organizingOfficialId String?
+  organizingOfficial   Official? @relation(fields: [organizingOfficialId], references: [id])
   
   format             String   @default("PHYSICAL") // PHYSICAL, VIRTUAL, HYBRID
   frequency          String   @default("ONCE")
