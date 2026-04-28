@@ -34,7 +34,22 @@ export default async function AccessSlipPage({ params }: { params: Promise<{ id:
 
     return (
         <div className="min-h-screen bg-gray-50 py-12 px-4 print:bg-white print:py-0 print:px-0">
-            <div className="max-w-3xl mx-auto bg-white border-2 border-gray-200 rounded-2xl shadow-xl overflow-hidden print:shadow-none print:border-0 print:max-w-full relative">
+            <style dangerouslySetInnerHTML={{ __html: `
+                @media print {
+                    @page { size: portrait; margin: 0; }
+                    body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+                    .print-card { 
+                        width: 100% !important; 
+                        max-width: 100% !important; 
+                        border: none !important; 
+                        box-shadow: none !important;
+                        margin: 0 !important;
+                        border-radius: 0 !important;
+                    }
+                    .no-print { display: none !important; }
+                }
+            `}} />
+            <div className="max-w-3xl mx-auto bg-white border-2 border-gray-200 rounded-2xl shadow-xl overflow-hidden print:shadow-none print:border-0 print:max-w-full relative print-card">
                 
                 {/* Unpaid Watermark/Overlay for print protection */}
                 {isPending && (
