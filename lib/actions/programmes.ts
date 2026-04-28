@@ -422,8 +422,18 @@ export async function registerForProgramme(programmeId: string, data?: z.infer<t
         }
 
         if (existingReg) {
-            if (existingReg.status === 'PENDING_PAYMENT') {
+            // If already paid or attended, they are done.
+            if (existingReg.status === 'PAID' || existingReg.status === 'ATTENDED') {
                 return { 
+                    success: false, 
+                    error: "You have already registered and paid for this programme.",
+                    registrationId: existingReg.id
+                }
+            }
+            
+            // If it's a paid programme and they haven't paid yet
+            if (programme.paymentRequired && parseFloat(programme.amount || "0") > 0) {
+                 return { 
                     success: true, 
                     registrationId: existingReg.id, 
                     paymentRequired: true,
@@ -431,6 +441,8 @@ export async function registerForProgramme(programmeId: string, data?: z.infer<t
                     isResume: true
                 }
             }
+
+            // Otherwise (free programme and already registered)
             return { 
                 success: false, 
                 error: "You have already registered for this programme.",
