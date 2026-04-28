@@ -12,14 +12,18 @@ import { VerifyPaymentStatusButton } from "@/components/programmes/verify-paymen
 export default async function AccessSlipPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
     let registration = await getRegistrationDetails(id)
-    if (!registration) redirect("/programmes")
+    if (!registration) {
+        redirect("/programmes")
+        return null // unreachable but satisfies TS
+    }
 
     // Auto-verify if pending and has a reference (Self-healing UX)
     if (registration.status === 'PENDING_PAYMENT' && registration.paymentReference) {
         const verifyResult = await verifyProgrammeRegistrationPayment(id, registration.paymentReference)
         if (verifyResult.success) {
             // Re-fetch updated details
-            registration = await getRegistrationDetails(id)
+            const updated = await getRegistrationDetails(id)
+            if (updated) registration = updated
         }
     }
 
