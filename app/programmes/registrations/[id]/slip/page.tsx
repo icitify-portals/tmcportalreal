@@ -1,4 +1,4 @@
-import { getRegistrationDetails } from "@/lib/actions/programmes"
+import { getRegistrationDetails, verifyProgrammeRegistrationPayment } from "@/lib/actions/programmes"
 import { redirect } from "next/navigation"
 import Image from "next/image"
 import { MapPin, Calendar, Clock, User, ShieldCheck, Mail, Phone, CreditCard, Printer } from "lucide-react"
@@ -11,9 +11,17 @@ import { VerifyPaymentStatusButton } from "@/components/programmes/verify-paymen
 
 export default async function AccessSlipPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
-    const registration = await getRegistrationDetails(id)
-
+    let registration = await getRegistrationDetails(id)
     if (!registration) redirect("/programmes")
+
+    // Auto-verify if pending and has a reference (Self-healing UX)
+    if (registration.status === 'PENDING_PAYMENT' && registration.paymentReference) {
+        const verifyResult = await verifyProgrammeRegistrationPayment(id, registration.paymentReference)
+        if (verifyResult.success) {
+            // Re-fetch updated details
+            registration = await getRegistrationDetails(id)
+        }
+    }
 
     const verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/admin/programmes/${registration.programmeId}/verify?regId=${id}`
     const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(verificationUrl)}`
