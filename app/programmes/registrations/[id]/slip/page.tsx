@@ -229,7 +229,5 @@ export default async function AccessSlipPage({ params }: { params: Promise<{ id:
                 Generated via TMC Portal on {new Date().toLocaleString()}
             </div>
         </div>
-            </div>
-        </div>
     )
 }
