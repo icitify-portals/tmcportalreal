@@ -1,7 +1,7 @@
 import { getRegistrationDetails } from "@/lib/actions/programmes"
 import { redirect } from "next/navigation"
 import Image from "next/image"
-import { MapPin, Calendar, Clock, User, ShieldCheck, Mail, Phone, CreditCard } from "lucide-react"
+import { MapPin, Calendar, Clock, User, ShieldCheck, Mail, Phone, CreditCard, Printer } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { ClientCurrency } from "@/components/ui/client-currency"
 import { format } from "date-fns"
