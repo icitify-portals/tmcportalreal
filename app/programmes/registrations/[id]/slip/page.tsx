@@ -7,6 +7,7 @@ import { ClientCurrency } from "@/components/ui/client-currency"
 import { format } from "date-fns"
 import { PrintButton } from "@/components/programmes/print-button"
 import { ResumePaymentButton } from "@/components/programmes/resume-payment-button"
+import { VerifyPaymentStatusButton } from "@/components/programmes/verify-payment-button"
 
 export default async function AccessSlipPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
@@ -163,7 +164,10 @@ export default async function AccessSlipPage({ params }: { params: Promise<{ id:
                     </p>
                     <div className="flex items-center gap-3">
                         {registration.status === 'PENDING_PAYMENT' && (
-                            <ResumePaymentButton registrationId={registration.id} />
+                            <div className="flex gap-2">
+                                <ResumePaymentButton registrationId={registration.id} />
+                                <VerifyPaymentStatusButton registrationId={registration.id} reference={registration.paymentReference || undefined} />
+                            </div>
                         )}
                         <PrintButton />
                     </div>

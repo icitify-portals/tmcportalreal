@@ -20,6 +20,7 @@ import { ExportRegistrationsCSV } from "@/components/admin/programmes/export-csv
 import { MarkAttendanceButton } from "@/components/admin/programmes/mark-attendance-button"
 import { DeleteRegistrationButton } from "@/components/admin/programmes/delete-registration-button"
 import { ClearRegistrationsButton } from "@/components/admin/programmes/clear-registrations-button"
+import { SyncPaymentsButton } from "@/components/admin/programmes/sync-payments-button"
 import { db } from "@/lib/db"
 import { programmes } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
@@ -162,6 +163,7 @@ async function RegistrationsHeader({ programmeId, programmeTitle }: { programmeI
                     Verify Entry
                 </Link>
             </Button>
+            <SyncPaymentsButton programmeId={programmeId} />
             <ClearRegistrationsButton programmeId={programmeId} programmeTitle={programmeTitle} />
         </div>
     )

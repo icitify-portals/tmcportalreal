@@ -797,3 +797,50 @@ export async function deleteAllProgrammeRegistrations(programmeId: string) {
         return { success: false, error: "Failed to delete all registrations" }
     }
 }
+
+export async function syncAllProgrammePayments(programmeId: string) {
+    try {
+        const session = await getServerSession()
+        if (!session?.user?.id) return { success: false, error: "Unauthorized" }
+
+        // Fetch all pending registrations with a reference
+        const pending = await db.select()
+            .from(programmeRegistrations)
+            .where(and(
+                eq(programmeRegistrations.programmeId, programmeId),
+                eq(programmeRegistrations.status, 'PENDING_PAYMENT'),
+                sql`${programmeRegistrations.paymentReference} IS NOT NULL`
+            ))
+
+        if (pending.length === 0) return { success: true, count: 0, message: "No pending payments to sync" }
+
+        let successCount = 0
+        for (const reg of pending) {
+            if (!reg.paymentReference) continue
+
+            const verification = await verifyPayment(reg.paymentReference)
+            if (verification.success && verification.data?.status === "success") {
+                await db.update(programmeRegistrations)
+                    .set({ 
+                        status: 'PAID',
+                        amountPaid: verification.data?.amount?.toString() || "0",
+                        updatedAt: new Date()
+                    })
+                    .where(eq(programmeRegistrations.id, reg.id))
+                
+                successCount++
+            }
+        }
+
+        revalidatePath(`/dashboard/admin/programmes/${programmeId}/registrations`)
+        return { 
+            success: true, 
+            count: successCount, 
+            message: `Successfully synced ${successCount} out of ${pending.length} pending payments.` 
+        }
+
+    } catch (error) {
+        console.error("Sync Payments Error:", error)
+        return { success: false, error: "Sync failed" }
+    }
+}
