@@ -470,14 +470,19 @@ export async function registerForProgramme(programmeId: string, data?: z.infer<t
         const [newReg] = await db.insert(programmeRegistrations).values(registrationData).$returningId()
         
         if (registrationData.status === 'REGISTERED') {
-            // Send email for free programme
+            // Fetch member info for ID if exists
+            const [member] = registrationData.memberId 
+                ? await db.select().from(members).where(eq(members.id, registrationData.memberId)).limit(1)
+                : [null]
+
             await sendEmail({
                 to: registrationData.email,
                 ...emailTemplates.programmeRegistrationReceipt(
                     registrationData.name,
                     programme.title,
                     0,
-                    newReg.id
+                    newReg.id,
+                    member?.memberId || undefined
                 )
             })
         }
@@ -613,7 +618,8 @@ export async function verifyProgrammeRegistrationPayment(registrationId: string,
                         regDetails.name,
                         regDetails.programme.title,
                         parseFloat(regDetails.amountPaid || "0"),
-                        registrationId
+                        registrationId,
+                        regDetails.member?.memberId || undefined
                     )
                 })
             }

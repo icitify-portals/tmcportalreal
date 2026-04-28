@@ -284,7 +284,7 @@ export const emailTemplates = {
       View meeting details here: ${meetingUrl}
     `,
   }),
-  programmeRegistrationReceipt: (name: string, programmeTitle: string, amount: number, registrationId: string) => ({
+  programmeRegistrationReceipt: (name: string, programmeTitle: string, amount: number, registrationId: string, memberId?: string) => ({
     subject: `Registration Confirmation: ${programmeTitle} - TMC`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 12px;">
@@ -299,6 +299,7 @@ export const emailTemplates = {
         <div style="background-color: #f0fdf4; border: 1px solid #bcf0da; padding: 20px; border-radius: 8px; margin: 24px 0;">
           <h2 style="margin-top: 0; color: #166534; font-size: 18px;">${programmeTitle}</h2>
           <p style="margin: 4px 0; font-size: 14px; color: #4b5563;"><strong>Amount Paid:</strong> ₦${amount.toLocaleString()}</p>
+          <p style="margin: 4px 0; font-size: 14px; color: #4b5563;"><strong>Membership ID:</strong> ${memberId || "Guest"}</p>
           <p style="margin: 4px 0; font-size: 14px; color: #4b5563;"><strong>Registration ID:</strong> ${registrationId}</p>
         </div>
         
