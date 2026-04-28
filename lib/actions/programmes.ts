@@ -396,27 +396,29 @@ export async function registerForProgramme(programmeId: string, data?: z.infer<t
         if (!programme) return { success: false, error: "Programme not found" }
 
         // Check for existing registration
-        let existingReg;
+        let existingRegId: string | null = null;
+        
         if (session?.user) {
-            [existingReg] = await db.select().from(programmeRegistrations)
+            const results = await db.select({ id: programmeRegistrations.id }).from(programmeRegistrations)
                 .where(and(
                     eq(programmeRegistrations.programmeId, programmeId),
                     eq(programmeRegistrations.userId, session.user.id)
                 )).limit(1)
+            if (results.length > 0) existingRegId = results[0].id
         } else if (data) {
-            const guestData = RegistrationSchema.parse(data)
-            [existingReg] = await db.select().from(programmeRegistrations)
+            const results = await db.select({ id: programmeRegistrations.id }).from(programmeRegistrations)
                 .where(and(
                     eq(programmeRegistrations.programmeId, programmeId),
-                    eq(programmeRegistrations.email, guestData.email)
+                    eq(programmeRegistrations.email, data.email)
                 )).limit(1)
+            if (results.length > 0) existingRegId = results[0].id
         }
 
-        if (existingReg) {
+        if (existingRegId) {
             return { 
                 success: false, 
                 error: "You have already registered for this programme.",
-                registrationId: existingReg.id
+                registrationId: existingRegId
             }
         }
 
