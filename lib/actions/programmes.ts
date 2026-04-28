@@ -580,11 +580,11 @@ export async function initializeProgrammeRegistrationPayment(registrationId: str
 export async function verifyProgrammeRegistrationPayment(registrationId: string, reference: string) {
     try {
         const response = await verifyPayment(reference)
-        if (response.success && response.data.status === "success") {
+        if (response.success && response.data?.status === "success") {
             await db.update(programmeRegistrations)
                 .set({ 
                     status: 'PAID',
-                    amountPaid: response.data.amount.toString(),
+                    amountPaid: response.data?.amount?.toString() || "0",
                     paymentReference: reference
                 })
                 .where(eq(programmeRegistrations.id, registrationId))
