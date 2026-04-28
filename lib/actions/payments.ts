@@ -58,7 +58,7 @@ export async function syncGeneralPayments() {
             if (!payment.paystackRef) continue
 
             const verifyResult = await verifyPayment(payment.paystackRef)
-            if (verifyResult.success && verifyResult.data.status === "success") {
+            if (verifyResult.success && verifyResult.data?.status === "success") {
                 await updatePaymentStatus(payment.id, "SUCCESS", verifyResult.data)
                 syncCount++
             } else if (verifyResult.data?.status === "failed") {
