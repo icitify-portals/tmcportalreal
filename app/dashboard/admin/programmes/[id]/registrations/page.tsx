@@ -88,7 +88,7 @@ async function RegistrationsTable({ programmeId }: { programmeId: string }) {
                                 </Badge>
                             </TableCell>
                             <TableCell className="text-sm">
-                                <ClientDate date={reg.registeredAt} formatString="MMM d, yyyy" />
+                                <ClientDate date={reg.registeredAt || new Date()} formatString="MMM d, yyyy" />
                             </TableCell>
                             <TableCell className="text-right">
                                 <div className="flex justify-end gap-2">

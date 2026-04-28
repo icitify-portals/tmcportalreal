@@ -65,9 +65,9 @@ export function RegisterForProgrammeDialog({
                     setOpen(false)
                 }
             } else if (result.registrationId) {
-                // Already registered case
-                toast.error(result.error)
-                // Optionally redirect to the slip or show a link
+                toast.info("You are already registered. Opening your access slip...")
+                setOpen(false)
+                window.open(`/programmes/registrations/${result.registrationId}/slip`, '_blank')
             } else {
                 toast.error(result.error || "Failed to register")
             }
