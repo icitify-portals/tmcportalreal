@@ -396,7 +396,7 @@ export async function registerForProgramme(programmeId: string, data?: z.infer<t
         if (!programme) return { success: false, error: "Programme not found" }
 
         // Check for existing registration
-        let existingReg: { id: string, status: string, email: string } | null = null;
+        let existingReg: { id: string, status: string | null, email: string } | null = null;
         const normalizedEmail = data?.email?.trim().toLowerCase() || session?.user?.email?.trim().toLowerCase();
         
         if (session?.user) {
