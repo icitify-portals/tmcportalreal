@@ -87,6 +87,9 @@ const RegistrationSchema = z.object({
     phone: z.string().optional(),
     gender: z.string().optional(),
     address: z.string().optional(),
+    country: z.string().optional(),
+    state: z.string().optional(),
+    lga: z.string().optional(),
 })
 
 // --- Programme Management ---
@@ -442,15 +445,35 @@ export async function registerForProgramme(programmeId: string, data?: z.infer<t
 
         if (session?.user) {
             // Logged in user (Member or Official)
-            const [member] = await db.select().from(members).where(eq(members.userId, session.user.id)).limit(1)
+            const [memberData] = await db.select({
+                id: members.id,
+                gender: members.gender,
+                address: members.address,
+                orgName: organizations.name,
+                orgState: organizations.state,
+                orgCity: organizations.city,
+                userPhone: users.phone,
+                userCountry: users.country
+            })
+            .from(members)
+            .innerJoin(users, eq(members.userId, users.id))
+            .innerJoin(organizations, eq(members.organizationId, organizations.id))
+            .where(eq(members.userId, session.user.id))
+            .limit(1)
             
             registrationData = {
                 ...registrationData,
                 userId: session.user.id,
-                memberId: member?.id || null,
+                memberId: memberData?.id || null,
                 name: session.user.name || "Unknown",
                 email: session.user.email || "Unknown",
-                phone: session.user.phone || null,
+                phone: memberData?.userPhone || session.user.phone || null,
+                gender: (memberData?.gender as any) || 'MALE',
+                address: memberData?.address || null,
+                country: memberData?.userCountry || "Nigeria",
+                state: memberData?.orgState || null,
+                lga: memberData?.orgCity || null,
+                branch: memberData?.orgName || null
             }
         } else if (data) {
             // Guest registration
@@ -462,6 +485,10 @@ export async function registerForProgramme(programmeId: string, data?: z.infer<t
                 phone: validData.phone,
                 gender: validData.gender,
                 address: validData.address,
+                country: validData.country || "Nigeria",
+                state: validData.state,
+                lga: validData.lga,
+                branch: null // Guests don't have branches
             }
         } else {
             return { success: false, error: "Registration data required for guests" }

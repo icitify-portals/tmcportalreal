@@ -801,6 +801,10 @@ model ProgrammeRegistration {
   paymentReference String?
   certificateUrl   String?   @db.VarChar(500)
   certificateIssuedAt DateTime?
+  country          String?   @default("Nigeria")
+  state            String?
+  lga              String?
+  branch           String?
   registeredAt     DateTime  @default(now())
 
   @@index([programmeId])

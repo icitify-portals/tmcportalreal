@@ -19,7 +19,16 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Textarea } from "@/components/ui/textarea"
 import { registerForProgramme, initializeProgrammeRegistrationPayment } from "@/lib/actions/programmes"
 import { toast } from "sonner"
-import { Loader2, UserPlus, CreditCard } from "lucide-react"
+import { Loader2, UserPlus, CreditCard, MapPin, Globe } from "lucide-react"
+import { nigerianStatesAndLgas } from "@/lib/nigeria-data"
+import { countries } from "@/lib/countries"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 
 export function RegisterForProgrammeDialog({
     programmeId,
@@ -40,8 +49,13 @@ export function RegisterForProgrammeDialog({
         email: "",
         phone: "",
         gender: "MALE",
-        address: ""
+        address: "",
+        country: "Nigeria",
+        state: "",
+        lga: ""
     })
+
+    const selectedStateData = nigerianStatesAndLgas.find(s => s.state === formData.state)
 
     async function handleRegister(e: React.FormEvent) {
         e.preventDefault()
@@ -164,6 +178,84 @@ export function RegisterForProgrammeDialog({
                                     className="col-span-3" 
                                 />
                             </div>
+
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label className="text-right text-xs font-bold uppercase text-gray-500">Country</Label>
+                                <Select 
+                                    value={formData.country} 
+                                    onValueChange={(v) => setFormData({...formData, country: v, state: "", lga: ""})}
+                                >
+                                    <SelectTrigger className="col-span-3">
+                                        <SelectValue placeholder="Select Country" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {countries.map(c => (
+                                            <SelectItem key={c.code} value={c.name}>{c.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            {formData.country === "Nigeria" ? (
+                                <>
+                                    <div className="grid grid-cols-4 items-center gap-4">
+                                        <Label className="text-right text-xs font-bold uppercase text-gray-500">State</Label>
+                                        <Select 
+                                            value={formData.state} 
+                                            onValueChange={(v) => setFormData({...formData, state: v, lga: ""})}
+                                        >
+                                            <SelectTrigger className="col-span-3">
+                                                <SelectValue placeholder="Select State" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {nigerianStatesAndLgas.map(s => (
+                                                    <SelectItem key={s.state} value={s.state}>{s.state}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="grid grid-cols-4 items-center gap-4">
+                                        <Label className="text-right text-xs font-bold uppercase text-gray-500">LGA</Label>
+                                        <Select 
+                                            value={formData.lga} 
+                                            onValueChange={(v) => setFormData({...formData, lga: v})}
+                                            disabled={!formData.state}
+                                        >
+                                            <SelectTrigger className="col-span-3">
+                                                <SelectValue placeholder="Select LGA" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {selectedStateData?.lgas.map(lga => (
+                                                    <SelectItem key={lga} value={lga}>{lga}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="grid grid-cols-4 items-center gap-4">
+                                        <Label htmlFor="state" className="text-right text-xs font-bold uppercase text-gray-500">State/Province</Label>
+                                        <Input 
+                                            id="state" 
+                                            value={formData.state} 
+                                            onChange={(e) => setFormData({...formData, state: e.target.value})}
+                                            className="col-span-3" 
+                                            placeholder="Enter State/Province"
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-4 items-center gap-4">
+                                        <Label htmlFor="lga" className="text-right text-xs font-bold uppercase text-gray-500">City/Local Govt</Label>
+                                        <Input 
+                                            id="lga" 
+                                            value={formData.lga} 
+                                            onChange={(e) => setFormData({...formData, lga: e.target.value})}
+                                            className="col-span-3" 
+                                            placeholder="Enter City/Local Govt"
+                                        />
+                                    </div>
+                                </>
+                            )}
                         </div>
                     )}
 

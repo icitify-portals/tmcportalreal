@@ -99,12 +99,28 @@ export default async function AccessSlipPage({ params }: { params: Promise<{ id:
                                 </div>
                                 <div className="space-y-1">
                                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Email Address</p>
-                                    <p className="font-medium text-gray-600 text-sm">{registration.email}</p>
+                                    <p className="font-medium text-gray-600 text-sm truncate">{registration.email}</p>
                                 </div>
                                 <div className="space-y-1">
                                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Phone Number</p>
                                     <p className="font-medium text-gray-600 text-sm">{registration.phone || "N/A"}</p>
                                 </div>
+                                <div className="space-y-1">
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Country</p>
+                                    <p className="font-medium text-gray-600 text-sm">{registration.country || "Nigeria"}</p>
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">State / LGA</p>
+                                    <p className="font-medium text-gray-600 text-sm">
+                                        {registration.state || "N/A"} {registration.lga ? `/ ${registration.lga}` : ""}
+                                    </p>
+                                </div>
+                                {registration.branch && (
+                                    <div className="space-y-1 col-span-2">
+                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Branch/Unit</p>
+                                        <p className="font-medium text-gray-600 text-sm">{registration.branch}</p>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
