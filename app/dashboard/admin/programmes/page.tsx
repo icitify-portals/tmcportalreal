@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { CheckCircle2, AlertCircle, XCircle } from "lucide-react"
+import { CheckCircle2, AlertCircle, XCircle, UserCheck } from "lucide-react"
 import { format } from "date-fns"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { db } from "@/lib/db"
@@ -100,9 +100,15 @@ async function ProgrammeList({ type, orgId }: { type: 'MY_PROGRAMMES' | 'TO_APPR
                             <ReviewActions programmeId={p.id} status={p.status || ""} />
                         )}
 
-                        {/* Reporting Action */}
+                        {/* Reporting & Registration Actions */}
                         {type === 'MY_PROGRAMMES' && p.status === 'APPROVED' && (
-                            <div className="mt-4 pt-4 border-t flex justify-end">
+                            <div className="mt-4 pt-4 border-t flex justify-between items-center">
+                                <Button variant="outline" size="sm" asChild>
+                                    <a href={`/dashboard/admin/programmes/${p.id}/registrations`}>
+                                        <UserCheck className="w-4 h-4 mr-2" />
+                                        View Registrations
+                                    </a>
+                                </Button>
                                 <SubmitReportDialog programmeId={p.id} programmeTitle={p.title} />
                             </div>
                         )}

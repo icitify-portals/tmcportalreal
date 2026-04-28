@@ -18,6 +18,8 @@ import { ClientDate } from "@/components/ui/client-date"
 import { ClientCurrency } from "@/components/ui/client-currency"
 import { ExportRegistrationsCSV } from "@/components/admin/programmes/export-csv"
 import { MarkAttendanceButton } from "@/components/admin/programmes/mark-attendance-button"
+import { DeleteRegistrationButton } from "@/components/admin/programmes/delete-registration-button"
+import { ClearRegistrationsButton } from "@/components/admin/programmes/clear-registrations-button"
 import { db } from "@/lib/db"
 import { programmes } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
@@ -100,6 +102,7 @@ async function RegistrationsTable({ programmeId }: { programmeId: string }) {
                                     {(reg.status === 'PAID' || reg.status === 'REGISTERED' || reg.status === 'ATTENDED') && (
                                         <MarkAttendanceButton registrationId={reg.id} status={reg.status} />
                                     )}
+                                    <DeleteRegistrationButton registrationId={reg.id} userName={reg.name} />
                                 </div>
                             </TableCell>
                         </TableRow>
@@ -159,6 +162,7 @@ async function RegistrationsHeader({ programmeId, programmeTitle }: { programmeI
                     Verify Entry
                 </Link>
             </Button>
+            <ClearRegistrationsButton programmeId={programmeId} programmeTitle={programmeTitle} />
         </div>
     )
 }

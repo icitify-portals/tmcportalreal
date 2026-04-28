@@ -756,3 +756,25 @@ export async function updateProgramme(programmeId: string, data: Partial<z.infer
         return { success: false, error: "Failed to update programme" }
     }
 }
+
+export async function deleteProgrammeRegistration(registrationId: string) {
+    try {
+        await db.delete(programmeRegistrations).where(eq(programmeRegistrations.id, registrationId))
+        revalidatePath(`/dashboard/admin/programmes`)
+        return { success: true }
+    } catch (error) {
+        console.error("Delete Registration Error:", error)
+        return { success: false, error: "Failed to delete registration" }
+    }
+}
+
+export async function deleteAllProgrammeRegistrations(programmeId: string) {
+    try {
+        await db.delete(programmeRegistrations).where(eq(programmeRegistrations.programmeId, programmeId))
+        revalidatePath(`/dashboard/admin/programmes`)
+        return { success: true }
+    } catch (error) {
+        console.error("Delete All Registrations Error:", error)
+        return { success: false, error: "Failed to delete all registrations" }
+    }
+}
