@@ -404,11 +404,11 @@ export async function registerForProgramme(programmeId: string, data?: z.infer<t
                     eq(programmeRegistrations.userId, session.user.id)
                 )).limit(1)
         } else if (data) {
-            const validData = RegistrationSchema.parse(data)
+            const guestData = RegistrationSchema.parse(data)
             [existingReg] = await db.select().from(programmeRegistrations)
                 .where(and(
                     eq(programmeRegistrations.programmeId, programmeId),
-                    eq(programmeRegistrations.email, validData.email)
+                    eq(programmeRegistrations.email, guestData.email)
                 )).limit(1)
         }
 
