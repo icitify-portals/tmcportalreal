@@ -513,11 +513,13 @@ export async function getRegistrationDetails(registrationId: string) {
             programme: programmes,
             member: members,
             organization: organizations,
+            user: users,
         })
             .from(programmeRegistrations)
             .innerJoin(programmes, eq(programmeRegistrations.programmeId, programmes.id))
             .leftJoin(members, eq(programmeRegistrations.memberId, members.id))
             .leftJoin(organizations, eq(programmes.organizationId, organizations.id))
+            .leftJoin(users, eq(programmeRegistrations.userId, users.id))
             .where(eq(programmeRegistrations.id, registrationId))
             .limit(1)
 
@@ -530,6 +532,7 @@ export async function getRegistrationDetails(registrationId: string) {
             programme: result.programme,
             member: result.member,
             organization: result.organization,
+            user: result.user,
             securityHash
         }
     } catch (error) {
