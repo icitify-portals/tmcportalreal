@@ -56,9 +56,9 @@ async function RegistrationsTable({ programmeId }: { programmeId: string }) {
                                 <div className="flex flex-col">
                                     <span className="font-semibold text-gray-900">{reg.name}</span>
                                     <span className="text-xs text-muted-foreground">{reg.email}</span>
-                                    {reg.member?.membershipId && (
+                                    {reg.member?.memberId && (
                                         <span className="text-[10px] font-mono text-green-700 bg-green-50 px-1 rounded w-fit mt-1">
-                                            {reg.member.membershipId}
+                                            {reg.member.memberId}
                                         </span>
                                     )}
                                 </div>

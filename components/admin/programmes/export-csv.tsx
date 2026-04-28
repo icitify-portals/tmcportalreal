@@ -25,7 +25,7 @@ export function ExportRegistrationsCSV({
                     `"${reg.gender || ""}"`,
                     `"${(reg.address || "").replace(/"/g, '""')}"`,
                     reg.userId ? "Member" : "Guest",
-                    `"${reg.member?.membershipId || ""}"`,
+                    `"${reg.member?.memberId || ""}"`,
                     reg.status,
                     reg.amountPaid || "0.00",
                     `"${reg.paymentReference || ""}"`,

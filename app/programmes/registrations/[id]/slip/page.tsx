@@ -92,7 +92,7 @@ export default async function AccessSlipPage({ params }: { params: Promise<{ id:
                                 </div>
                                 <div className="space-y-1">
                                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Membership ID</p>
-                                    <p className="font-bold text-gray-800">{registration.member?.membershipId || "Guest Attendee"}</p>
+                                    <p className="font-bold text-gray-800">{registration.member?.memberId || "Guest Attendee"}</p>
                                 </div>
                                 <div className="space-y-1">
                                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Email Address</p>
