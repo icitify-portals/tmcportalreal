@@ -1055,6 +1055,10 @@ export const programmeRegistrations = mysqlTable("programme_registrations", {
     certificateUrl: varchar("certificateUrl", { length: 500 }),
     certificateIssuedAt: timestamp("certificateIssuedAt", { mode: "date", fsp: 3 }),
 
+    country: varchar("country", { length: 255 }).default("Nigeria"),
+    state: varchar("state", { length: 255 }),
+    lga: varchar("lga", { length: 255 }),
+    branch: varchar("branch", { length: 255 }),
     registeredAt: timestamp("registeredAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
 });
 
