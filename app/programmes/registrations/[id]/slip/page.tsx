@@ -18,10 +18,43 @@ export default async function AccessSlipPage({ params }: { params: Promise<{ id:
     const verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/admin/programmes/${registration.programmeId}/verify?regId=${id}`
     const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(verificationUrl)}`
 
+    const isPending = registration.status === 'PENDING_PAYMENT'
+
     return (
         <div className="min-h-screen bg-gray-50 py-12 px-4 print:bg-white print:py-0 print:px-0">
-            <div className="max-w-3xl mx-auto bg-white border-2 border-gray-200 rounded-2xl shadow-xl overflow-hidden print:shadow-none print:border-0 print:max-w-full">
+            <div className="max-w-3xl mx-auto bg-white border-2 border-gray-200 rounded-2xl shadow-xl overflow-hidden print:shadow-none print:border-0 print:max-w-full relative">
                 
+                {/* Unpaid Watermark/Overlay for print protection */}
+                {isPending && (
+                    <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/95 backdrop-blur-sm print:bg-white print:backdrop-blur-none">
+                        <div className="max-w-md w-full p-8 text-center space-y-6">
+                            <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mx-auto">
+                                <CreditCard className="w-10 h-10 text-amber-600" />
+                            </div>
+                            <div className="space-y-2">
+                                <h2 className="text-2xl font-bold text-gray-900">Payment Required</h2>
+                                <p className="text-gray-500">
+                                    Your registration for <span className="font-semibold text-gray-700">{registration.programme.title}</span> is pending payment. 
+                                    Please complete your payment to access your slip and QR code.
+                                </p>
+                            </div>
+                            <div className="flex flex-col gap-3 pt-4 print:hidden">
+                                <ResumePaymentButton registrationId={registration.id} />
+                                <VerifyPaymentStatusButton registrationId={registration.id} reference={registration.paymentReference || undefined} />
+                                <button 
+                                    onClick={() => window.location.reload()} 
+                                    className="text-sm text-gray-400 hover:text-gray-600"
+                                >
+                                    Refresh Page after payment
+                                </button>
+                            </div>
+                            <div className="hidden print:block text-red-600 font-black text-4xl border-4 border-red-600 p-4 rotate-12 opacity-50">
+                                INVALID - PAYMENT PENDING
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* Header with Logo */}
                 <div className="bg-green-700 text-white p-8 flex justify-between items-center relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl" />
@@ -44,7 +77,7 @@ export default async function AccessSlipPage({ params }: { params: Promise<{ id:
                     </div>
                     <div className="text-right relative z-10">
                         <Badge variant="outline" className="bg-white/20 border-white/30 text-white text-[10px] font-bold uppercase tracking-widest">
-                            {registration.status === 'PAID' ? 'CONFIRMED' : 'ACCESS GRANTED'}
+                            {registration.status === 'PAID' ? 'CONFIRMED' : isPending ? 'PENDING' : 'ACCESS GRANTED'}
                         </Badge>
                     </div>
                 </div>
@@ -69,14 +102,20 @@ export default async function AccessSlipPage({ params }: { params: Promise<{ id:
                         <div className="text-center">
                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Scan to Verify</p>
                             <div className="p-2 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50">
-                                <Image src={qrCodeUrl} alt="Verification QR Code" width={120} height={120} />
+                                {!isPending ? (
+                                    <Image src={qrCodeUrl} alt="Verification QR Code" width={120} height={120} />
+                                ) : (
+                                    <div className="w-[120px] h-[120px] flex items-center justify-center bg-gray-200 rounded-lg">
+                                        <CreditCard className="w-8 h-8 text-gray-400" />
+                                    </div>
+                                )}
                             </div>
                         </div>
 
                         <div className="mt-auto pt-4 text-center">
                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Security Key</p>
                             <code className="text-lg font-mono font-bold text-green-700 tracking-tighter">
-                                {registration.securityHash}
+                                {!isPending ? registration.securityHash : "********"}
                             </code>
                         </div>
                     </div>
@@ -174,18 +213,12 @@ export default async function AccessSlipPage({ params }: { params: Promise<{ id:
 
                 <div className="bg-gray-50 p-6 border-t border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-4 print:hidden">
                     <p className="text-xs text-gray-400 italic">
-                        {registration.status === 'PENDING_PAYMENT' 
+                        {isPending 
                             ? "Payment is required to validate this access slip."
                             : "Please present this slip at the venue for entry."}
                     </p>
                     <div className="flex items-center gap-3">
-                        {registration.status === 'PENDING_PAYMENT' && (
-                            <div className="flex gap-2">
-                                <ResumePaymentButton registrationId={registration.id} />
-                                <VerifyPaymentStatusButton registrationId={registration.id} reference={registration.paymentReference || undefined} />
-                            </div>
-                        )}
-                        <PrintButton />
+                        {!isPending && <PrintButton />}
                     </div>
                 </div>
             </div>
@@ -194,6 +227,8 @@ export default async function AccessSlipPage({ params }: { params: Promise<{ id:
             <div className="hidden print:block mt-8 text-center text-[10px] text-gray-400 border-t pt-4 max-w-3xl mx-auto">
                 This is a computer-generated document. For verification, scan the QR code or use the security key. 
                 Generated via TMC Portal on {new Date().toLocaleString()}
+            </div>
+        </div>
             </div>
         </div>
     )
