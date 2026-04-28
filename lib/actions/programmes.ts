@@ -16,7 +16,7 @@ import { initializePayment, verifyPayment } from "@/lib/payments"
 import { sendEmail, emailTemplates } from "@/lib/email"
 import crypto from "crypto"
 
-export function generateSecurityHash(registrationId: string, email: string) {
+export async function generateSecurityHash(registrationId: string, email: string) {
     const secret = process.env.SLIP_SECRET || "tmc-secure-slip-2026"
     return crypto.createHmac("sha256", secret)
         .update(`${registrationId}-${email}`)
@@ -523,7 +523,7 @@ export async function getRegistrationDetails(registrationId: string) {
 
         if (!result) return null
 
-        const securityHash = generateSecurityHash(result.registration.id, result.registration.email)
+        const securityHash = await generateSecurityHash(result.registration.id, result.registration.email)
 
         return {
             ...result.registration,
