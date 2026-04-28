@@ -297,6 +297,8 @@ model Official {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 
+  programmes    Programme[] @relation("OrganizingOfficial")
+
   @@map("officials")
 }
 
@@ -756,7 +758,7 @@ model Programme {
   organizingOffice   Office?  @relation(fields: [organizingOfficeId], references: [id])
 
   organizingOfficialId String?
-  organizingOfficial   Official? @relation(fields: [organizingOfficialId], references: [id])
+  organizingOfficial   Official? @relation("OrganizingOfficial", fields: [organizingOfficialId], references: [id])
   
   format             String   @default("PHYSICAL") // PHYSICAL, VIRTUAL, HYBRID
   frequency          String   @default("ONCE")
