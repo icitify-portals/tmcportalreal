@@ -823,8 +823,7 @@ export async function syncAllProgrammePayments(programmeId: string) {
                 await db.update(programmeRegistrations)
                     .set({ 
                         status: 'PAID',
-                        amountPaid: verification.data?.amount?.toString() || "0",
-                        updatedAt: new Date()
+                        amountPaid: verification.data?.amount?.toString() || "0"
                     })
                     .where(eq(programmeRegistrations.id, reg.id))
                 
