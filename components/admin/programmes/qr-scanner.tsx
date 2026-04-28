@@ -9,8 +9,10 @@ import { getRegistrationDetails, markAttendance } from "@/lib/actions/programmes
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ClientCurrency } from "@/components/ui/client-currency"
+import { useSearchParams } from "next/navigation"
 
 export function QRScanner({ programmeId }: { programmeId: string }) {
+    const searchParams = useSearchParams()
     const [scanResult, setScanResult] = useState<string | null>(null)
     const [registration, setRegistration] = useState<any>(null)
     const [loading, setLoading] = useState(false)
@@ -18,6 +20,11 @@ export function QRScanner({ programmeId }: { programmeId: string }) {
     const [success, setSuccess] = useState<string | null>(null)
 
     useEffect(() => {
+        const regId = searchParams.get("regId")
+        if (regId) {
+            handleVerify(regId)
+        }
+
         const scanner = new Html5QrcodeScanner(
             "reader",
             { fps: 10, qrbox: { width: 250, height: 250 } },
@@ -27,8 +34,18 @@ export function QRScanner({ programmeId }: { programmeId: string }) {
         scanner.render(onScanSuccess, onScanFailure)
 
         function onScanSuccess(decodedText: string) {
-            setScanResult(decodedText)
-            handleVerify(decodedText)
+            let regId = decodedText
+            if (decodedText.includes("regId=")) {
+                const url = new URL(decodedText)
+                regId = url.searchParams.get("regId") || decodedText
+            } else if (decodedText.includes("/verify/")) {
+                // Fallback for different URL patterns
+                const parts = decodedText.split("/")
+                regId = parts[parts.length - 1]
+            }
+            
+            setScanResult(regId)
+            handleVerify(regId)
             scanner.clear()
         }
 
@@ -126,6 +143,16 @@ export function QRScanner({ programmeId }: { programmeId: string }) {
                             <CardTitle className="text-sm font-bold uppercase tracking-wider text-gray-500">Attendee Details</CardTitle>
                         </CardHeader>
                         <CardContent className="pt-6 space-y-4">
+                            <div className="flex justify-center mb-4">
+                                <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-green-100 shadow-inner bg-gray-50 flex items-center justify-center">
+                                    {registration.user?.image ? (
+                                        <img src={registration.user.image} alt={registration.name} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <User className="w-16 h-16 text-gray-300" />
+                                    )}
+                                </div>
+                            </div>
+
                             <div className="flex items-center gap-4 p-3 bg-white rounded-xl border border-gray-100">
                                 <div className="bg-green-50 p-2 rounded-full">
                                     <User className="w-5 h-5 text-green-700" />
