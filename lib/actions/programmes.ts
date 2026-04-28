@@ -11,6 +11,19 @@ import { eq, desc, and, or, aliasedTable, inArray, sql } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { getServerSession } from "@/lib/session"
+import { members } from "@/lib/db/schema"
+import { initializePayment, verifyPayment } from "@/lib/payments"
+import { sendEmail, emailTemplates } from "@/lib/email"
+import crypto from "crypto"
+
+export function generateSecurityHash(registrationId: string, email: string) {
+    const secret = process.env.SLIP_SECRET || "tmc-secure-slip-2026"
+    return crypto.createHmac("sha256", secret)
+        .update(`${registrationId}-${email}`)
+        .digest("hex")
+        .substring(0, 8)
+        .toUpperCase()
+}
 
 export async function getOffices(organizationId: string) {
     try {
@@ -66,6 +79,14 @@ const ReportSchema = z.object({
     attendeesFemale: z.number().int().nonnegative().default(0),
     amountSpent: z.number().nonnegative().default(0),
     images: z.array(z.string().url()).optional(),
+})
+
+const RegistrationSchema = z.object({
+    name: z.string().min(1, "Name is required"),
+    email: z.string().email("Invalid email"),
+    phone: z.string().optional(),
+    gender: z.string().optional(),
+    address: z.string().optional(),
 })
 
 // --- Programme Management ---
@@ -367,24 +388,224 @@ export async function getAdminProgrammes(organizationId: string, type: 'MY_PROGR
 
 // --- Registration ---
 
-export async function registerForProgramme(programmeId: string, userId?: string, memberId?: string) {
-    // If not logged in, maybe allow guest registration with name/email passed in data?
-    // For now assume user is logged in
+export async function registerForProgramme(programmeId: string, data?: z.infer<typeof RegistrationSchema>) {
     const session = await getServerSession()
-    if (!session?.user) return { success: false, error: "Must be logged in" }
-
+    
     try {
-        await db.insert(programmeRegistrations).values({
+        const [programme] = await db.select().from(programmes).where(eq(programmes.id, programmeId)).limit(1)
+        if (!programme) return { success: false, error: "Programme not found" }
+
+        // Check for existing registration
+        let existingReg;
+        if (session?.user) {
+            [existingReg] = await db.select().from(programmeRegistrations)
+                .where(and(
+                    eq(programmeRegistrations.programmeId, programmeId),
+                    eq(programmeRegistrations.userId, session.user.id)
+                )).limit(1)
+        } else if (data) {
+            const validData = RegistrationSchema.parse(data)
+            [existingReg] = await db.select().from(programmeRegistrations)
+                .where(and(
+                    eq(programmeRegistrations.programmeId, programmeId),
+                    eq(programmeRegistrations.email, validData.email)
+                )).limit(1)
+        }
+
+        if (existingReg) {
+            return { 
+                success: false, 
+                error: "You have already registered for this programme.",
+                registrationId: existingReg.id
+            }
+        }
+
+        let registrationData: any = {
             programmeId,
-            userId: session.user.id,
-            // memberId: ... fetch if exists
-            name: session.user.name || "Unknown",
-            email: session.user.email || "Unknown",
-            status: 'REGISTERED'
-        })
-        return { success: true }
+            status: programme.paymentRequired && parseFloat(programme.amount || "0") > 0 ? 'PENDING_PAYMENT' : 'REGISTERED',
+        }
+
+        if (session?.user) {
+            // Logged in user (Member or Official)
+            const [member] = await db.select().from(members).where(eq(members.userId, session.user.id)).limit(1)
+            
+            registrationData = {
+                ...registrationData,
+                userId: session.user.id,
+                memberId: member?.id || null,
+                name: session.user.name || "Unknown",
+                email: session.user.email || "Unknown",
+                phone: session.user.phone || null,
+            }
+        } else if (data) {
+            // Guest registration
+            const validData = RegistrationSchema.parse(data)
+            registrationData = {
+                ...registrationData,
+                name: validData.name,
+                email: validData.email,
+                phone: validData.phone,
+                gender: validData.gender,
+                address: validData.address,
+            }
+        } else {
+            return { success: false, error: "Registration data required for guests" }
+        }
+
+        const [newReg] = await db.insert(programmeRegistrations).values(registrationData).$returningId()
+        
+        if (registrationData.status === 'REGISTERED') {
+            // Send email for free programme
+            await sendEmail({
+                to: registrationData.email,
+                ...emailTemplates.programmeRegistrationReceipt(
+                    registrationData.name,
+                    programme.title,
+                    0,
+                    newReg.id
+                )
+            })
+        }
+
+        return { 
+            success: true, 
+            registrationId: newReg.id, 
+            paymentRequired: registrationData.status === 'PENDING_PAYMENT',
+            amount: programme.amount
+        }
     } catch (e) {
+        console.error("Registration Error:", e)
         return { success: false, error: "Registration failed" }
+    }
+}
+
+export async function getProgrammeRegistrations(programmeId: string) {
+    try {
+        const session = await getServerSession()
+        if (!session?.user?.id) return []
+
+        const results = await db.select({
+            registration: programmeRegistrations,
+            user: users,
+            member: members,
+        })
+            .from(programmeRegistrations)
+            .leftJoin(users, eq(programmeRegistrations.userId, users.id))
+            .leftJoin(members, eq(programmeRegistrations.memberId, members.id))
+            .where(eq(programmeRegistrations.programmeId, programmeId))
+            .orderBy(desc(programmeRegistrations.registeredAt))
+
+        return results.map(r => ({
+            ...r.registration,
+            user: r.user,
+            member: r.member
+        }))
+    } catch (error) {
+        console.error("Fetch Registrations Error:", error)
+        return []
+    }
+}
+
+export async function getRegistrationDetails(registrationId: string) {
+    try {
+        const [result] = await db.select({
+            registration: programmeRegistrations,
+            programme: programmes,
+            member: members,
+            organization: organizations,
+        })
+            .from(programmeRegistrations)
+            .innerJoin(programmes, eq(programmeRegistrations.programmeId, programmes.id))
+            .leftJoin(members, eq(programmeRegistrations.memberId, members.id))
+            .leftJoin(organizations, eq(programmes.organizationId, organizations.id))
+            .where(eq(programmeRegistrations.id, registrationId))
+            .limit(1)
+
+        if (!result) return null
+
+        const securityHash = generateSecurityHash(result.registration.id, result.registration.email)
+
+        return {
+            ...result.registration,
+            programme: result.programme,
+            member: result.member,
+            organization: result.organization,
+            securityHash
+        }
+    } catch (error) {
+        console.error("Fetch Registration Details Error:", error)
+        return null
+    }
+}
+
+export async function initializeProgrammeRegistrationPayment(registrationId: string) {
+    try {
+        const registration = await getRegistrationDetails(registrationId)
+        if (!registration) return { success: false, error: "Registration not found" }
+        
+        const amount = parseFloat(registration.programme.amount || "0")
+        if (amount <= 0) return { success: false, error: "No payment required" }
+
+        const response = await initializePayment({
+            email: registration.email,
+            amount: amount,
+            callbackUrl: `${process.env.NEXT_PUBLIC_APP_URL}/programmes/registrations/${registrationId}/verify`,
+            metadata: {
+                registrationId: registrationId,
+                type: "PROGRAMME_REGISTRATION",
+                programmeId: registration.programmeId
+            }
+        })
+
+        if (response.success) {
+            await db.update(programmeRegistrations)
+                .set({ paymentReference: response.reference })
+                .where(eq(programmeRegistrations.id, registrationId))
+            
+            return response
+        }
+        
+        return { success: false, error: response.error }
+    } catch (error) {
+        console.error("Payment Init Error:", error)
+        return { success: false, error: "Payment initialization failed" }
+    }
+}
+
+export async function verifyProgrammeRegistrationPayment(registrationId: string, reference: string) {
+    try {
+        const response = await verifyPayment(reference)
+        if (response.success && response.data.status === "success") {
+            await db.update(programmeRegistrations)
+                .set({ 
+                    status: 'PAID',
+                    amountPaid: response.data.amount.toString(),
+                    paymentReference: reference
+                })
+                .where(eq(programmeRegistrations.id, registrationId))
+            
+            revalidatePath(`/programmes/registrations/${registrationId}/slip`)
+
+            // Send confirmation email
+            const regDetails = await getRegistrationDetails(registrationId)
+            if (regDetails) {
+                await sendEmail({
+                    to: regDetails.email,
+                    ...emailTemplates.programmeRegistrationReceipt(
+                        regDetails.name,
+                        regDetails.programme.title,
+                        parseFloat(regDetails.amountPaid || "0"),
+                        registrationId
+                    )
+                })
+            }
+            
+            return { success: true }
+        }
+        return { success: false, error: response.data?.status || response.error || "Payment verification failed" }
+    } catch (error) {
+        console.error("Payment Verify Error:", error)
+        return { success: false, error: "Verification failed" }
     }
 }
 

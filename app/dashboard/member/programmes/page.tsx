@@ -2,7 +2,9 @@ import { Suspense } from "react"
 import { getUserRegistrations } from "@/lib/actions/programmes"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Calendar, MapPin } from "lucide-react"
+import { Calendar, MapPin, Printer, CreditCard } from "lucide-react"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
 import { CertificateDownloadButton } from "@/components/programme/certificate-download-button"
 import { format } from "date-fns"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
@@ -51,7 +53,23 @@ async function MyProgrammesList() {
                             </>
                         )}
                     </CardContent>
-                    <CardFooter>
+                    <CardFooter className="flex-col gap-2">
+                        {(reg.status === 'REGISTERED' || reg.status === 'PAID') && (
+                            <Button variant="outline" size="sm" asChild className="w-full border-green-200 text-green-700 hover:bg-green-50">
+                                <Link href={`/programmes/registrations/${reg.id}/slip`} target="_blank">
+                                    <Printer className="mr-2 h-4 w-4" /> Print Access Slip
+                                </Link>
+                            </Button>
+                        )}
+                        
+                        {reg.status === 'PENDING_PAYMENT' && (
+                            <Button size="sm" className="w-full bg-orange-600 hover:bg-orange-700" asChild>
+                                <Link href={`/programmes/registrations/${reg.id}/verify`}>
+                                    <CreditCard className="mr-2 h-4 w-4" /> Pay Now
+                                </Link>
+                            </Button>
+                        )}
+
                         {reg.status === 'ATTENDED' && programme?.hasCertificate ? (
                             <CertificateDownloadButton
                                 userName={reg.name}
@@ -59,11 +77,9 @@ async function MyProgrammesList() {
                                 date={programme.startDate}
                                 programmeId={programme.id}
                             />
-                        ) : (
-                            <p className="text-xs text-muted-foreground italic">
-                                {reg.status === 'ATTENDED' ? "No certificate involved" : "Certificate available after attendance"}
-                            </p>
-                        )}
+                        ) : reg.status === 'ATTENDED' ? (
+                            <p className="text-xs text-muted-foreground italic">No certificate involved</p>
+                        ) : null}
                     </CardFooter>
                 </Card>
             ))}

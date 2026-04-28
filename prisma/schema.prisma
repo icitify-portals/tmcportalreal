@@ -790,6 +790,9 @@ model ProgrammeRegistration {
   email            String
   phone            String?
   status           String    @default("REGISTERED")
+  gender           String?   @db.VarChar(50)
+  address          String?   @db.Text
+  amountPaid       Decimal?  @default(0.00) @db.Decimal(10, 2)
   paymentReference String?
   certificateUrl   String?   @db.VarChar(500)
   certificateIssuedAt DateTime?

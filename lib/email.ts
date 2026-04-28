@@ -284,5 +284,47 @@ export const emailTemplates = {
       View meeting details here: ${meetingUrl}
     `,
   }),
+  programmeRegistrationReceipt: (name: string, programmeTitle: string, amount: number, registrationId: string) => ({
+    subject: `Registration Confirmation: ${programmeTitle} - TMC`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 12px;">
+        <div style="text-align: center; margin-bottom: 24px;">
+           <h1 style="color: #15803d; margin: 0;">Registration Confirmed</h1>
+           <p style="color: #6b7280; margin-top: 4px;">Thank you for registering with The Muslim Congress</p>
+        </div>
+        
+        <p>Dear ${name},</p>
+        <p>This is to confirm your successful registration for the upcoming programme:</p>
+        
+        <div style="background-color: #f0fdf4; border: 1px solid #bcf0da; padding: 20px; border-radius: 8px; margin: 24px 0;">
+          <h2 style="margin-top: 0; color: #166534; font-size: 18px;">${programmeTitle}</h2>
+          <p style="margin: 4px 0; font-size: 14px; color: #4b5563;"><strong>Amount Paid:</strong> ₦${amount.toLocaleString()}</p>
+          <p style="margin: 4px 0; font-size: 14px; color: #4b5563;"><strong>Registration ID:</strong> ${registrationId}</p>
+        </div>
+        
+        <p><strong>Your Access Slip:</strong></p>
+        <p>Please download and print your official access slip, which includes a secure QR code for entry verification at the venue.</p>
+        
+        <div style="text-align: center; margin: 32px 0;">
+          <a href="${process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL}/programmes/registrations/${registrationId}/slip" style="background-color: #15803d; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Download Access Slip</a>
+        </div>
+        
+        <p style="font-size: 13px; color: #6b7280;">If you have any questions, please contact the organizing committee or your local chapter.</p>
+        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;">
+        <p style="text-align: center; color: #9ca3af; font-size: 11px;">© ${new Date().getFullYear()} The Muslim Congress. All rights reserved.</p>
+      </div>
+    `,
+    text: `
+      Registration Confirmation: ${programmeTitle}
+      
+      Dear ${name},
+      
+      Your registration for ${programmeTitle} is confirmed.
+      Amount Paid: ₦${amount.toLocaleString()}
+      Registration ID: ${registrationId}
+      
+      Download your access slip here: ${process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL}/programmes/registrations/${registrationId}/slip
+    `,
+  }),
 }
 

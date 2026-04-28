@@ -45,7 +45,7 @@ export const transactionTypeEnum = mysqlEnum('type', ['INFLOW', 'OUTFLOW']);
 // Programme Enums
 export const programmeStatusEnum = mysqlEnum('status', ['DRAFT', 'PENDING_STATE', 'PENDING_NATIONAL', 'APPROVED', 'REJECTED', 'CANCELLED', 'COMPLETED']);
 export const targetAudienceEnum = mysqlEnum('targetAudience', ['PUBLIC', 'MEMBERS', 'BROTHERS', 'SISTERS', 'CHILDREN', 'YOUTH', 'ELDERS']);
-export const registrationStatusEnum = mysqlEnum('status', ['REGISTERED', 'PAID', 'ATTENDED', 'CANCELLED']);
+export const registrationStatusEnum = mysqlEnum('status', ['REGISTERED', 'PENDING_PAYMENT', 'PAID', 'ATTENDED', 'CANCELLED']);
 export const programmeFormatEnum = mysqlEnum('format', ['PHYSICAL', 'VIRTUAL', 'HYBRID']);
 export const programmeFrequencyEnum = mysqlEnum('frequency', ['WEEKLY', 'MONTHLY', 'QUARTERLY', 'BI-ANNUALLY', 'ANNUALLY', 'ONCE']);
 
@@ -1048,6 +1048,9 @@ export const programmeRegistrations = mysqlTable("programme_registrations", {
     phone: varchar("phone", { length: 255 }),
 
     status: registrationStatusEnum.default('REGISTERED'),
+    gender: varchar("gender", { length: 50 }),
+    address: text("address"),
+    amountPaid: decimal("amountPaid", { precision: 10, scale: 2 }).default("0.00"),
     paymentReference: varchar("paymentReference", { length: 255 }), // Paystack Ref
     certificateUrl: varchar("certificateUrl", { length: 500 }),
     certificateIssuedAt: timestamp("certificateIssuedAt", { mode: "date", fsp: 3 }),

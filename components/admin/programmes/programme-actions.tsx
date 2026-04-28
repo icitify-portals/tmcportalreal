@@ -10,10 +10,11 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { MoreHorizontal, Edit, Trash, Loader2 } from "lucide-react"
+import { MoreHorizontal, Edit, Trash, Loader2, Users } from "lucide-react"
 import { EditProgrammeDialog } from "./edit-programme-dialog"
 import { deleteProgramme } from "@/lib/actions/programmes"
 import { toast } from "sonner"
+import Link from "next/link"
 import {
     AlertDialog,
     AlertDialogAction,
@@ -64,6 +65,11 @@ export function ProgrammeActions({ programme }: ProgrammeActionsProps) {
                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
                     <DropdownMenuItem onClick={() => setEditOpen(true)}>
                         <Edit className="mr-2 h-4 w-4" /> Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                        <Link href={`/dashboard/admin/programmes/${programme.id}/registrations`}>
+                            <Users className="mr-2 h-4 w-4" /> Registrations
+                        </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => setDeleteOpen(true)} className="text-red-600 focus:text-red-600">

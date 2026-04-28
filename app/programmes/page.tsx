@@ -1,11 +1,11 @@
 import { Suspense } from "react"
 export const dynamic = 'force-dynamic'
-import { getProgrammes } from "@/lib/actions/programmes"
+import { getProgrammes, getUserRegistrations } from "@/lib/actions/programmes"
 import { RegisterForProgrammeDialog } from "@/components/programmes/register-dialog"
 import { PublicNav } from "@/components/layout/public-nav"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { CalendarIcon, MapPinIcon, ClockIcon, UsersIcon, Filter } from "lucide-react"
+import { CalendarIcon, MapPinIcon, ClockIcon, UsersIcon, Filter, CheckCircle2 } from "lucide-react"
 import { format } from "date-fns"
 import { Metadata } from "next"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -27,6 +27,8 @@ const NIGERIAN_STATES = [
 
 async function ProgrammeGrid({ level, state }: { level?: string, state?: string }) {
     const programmes = await getProgrammes({ status: 'APPROVED', level, state }) || []
+    const userRegs = await getUserRegistrations()
+    const registeredProgrammeIds = new Set(userRegs.map(r => r.programmeId))
 
     if (programmes.length === 0) {
         return (
@@ -83,11 +85,18 @@ async function ProgrammeGrid({ level, state }: { level?: string, state?: string 
                             </div>
                         </CardContent>
                         <CardFooter className="pt-4 border-t bg-gray-50/50">
-                            <RegisterForProgrammeDialog
-                                programmeId={p.id}
-                                programmeTitle={p.title}
-                                amount={parseFloat(p.amount || "0")}
-                            />
+                            {registeredProgrammeIds.has(p.id) ? (
+                                <Button className="w-full" variant="outline" disabled>
+                                    <CheckCircle2 className="mr-2 h-4 w-4" />
+                                    Already Registered
+                                </Button>
+                            ) : (
+                                <RegisterForProgrammeDialog
+                                    programmeId={p.id}
+                                    programmeTitle={p.title}
+                                    amount={parseFloat(p.amount || "0")}
+                                />
+                            )}
                         </CardFooter>
                     </Card>
                 )
