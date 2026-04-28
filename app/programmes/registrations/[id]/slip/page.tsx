@@ -5,6 +5,8 @@ import { MapPin, Calendar, Clock, User, ShieldCheck, Mail, Phone, CreditCard, Pr
 import { Badge } from "@/components/ui/badge"
 import { ClientCurrency } from "@/components/ui/client-currency"
 import { format } from "date-fns"
+import { PrintButton } from "@/components/programmes/print-button"
+import { ResumePaymentButton } from "@/components/programmes/resume-payment-button"
 
 export default async function AccessSlipPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
@@ -153,16 +155,18 @@ export default async function AccessSlipPage({ params }: { params: Promise<{ id:
                     </div>
                 </div>
 
-                {/* Footer Section */}
-                <div className="bg-gray-50 p-6 border-t border-gray-100 flex justify-between items-center print:hidden">
-                    <p className="text-xs text-gray-400 italic">Please present this slip at the venue for entry.</p>
-                    <button 
-                        onClick={() => window.print()}
-                        className="flex items-center gap-2 bg-green-700 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-green-800 transition-colors shadow-lg shadow-green-700/20"
-                    >
-                        <Printer className="w-4 h-4" />
-                        Print Access Slip
-                    </button>
+                <div className="bg-gray-50 p-6 border-t border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-4 print:hidden">
+                    <p className="text-xs text-gray-400 italic">
+                        {registration.status === 'PENDING_PAYMENT' 
+                            ? "Payment is required to validate this access slip."
+                            : "Please present this slip at the venue for entry."}
+                    </p>
+                    <div className="flex items-center gap-3">
+                        {registration.status === 'PENDING_PAYMENT' && (
+                            <ResumePaymentButton registrationId={registration.id} />
+                        )}
+                        <PrintButton />
+                    </div>
                 </div>
             </div>
 

@@ -396,29 +396,42 @@ export async function registerForProgramme(programmeId: string, data?: z.infer<t
         if (!programme) return { success: false, error: "Programme not found" }
 
         // Check for existing registration
-        let existingRegId: string | null = null;
+        let existingReg: { id: string, status: string, email: string } | null = null;
+        const normalizedEmail = data?.email?.trim().toLowerCase() || session?.user?.email?.trim().toLowerCase();
         
         if (session?.user) {
-            const results = await db.select({ id: programmeRegistrations.id }).from(programmeRegistrations)
+            const results = await db.select({ id: programmeRegistrations.id, status: programmeRegistrations.status, email: programmeRegistrations.email }).from(programmeRegistrations)
                 .where(and(
                     eq(programmeRegistrations.programmeId, programmeId),
                     eq(programmeRegistrations.userId, session.user.id)
                 )).limit(1)
-            if (results.length > 0) existingRegId = results[0].id
-        } else if (data) {
-            const results = await db.select({ id: programmeRegistrations.id }).from(programmeRegistrations)
+            if (results.length > 0) existingReg = results[0]
+        } 
+        
+        // Secondary check by email if not found by userId or if guest
+        if (!existingReg && normalizedEmail) {
+            const results = await db.select({ id: programmeRegistrations.id, status: programmeRegistrations.status, email: programmeRegistrations.email }).from(programmeRegistrations)
                 .where(and(
                     eq(programmeRegistrations.programmeId, programmeId),
-                    eq(programmeRegistrations.email, data.email)
+                    eq(programmeRegistrations.email, normalizedEmail)
                 )).limit(1)
-            if (results.length > 0) existingRegId = results[0].id
+            if (results.length > 0) existingReg = results[0]
         }
 
-        if (existingRegId) {
+        if (existingReg) {
+            if (existingReg.status === 'PENDING_PAYMENT') {
+                return { 
+                    success: true, 
+                    registrationId: existingReg.id, 
+                    paymentRequired: true,
+                    amount: programme.amount,
+                    isResume: true
+                }
+            }
             return { 
                 success: false, 
                 error: "You have already registered for this programme.",
-                registrationId: existingRegId
+                registrationId: existingReg.id
             }
         }
 

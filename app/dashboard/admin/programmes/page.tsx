@@ -49,15 +49,15 @@ async function ProgrammeList({ type, orgId }: { type: 'MY_PROGRAMMES' | 'TO_APPR
         <div className="space-y-4">
             {programmes.map((p) => (
                 <Card key={p.id}>
-                    <CardHeader className="pb-3">
+                    <CardHeader className="pb-3 bg-gray-50/50">
                         <div className="flex justify-between items-start">
                             <div className="space-y-1">
-                                <CardTitle className="text-xl">{p.title}</CardTitle>
-                                <CardDescription>
+                                <CardTitle className="text-xl font-bold text-gray-900">{p.title}</CardTitle>
+                                <CardDescription className="text-gray-600 font-medium">
                                     <ClientDate date={p.startDate} formatString="PPP" /> @ {p.venue}
                                 </CardDescription>
                                 {p.office && (
-                                    <Badge variant="outline" className="mt-1">
+                                    <Badge variant="outline" className="mt-1 border-green-200 text-green-700 bg-green-50">
                                         {p.office.name}
                                     </Badge>
                                 )}
@@ -66,32 +66,32 @@ async function ProgrammeList({ type, orgId }: { type: 'MY_PROGRAMMES' | 'TO_APPR
                                 {p.isLateSubmission && (
                                     <Badge variant="destructive" className="animate-pulse">LATE</Badge>
                                 )}
-                                <Badge className={getStatusColor(p.status || "")}>
+                                <Badge className={`${getStatusColor(p.status || "")} text-white shadow-sm font-bold`}>
                                     {p.status?.replace('_', ' ')}
                                 </Badge>
                                 <ProgrammeActions programme={p} />
                             </div>
                         </div>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                        <p className="text-sm text-gray-600 line-clamp-2">{p.description}</p>
+                    <CardContent className="space-y-4 pt-4">
+                        <p className="text-sm text-gray-800 font-medium leading-relaxed">{p.description}</p>
                         
                         {p.status === 'REJECTED' && p.rejectionReason && (
-                            <Alert variant="destructive" className="bg-red-50/50 border-red-200">
+                            <Alert variant="destructive" className="bg-red-50/80 border-red-200">
                                 <XCircle className="h-4 w-4 text-red-600" />
-                                <AlertTitle className="text-red-800 text-xs font-bold uppercase tracking-wider">Rejection Reason</AlertTitle>
-                                <AlertDescription className="text-red-700 text-sm">
+                                <AlertTitle className="text-red-900 text-xs font-bold uppercase tracking-wider">Rejection Reason</AlertTitle>
+                                <AlertDescription className="text-red-800 text-sm font-medium">
                                     {p.rejectionReason}
                                 </AlertDescription>
                             </Alert>
                         )}
 
-                        <div className="flex justify-between items-center text-sm text-muted-foreground pt-2">
+                        <div className="flex justify-between items-center text-sm font-medium text-gray-700 pt-2">
                             <span>Target: {p.targetAudience}</span>
                             {p.paymentRequired ? (
-                                <ClientCurrency amount={p.amount || 0} />
+                                <ClientCurrency amount={p.amount || 0} className="text-green-800 font-bold" />
                             ) : (
-                                <span>Free</span>
+                                <span className="text-green-700">Free</span>
                             )}
                         </div>
 

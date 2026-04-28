@@ -43,12 +43,12 @@ async function RegistrationsTable({ programmeId }: { programmeId: string }) {
             <Table>
                 <TableHeader className="bg-gray-50">
                     <TableRow>
-                        <TableHead className="font-bold uppercase text-[10px] tracking-wider text-gray-500">Attendee</TableHead>
-                        <TableHead className="font-bold uppercase text-[10px] tracking-wider text-gray-500">Type</TableHead>
-                        <TableHead className="font-bold uppercase text-[10px] tracking-wider text-gray-500">Payment</TableHead>
-                        <TableHead className="font-bold uppercase text-[10px] tracking-wider text-gray-500">Status</TableHead>
-                        <TableHead className="font-bold uppercase text-[10px] tracking-wider text-gray-500">Date</TableHead>
-                        <TableHead className="font-bold uppercase text-[10px] tracking-wider text-gray-500 text-right">Actions</TableHead>
+                        <TableHead className="font-bold uppercase text-[10px] tracking-wider text-gray-700">Attendee</TableHead>
+                        <TableHead className="font-bold uppercase text-[10px] tracking-wider text-gray-700">Type</TableHead>
+                        <TableHead className="font-bold uppercase text-[10px] tracking-wider text-gray-700">Payment</TableHead>
+                        <TableHead className="font-bold uppercase text-[10px] tracking-wider text-gray-700">Status</TableHead>
+                        <TableHead className="font-bold uppercase text-[10px] tracking-wider text-gray-700">Date</TableHead>
+                        <TableHead className="font-bold uppercase text-[10px] tracking-wider text-gray-700 text-right">Actions</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
