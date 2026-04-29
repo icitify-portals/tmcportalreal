@@ -25,6 +25,71 @@ export async function generateSecurityHash(registrationId: string, email: string
         .toUpperCase()
 }
 
+export async function recordAttendance(registrationId: string) {
+    const session = await getServerSession()
+    if (!session?.user?.id) return { success: false, error: "Authentication required to record attendance" }
+
+    try {
+        const [reg] = await db.select({
+            registration: programmeRegistrations,
+            programme: programmes
+        })
+        .from(programmeRegistrations)
+        .innerJoin(programmes, eq(programmeRegistrations.programmeId, programmes.id))
+        .where(eq(programmeRegistrations.id, registrationId))
+        .limit(1)
+
+        if (!reg) return { success: false, error: "Registration not found" }
+
+        // Time check: Must be within 3 hours of start date (and before end date if exists)
+        const now = new Date()
+        const startTime = new Date(reg.programme.startDate)
+        const allowedStartTime = new Date(startTime.getTime() - (3 * 60 * 60 * 1000))
+        
+        // If programme has an end date, we allow scanning until then. If not, we allow for the day.
+        const endTime = reg.programme.endDate ? new Date(reg.programme.endDate) : new Date(startTime.getTime() + (24 * 60 * 60 * 1000))
+
+        if (now < allowedStartTime) {
+            return { 
+                success: false, 
+                error: `Attendance starts 3 hours before the programme (Starts at ${startTime.toLocaleTimeString()})` 
+            }
+        }
+        
+        if (now > endTime) {
+             return { success: false, error: "This programme has already concluded." }
+        }
+
+        // Must be PAID to check in
+        if (reg.registration.status === 'PENDING_PAYMENT') {
+            return { success: false, error: "Payment is required before check-in" }
+        }
+
+        if (!reg.registration.checkInTime) {
+            // First time scanning -> Check In
+            await db.update(programmeRegistrations).set({
+                checkInTime: now,
+                checkInBy: session.user.id,
+                status: 'ATTENDED'
+            }).where(eq(programmeRegistrations.id, registrationId))
+
+            revalidatePath(`/programmes/verify/${registrationId}`)
+            return { success: true, type: 'CHECK_IN', time: now }
+        } else {
+            // Second time scanning -> Check Out
+            await db.update(programmeRegistrations).set({
+                checkOutTime: now,
+                checkOutBy: session.user.id
+            }).where(eq(programmeRegistrations.id, registrationId))
+
+            revalidatePath(`/programmes/verify/${registrationId}`)
+            return { success: true, type: 'CHECK_OUT', time: now }
+        }
+    } catch (error: any) {
+        return { success: false, error: error.message }
+    }
+}
+
 export async function getOffices(organizationId: string) {
     try {
         return await db.select().from(offices).where(eq(offices.organizationId, organizationId))
@@ -543,21 +608,30 @@ export async function getProgrammeRegistrations(programmeId: string) {
         const session = await getServerSession()
         if (!session?.user?.id) return []
 
+        const checkInGatekeeper = aliasedTable(users, "checkInGatekeeper")
+        const checkOutGatekeeper = aliasedTable(users, "checkOutGatekeeper")
+
         const results = await db.select({
             registration: programmeRegistrations,
             user: users,
             member: members,
+            checkInBy: checkInGatekeeper.name,
+            checkOutBy: checkOutGatekeeper.name,
         })
             .from(programmeRegistrations)
             .leftJoin(users, eq(programmeRegistrations.userId, users.id))
             .leftJoin(members, eq(programmeRegistrations.memberId, members.id))
+            .leftJoin(checkInGatekeeper, eq(programmeRegistrations.checkInBy, checkInGatekeeper.id))
+            .leftJoin(checkOutGatekeeper, eq(programmeRegistrations.checkOutBy, checkOutGatekeeper.id))
             .where(eq(programmeRegistrations.programmeId, programmeId))
             .orderBy(desc(programmeRegistrations.registeredAt))
 
         return results.map(r => ({
             ...r.registration,
             user: r.user,
-            member: r.member
+            member: r.member,
+            checkInBy: r.checkInBy,
+            checkOutBy: r.checkOutBy
         }))
     } catch (error) {
         console.error("Fetch Registrations Error:", error)

@@ -1059,6 +1059,12 @@ export const programmeRegistrations = mysqlTable("programme_registrations", {
     state: varchar("state", { length: 255 }),
     lga: varchar("lga", { length: 255 }),
     branch: varchar("branch", { length: 255 }),
+    
+    checkInTime: timestamp("checkInTime", { mode: "date", fsp: 3 }),
+    checkOutTime: timestamp("checkOutTime", { mode: "date", fsp: 3 }),
+    checkInBy: varchar("checkInBy", { length: 255 }).references(() => users.id),
+    checkOutBy: varchar("checkOutBy", { length: 255 }).references(() => users.id),
+
     registeredAt: timestamp("registeredAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
 });
 

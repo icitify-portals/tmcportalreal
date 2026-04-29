@@ -47,8 +47,9 @@ async function RegistrationsTable({ programmeId }: { programmeId: string }) {
                         <TableHead className="font-bold uppercase text-[10px] tracking-wider text-gray-700">Attendee</TableHead>
                         <TableHead className="font-bold uppercase text-[10px] tracking-wider text-gray-700">Type</TableHead>
                         <TableHead className="font-bold uppercase text-[10px] tracking-wider text-gray-700">Payment</TableHead>
+                        <TableHead className="font-bold uppercase text-[10px] tracking-wider text-gray-700">Check In</TableHead>
+                        <TableHead className="font-bold uppercase text-[10px] tracking-wider text-gray-700">Check Out</TableHead>
                         <TableHead className="font-bold uppercase text-[10px] tracking-wider text-gray-700">Status</TableHead>
-                        <TableHead className="font-bold uppercase text-[10px] tracking-wider text-gray-700">Date</TableHead>
                         <TableHead className="font-bold uppercase text-[10px] tracking-wider text-gray-700 text-right">Actions</TableHead>
                     </TableRow>
                 </TableHeader>
@@ -82,6 +83,26 @@ async function RegistrationsTable({ programmeId }: { programmeId: string }) {
                                 </div>
                             </TableCell>
                             <TableCell>
+                                {reg.checkInTime ? (
+                                    <div className="flex flex-col">
+                                        <span className="font-bold text-gray-900">{format(new Date(reg.checkInTime), "h:mm a")}</span>
+                                        <span className="text-[10px] text-muted-foreground uppercase">{reg.checkInBy || "System"}</span>
+                                    </div>
+                                ) : (
+                                    <span className="text-gray-300">--</span>
+                                )}
+                            </TableCell>
+                            <TableCell>
+                                {reg.checkOutTime ? (
+                                    <div className="flex flex-col">
+                                        <span className="font-bold text-gray-900">{format(new Date(reg.checkOutTime), "h:mm a")}</span>
+                                        <span className="text-[10px] text-muted-foreground uppercase">{reg.checkOutBy || "System"}</span>
+                                    </div>
+                                ) : (
+                                    <span className="text-gray-300">--</span>
+                                )}
+                            </TableCell>
+                            <TableCell>
                                 <Badge variant={
                                     reg.status === 'PAID' ? 'default' :
                                     reg.status === 'ATTENDED' ? 'secondary' :
@@ -89,9 +110,6 @@ async function RegistrationsTable({ programmeId }: { programmeId: string }) {
                                 } className="text-[10px]">
                                     {reg.status}
                                 </Badge>
-                            </TableCell>
-                            <TableCell className="text-sm">
-                                <ClientDate date={reg.registeredAt || new Date()} formatString="MMM d, yyyy" />
                             </TableCell>
                             <TableCell className="text-right">
                                 <div className="flex justify-end gap-2">

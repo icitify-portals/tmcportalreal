@@ -1,9 +1,11 @@
 import { getRegistrationDetails, generateSecurityHash } from "@/lib/actions/programmes"
 import { notFound } from "next/navigation"
 import Image from "next/image"
-import { CheckCircle2, XCircle, ShieldCheck, User, Calendar, MapPin, BadgeCheck } from "lucide-react"
+import { CheckCircle2, XCircle, ShieldCheck, User, Calendar, MapPin, BadgeCheck, Clock, UserCheck } from "lucide-react"
 import { format } from "date-fns"
 import { Badge } from "@/components/ui/badge"
+import { getServerSession } from "@/lib/session"
+import { AttendanceButton } from "@/components/programmes/attendance-button"
 
 export default async function PublicVerifyPage({ 
     params, 
@@ -14,6 +16,7 @@ export default async function PublicVerifyPage({
 }) {
     const { id } = await params
     const { hash } = await searchParams
+    const session = await getServerSession()
 
     const registration = await getRegistrationDetails(id)
     if (!registration) return notFound()
@@ -23,6 +26,8 @@ export default async function PublicVerifyPage({
     const isValid = hash === expectedHash
 
     const isPaid = registration.status === 'PAID' || registration.status === 'ATTENDED'
+    const hasCheckedIn = !!registration.checkInTime
+    const hasCheckedOut = !!registration.checkOutTime
 
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
@@ -93,6 +98,54 @@ export default async function PublicVerifyPage({
                             </div>
                         </div>
                     </div>
+
+                    {/* Attendance Logs */}
+                    {(hasCheckedIn || hasCheckedOut) && (
+                        <div className="bg-blue-50 rounded-2xl p-5 border border-blue-100 space-y-4">
+                            <p className="text-[10px] font-bold text-blue-400 uppercase tracking-widest">Attendance History</p>
+                            <div className="space-y-3">
+                                {hasCheckedIn && (
+                                    <div className="flex items-center justify-between text-sm">
+                                        <div className="flex items-center gap-2 text-blue-700 font-semibold">
+                                            <Clock className="w-4 h-4" />
+                                            Checked In
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-gray-900 font-bold">{format(new Date(registration.checkInTime!), "h:mm a")}</p>
+                                            <p className="text-[10px] text-gray-500">{format(new Date(registration.checkInTime!), "MMM d")}</p>
+                                        </div>
+                                    </div>
+                                )}
+                                {hasCheckedOut && (
+                                    <div className="flex items-center justify-between text-sm">
+                                        <div className="flex items-center gap-2 text-amber-700 font-semibold">
+                                            <Clock className="w-4 h-4" />
+                                            Checked Out
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-gray-900 font-bold">{format(new Date(registration.checkOutTime!), "h:mm a")}</p>
+                                            <p className="text-[10px] text-gray-500">{format(new Date(registration.checkOutTime!), "MMM d")}</p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Gatekeeper Controls */}
+                    {session?.user && isValid && isPaid && (
+                        <div className="pt-2">
+                            <AttendanceButton 
+                                registrationId={registration.id} 
+                                checkInTime={registration.checkInTime}
+                                checkOutTime={registration.checkOutTime}
+                            />
+                            <p className="text-[10px] text-center text-gray-400 mt-3 flex items-center justify-center gap-1">
+                                <UserCheck className="w-3 h-3" />
+                                Gatekeeper: {session.user.name || session.user.email}
+                            </p>
+                        </div>
+                    )}
 
                     <div className="pt-6 border-t border-gray-100 flex items-center justify-between">
                         <div className="flex flex-col">

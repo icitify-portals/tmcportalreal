@@ -13,7 +13,7 @@ export function ExportRegistrationsCSV({
     const handleExport = () => {
         if (data.length === 0) return
 
-        const headers = ["Name", "Email", "Phone", "Gender", "Address", "Country", "State", "LGA", "Branch", "User Type", "Membership ID", "Status", "Amount Paid", "Payment Ref", "Date"]
+        const headers = ["Name", "Email", "Phone", "Gender", "Address", "Country", "State", "LGA", "Branch", "User Type", "Membership ID", "Status", "Amount Paid", "Payment Ref", "Check-In Time", "Check-In By", "Check-Out Time", "Check-Out By", "Registration Date"]
         
         const csvContent = [
             headers.join(","),
@@ -33,6 +33,10 @@ export function ExportRegistrationsCSV({
                     reg.status,
                     reg.amountPaid || "0.00",
                     `"${reg.paymentReference || ""}"`,
+                    reg.checkInTime ? `"${new Date(reg.checkInTime).toLocaleString()}"` : '""',
+                    `"${reg.checkInBy || ""}"`,
+                    reg.checkOutTime ? `"${new Date(reg.checkOutTime).toLocaleString()}"` : '""',
+                    `"${reg.checkOutBy || ""}"`,
                     new Date(reg.registeredAt).toLocaleDateString()
                 ]
                 return row.join(",")
