@@ -90,7 +90,7 @@ export async function recordAttendance(registrationId: string) {
     }
 }
 
-import { verifyAttendanceToken } from "@/lib/attendance-token"
+import { verifyAttendanceToken, generateAttendanceToken } from "@/lib/attendance-token"
 
 export async function resetAttendance(registrationId: string) {
     const session = await getServerSession()
