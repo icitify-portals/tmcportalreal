@@ -36,20 +36,33 @@ export default async function AccessSlipPage({ params }: { params: Promise<{ id:
         <div className="min-h-screen bg-gray-50 py-12 px-4 print:bg-white print:py-0 print:px-0">
             <style dangerouslySetInnerHTML={{ __html: `
                 @media print {
-                    @page { size: portrait; margin: 0; }
-                    body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+                    @page { 
+                        size: portrait; 
+                        margin: 10mm; 
+                    }
+                    body { 
+                        -webkit-print-color-adjust: exact !important; 
+                        print-color-adjust: exact !important;
+                        background: white !important;
+                        height: auto !important;
+                        min-height: 0 !important;
+                    }
                     .print-card { 
                         width: 100% !important; 
                         max-width: 100% !important; 
-                        border: none !important; 
+                        border: 1px solid #e5e7eb !important; 
                         box-shadow: none !important;
                         margin: 0 !important;
-                        border-radius: 0 !important;
+                        border-radius: 12px !important;
+                        page-break-inside: avoid !important;
                     }
+                    .print-p-4 { padding: 1rem !important; }
+                    .print-gap-4 { gap: 1rem !important; }
+                    .print-mt-4 { margin-top: 1rem !important; }
                     .no-print { display: none !important; }
                 }
             `}} />
-            <div className="max-w-3xl mx-auto bg-white border-2 border-gray-200 rounded-2xl shadow-xl overflow-hidden print:shadow-none print:border-0 print:max-w-full relative print-card">
+            <div className="max-w-3xl mx-auto bg-white border-2 border-gray-200 rounded-2xl shadow-xl overflow-hidden print:shadow-none print:border-1 print:max-w-full relative print-card">
                 
                 {/* Unpaid Watermark/Overlay for print protection */}
                 {isPending && (
@@ -83,7 +96,7 @@ export default async function AccessSlipPage({ params }: { params: Promise<{ id:
                 )}
 
                 {/* Header with Logo */}
-                <div className="bg-green-700 text-white p-8 flex justify-between items-center relative overflow-hidden">
+                <div className="bg-green-700 text-white p-8 print:p-6 flex justify-between items-center relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl" />
                     <div className="relative z-10">
                         <div className="flex items-center gap-3 mb-2">
@@ -109,7 +122,7 @@ export default async function AccessSlipPage({ params }: { params: Promise<{ id:
                     </div>
                 </div>
 
-                <div className="p-8 grid md:grid-cols-3 gap-8">
+                <div className="p-8 print:p-6 grid md:grid-cols-3 gap-8 print:gap-4">
                     
                     {/* Left Column: QR and Photo */}
                     <div className="flex flex-col items-center gap-6 border-b md:border-b-0 md:border-r border-gray-100 pb-8 md:pb-0">
@@ -148,7 +161,7 @@ export default async function AccessSlipPage({ params }: { params: Promise<{ id:
                     </div>
 
                     {/* Right Column: Details */}
-                    <div className="md:col-span-2 space-y-8">
+                    <div className="md:col-span-2 space-y-8 print:space-y-4">
                         <div>
                             <h2 className="text-2xl font-black text-gray-900 mb-6 leading-tight">
                                 {registration.programme.title}
@@ -190,7 +203,7 @@ export default async function AccessSlipPage({ params }: { params: Promise<{ id:
                             </div>
                         </div>
 
-                        <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100 space-y-4">
+                        <div className="bg-gray-50 rounded-2xl p-6 print:p-4 border border-gray-100 space-y-4 print:space-y-2">
                             <div className="flex items-start gap-4">
                                 <div className="bg-white p-2 rounded-lg shadow-sm border border-gray-100">
                                     <MapPin className="w-5 h-5 text-green-700" />
