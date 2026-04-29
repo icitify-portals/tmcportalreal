@@ -27,7 +27,7 @@ export default async function AccessSlipPage({ params }: { params: Promise<{ id:
         }
     }
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://portal.tmcng.net"
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://tmcng.net"
     const verificationUrl = `${appUrl}/dashboard/admin/programmes/${registration.programmeId}/verify?regId=${id}`
     const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(verificationUrl)}`
 
