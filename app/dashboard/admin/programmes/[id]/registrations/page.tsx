@@ -21,6 +21,7 @@ import { MarkAttendanceButton } from "@/components/admin/programmes/mark-attenda
 import { DeleteRegistrationButton } from "@/components/admin/programmes/delete-registration-button"
 import { ClearRegistrationsButton } from "@/components/admin/programmes/clear-registrations-button"
 import { SyncPaymentsButton } from "@/components/admin/programmes/sync-payments-button"
+import { ResetAttendanceButton } from "@/components/admin/programmes/reset-attendance-button"
 import { db } from "@/lib/db"
 import { programmes } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
@@ -120,6 +121,9 @@ async function RegistrationsTable({ programmeId }: { programmeId: string }) {
                                     </Button>
                                     {(reg.status === 'PAID' || reg.status === 'REGISTERED' || reg.status === 'ATTENDED') && (
                                         <MarkAttendanceButton registrationId={reg.id} status={reg.status} />
+                                    )}
+                                    {reg.checkInTime && (
+                                        <ResetAttendanceButton registrationId={reg.id} userName={reg.name} />
                                     )}
                                     <DeleteRegistrationButton registrationId={reg.id} userName={reg.name} />
                                 </div>

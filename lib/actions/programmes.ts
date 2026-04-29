@@ -90,6 +90,26 @@ export async function recordAttendance(registrationId: string) {
     }
 }
 
+export async function resetAttendance(registrationId: string) {
+    const session = await getServerSession()
+    if (!session?.user?.id) return { success: false, error: "Authentication required" }
+
+    try {
+        await db.update(programmeRegistrations).set({
+            checkInTime: null,
+            checkOutTime: null,
+            checkInBy: null,
+            checkOutBy: null,
+            status: 'PAID' // Revert to paid status
+        }).where(eq(programmeRegistrations.id, registrationId))
+
+        revalidatePath(`/dashboard/admin/programmes`)
+        return { success: true }
+    } catch (error: any) {
+        return { success: false, error: error.message }
+    }
+}
+
 export async function getOffices(organizationId: string) {
     try {
         return await db.select().from(offices).where(eq(offices.organizationId, organizationId))
