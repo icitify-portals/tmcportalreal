@@ -1030,6 +1030,7 @@ export const programmes = mysqlTable("programmes", {
     amount: decimal("amount", { precision: 10, scale: 2 }).default("0.00"),
     hasCertificate: boolean("hasCertificate").default(false),
     rejectionReason: text("rejectionReason"),
+    staticAttendanceToken: varchar("staticAttendanceToken", { length: 255 }),
 
     createdBy: varchar("createdBy", { length: 255 }).notNull().references(() => users.id),
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
