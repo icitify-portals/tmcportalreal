@@ -90,6 +90,8 @@ export async function recordAttendance(registrationId: string) {
     }
 }
 
+import { verifyAttendanceToken } from "@/lib/attendance-token"
+
 export async function resetAttendance(registrationId: string) {
     const session = await getServerSession()
     if (!session?.user?.id) return { success: false, error: "Authentication required" }
@@ -108,6 +110,81 @@ export async function resetAttendance(registrationId: string) {
     } catch (error: any) {
         return { success: false, error: error.message }
     }
+}
+
+export async function selfRecordAttendance(programmeId: string, token: string) {
+    const session = await getServerSession()
+    if (!session?.user?.id) return { success: false, error: "Please log in to record your attendance" }
+
+    try {
+        // 1. Verify Dynamic Token (Security Check)
+        const isTokenValid = verifyAttendanceToken(programmeId, token)
+        if (!isTokenValid) {
+            return { success: false, error: "Invalid or expired QR code. Please scan the current code on the screen." }
+        }
+
+        // 2. Find registration
+        const [reg] = await db.select().from(programmeRegistrations)
+            .where(and(
+                eq(programmeRegistrations.programmeId, programmeId),
+                eq(programmeRegistrations.userId, session.user.id)
+            )).limit(1)
+
+        if (!reg) return { success: false, error: "You are not registered for this programme." }
+
+        // 3. Time check (Reuse logic from recordAttendance but for member)
+        const [programme] = await db.select().from(programmes).where(eq(programmes.id, programmeId)).limit(1)
+        if (!programme) return { success: false, error: "Programme not found" }
+
+        const now = new Date()
+        const startTime = new Date(programme.startDate)
+        const allowedStartTime = new Date(startTime.getTime() - (3 * 60 * 60 * 1000))
+        const endTime = programme.endDate ? new Date(programme.endDate) : new Date(startTime.getTime() + (24 * 60 * 60 * 1000))
+
+        if (now < allowedStartTime) {
+            return { success: false, error: "Attendance is not yet open for this programme." }
+        }
+        if (now > endTime) {
+            return { success: false, error: "Attendance for this programme has concluded." }
+        }
+
+        // 4. Must be PAID
+        if (reg.status === 'PENDING_PAYMENT') {
+            return { success: false, error: "Payment is required before check-in." }
+        }
+
+        // 5. Toggle Attendance
+        if (!reg.checkInTime) {
+            await db.update(programmeRegistrations).set({
+                checkInTime: now,
+                checkInBy: 'SELF', // Mark as self-scanned
+                status: 'ATTENDED'
+            }).where(eq(programmeRegistrations.id, reg.id))
+            return { success: true, type: 'CHECK_IN' }
+        } else if (!reg.checkOutTime) {
+            await db.update(programmeRegistrations).set({
+                checkOutTime: now,
+                checkOutBy: 'SELF'
+            }).where(eq(programmeRegistrations.id, reg.id))
+            return { success: true, type: 'CHECK_OUT' }
+        } else {
+            return { success: false, error: "You have already completed your attendance for this programme." }
+        }
+
+    } catch (error: any) {
+        return { success: false, error: error.message }
+    }
+}
+
+export async function getAttendanceTokenAction(programmeId: string) {
+    const session = await getServerSession()
+    if (!session?.user?.id) return { success: false, error: "Unauthorized" }
+    
+    const token = generateAttendanceToken(programmeId)
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://tmcng.net"
+    const url = `${appUrl}/programmes/attendance/${programmeId}?token=${token}`
+    
+    return { success: true, token, url }
 }
 
 export async function getOffices(organizationId: string) {

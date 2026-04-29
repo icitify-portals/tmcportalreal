@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Download, Printer, UserCheck, ShieldCheck, QrCode } from "lucide-react"
+import { Download, Printer, UserCheck, ShieldCheck, QrCode, Monitor } from "lucide-react"
 import Link from "next/link"
 import { format } from "date-fns"
 import { ClientDate } from "@/components/ui/client-date"
@@ -183,6 +183,12 @@ async function RegistrationsHeader({ programmeId, programmeTitle }: { programmeI
                 <Link href={`/dashboard/admin/programmes/${programmeId}/verify`}>
                     <QrCode className="mr-2 h-4 w-4" />
                     Verify Entry
+                </Link>
+            </Button>
+            <Button variant="outline" className="h-9 border-blue-200 text-blue-700 hover:bg-blue-50" asChild>
+                <Link href={`/dashboard/admin/programmes/${programmeId}/kiosk`} target="_blank">
+                    <Monitor className="mr-2 h-4 w-4" />
+                    Launch Kiosk
                 </Link>
             </Button>
             <SyncPaymentsButton programmeId={programmeId} />
