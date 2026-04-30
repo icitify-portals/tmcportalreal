@@ -30,7 +30,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { createProgramme, getOffices, getOfficials } from "@/lib/actions/programmes"
 import { getOrganizations } from "@/lib/actions/organization"
 import { toast } from "sonner"
-import { Loader2, Plus, FileUpload } from "lucide-react"
+import { Loader2, Plus } from "lucide-react"
 import { FileUpload as FileUploadInput } from "@/components/ui/file-upload"
 
 const ProgrammeSchema = z.object({
