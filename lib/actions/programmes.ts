@@ -264,7 +264,7 @@ const ProgrammeSchema = z.object({
     frequency: z.enum(['ONCE', 'WEEKLY', 'MONTHLY', 'QUARTERLY', 'BI-ANNUALLY', 'ANNUALLY']).default('ONCE'),
     budget: z.number().nonnegative().default(0),
     objectives: z.string().optional(),
-    attendanceWindow: z.string().default("3"),
+    attendanceWindow: z.number().default(3),
     certTemplateType: z.enum(['TMC_ONLY', 'PARTNER_ONLY', 'BOTH']).default('TMC_ONLY'),
     certTmcSignature: z.string().optional(),
     certTmcSignatory: z.string().optional(),
