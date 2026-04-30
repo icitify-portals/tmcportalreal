@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { CheckCircle2, AlertCircle, XCircle, UserCheck } from "lucide-react"
+import { CheckCircle2, AlertCircle, XCircle, UserCheck, BarChart3, MessageSquare } from "lucide-react"
 import { format } from "date-fns"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { db } from "@/lib/db"
@@ -106,7 +106,19 @@ async function ProgrammeList({ type, orgId }: { type: 'MY_PROGRAMMES' | 'TO_APPR
                                 <Button variant="outline" size="sm" asChild>
                                     <a href={`/dashboard/admin/programmes/${p.id}/registrations`}>
                                         <UserCheck className="w-4 h-4 mr-2" />
-                                        View Registrations
+                                        Registrations
+                                    </a>
+                                </Button>
+                                <Button variant="outline" size="sm" asChild className="bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-100">
+                                    <a href={`/dashboard/admin/programmes/${p.id}/analytics`}>
+                                        <BarChart3 className="w-4 h-4 mr-2" />
+                                        Analytics
+                                    </a>
+                                </Button>
+                                <Button variant="outline" size="sm" asChild className="bg-purple-50 text-purple-700 hover:bg-purple-100 border-purple-100">
+                                    <a href={`/dashboard/programmes/${p.id}/group`}>
+                                        <MessageSquare className="w-4 h-4 mr-2" />
+                                        Lounge
                                     </a>
                                 </Button>
                                 <SubmitReportDialog programmeId={p.id} programmeTitle={p.title} />

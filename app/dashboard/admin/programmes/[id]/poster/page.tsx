@@ -6,6 +6,7 @@ import Image from "next/image"
 import { getStaticAttendanceUrl } from "@/lib/actions/programmes"
 import { ShieldCheck, MapPin, Calendar, Clock, Smartphone } from "lucide-react"
 import { format } from "date-fns"
+import { PosterPrintButton } from "@/components/admin/programmes/poster-print-button"
 
 export default async function ProgrammePosterPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
@@ -89,15 +90,9 @@ export default async function ProgrammePosterPage({ params }: { params: Promise<
                     tmcng.net • Empowering the Ummah
                 </p>
             </div>
-
             {/* Print Helper (Hidden on Print) */}
             <div className="mt-12 print:hidden flex items-center gap-4">
-                <button 
-                    onClick={() => window.print()}
-                    className="bg-green-600 text-white px-8 py-4 rounded-2xl font-bold text-xl shadow-xl hover:bg-green-700 transition-all active:scale-95 flex items-center gap-2"
-                >
-                    Print Poster
-                </button>
+                <PosterPrintButton />
                 <p className="text-gray-500 font-medium">Recommended: Print on A3 or A4 paper</p>
             </div>
         </div>

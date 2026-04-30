@@ -3,7 +3,7 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { getServerSession } from "@/lib/session"
 import { db } from "@/lib/db"
-import { users, roles, userRoles, organizations } from "@/lib/db/schema"
+import { users, roles, userRoles, organizations, members } from "@/lib/db/schema"
 import { requirePermission } from "@/lib/rbac-v2"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Button } from "@/components/ui/button"
@@ -13,6 +13,7 @@ import { eq, and, asc } from "drizzle-orm"
 import { ArrowLeft, Plus, ShieldAlert, Trash2 } from "lucide-react"
 import { AssignRoleForm } from "./assign-role-form"
 import { RemoveRoleButton } from "./remove-role-button"
+import { EditMemberForm } from "@/components/admin/users/edit-member-form"
 
 interface PageProps {
     params: Promise<{ id: string }>
@@ -26,6 +27,9 @@ export default async function UserDetailPage(props: PageProps) {
     // 1. Fetch User Basic Info
     const userResult = await db.select().from(users).where(eq(users.id, id)).limit(1);
     const userInfo = userResult[0];
+
+    const memberResult = await db.select().from(members).where(eq(members.userId, id)).limit(1);
+    const memberInfo = memberResult[0];
 
     if (!userInfo) notFound();
 
@@ -137,6 +141,33 @@ export default async function UserDetailPage(props: PageProps) {
                             />
                         </CardContent>
                     </Card>
+
+                    {/* Member Details Panel */}
+                    {memberInfo && (
+                        <Card className="md:col-span-3 border-t-4 border-t-green-600">
+                            <CardHeader>
+                                <CardTitle>Edit Member Details</CardTitle>
+                                <CardDescription>Update official records and jurisdiction info.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <EditMemberForm 
+                                    userId={user.id} 
+                                    initialData={{
+                                        name: user.name || "",
+                                        email: user.email || "",
+                                        phone: user.phone || "",
+                                        memberId: memberInfo.memberId || "",
+                                        occupation: memberInfo.occupation || "",
+                                        address: memberInfo.address || "",
+                                        gender: memberInfo.gender as any,
+                                        state: (memberInfo.metadata as any)?.state || "",
+                                        lga: (memberInfo.metadata as any)?.lga || "",
+                                        branch: (memberInfo.metadata as any)?.branch || ""
+                                    }} 
+                                />
+                            </CardContent>
+                        </Card>
+                    )}
                 </div>
             </div>
         </DashboardLayout>

@@ -54,6 +54,7 @@ async function UserList({ searchParams }: {
     const stateFilter = searchParams?.state
     const lgaFilter = searchParams?.lga
     const branchFilter = searchParams?.branch
+    console.log(`[DEBUG] Fetching User List with searchParams:`, searchParams)
     const page = parseInt(searchParams?.page || "1")
     const limit = parseInt(searchParams?.limit || "50")
     const offset = (page - 1) * limit
@@ -62,7 +63,7 @@ async function UserList({ searchParams }: {
 
     const conditions = []
     if (query) {
-        conditions.push(or(ilike(users.name, `%${query}%`), ilike(users.email, `%${query}%`)))
+        conditions.push(or(sql`${users.name} LIKE ${`%${query}%`}`, sql`${users.email} LIKE ${`%${query}%`}`))
     }
     if (stateFilter && stateFilter !== "all") {
         conditions.push(sql`JSON_UNQUOTE(JSON_EXTRACT(${membersTable.metadata}, '$.state')) = ${stateFilter}`)
@@ -298,7 +299,7 @@ export default async function UsersPage(props: {
     
     const conditions = []
     if (searchParams.q) {
-        conditions.push(or(ilike(users.name, `%${searchParams.q}%`), ilike(users.email, `%${searchParams.q}%`)))
+        conditions.push(or(sql`${users.name} LIKE ${`%${searchParams.q}%`}`, sql`${users.email} LIKE ${`%${searchParams.q}%`}`))
     }
     if (searchParams.state && searchParams.state !== "all") {
         conditions.push(sql`JSON_UNQUOTE(JSON_EXTRACT(${membersTable.metadata}, '$.state')) = ${searchParams.state}`)

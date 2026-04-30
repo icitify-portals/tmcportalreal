@@ -23,7 +23,8 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { toast } from "sonner"
-import { Loader2 } from "lucide-react"
+import { Loader2, Search } from "lucide-react"
+import { Input } from "@/components/ui/input"
 
 const assignSchema = z.object({
     roleId: z.string().min(1, "Please select a role"),
@@ -51,6 +52,8 @@ export function AssignRoleForm({ userId, roles, organizations }: AssignRoleFormP
     const router = useRouter()
     const [isLoading, setIsLoading] = useState(false)
     const [selectedRole, setSelectedRole] = useState<{ id: string; name: string; jurisdictionLevel: string } | null>(null)
+    const [searchTerm, setSearchTerm] = useState("")
+    const [orgSearchTerm, setOrgSearchTerm] = useState("")
 
     const form = useForm<z.infer<typeof assignSchema>>({
         resolver: zodResolver(assignSchema),
@@ -60,9 +63,18 @@ export function AssignRoleForm({ userId, roles, organizations }: AssignRoleFormP
         },
     })
 
-    // Filter organizations based on selected role
+    // Filter roles based on search
+    const filteredRoles = roles.filter(role => 
+        role.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        role.jurisdictionLevel.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+
+    // Filter organizations based on selected role and search
     const filteredOrgs = selectedRole
-        ? organizations.filter(org => org.level === selectedRole.jurisdictionLevel)
+        ? organizations.filter(org => 
+            org.level === selectedRole.jurisdictionLevel && 
+            org.name.toLowerCase().includes(orgSearchTerm.toLowerCase())
+        )
         : []
 
     async function onSubmit(values: z.infer<typeof assignSchema>) {
@@ -114,10 +126,21 @@ export function AssignRoleForm({ userId, roles, organizations }: AssignRoleFormP
                                     </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                    {roles.length === 0 ? (
-                                        <div className="p-2 text-sm text-muted-foreground">No roles available</div>
+                                    <div className="p-2 sticky top-0 bg-white z-10 border-b">
+                                        <Input 
+                                            placeholder="Search roles..." 
+                                            value={searchTerm}
+                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                            className="h-9 text-black font-medium border-green-200 focus-visible:ring-green-500"
+                                            onKeyDown={(e) => e.stopPropagation()}
+                                            onPointerDown={(e) => e.stopPropagation()}
+                                            autoFocus
+                                        />
+                                    </div>
+                                    {filteredRoles.length === 0 ? (
+                                        <div className="p-2 text-sm text-muted-foreground">No roles matching your search</div>
                                     ) : (
-                                        roles.map((role) => (
+                                        filteredRoles.map((role) => (
                                             <SelectItem key={role.id} value={role.id}>
                                                 {role.name} <span className="text-xs text-muted-foreground">({role.jurisdictionLevel})</span>
                                             </SelectItem>
@@ -147,6 +170,17 @@ export function AssignRoleForm({ userId, roles, organizations }: AssignRoleFormP
                                         </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
+                                        <div className="p-2 sticky top-0 bg-white z-10 border-b">
+                                            <Input 
+                                                placeholder="Search organizations..." 
+                                                value={orgSearchTerm}
+                                                onChange={(e) => setOrgSearchTerm(e.target.value)}
+                                                className="h-9 text-black font-medium border-green-200 focus-visible:ring-green-500"
+                                                onKeyDown={(e) => e.stopPropagation()}
+                                                onPointerDown={(e) => e.stopPropagation()}
+                                                autoFocus
+                                            />
+                                        </div>
                                         {filteredOrgs.length === 0 ? (
                                             <div className="p-2 text-sm text-muted-foreground">No organizations found for this level.</div>
                                         ) : (

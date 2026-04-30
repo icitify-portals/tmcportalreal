@@ -2,7 +2,7 @@ import { Suspense } from "react"
 import { getUserRegistrations } from "@/lib/actions/programmes"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Calendar, MapPin, Printer, CreditCard } from "lucide-react"
+import { Calendar, MapPin, Printer, CreditCard, MessageSquare } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { CertificateDownloadButton } from "@/components/programme/certificate-download-button"
@@ -54,12 +54,19 @@ async function MyProgrammesList() {
                         )}
                     </CardContent>
                     <CardFooter className="flex-col gap-2">
-                        {(reg.status === 'REGISTERED' || reg.status === 'PAID') && (
-                            <Button variant="outline" size="sm" asChild className="w-full border-green-200 text-green-700 hover:bg-green-50">
-                                <Link href={`/programmes/registrations/${reg.id}/slip`} target="_blank">
-                                    <Printer className="mr-2 h-4 w-4" /> Print Access Slip
-                                </Link>
-                            </Button>
+                        {(reg.status === 'REGISTERED' || reg.status === 'PAID' || reg.status === 'ATTENDED') && (
+                            <div className="flex gap-2 w-full">
+                                <Button variant="outline" size="sm" asChild className="flex-1 border-green-200 text-green-700 hover:bg-green-50">
+                                    <Link href={`/programmes/registrations/${reg.id}/slip`} target="_blank">
+                                        <Printer className="mr-2 h-4 w-4" /> Slip
+                                    </Link>
+                                </Button>
+                                <Button variant="secondary" size="sm" asChild className="flex-1 bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-100">
+                                    <Link href={`/dashboard/programmes/${programme?.id}/group`}>
+                                        <MessageSquare className="mr-2 h-4 w-4" /> Group
+                                    </Link>
+                                </Button>
+                            </div>
                         )}
                         
                         {reg.status === 'PENDING_PAYMENT' && (
@@ -72,10 +79,8 @@ async function MyProgrammesList() {
 
                         {reg.status === 'ATTENDED' && programme?.hasCertificate ? (
                             <CertificateDownloadButton
-                                userName={reg.name}
+                                registrationId={reg.id}
                                 programmeTitle={programme.title}
-                                date={programme.startDate}
-                                programmeId={programme.id}
                             />
                         ) : reg.status === 'ATTENDED' ? (
                             <p className="text-xs text-muted-foreground italic">No certificate involved</p>
