@@ -21,7 +21,7 @@ export interface EmailOptions {
 export async function sendEmail(options: EmailOptions): Promise<{ success: boolean; messageId?: string; error?: string }> {
   try {
     const recipients = Array.isArray(options.to) ? options.to : [options.to]
-    const from = "TMC Connect <info@messages.tmcng.net>"
+    const from = "TMC Connect <info@information.tmcng.net>"
 
     // Use Resend if API key is set, otherwise log (for development)
     if (process.env.RESEND_API_KEY) {
