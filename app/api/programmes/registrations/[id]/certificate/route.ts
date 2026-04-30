@@ -17,9 +17,9 @@ async function getBase64Image(url: string): Promise<string | null> {
 
 export async function GET(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
-    const registrationId = params.id;
+    const { id: registrationId } = await params;
 
     try {
         const [result] = await db.select({
