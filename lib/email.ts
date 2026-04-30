@@ -326,6 +326,7 @@ export const emailTemplates = {
       
       Download your access slip here: ${process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL}/programmes/registrations/${registrationId}/slip
     `,
+  }),
   programmeCertificateThankYou: (name: string, programmeTitle: string, registrationId: string) => ({
     subject: `Thank You for Attending: ${programmeTitle} - Certificate Included`,
     html: `
