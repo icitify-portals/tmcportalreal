@@ -18,7 +18,7 @@ import { format } from "date-fns"
 import { ClientCurrency } from "@/components/ui/client-currency"
 import { MarkAttendanceButton } from "@/components/admin/programmes/mark-attendance-button"
 import { DeleteRegistrationButton } from "@/components/admin/programmes/delete-registration-button"
-import { markAttendanceAction } from "@/lib/actions/programmes"
+import { markAttendanceAction, sendSelectedCertificatesAction } from "@/lib/actions/programmes"
 import { toast } from "sonner"
 
 export function RegistrationsClientTable({ 
@@ -72,6 +72,25 @@ export function RegistrationsClientTable({
         }
     }
 
+    const handleBulkSendCertificates = async () => {
+        if (selectedIds.length === 0) return
+        
+        setIsBulkLoading(true)
+        try {
+            const result = await sendSelectedCertificatesAction(selectedIds)
+            if (result.success) {
+                toast.success(`Successfully sent ${result.count} certificates`)
+                setSelectedIds([])
+            } else {
+                toast.error(result.error || "Failed to send certificates")
+            }
+        } catch (error) {
+            toast.error("An error occurred during bulk sending")
+        } finally {
+            setIsBulkLoading(false)
+        }
+    }
+
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -79,15 +98,26 @@ export function RegistrationsClientTable({
                     {selectedIds.length > 0 && (
                         <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 border border-blue-200 rounded-full animate-in fade-in slide-in-from-left-4">
                             <span className="text-xs font-bold text-blue-700">{selectedIds.length} SELECTED</span>
-                            <Button 
-                                size="sm" 
-                                onClick={handleBulkMarkAttended}
-                                disabled={isBulkLoading}
-                                className="h-7 px-3 bg-blue-600 hover:bg-blue-700 text-[10px] font-bold uppercase tracking-wider"
-                            >
-                                {isBulkLoading ? "Updating..." : "Mark as Attended"}
-                                {!isBulkLoading && <CheckCircle2 className="ml-1.5 h-3 w-3" />}
-                            </Button>
+                            <div className="flex items-center gap-1">
+                                <Button 
+                                    size="sm" 
+                                    onClick={handleBulkMarkAttended}
+                                    disabled={isBulkLoading}
+                                    className="h-7 px-3 bg-blue-600 hover:bg-blue-700 text-[10px] font-bold uppercase tracking-wider"
+                                >
+                                    {isBulkLoading ? "Updating..." : "Mark Attended"}
+                                    {!isBulkLoading && <CheckCircle2 className="ml-1.5 h-3 w-3" />}
+                                </Button>
+                                <Button 
+                                    size="sm" 
+                                    onClick={handleBulkSendCertificates}
+                                    disabled={isBulkLoading}
+                                    variant="outline"
+                                    className="h-7 px-3 border-blue-600 text-blue-600 hover:bg-blue-50 text-[10px] font-bold uppercase tracking-wider"
+                                >
+                                    {isBulkLoading ? "Sending..." : "Send Certificates"}
+                                </Button>
+                            </div>
                         </div>
                     )}
                 </div>

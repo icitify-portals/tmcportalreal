@@ -1228,3 +1228,46 @@ export async function getProgrammeMessages(programmeId: string) {
         return []
     }
 }
+
+export async function sendSelectedCertificatesAction(registrationIds: string[]) {
+    try {
+        const session = await getServerSession()
+        if (!session?.user?.id) return { success: false, error: "Unauthorized" }
+
+        if (registrationIds.length === 0) return { success: false, error: "No registrations selected" }
+
+        const registrations = await db.select({
+            id: programmeRegistrations.id,
+            name: programmeRegistrations.name,
+            email: programmeRegistrations.email,
+            status: programmeRegistrations.status,
+            programmeTitle: programmes.title
+        })
+        .from(programmeRegistrations)
+        .innerJoin(programmes, eq(programmeRegistrations.programmeId, programmes.id))
+        .where(inArray(programmeRegistrations.id, registrationIds))
+
+        let sentCount = 0
+        for (const reg of registrations) {
+            if (reg.status !== 'ATTENDED' || !reg.email) continue
+
+            const emailContent = emailTemplates.programmeCertificateThankYou(
+                reg.name,
+                reg.programmeTitle,
+                reg.id
+            )
+
+            await sendEmail({
+                to: reg.email,
+                subject: `Certificate of Participation: ${reg.programmeTitle}`,
+                html: emailContent
+            })
+            sentCount++
+        }
+
+        return { success: true, count: sentCount }
+    } catch (error) {
+        console.error("Send Selected Certificates Error:", error)
+        return { success: false, error: "Failed to send certificates" }
+    }
+}
