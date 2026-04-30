@@ -36,12 +36,10 @@ export async function GET(
         .limit(1);
 
         if (!result) return new NextResponse("Registration not found", { status: 404 });
-        if (result.registration.status !== 'ATTENDED' && result.registration.status !== 'PAID') {
-            // For now allow PAID too if they want to download early, but user said "after the programme"
-            // Let's stick to ATTENDED as requested for certificates
-            if (result.registration.status !== 'ATTENDED') {
-                return new NextResponse("Certificate only available for attended participants", { status: 403 });
-            }
+        
+        // Certificate only available for attended participants
+        if (result.registration.status !== 'ATTENDED') {
+            return new NextResponse("Certificate only available for attended participants", { status: 403 });
         }
 
         const doc = new jsPDF({
