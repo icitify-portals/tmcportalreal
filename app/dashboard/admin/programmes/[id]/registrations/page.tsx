@@ -22,6 +22,7 @@ import { DeleteRegistrationButton } from "@/components/admin/programmes/delete-r
 import { ClearRegistrationsButton } from "@/components/admin/programmes/clear-registrations-button"
 import { SyncPaymentsButton } from "@/components/admin/programmes/sync-payments-button"
 import { ResetAttendanceButton } from "@/components/admin/programmes/reset-attendance-button"
+import { SendCertificatesButton } from "@/components/admin/programmes/send-certificates-button"
 import { db } from "@/lib/db"
 import { programmes } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
@@ -43,87 +44,74 @@ async function RegistrationsTable({ programmeId }: { programmeId: string }) {
     return (
         <div className="border rounded-lg overflow-hidden bg-white shadow-sm">
             <Table>
-                <TableHeader className="bg-gray-50">
+                <TableHeader className="bg-gray-50/50">
                     <TableRow>
-                        <TableHead className="font-bold uppercase text-[10px] tracking-wider text-gray-700">Attendee</TableHead>
-                        <TableHead className="font-bold uppercase text-[10px] tracking-wider text-gray-700">Type</TableHead>
-                        <TableHead className="font-bold uppercase text-[10px] tracking-wider text-gray-700">Payment</TableHead>
-                        <TableHead className="font-bold uppercase text-[10px] tracking-wider text-gray-700">Check In</TableHead>
-                        <TableHead className="font-bold uppercase text-[10px] tracking-wider text-gray-700">Check Out</TableHead>
-                        <TableHead className="font-bold uppercase text-[10px] tracking-wider text-gray-700">Status</TableHead>
-                        <TableHead className="font-bold uppercase text-[10px] tracking-wider text-gray-700 text-right">Actions</TableHead>
+                        <TableHead className="w-[50px] font-bold text-gray-700 uppercase text-[11px] tracking-widest">S/N</TableHead>
+                        <TableHead className="w-[120px] font-bold text-gray-700 uppercase text-[11px] tracking-widest">Mem. ID</TableHead>
+                        <TableHead className="font-bold text-gray-700 uppercase text-[11px] tracking-widest">Name/Email</TableHead>
+                        <TableHead className="font-bold text-gray-700 uppercase text-[11px] tracking-widest">Phone</TableHead>
+                        <TableHead className="font-bold text-gray-700 uppercase text-[11px] tracking-widest">Type</TableHead>
+                        <TableHead className="font-bold text-gray-700 uppercase text-[11px] tracking-widest">Payment</TableHead>
+                        <TableHead className="font-bold text-gray-700 uppercase text-[11px] tracking-widest">Check-In</TableHead>
+                        <TableHead className="font-bold text-gray-700 uppercase text-[11px] tracking-widest">Check-Out</TableHead>
+                        <TableHead className="font-bold text-gray-700 uppercase text-[11px] tracking-widest">Status</TableHead>
+                        <TableHead className="text-right font-bold text-gray-700 uppercase text-[11px] tracking-widest">Actions</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {registrations.map((reg) => (
-                        <TableRow key={reg.id} className="hover:bg-gray-50/50">
-                            <TableCell>
+                    {registrations.map((reg, index) => (
+                        <TableRow key={reg.id} className="hover:bg-gray-50/80 transition-colors border-b last:border-0">
+                            <TableCell className="py-4 text-gray-500 font-medium text-xs">{index + 1}</TableCell>
+                            <TableCell className="py-4 text-black font-semibold uppercase text-xs tracking-wider">{reg.member?.memberId || 'Guest'}</TableCell>
+                            <TableCell className="py-4">
                                 <div className="flex flex-col">
-                                    <span className="font-semibold text-gray-900">{reg.name}</span>
-                                    <span className="text-xs text-muted-foreground">{reg.email}</span>
-                                    {reg.member?.memberId && (
-                                        <span className="text-[10px] font-mono text-green-700 bg-green-50 px-1 rounded w-fit mt-1">
-                                            {reg.member.memberId}
-                                        </span>
-                                    )}
+                                    <span className="font-bold text-gray-900 text-sm">{reg.name}</span>
+                                    <span className="text-[10px] text-gray-500 font-medium">{reg.email}</span>
                                 </div>
                             </TableCell>
-                            <TableCell>
-                                <Badge variant={reg.userId ? "outline" : "secondary"} className="text-[10px]">
+                            <TableCell className="py-4 text-black font-medium text-sm">{reg.phone || 'N/A'}</TableCell>
+                            <TableCell className="py-4">
+                                <Badge variant={reg.userId ? "outline" : "secondary"} className="font-bold uppercase tracking-tighter text-[9px] px-2 py-0.5">
                                     {reg.userId ? "Member" : "Guest"}
                                 </Badge>
                             </TableCell>
-                            <TableCell>
-                                <div className="flex flex-col">
-                                    <ClientCurrency amount={parseFloat(reg.amountPaid || "0")} className="font-medium text-sm" />
-                                    {reg.paymentReference && (
-                                        <span className="text-[10px] text-muted-foreground truncate max-w-[100px]">
-                                            Ref: {reg.paymentReference}
-                                        </span>
-                                    )}
-                                </div>
+                            <TableCell className="py-4">
+                                <ClientCurrency amount={parseFloat(reg.amountPaid || "0")} className="font-bold text-black text-sm" />
                             </TableCell>
-                            <TableCell>
+                            <TableCell className="py-4">
                                 {reg.checkInTime ? (
-                                    <div className="flex flex-col">
-                                        <span className="font-bold text-gray-900">{format(new Date(reg.checkInTime), "h:mm a")}</span>
-                                        <span className="text-[10px] text-muted-foreground uppercase">{reg.checkInBy || "System"}</span>
+                                    <div className="flex flex-col gap-0.5">
+                                        <span className="font-bold text-green-700 text-sm">{format(new Date(reg.checkInTime), "HH:mm")}</span>
+                                        <span className="text-[9px] text-gray-400 uppercase font-bold tracking-tighter">By: {reg.checkInBy || 'Self'}</span>
                                     </div>
                                 ) : (
-                                    <span className="text-gray-300">--</span>
+                                    <span className="text-gray-200">—</span>
                                 )}
                             </TableCell>
-                            <TableCell>
+                            <TableCell className="py-4">
                                 {reg.checkOutTime ? (
-                                    <div className="flex flex-col">
-                                        <span className="font-bold text-gray-900">{format(new Date(reg.checkOutTime), "h:mm a")}</span>
-                                        <span className="text-[10px] text-muted-foreground uppercase">{reg.checkOutBy || "System"}</span>
+                                    <div className="flex flex-col gap-0.5">
+                                        <span className="font-bold text-amber-700 text-sm">{format(new Date(reg.checkOutTime), "HH:mm")}</span>
+                                        <span className="text-[9px] text-gray-400 uppercase font-bold tracking-tighter">By: {reg.checkOutBy || 'Self'}</span>
                                     </div>
                                 ) : (
-                                    <span className="text-gray-300">--</span>
+                                    <span className="text-gray-200">—</span>
                                 )}
                             </TableCell>
-                            <TableCell>
-                                <Badge variant={
-                                    reg.status === 'PAID' ? 'default' :
-                                    reg.status === 'ATTENDED' ? 'secondary' :
-                                    reg.status === 'REGISTERED' ? 'outline' : 'destructive'
-                                } className="text-[10px]">
+                            <TableCell className="py-4">
+                                <Badge variant={reg.status === 'PAID' || reg.status === 'ATTENDED' ? 'default' : 'secondary'} className="font-black uppercase tracking-tighter text-[9px] px-2 py-0.5">
                                     {reg.status}
                                 </Badge>
                             </TableCell>
-                            <TableCell className="text-right">
-                                <div className="flex justify-end gap-2">
-                                    <Button size="icon" variant="ghost" className="h-8 w-8" asChild title="Print Access Slip">
+                            <TableCell className="py-4 text-right">
+                                <div className="flex items-center justify-end gap-1">
+                                    <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-blue-50" asChild title="Print Access Slip">
                                         <Link href={`/programmes/registrations/${reg.id}/slip`} target="_blank">
                                             <Printer className="h-4 w-4 text-blue-600" />
                                         </Link>
                                     </Button>
                                     {(reg.status === 'PAID' || reg.status === 'REGISTERED' || reg.status === 'ATTENDED') && (
-                                        <MarkAttendanceButton registrationId={reg.id} status={reg.status} />
-                                    )}
-                                    {reg.checkInTime && (
-                                        <ResetAttendanceButton registrationId={reg.id} userName={reg.name} />
+                                        <MarkAttendanceButton registrationId={reg.id} status={reg.status} userName={reg.name} />
                                     )}
                                     <DeleteRegistrationButton registrationId={reg.id} userName={reg.name} />
                                 </div>
@@ -198,6 +186,7 @@ async function RegistrationsHeader({ programmeId, programmeTitle }: { programmeI
                 </Link>
             </Button>
             <SyncPaymentsButton programmeId={programmeId} />
+            <SendCertificatesButton programmeId={programmeId} />
             <ClearRegistrationsButton programmeId={programmeId} programmeTitle={programmeTitle} />
         </div>
     )

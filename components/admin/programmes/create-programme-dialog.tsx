@@ -30,7 +30,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { createProgramme, getOffices, getOfficials } from "@/lib/actions/programmes"
 import { getOrganizations } from "@/lib/actions/organization"
 import { toast } from "sonner"
-import { Loader2, Plus } from "lucide-react"
+import { Loader2, Plus, FileUpload } from "lucide-react"
+import { FileUpload as FileUploadInput } from "@/components/ui/file-upload"
 
 const ProgrammeSchema = z.object({
     title: z.string().min(1, "Title is required"),
@@ -41,6 +42,7 @@ const ProgrammeSchema = z.object({
     endDate: z.string().optional(),
     time: z.string().optional(),
     targetAudience: z.enum(['PUBLIC', 'MEMBERS', 'BROTHERS', 'SISTERS', 'CHILDREN', 'YOUTH', 'ELDERS']).default('PUBLIC'),
+    hasCertificate: z.boolean().default(false),
     paymentRequired: z.boolean().default(false),
     amount: z.string().default("0"),
     organizingOfficeId: z.string().optional(),
@@ -51,6 +53,14 @@ const ProgrammeSchema = z.object({
     budget: z.string().default("0"),
     objectives: z.string().optional(),
     committee: z.string().optional(),
+    attendanceWindow: z.string().default("3"),
+    certTemplateType: z.enum(['TMC_ONLY', 'PARTNER_ONLY', 'BOTH']).default('TMC_ONLY'),
+    certTmcSignature: z.string().optional(),
+    certTmcSignatory: z.string().optional(),
+    certPartnerName: z.string().optional(),
+    certPartnerLogo: z.string().optional(),
+    certPartnerSignature: z.string().optional(),
+    certPartnerSignatory: z.string().optional(),
 })
 
 export function CreateProgrammeDialog({ organizationId, isSuperAdmin }: { organizationId: string; isSuperAdmin?: boolean }) {
@@ -71,6 +81,7 @@ export function CreateProgrammeDialog({ organizationId, isSuperAdmin }: { organi
             endDate: "",
             time: "",
             targetAudience: "PUBLIC",
+            hasCertificate: false,
             paymentRequired: false,
             amount: "0",
             organizingOfficeId: "",
@@ -80,6 +91,14 @@ export function CreateProgrammeDialog({ organizationId, isSuperAdmin }: { organi
             budget: "0",
             objectives: "",
             committee: "",
+            attendanceWindow: "3",
+            certTemplateType: "TMC_ONLY",
+            certTmcSignature: "",
+            certTmcSignatory: "",
+            certPartnerName: "",
+            certPartnerLogo: "",
+            certPartnerSignature: "",
+            certPartnerSignatory: "",
         },
     })
 
@@ -107,6 +126,7 @@ export function CreateProgrammeDialog({ organizationId, isSuperAdmin }: { organi
                 endDate: data.endDate ? new Date(data.endDate) : undefined,
                 amount: parseFloat(data.amount || "0"),
                 budget: parseFloat(data.budget || "0"),
+                attendanceWindow: parseInt(data.attendanceWindow || "3"),
                 hasCertificate: false,
             }
 
@@ -432,6 +452,29 @@ export function CreateProgrammeDialog({ organizationId, isSuperAdmin }: { organi
                             />
                         </div>
 
+                        <div className="flex items-center space-x-2 border p-4 rounded-md bg-green-50/50">
+                            <FormField
+                                control={form.control}
+                                name="hasCertificate"
+                                render={({ field }) => (
+                                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                                        <FormControl>
+                                            <Checkbox
+                                                checked={field.value}
+                                                onCheckedChange={field.onChange}
+                                            />
+                                        </FormControl>
+                                        <div className="space-y-1 leading-none">
+                                            <FormLabel className="text-green-900 font-bold">
+                                                Issue Certificates for this Programme?
+                                            </FormLabel>
+                                            <FormDescription className="text-[10px]">If enabled, attended participants will be able to download certificates.</FormDescription>
+                                        </div>
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+
                         <div className="flex items-center space-x-2 border p-4 rounded-md">
                             <FormField
                                 control={form.control}
@@ -467,6 +510,165 @@ export function CreateProgrammeDialog({ organizationId, isSuperAdmin }: { organi
                                         </FormItem>
                                     )}
                                 />
+                            )}
+                        </div>
+
+                        <FormField
+                            control={form.control}
+                            name="attendanceWindow"
+                            render={({ field }) => (
+                                <FormItem className="border p-4 rounded-md bg-gray-50/50">
+                                    <FormLabel className="text-gray-900 font-bold text-xs uppercase tracking-wider">Attendance Window (Hours before start)</FormLabel>
+                                    <FormControl>
+                                        <Input type="number" min="0" max="48" placeholder="3" {...field} value={field.value || ''} />
+                                    </FormControl>
+                                    <FormDescription className="text-[10px]">Determine how many hours before the programme starts that scanning should be enabled.</FormDescription>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <div className="space-y-4 border p-4 rounded-md bg-purple-50/30">
+                            <h3 className="text-sm font-bold text-purple-900 flex items-center gap-2">
+                                <Plus className="w-4 h-4" />
+                                Certificate Settings & Branding
+                            </h3>
+                            <p className="text-xs text-purple-700">Configure how the certificates of participation should look.</p>
+                            
+                            <FormField
+                                control={form.control}
+                                name="certTemplateType"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Certificate Template</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select template type" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="TMC_ONLY">TMC Only (Standard)</SelectItem>
+                                                <SelectItem value="PARTNER_ONLY">Partner Only (Hosted)</SelectItem>
+                                                <SelectItem value="BOTH">Partnership (TMC & Partner)</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            {(form.watch("certTemplateType") === 'TMC_ONLY' || form.watch("certTemplateType") === 'BOTH') && (
+                                <div className="p-3 border border-purple-100 rounded-md bg-white/50 space-y-4">
+                                    <h4 className="text-[10px] font-bold text-purple-600 uppercase tracking-widest">TMC Branding</h4>
+                                    <FormField
+                                        control={form.control}
+                                        name="certTmcSignatory"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>TMC Signatory Name/Title</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="e.g. National Amir" {...field} value={field.value || ''} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="certTmcSignature"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>TMC Signature</FormLabel>
+                                                <div className="flex items-center gap-2">
+                                                    <FormControl>
+                                                        <Input {...field} placeholder="Signature URL" value={field.value || ''} />
+                                                    </FormControl>
+                                                    <FileUploadInput 
+                                                        onUploadComplete={(url) => field.onChange(url)} 
+                                                        label="Upload"
+                                                        accept="image/*"
+                                                    />
+                                                </div>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                            )}
+
+                            {(form.watch("certTemplateType") === 'PARTNER_ONLY' || form.watch("certTemplateType") === 'BOTH') && (
+                                <div className="p-3 border border-purple-100 rounded-md bg-white/50 space-y-4">
+                                    <h4 className="text-[10px] font-bold text-purple-600 uppercase tracking-widest">Partner Branding</h4>
+                                    <FormField
+                                        control={form.control}
+                                        name="certPartnerName"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Partner Organization Name</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="e.g. Al-Hikmah University" {...field} value={field.value || ''} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="certPartnerSignatory"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Partner Signatory Name/Title</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="e.g. Vice Chancellor" {...field} value={field.value || ''} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <FormField
+                                            control={form.control}
+                                            name="certPartnerLogo"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Partner Logo</FormLabel>
+                                                    <div className="flex items-center gap-2">
+                                                        <FormControl>
+                                                            <Input {...field} placeholder="Logo URL" value={field.value || ''} />
+                                                        </FormControl>
+                                                        <FileUploadInput 
+                                                            onUploadComplete={(url) => field.onChange(url)} 
+                                                            label="Upload"
+                                                            accept="image/*"
+                                                        />
+                                                    </div>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="certPartnerSignature"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Partner Signature</FormLabel>
+                                                    <div className="flex items-center gap-2">
+                                                        <FormControl>
+                                                            <Input {...field} placeholder="Signature URL" value={field.value || ''} />
+                                                        </FormControl>
+                                                        <FileUploadInput 
+                                                            onUploadComplete={(url) => field.onChange(url)} 
+                                                            label="Upload"
+                                                            accept="image/*"
+                                                        />
+                                                    </div>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+                                </div>
                             )}
                         </div>
 

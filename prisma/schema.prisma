@@ -770,7 +770,15 @@ model Programme {
   paymentRequired    Boolean  @default(false)
   amount             Decimal? @default(0.00) @db.Decimal(10, 2)
   hasCertificate     Boolean  @default(false)
+  certTemplateType   String?  @default("TMC_ONLY")
+  certTmcSignature   String?  @db.VarChar(500)
+  certTmcSignatory   String?  @db.VarChar(255)
+  certPartnerName    String?  @db.VarChar(255)
+  certPartnerLogo    String?  @db.VarChar(500)
+  certPartnerSignature String? @db.VarChar(500)
+  certPartnerSignatory String? @db.VarChar(255)
   staticAttendanceToken String? @db.VarChar(255)
+  attendanceWindow   Int @default(3)
   
   createdBy          String
   creator            User     @relation("ProgrammeCreator", fields: [createdBy], references: [id])

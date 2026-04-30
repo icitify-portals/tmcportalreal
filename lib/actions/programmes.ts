@@ -7,7 +7,7 @@ import {
     users, organizations, offices, officials
 } from "@/lib/db/schema"
 import { getYearPlannerSettings } from "@/lib/actions/settings"
-import { eq, desc, and, or, aliasedTable, inArray, sql } from "drizzle-orm"
+import { eq, desc, and, or, aliasedTable, inArray, sql, asc } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { getServerSession } from "@/lib/session"
@@ -44,7 +44,8 @@ export async function recordAttendance(registrationId: string) {
         // Time check: Must be within 3 hours of start date (and before end date if exists)
         const now = new Date()
         const startTime = new Date(reg.programme.startDate)
-        const allowedStartTime = new Date(startTime.getTime() - (3 * 60 * 60 * 1000))
+        const windowHours = reg.programme.attendanceWindow ?? 3
+        const allowedStartTime = new Date(startTime.getTime() - (windowHours * 60 * 60 * 1000))
         
         // If programme has an end date, we allow scanning until then. If not, we allow for the day.
         const endTime = reg.programme.endDate ? new Date(reg.programme.endDate) : new Date(startTime.getTime() + (24 * 60 * 60 * 1000))
@@ -52,7 +53,7 @@ export async function recordAttendance(registrationId: string) {
         if (now < allowedStartTime) {
             return { 
                 success: false, 
-                error: `Attendance starts 3 hours before the programme (Starts at ${startTime.toLocaleTimeString()})` 
+                error: `Attendance starts ${windowHours} hours before the programme (Starts at ${startTime.toLocaleTimeString()})` 
             }
         }
         
@@ -144,7 +145,8 @@ export async function selfRecordAttendance(programmeId: string, token: string) {
         // 4. Time check
         const now = new Date()
         const startTime = new Date(programme.startDate)
-        const allowedStartTime = new Date(startTime.getTime() - (3 * 60 * 60 * 1000))
+        const windowHours = programme.attendanceWindow ?? 3
+        const allowedStartTime = new Date(startTime.getTime() - (windowHours * 60 * 60 * 1000))
         const endTime = programme.endDate ? new Date(programme.endDate) : new Date(startTime.getTime() + (24 * 60 * 60 * 1000))
 
         if (now < allowedStartTime) {
@@ -200,8 +202,10 @@ export async function getStaticAttendanceUrl(programmeId: string) {
         const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://tmcng.net"
         const url = `${appUrl}/programmes/attendance/${programmeId}?token=${token}`
 
+        console.log(`[DEBUG] Generated Static Attendance URL: ${url}`)
         return { success: true, url }
     } catch (error: any) {
+        console.error(`[ERROR] getStaticAttendanceUrl failure: ${error.message}`, error)
         return { success: false, error: error.message }
     }
 }
@@ -250,9 +254,9 @@ const ProgrammeSchema = z.object({
     endDate: z.date().optional(),
     time: z.string().optional(),
     targetAudience: z.enum(['PUBLIC', 'MEMBERS', 'BROTHERS', 'SISTERS', 'CHILDREN', 'YOUTH', 'ELDERS']).default('PUBLIC'),
+    hasCertificate: z.boolean().default(false),
     paymentRequired: z.boolean().default(false),
     amount: z.number().nonnegative().default(0),
-    hasCertificate: z.boolean().default(false),
     organizingOfficeId: z.string().optional().nullable(),
     organizingOfficialId: z.string().optional().nullable(),
     // New Planner Fields
@@ -260,7 +264,14 @@ const ProgrammeSchema = z.object({
     frequency: z.enum(['ONCE', 'WEEKLY', 'MONTHLY', 'QUARTERLY', 'BI-ANNUALLY', 'ANNUALLY']).default('ONCE'),
     budget: z.number().nonnegative().default(0),
     objectives: z.string().optional(),
-    committee: z.string().optional(),
+    attendanceWindow: z.string().default("3"),
+    certTemplateType: z.enum(['TMC_ONLY', 'PARTNER_ONLY', 'BOTH']).default('TMC_ONLY'),
+    certTmcSignature: z.string().optional(),
+    certTmcSignatory: z.string().optional(),
+    certPartnerName: z.string().optional(),
+    certPartnerLogo: z.string().optional(),
+    certPartnerSignature: z.string().optional(),
+    certPartnerSignatory: z.string().optional(),
 })
 
 const ReportSchema = z.object({
@@ -385,6 +396,13 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
             committee: validData.committee,
             isLateSubmission,
             status: initialStatus,
+            certTemplateType: validData.certTemplateType,
+            certTmcSignature: validData.certTmcSignature,
+            certTmcSignatory: validData.certTmcSignatory,
+            certPartnerName: validData.certPartnerName,
+            certPartnerLogo: validData.certPartnerLogo,
+            certPartnerSignature: validData.certPartnerSignature,
+            certPartnerSignatory: validData.certPartnerSignatory,
             createdBy: session.user.id,
         }).$returningId()
 
@@ -757,8 +775,8 @@ export async function getProgrammeRegistrations(programmeId: string) {
             ...r.registration,
             user: r.user,
             member: r.member,
-            checkInBy: r.checkInBy,
-            checkOutBy: r.checkOutBy
+            checkInBy: r.checkInBy || r.registration.checkInBy,
+            checkOutBy: r.checkOutBy || r.registration.checkOutBy
         }))
     } catch (error) {
         console.error("Fetch Registrations Error:", error)
@@ -1005,6 +1023,14 @@ export async function updateProgramme(programmeId: string, data: Partial<z.infer
             committee: validData.committee,
             status: newStatus,
             rejectionReason,
+            hasCertificate: validData.hasCertificate,
+            certTemplateType: validData.certTemplateType,
+            certTmcSignature: validData.certTmcSignature,
+            certTmcSignatory: validData.certTmcSignatory,
+            certPartnerName: validData.certPartnerName,
+            certPartnerLogo: validData.certPartnerLogo,
+            certPartnerSignature: validData.certPartnerSignature,
+            certPartnerSignatory: validData.certPartnerSignatory,
             updatedAt: new Date()
         }).where(eq(programmes.id, programmeId))
 
@@ -1077,9 +1103,127 @@ export async function syncAllProgrammePayments(programmeId: string) {
             count: successCount, 
             message: `Successfully synced ${successCount} out of ${pending.length} pending payments.` 
         }
-
     } catch (error) {
         console.error("Sync Payments Error:", error)
-        return { success: false, error: "Sync failed" }
+        return { success: false, error: "Failed to sync payments" }
+    }
+}
+
+export async function sendCertificatesAction(programmeId: string) {
+    try {
+        const session = await getServerSession()
+        if (!session?.user?.id) return { success: false, error: "Unauthorized" }
+
+        // Fetch programme details
+        const [programme] = await db.select()
+            .from(programmes)
+            .where(eq(programmes.id, programmeId))
+            .limit(1)
+
+        if (!programme) return { success: false, error: "Programme not found" }
+
+        // Fetch all attended participants who haven't been sent certificates yet (optional)
+        // For simplicity, we'll send to all 'ATTENDED' participants
+        const participants = await db.select()
+            .from(programmeRegistrations)
+            .where(and(
+                eq(programmeRegistrations.programmeId, programmeId),
+                eq(programmeRegistrations.status, 'ATTENDED')
+            ))
+
+        if (participants.length === 0) {
+            return { success: false, error: "No attended participants found to send certificates to." }
+        }
+
+        let sentCount = 0
+        for (const part of participants) {
+            if (!part.email) continue
+
+            const emailContent = emailTemplates.programmeCertificateThankYou(
+                part.name,
+                programme.title,
+                part.id
+            )
+
+            await sendEmail({
+                to: part.email,
+                ...emailContent
+            })
+            sentCount++
+        }
+
+        return { 
+            success: true, 
+            message: `Successfully queued/sent certificates to ${sentCount} participants.` 
+        }
+    } catch (error) {
+        console.error("Send Certificates Error:", error)
+        return { success: false, error: "Failed to send certificates" }
+    }
+}
+
+import { programmeMessages } from "@/lib/db/schema"
+
+export async function sendProgrammeMessage(programmeId: string, content: string, isAnnouncement: boolean = false) {
+    const session = await getServerSession()
+    if (!session?.user?.id) return { success: false, error: "Unauthorized" }
+
+    try {
+        const isAdmin = session.user.isSuperAdmin || 
+                        session.user.roles?.some((r: any) => r.code === 'ADMIN' || r.jurisdictionLevel !== 'MEMBER') ||
+                        !!session.user.officialId
+
+        // Verify registration if not announcement and not admin
+        if (!isAnnouncement && !isAdmin) {
+            const [reg] = await db.select().from(programmeRegistrations)
+                .where(and(
+                    eq(programmeRegistrations.programmeId, programmeId),
+                    eq(programmeRegistrations.userId, session.user.id)
+                )).limit(1)
+            
+            if (!reg) return { success: false, error: "You must be registered to participate in the group" }
+        }
+
+        // Only admins can send announcements
+        if (isAnnouncement && !isAdmin) {
+            return { success: false, error: "Only administrators can post announcements" }
+        }
+
+        await db.insert(programmeMessages).values({
+            programmeId,
+            userId: session.user.id,
+            content,
+            isAnnouncement
+        })
+
+        revalidatePath(`/dashboard/programmes/${programmeId}/group`)
+        return { success: true }
+    } catch (error) {
+        console.error("Send Message Error:", error)
+        return { success: false, error: "Failed to send message" }
+    }
+}
+
+export async function getProgrammeMessages(programmeId: string) {
+    try {
+        const results = await db.select({
+            id: programmeMessages.id,
+            content: programmeMessages.content,
+            createdAt: programmeMessages.createdAt,
+            isAnnouncement: programmeMessages.isAnnouncement,
+            user: {
+                name: users.name,
+                image: users.image
+            }
+        })
+        .from(programmeMessages)
+        .innerJoin(users, eq(programmeMessages.userId, users.id))
+        .where(eq(programmeMessages.programmeId, programmeId))
+        .orderBy(asc(programmeMessages.createdAt))
+
+        return results
+    } catch (error) {
+        console.error("Get Messages Error:", error)
+        return []
     }
 }

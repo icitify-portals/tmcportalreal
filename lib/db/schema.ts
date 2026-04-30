@@ -73,6 +73,7 @@ export const meetingAttendanceStatusEnum = mysqlEnum('meetingAttendanceStatus', 
 export const meetingDocTypeEnum = mysqlEnum('meetingDocType', ['AGENDA', 'MINUTES', 'MEMBER_REPORT', 'OTHER']);
 export const meetingDocSubmissionStatusEnum = mysqlEnum('meetingDocSubmissionStatus', ['ON_TIME', 'LATE']);
 export const broadcastTargetLevelEnum = mysqlEnum('broadcastTargetLevel', ['NATIONAL', 'STATE', 'LOCAL_GOVERNMENT', 'BRANCH']);
+export const certTemplateTypeEnum = mysqlEnum('certTemplateType', ['TMC_ONLY', 'PARTNER_ONLY', 'BOTH']);
 
 
 // Users
@@ -1029,8 +1030,16 @@ export const programmes = mysqlTable("programmes", {
     paymentRequired: boolean("paymentRequired").default(false),
     amount: decimal("amount", { precision: 10, scale: 2 }).default("0.00"),
     hasCertificate: boolean("hasCertificate").default(false),
+    certTemplateType: certTemplateTypeEnum.default('TMC_ONLY'),
+    certTmcSignature: varchar("certTmcSignature", { length: 500 }),
+    certTmcSignatory: varchar("certTmcSignatory", { length: 255 }),
+    certPartnerName: varchar("certPartnerName", { length: 255 }),
+    certPartnerLogo: varchar("certPartnerLogo", { length: 500 }),
+    certPartnerSignature: varchar("certPartnerSignature", { length: 500 }),
+    certPartnerSignatory: varchar("certPartnerSignatory", { length: 255 }),
     rejectionReason: text("rejectionReason"),
     staticAttendanceToken: varchar("staticAttendanceToken", { length: 255 }),
+    attendanceWindow: int("attendanceWindow").default(3),
 
     createdBy: varchar("createdBy", { length: 255 }).notNull().references(() => users.id),
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
@@ -1678,6 +1687,25 @@ export const competitionSubmissionsRelations = relations(competitionSubmissions,
     }),
     user: one(users, {
         fields: [competitionSubmissions.userId],
+        references: [users.id],
+    }),
+}));
+export const programmeMessages = mysqlTable("programme_messages", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
+    programmeId: varchar("programmeId", { length: 255 }).notNull().references(() => programmes.id, { onDelete: "cascade" }),
+    userId: varchar("userId", { length: 255 }).notNull().references(() => users.id, { onDelete: "cascade" }),
+    content: text("content").notNull(),
+    isAnnouncement: boolean("isAnnouncement").default(false),
+    createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+});
+
+export const programmeMessagesRelations = relations(programmeMessages, ({ one }) => ({
+    programme: one(programmes, {
+        fields: [programmeMessages.programmeId],
+        references: [programmes.id],
+    }),
+    user: one(users, {
+        fields: [programmeMessages.userId],
         references: [users.id],
     }),
 }));

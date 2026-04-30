@@ -326,6 +326,42 @@ export const emailTemplates = {
       
       Download your access slip here: ${process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL}/programmes/registrations/${registrationId}/slip
     `,
+  programmeCertificateThankYou: (name: string, programmeTitle: string, registrationId: string) => ({
+    subject: `Thank You for Attending: ${programmeTitle} - Certificate Included`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 12px;">
+        <div style="text-align: center; margin-bottom: 24px;">
+           <h1 style="color: #15803d; margin: 0;">Thank You for Coming!</h1>
+           <p style="color: #6b7280; margin-top: 4px;">It was a pleasure having you at our programme.</p>
+        </div>
+        
+        <p>Dear ${name},</p>
+        <p>We want to express our sincere gratitude for your participation in <strong>${programmeTitle}</strong>. Your presence added great value to the event.</p>
+        
+        <p>As a token of appreciation and recognition of your participation, your Certificate of Participation is now ready for download.</p>
+        
+        <div style="text-align: center; margin: 32px 0;">
+          <a href="${process.env.NEXT_PUBLIC_APP_URL}/api/programmes/registrations/${registrationId}/certificate" style="background-color: #15803d; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Download My Certificate</a>
+        </div>
+        
+        <p>We hope to see you at our future programmes. Stay connected with TMC for more impactful engagements.</p>
+        
+        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;">
+        <p style="text-align: center; color: #9ca3af; font-size: 11px;">© ${new Date().getFullYear()} The Muslim Congress. All rights reserved.</p>
+      </div>
+    `,
+    text: `
+      Thank You for Attending: ${programmeTitle}
+      
+      Dear ${name},
+      
+      Thank you for participating in ${programmeTitle}. Your certificate is now ready.
+      
+      Download your certificate here: ${process.env.NEXT_PUBLIC_APP_URL}/api/programmes/registrations/${registrationId}/certificate
+      
+      Best regards,
+      The Muslim Congress
+    `,
   }),
 }
 
