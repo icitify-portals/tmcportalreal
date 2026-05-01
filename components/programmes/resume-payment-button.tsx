@@ -39,3 +39,14 @@ export function ResumePaymentButton({ registrationId }: { registrationId: string
         </Button>
     )
 }
+
+export function RefreshButton() {
+    return (
+        <button 
+            onClick={() => window.location.reload()} 
+            className="text-sm text-gray-400 hover:text-gray-600"
+        >
+            Refresh Page after payment
+        </button>
+    )
+}

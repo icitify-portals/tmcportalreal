@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { ClientCurrency } from "@/components/ui/client-currency"
 import { format } from "date-fns"
 import { PrintButton } from "@/components/programmes/print-button"
-import { ResumePaymentButton } from "@/components/programmes/resume-payment-button"
+import { ResumePaymentButton, RefreshButton } from "@/components/programmes/resume-payment-button"
 import { VerifyPaymentStatusButton } from "@/components/programmes/verify-payment-button"
 
 export default async function AccessSlipPage({ params }: { params: Promise<{ id: string }> }) {
@@ -82,12 +82,7 @@ export default async function AccessSlipPage({ params }: { params: Promise<{ id:
                             <div className="flex flex-col gap-3 pt-4 print:hidden">
                                 <ResumePaymentButton registrationId={registration.id} />
                                 <VerifyPaymentStatusButton registrationId={registration.id} reference={registration.paymentReference || undefined} />
-                                <button 
-                                    onClick={() => window.location.reload()} 
-                                    className="text-sm text-gray-400 hover:text-gray-600"
-                                >
-                                    Refresh Page after payment
-                                </button>
+                                <RefreshButton />
                             </div>
                             <div className="hidden print:block text-red-600 font-black text-4xl border-4 border-red-600 p-4 rotate-12 opacity-50">
                                 INVALID - PAYMENT PENDING
