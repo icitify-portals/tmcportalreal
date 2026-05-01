@@ -646,6 +646,19 @@ export async function registerForProgramme(programmeId: string, data?: z.infer<t
             
             // If it's a paid programme and they haven't paid yet
             if (programme.paymentRequired && parseFloat(programme.amount || "0") > 0) {
+                 if (data && !session?.user) {
+                     const validData = RegistrationSchema.parse(data)
+                     await db.update(programmeRegistrations).set({
+                         name: validData.name,
+                         phone: validData.phone,
+                         gender: validData.gender,
+                         address: validData.address,
+                         country: validData.country || "Nigeria",
+                         state: validData.state,
+                         lga: validData.lga,
+                     }).where(eq(programmeRegistrations.id, existingReg.id))
+                 }
+                 
                  return { 
                     success: true, 
                     registrationId: existingReg.id, 

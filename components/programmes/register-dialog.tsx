@@ -33,11 +33,15 @@ import {
 export function RegisterForProgrammeDialog({
     programmeId,
     programmeTitle,
-    amount
+    amount,
+    triggerText,
+    variant
 }: {
     programmeId: string,
     programmeTitle: string,
-    amount: number
+    amount: number,
+    triggerText?: string,
+    variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link"
 }) {
     const { data: session } = useSession()
     const [open, setOpen] = useState(false)
@@ -96,9 +100,9 @@ export function RegisterForProgrammeDialog({
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button className="w-full bg-green-700 hover:bg-green-800">
+                <Button variant={variant || "default"} className={variant !== "outline" ? "w-full bg-green-700 hover:bg-green-800" : "w-full"}>
                     <UserPlus className="mr-2 h-4 w-4" />
-                    Register {amount > 0 ? `(₦${amount})` : "Free"}
+                    {triggerText || `Register ${amount > 0 ? `(₦${amount})` : "Free"}`}
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[500px]">

@@ -5,7 +5,7 @@ import { RegisterForProgrammeDialog } from "@/components/programmes/register-dia
 import { PublicNav } from "@/components/layout/public-nav"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { CalendarIcon, MapPinIcon, ClockIcon, UsersIcon, Filter, CheckCircle2 } from "lucide-react"
+import { CalendarIcon, MapPinIcon, ClockIcon, UsersIcon, Filter, CheckCircle2, CreditCard } from "lucide-react"
 import { format } from "date-fns"
 import { Metadata } from "next"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -28,7 +28,7 @@ const NIGERIAN_STATES = [
 async function ProgrammeGrid({ level, state }: { level?: string, state?: string }) {
     const programmes = await getProgrammes({ status: 'APPROVED', level, state }) || []
     const userRegs = await getUserRegistrations()
-    const registeredProgrammeIds = new Set(userRegs.map(r => r.programmeId))
+    const registeredProgrammesMap = new Map(userRegs.map(r => [r.programmeId, r]))
 
     if (programmes.length === 0) {
         return (
@@ -84,19 +84,48 @@ async function ProgrammeGrid({ level, state }: { level?: string, state?: string 
                                 </div>
                             </div>
                         </CardContent>
-                        <CardFooter className="pt-4 border-t bg-gray-50/50">
-                            {registeredProgrammeIds.has(p.id) ? (
-                                <Button className="w-full" variant="outline" disabled>
-                                    <CheckCircle2 className="mr-2 h-4 w-4" />
-                                    Already Registered
-                                </Button>
-                            ) : (
-                                <RegisterForProgrammeDialog
-                                    programmeId={p.id}
-                                    programmeTitle={p.title}
-                                    amount={parseFloat(p.amount || "0")}
-                                />
-                            )}
+                        <CardFooter className="pt-4 border-t bg-gray-50/50 flex gap-2 w-full">
+                            {(() => {
+                                const reg = registeredProgrammesMap.get(p.id);
+                                if (reg) {
+                                    if (reg.status === 'PENDING_PAYMENT') {
+                                        return (
+                                            <>
+                                                <Button className="flex-1 bg-orange-600 hover:bg-orange-700 text-white" asChild>
+                                                    <Link href={`/programmes/registrations/${reg.id}/slip`}>
+                                                        <CreditCard className="mr-2 h-4 w-4" />
+                                                        Pay Now
+                                                    </Link>
+                                                </Button>
+                                                <div className="flex-1">
+                                                    <RegisterForProgrammeDialog
+                                                        programmeId={p.id}
+                                                        programmeTitle={p.title}
+                                                        amount={parseFloat(p.amount || "0")}
+                                                        triggerText="Restart"
+                                                        variant="outline"
+                                                    />
+                                                </div>
+                                            </>
+                                        )
+                                    }
+                                    return (
+                                        <Button className="w-full" variant="outline" disabled>
+                                            <CheckCircle2 className="mr-2 h-4 w-4" />
+                                            Already Registered
+                                        </Button>
+                                    )
+                                }
+                                return (
+                                    <div className="w-full">
+                                        <RegisterForProgrammeDialog
+                                            programmeId={p.id}
+                                            programmeTitle={p.title}
+                                            amount={parseFloat(p.amount || "0")}
+                                        />
+                                    </div>
+                                )
+                            })()}
                         </CardFooter>
                     </Card>
                 )
