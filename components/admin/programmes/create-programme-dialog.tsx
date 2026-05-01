@@ -50,6 +50,7 @@ const ProgrammeSchema = z.object({
     organizingOfficialId: z.string().optional(),
     // New fields
     format: z.enum(['PHYSICAL', 'VIRTUAL', 'HYBRID']).default('PHYSICAL'),
+    meetingUrl: z.string().optional(),
     frequency: z.enum(['ONCE', 'WEEKLY', 'MONTHLY', 'QUARTERLY', 'BI-ANNUALLY', 'ANNUALLY']).default('ONCE'),
     budget: z.string().default("0"),
     objectives: z.string().optional(),
@@ -89,6 +90,7 @@ export function CreateProgrammeDialog({ organizationId, isSuperAdmin }: { organi
             organizingOfficeId: "",
             organizingOfficialId: "",
             format: "PHYSICAL",
+            meetingUrl: "",
             frequency: "ONCE",
             budget: "0",
             objectives: "",
