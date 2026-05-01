@@ -51,6 +51,8 @@ async function runTest() {
         const [reg] = await db.insert(programmeRegistrations).values({
             programmeId: prog.id,
             userId: user.id,
+            name: "AA Adelopo",
+            email: email,
             status: "REGISTERED",
             updatedAt: new Date()
         }).$returningId()
