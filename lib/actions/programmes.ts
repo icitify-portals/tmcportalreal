@@ -261,6 +261,7 @@ const ProgrammeSchema = z.object({
     organizingOfficialId: z.string().optional().nullable(),
     // New Planner Fields
     format: z.enum(['PHYSICAL', 'VIRTUAL', 'HYBRID']).default('PHYSICAL'),
+    meetingUrl: z.string().optional().nullable(),
     frequency: z.enum(['ONCE', 'WEEKLY', 'MONTHLY', 'QUARTERLY', 'BI-ANNUALLY', 'ANNUALLY']).default('ONCE'),
     budget: z.number().nonnegative().default(0),
     objectives: z.string().optional(),
@@ -391,6 +392,7 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
             organizingOfficeId: (validData.organizingOfficeId && validData.organizingOfficeId !== "none") ? validData.organizingOfficeId : null,
             organizingOfficialId: (validData.organizingOfficialId && validData.organizingOfficialId !== "none") ? validData.organizingOfficialId : null,
             format: validData.format,
+            meetingUrl: validData.meetingUrl,
             frequency: validData.frequency,
             budget: validData.budget.toString(),
             objectives: validData.objectives,
@@ -1018,6 +1020,7 @@ export async function updateProgramme(programmeId: string, data: Partial<z.infer
             organizingOfficeId: validData.organizingOfficeId,
             organizingOfficialId: validData.organizingOfficialId,
             format: validData.format,
+            meetingUrl: validData.meetingUrl,
             frequency: validData.frequency,
             budget: validData.budget !== undefined ? validData.budget.toString() : undefined,
             objectives: validData.objectives,
@@ -1318,4 +1321,5 @@ export async function deleteProgrammeMaterial(materialId: string, programmeId: s
         return { success: false, error: error.message }
     }
 }
+
 

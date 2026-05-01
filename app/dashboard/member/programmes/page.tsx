@@ -57,11 +57,19 @@ async function MyProgrammesList() {
                     <CardFooter className="flex-col gap-2">
                         {(reg.status === 'REGISTERED' || reg.status === 'PAID' || reg.status === 'ATTENDED') && (
                             <div className="flex gap-2 w-full">
-                                <Button variant="outline" size="sm" asChild className="flex-1 border-green-200 text-green-700 hover:bg-green-50">
-                                    <Link href={`/programmes/registrations/${reg.id}/slip`} target="_blank">
-                                        <Printer className="mr-2 h-4 w-4" /> Slip
-                                    </Link>
-                                </Button>
+                                {programme?.format === 'VIRTUAL' || programme?.format === 'HYBRID' ? (
+                                    <Button variant="default" size="sm" asChild className="flex-1 bg-green-600 hover:bg-green-700">
+                                        <Link href={`/api/programmes/virtual-join/${reg.id}`} target="_blank">
+                                            <MapPin className="mr-2 h-4 w-4" /> Join Meeting
+                                        </Link>
+                                    </Button>
+                                ) : (
+                                    <Button variant="outline" size="sm" asChild className="flex-1 border-green-200 text-green-700 hover:bg-green-50">
+                                        <Link href={`/programmes/registrations/${reg.id}/slip`} target="_blank">
+                                            <Printer className="mr-2 h-4 w-4" /> Slip
+                                        </Link>
+                                    </Button>
+                                )}
                                 <Button variant="secondary" size="sm" asChild className="flex-1 bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-100">
                                     <Link href={`/dashboard/programmes/${programme?.id}/group`}>
                                         <MessageSquare className="mr-2 h-4 w-4" /> Group

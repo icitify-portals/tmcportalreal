@@ -761,6 +761,7 @@ model Programme {
   organizingOfficial   Official? @relation("OrganizingOfficial", fields: [organizingOfficialId], references: [id])
   
   format             String   @default("PHYSICAL") // PHYSICAL, VIRTUAL, HYBRID
+  meetingUrl         String?  @db.VarChar(500)
   frequency          String   @default("ONCE")
   objectives         String?  @db.Text
   budget             Decimal? @default(0.00) @db.Decimal(15, 2)

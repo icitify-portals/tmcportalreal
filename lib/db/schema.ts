@@ -1019,6 +1019,7 @@ export const programmes = mysqlTable("programmes", {
     organizingOfficialId: varchar("organizingOfficialId", { length: 255 }).references(() => officials.id),
     // Year Planner Fields
     format: programmeFormatEnum.default('PHYSICAL'),
+    meetingUrl: varchar("meetingUrl", { length: 500 }),
     frequency: programmeFrequencyEnum.default('ONCE'),
     objectives: text("objectives"),
     budget: decimal("budget", { precision: 15, scale: 2 }).default("0.00"),

@@ -200,6 +200,14 @@ async function runAutomatedBackup() {
         })
 
         console.log("Automated backup completed successfully!");
+        
+        try {
+            console.log("Triggering virtual attendees auto-checkout...");
+            await execAsync("npx tsx scripts/virtual-auto-checkout.ts");
+            console.log("Virtual attendees auto-checkout completed successfully!");
+        } catch (checkoutErr) {
+            console.error("Virtual auto checkout failed during backup:", checkoutErr);
+        }
     } catch (error) {
         console.error("CRITICAL: Backup process failed:", error)
         try {

@@ -378,6 +378,22 @@ export function CreateProgrammeDialog({ organizationId, isSuperAdmin }: { organi
                             />
                         </div>
 
+                        {(form.watch('format') === 'VIRTUAL' || form.watch('format') === 'HYBRID') && (
+                            <FormField
+                                control={form.control}
+                                name="meetingUrl"
+                                render={({ field }) => (
+                                    <FormItem className="animate-in fade-in slide-in-from-top-2">
+                                        <FormLabel>Virtual Meeting Link (e.g. Zoom/Google Meet)</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="https://zoom.us/j/..." {...field} value={field.value || ''} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        )}
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <FormField
                                 control={form.control}
@@ -703,3 +719,4 @@ export function CreateProgrammeDialog({ organizationId, isSuperAdmin }: { organi
         </Dialog>
     )
 }
+
