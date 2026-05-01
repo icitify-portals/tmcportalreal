@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { UserCheck, Loader2, RotateCcw } from "lucide-react"
+import { UserCheck, UserMinus, Loader2, RotateCcw } from "lucide-react"
 import { markAttendance, resetAttendance } from "@/lib/actions/programmes"
 import { toast } from "sonner"
 import {
@@ -17,7 +17,7 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
-export function MarkAttendanceButton({ registrationId, status, userName }: { registrationId: string, status: string, userName: string }) {
+export function MarkAttendanceButton({ registrationId, status, userName, checkOutTime }: { registrationId: string, status: string, userName: string, checkOutTime?: string | null }) {
     const [isLoading, setIsLoading] = useState(false)
 
     async function handleMark() {
@@ -54,33 +54,47 @@ export function MarkAttendanceButton({ registrationId, status, userName }: { reg
 
     if (status === 'ATTENDED') {
         return (
-            <AlertDialog>
-                <AlertDialogTrigger asChild>
+            <div className="flex items-center gap-1">
+                {!checkOutTime && (
                     <Button 
                         size="icon" 
                         variant="ghost" 
-                        className="h-8 w-8 text-green-600 hover:bg-amber-50 hover:text-amber-600" 
+                        className="h-8 w-8 hover:bg-blue-50" 
+                        onClick={handleMark} 
                         disabled={isLoading}
-                        title="Reset to Paid"
+                        title="Mark Check-Out"
                     >
-                        {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserCheck className="h-4 w-4" />}
+                        {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserMinus className="h-4 w-4 text-gray-400 hover:text-blue-600" />}
                     </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Reset Attendance?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            This will remove the Check-In/Out records for <strong>{userName}</strong> and revert status to PAID.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleReset} className="bg-amber-600 hover:bg-amber-700">
-                            Reset to Paid
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
+                )}
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button 
+                            size="icon" 
+                            variant="ghost" 
+                            className="h-8 w-8 text-amber-600 hover:bg-amber-50 hover:text-amber-700" 
+                            disabled={isLoading}
+                            title="Reset to Paid"
+                        >
+                            <RotateCcw className="h-4 w-4" />
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Reset Attendance?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This will remove the Check-In/Out records for <strong>{userName}</strong> and revert status to PAID.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleReset} className="bg-amber-600 hover:bg-amber-700">
+                                Reset to Paid
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            </div>
         )
     }
 

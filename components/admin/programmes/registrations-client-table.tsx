@@ -143,6 +143,7 @@ export function RegistrationsClientTable({
                             <TableHead className="font-bold text-gray-700 uppercase text-[11px] tracking-widest">Type</TableHead>
                             <TableHead className="font-bold text-gray-700 uppercase text-[11px] tracking-widest">Payment</TableHead>
                             <TableHead className="font-bold text-gray-700 uppercase text-[11px] tracking-widest">Check-In</TableHead>
+                            <TableHead className="font-bold text-gray-700 uppercase text-[11px] tracking-widest">Check-Out</TableHead>
                             <TableHead className="font-bold text-gray-700 uppercase text-[11px] tracking-widest">Status</TableHead>
                             <TableHead className="text-right font-bold text-gray-700 uppercase text-[11px] tracking-widest">Actions</TableHead>
                         </TableRow>
@@ -166,7 +167,7 @@ export function RegistrationsClientTable({
                                 </TableCell>
                                 <TableCell className="py-4 text-black font-medium text-sm">{reg.phone || 'N/A'}</TableCell>
                                 <TableCell className="py-4">
-                                    <Badge variant={reg.userId ? "outline" : "secondary"} className="font-bold uppercase tracking-tighter text-[9px] px-2 py-0.5">
+                                    <Badge variant={reg.userId ? "outline" : "secondary"} className={`font-bold uppercase tracking-tighter text-[9px] px-2 py-0.5 ${reg.userId ? 'text-black border-black' : 'text-black'}`}>
                                         {reg.userId ? "Member" : "Guest"}
                                     </Badge>
                                 </TableCell>
@@ -178,6 +179,16 @@ export function RegistrationsClientTable({
                                         <div className="flex flex-col gap-0.5">
                                             <span className="font-bold text-green-700 text-sm">{format(new Date(reg.checkInTime), "HH:mm")}</span>
                                             <span className="text-[9px] text-gray-400 uppercase font-bold tracking-tighter">By: {reg.checkInBy || 'Self'}</span>
+                                        </div>
+                                    ) : (
+                                        <span className="text-gray-200">—</span>
+                                    )}
+                                </TableCell>
+                                <TableCell className="py-4">
+                                    {reg.checkOutTime ? (
+                                        <div className="flex flex-col gap-0.5">
+                                            <span className="font-bold text-blue-700 text-sm">{format(new Date(reg.checkOutTime), "HH:mm")}</span>
+                                            <span className="text-[9px] text-gray-400 uppercase font-bold tracking-tighter">By: {reg.checkOutBy || 'Self'}</span>
                                         </div>
                                     ) : (
                                         <span className="text-gray-200">—</span>
@@ -202,7 +213,7 @@ export function RegistrationsClientTable({
                                             </Link>
                                         </Button>
                                         {(reg.status === 'PAID' || reg.status === 'REGISTERED' || reg.status === 'ATTENDED') && (
-                                            <MarkAttendanceButton registrationId={reg.id} status={reg.status} userName={reg.name} />
+                                            <MarkAttendanceButton registrationId={reg.id} status={reg.status} userName={reg.name} checkOutTime={reg.checkOutTime} />
                                         )}
                                         <DeleteRegistrationButton registrationId={reg.id} userName={reg.name} />
                                     </div>
