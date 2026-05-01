@@ -23,7 +23,8 @@ async function runTest() {
             const [newUser] = await db.insert(users).values({
                 name: "AA Adelopo",
                 email: email,
-                emailVerified: new Date()
+                emailVerified: new Date(),
+                updatedAt: new Date()
             }).$returningId()
             user = { id: newUser.id, name: "AA Adelopo", email: email } as any
         }
@@ -41,7 +42,8 @@ async function runTest() {
             format: "VIRTUAL",
             meetingUrl: "https://zoom.us/test",
             level: org.level,
-            createdBy: user.id
+            createdBy: user.id,
+            updatedAt: new Date()
         }).$returningId()
 
         // 4. Register the participant
@@ -49,7 +51,8 @@ async function runTest() {
         const [reg] = await db.insert(programmeRegistrations).values({
             programmeId: prog.id,
             userId: user.id,
-            status: "REGISTERED"
+            status: "REGISTERED",
+            updatedAt: new Date()
         }).$returningId()
 
         // 5. Clock-In
