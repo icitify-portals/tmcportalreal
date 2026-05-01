@@ -1241,13 +1241,18 @@ export async function sendSelectedCertificatesAction(registrationIds: string[]) 
             name: programmeRegistrations.name,
             email: programmeRegistrations.email,
             status: programmeRegistrations.status,
-            programmeTitle: programmes.title
+            programmeTitle: programmes.title,
+            programmeId: programmeRegistrations.programmeId
         })
         .from(programmeRegistrations)
         .innerJoin(programmes, eq(programmeRegistrations.programmeId, programmes.id))
         .where(inArray(programmeRegistrations.id, registrationIds))
 
-        const materials = await db.select().from(programmeMaterials).where(eq(programmeMaterials.programmeId, programmeId))
+        const programmeIds = [...new Set(registrations.map(r => r.programmeId))]
+        let materialsList: any[] = []
+        if (programmeIds.length > 0) {
+            materialsList = await db.select().from(programmeMaterials).where(inArray(programmeMaterials.programmeId, programmeIds))
+        }
 
         let sentCount = 0
         for (const reg of registrations) {
@@ -1257,7 +1262,7 @@ export async function sendSelectedCertificatesAction(registrationIds: string[]) 
                 reg.name,
                 reg.programmeTitle,
                 reg.id,
-                materials
+                materialsList.filter(m => m.programmeId === reg.programmeId)
             )
 
             await sendEmail({
@@ -1313,3 +1318,4 @@ export async function deleteProgrammeMaterial(materialId: string, programmeId: s
         return { success: false, error: error.message }
     }
 }
+
