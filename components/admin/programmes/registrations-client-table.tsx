@@ -167,7 +167,7 @@ export function RegistrationsClientTable({
                                 </TableCell>
                                 <TableCell className="py-4 text-black font-medium text-sm">{reg.phone || 'N/A'}</TableCell>
                                 <TableCell className="py-4">
-                                    <Badge variant={reg.userId ? "outline" : "secondary"} className={`font-bold uppercase tracking-tighter text-[9px] px-2 py-0.5 ${reg.userId ? 'text-black border-black' : 'text-black'}`}>
+                                    <Badge variant="outline" className="font-bold uppercase tracking-tighter text-[9px] px-2 py-0.5 text-black border-black border">
                                         {reg.userId ? "Member" : "Guest"}
                                     </Badge>
                                 </TableCell>
