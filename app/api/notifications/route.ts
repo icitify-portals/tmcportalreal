@@ -17,12 +17,16 @@ export async function GET(request: NextRequest) {
             limit: 20
         })
 
-        const unreadCount = userNotifications.filter(n => !n.isRead).length // Basic count from fetched
+        const mappedNotifications = (userNotifications || []).map(n => ({
+            ...n,
+            read: n.isRead,
+            link: n.actionUrl || "#"
+        }))
 
-        // Or proper count query if performance needed later
+        const unreadCount = mappedNotifications.filter(n => !n.read).length
 
         return NextResponse.json({
-            notifications: userNotifications,
+            notifications: mappedNotifications,
             unreadCount
         })
 

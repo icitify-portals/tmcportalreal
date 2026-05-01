@@ -65,6 +65,8 @@ export default async function ProgrammeGroupPage({ params }: { params: Promise<{
                         programmeId={id} 
                         initialMessages={messages} 
                         currentUserId={session.user.id} 
+                        currentUserName={session.user.name || "User"}
+                        currentUserImage={session.user.image}
                         isAdmin={isAdmin} 
                     />
                 </div>

@@ -4,7 +4,7 @@ import { db } from "@/lib/db"
 import {
     programmes, programmeRegistrations, programmeReports, programmeMaterials,
     programmeStatusEnum, registrationStatusEnum,
-    users, organizations, offices, officials
+    users, organizations, offices, officials, notifications
 } from "@/lib/db/schema"
 import { getYearPlannerSettings } from "@/lib/actions/settings"
 import { eq, desc, and, or, aliasedTable, inArray, sql, asc } from "drizzle-orm"
@@ -1199,6 +1199,30 @@ export async function sendProgrammeMessage(programmeId: string, content: string,
             content,
             isAnnouncement
         })
+
+        // Generate notifications for registered participants
+        try {
+            const regs = await db.select().from(programmeRegistrations)
+                .where(eq(programmeRegistrations.programmeId, programmeId))
+
+            const notificationList = regs
+                .filter(r => r.userId && r.userId !== session.user.id)
+                .map(r => ({
+                    userId: r.userId!,
+                    title: isAnnouncement ? "New Programme Announcement" : "New Lounge Message",
+                    message: content.substring(0, 50) + (content.length > 50 ? "..." : ""),
+                    actionUrl: `/dashboard/programmes/${programmeId}/group`,
+                    isRead: false,
+                    createdAt: new Date(),
+                    updatedAt: new Date()
+                }))
+
+            if (notificationList.length > 0) {
+                await db.insert(notifications).values(notificationList)
+            }
+        } catch (err) {
+            console.error("Failed to generate in-app notifications:", err)
+        }
 
         revalidatePath(`/dashboard/programmes/${programmeId}/group`)
         return { success: true }

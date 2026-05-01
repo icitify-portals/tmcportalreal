@@ -44,9 +44,13 @@ export function NotificationBell() {
 
     const markAsRead = async (id: string) => {
         try {
-            const res = await fetch(`/api/notifications/${id}/read`, { method: "POST" })
+            const res = await fetch(`/api/notifications`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ notificationId: id })
+            })
             if (res.ok) {
-                setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n))
+                setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true, isRead: true } : n))
                 setUnreadCount(prev => Math.max(0, prev - 1))
             }
         } catch (error) {
@@ -56,9 +60,13 @@ export function NotificationBell() {
 
     const markAllAsRead = async () => {
         try {
-            const res = await fetch("/api/notifications/read-all", { method: "POST" })
+            const res = await fetch("/api/notifications", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ markAllRead: true })
+            })
             if (res.ok) {
-                setNotifications(prev => prev.map(n => ({ ...n, read: true })))
+                setNotifications(prev => prev.map(n => ({ ...n, read: true, isRead: true })))
                 setUnreadCount(0)
             }
         } catch (error) {

@@ -25,10 +25,19 @@ interface GroupChatProps {
     programmeId: string
     initialMessages: any[]
     currentUserId: string
+    currentUserName: string
+    currentUserImage?: string | null
     isAdmin: boolean
 }
 
-export function GroupChat({ programmeId, initialMessages, currentUserId, isAdmin }: GroupChatProps) {
+export function GroupChat({ 
+    programmeId, 
+    initialMessages, 
+    currentUserId, 
+    currentUserName,
+    currentUserImage,
+    isAdmin 
+}: GroupChatProps) {
     const [messages, setMessages] = useState<Message[]>(initialMessages)
     const [input, setInput] = useState("")
     const [isSending, setIsSending] = useState(false)
@@ -44,13 +53,23 @@ export function GroupChat({ programmeId, initialMessages, currentUserId, isAdmin
     async function handleSend() {
         if (!input.trim() || isSending) return
         
+        const contentToSend = input.trim()
         setIsSending(true)
         try {
-            const res = await sendProgrammeMessage(programmeId, input, isAnnouncement)
+            const res = await sendProgrammeMessage(programmeId, contentToSend, isAnnouncement)
             if (res.success) {
-                // For a simple real-time feel, we could add locally, 
-                // but revalidatePath should handle it if using polling or server actions correctly.
-                // Here we just clear input and hope revalidation kicks in (or we could refetch).
+                // Add the message to the messages list locally to reflect immediately
+                const newMessage: Message = {
+                    id: res.messageId || Math.random().toString(),
+                    content: contentToSend,
+                    createdAt: new Date(),
+                    isAnnouncement: isAnnouncement,
+                    user: {
+                        name: currentUserName,
+                        image: currentUserImage || null
+                    }
+                }
+                setMessages((prev) => [...prev, newMessage])
                 setInput("")
                 setIsAnnouncement(false)
                 toast.success("Message sent")
