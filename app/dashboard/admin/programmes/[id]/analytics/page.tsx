@@ -56,8 +56,12 @@ export default async function ProgrammeAnalyticsPage({ params }: { params: Promi
         const state = meta?.state || "Unknown"
         const lga = meta?.lga || "Unknown"
         
-        stateStats[state] = (stateStats[state] || 0) + 1
-        lgaStats[lga] = (lgaStats[lga] || 0) + 1
+        if (state && state !== "Unknown" && state !== "Unspecified") {
+            stateStats[state] = (stateStats[state] || 0) + 1
+        }
+        if (lga && lga !== "Unknown" && lga !== "Unspecified") {
+            lgaStats[lga] = (lgaStats[lga] || 0) + 1
+        }
     })
 
     const sortedStates = Object.entries(stateStats).sort((a, b) => b[1] - a[1])
@@ -67,51 +71,51 @@ export default async function ProgrammeAnalyticsPage({ params }: { params: Promi
         <DashboardLayout>
             <div className="space-y-6 max-w-7xl mx-auto">
                 <div className="flex flex-col gap-2">
-                    <h1 className="text-3xl font-bold tracking-tight">Programme Analytics</h1>
-                    <p className="text-muted-foreground">{programme.title}</p>
+                    <h1 className="text-3xl font-black tracking-tight text-black" style={{ color: "#000000" }}>Programme Analytics</h1>
+                    <p className="text-muted-foreground text-black font-semibold" style={{ color: "#000000" }}>{programme.title}</p>
                 </div>
 
                 {/* Summary Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <Card className="bg-blue-50/50 border-blue-100">
                         <CardHeader className="p-4 flex flex-row items-center justify-between space-y-0">
-                            <CardTitle className="text-sm font-bold uppercase tracking-wider text-blue-900">Total Registered</CardTitle>
+                            <CardTitle className="text-sm font-black uppercase tracking-wider text-black" style={{ color: "#000000" }}>Total Registered</CardTitle>
                             <Users className="h-4 w-4 text-blue-600" />
                         </CardHeader>
                         <CardContent className="p-4 pt-0">
-                            <div className="text-2xl font-black">{totalRegistered}</div>
+                            <div className="text-2xl font-black text-black" style={{ color: "#000000" }}>{totalRegistered}</div>
                         </CardContent>
                     </Card>
                     <Card className="bg-green-50/50 border-green-100">
                         <CardHeader className="p-4 flex flex-row items-center justify-between space-y-0">
-                            <CardTitle className="text-sm font-bold uppercase tracking-wider text-green-900">Total Attended</CardTitle>
+                            <CardTitle className="text-sm font-black uppercase tracking-wider text-black" style={{ color: "#000000" }}>Total Attended</CardTitle>
                             <TrendingUp className="h-4 w-4 text-green-600" />
                         </CardHeader>
                         <CardContent className="p-4 pt-0">
-                            <div className="text-2xl font-black">{totalAttended}</div>
-                            <p className="text-xs text-green-600 font-medium">
+                            <div className="text-2xl font-black text-black" style={{ color: "#000000" }}>{totalAttended}</div>
+                            <p className="text-xs text-green-600 font-bold">
                                 {totalRegistered > 0 ? Math.round((totalAttended / totalRegistered) * 100) : 0}% Attendance Rate
                             </p>
                         </CardContent>
                     </Card>
                     <Card className="bg-amber-50/50 border-amber-100">
                         <CardHeader className="p-4 flex flex-row items-center justify-between space-y-0">
-                            <CardTitle className="text-sm font-bold uppercase tracking-wider text-amber-900">Lateness Rate</CardTitle>
+                            <CardTitle className="text-sm font-black uppercase tracking-wider text-black" style={{ color: "#000000" }}>Lateness Rate</CardTitle>
                             <Clock className="h-4 w-4 text-amber-600" />
                         </CardHeader>
                         <CardContent className="p-4 pt-0">
-                            <div className="text-2xl font-black">{latenessRate}%</div>
-                            <p className="text-xs text-amber-600 font-medium">{lateCount} late participants</p>
+                            <div className="text-2xl font-black text-black" style={{ color: "#000000" }}>{latenessRate}%</div>
+                            <p className="text-xs text-amber-600 font-bold">{lateCount} late participants</p>
                         </CardContent>
                     </Card>
                     <Card className="bg-purple-50/50 border-purple-100">
                         <CardHeader className="p-4 flex flex-row items-center justify-between space-y-0">
-                            <CardTitle className="text-sm font-bold uppercase tracking-wider text-purple-900">Avg. Lateness</CardTitle>
+                            <CardTitle className="text-sm font-black uppercase tracking-wider text-black" style={{ color: "#000000" }}>Avg. Lateness</CardTitle>
                             <Clock className="h-4 w-4 text-purple-600" />
                         </CardHeader>
                         <CardContent className="p-4 pt-0">
-                            <div className="text-2xl font-black">{avgLateness}m</div>
-                            <p className="text-xs text-purple-600 font-medium">Minutes past start time</p>
+                            <div className="text-2xl font-black text-black" style={{ color: "#000000" }}>{avgLateness}m</div>
+                            <p className="text-xs text-purple-600 font-bold">Minutes past start time</p>
                         </CardContent>
                     </Card>
                 </div>
@@ -120,7 +124,7 @@ export default async function ProgrammeAnalyticsPage({ params }: { params: Promi
                     {/* Jurisdiction: States */}
                     <Card>
                         <CardHeader>
-                            <CardTitle>State Representation</CardTitle>
+                            <CardTitle className="text-black font-bold" style={{ color: "#000000" }}>State Representation</CardTitle>
                             <CardDescription>Breakdown of participants by state.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
@@ -129,8 +133,8 @@ export default async function ProgrammeAnalyticsPage({ params }: { params: Promi
                                 return (
                                     <div key={state} className="space-y-1">
                                         <div className="flex items-center justify-between text-sm">
-                                            <span className="font-bold text-gray-700 uppercase tracking-tighter">{state}</span>
-                                            <span className="font-bold text-gray-500">{count} ({percentage}%)</span>
+                                            <span className="font-bold text-black uppercase tracking-tighter" style={{ color: "#000000" }}>{state}</span>
+                                            <span className="font-bold text-black" style={{ color: "#000000" }}>{count} ({percentage}%)</span>
                                         </div>
                                         <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
                                             <div 
@@ -147,7 +151,7 @@ export default async function ProgrammeAnalyticsPage({ params }: { params: Promi
                     {/* Jurisdiction: LGAs */}
                     <Card>
                         <CardHeader>
-                            <CardTitle>Top LGAs</CardTitle>
+                            <CardTitle className="text-black font-bold" style={{ color: "#000000" }}>Top LGAs</CardTitle>
                             <CardDescription>The most represented local government areas.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
@@ -156,8 +160,8 @@ export default async function ProgrammeAnalyticsPage({ params }: { params: Promi
                                 return (
                                     <div key={lga} className="space-y-1">
                                         <div className="flex items-center justify-between text-sm">
-                                            <span className="font-bold text-gray-700 uppercase tracking-tighter">{lga}</span>
-                                            <span className="font-bold text-gray-500">{count} ({percentage}%)</span>
+                                            <span className="font-bold text-black uppercase tracking-tighter" style={{ color: "#000000" }}>{lga}</span>
+                                            <span className="font-bold text-black" style={{ color: "#000000" }}>{count} ({percentage}%)</span>
                                         </div>
                                         <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
                                             <div 
