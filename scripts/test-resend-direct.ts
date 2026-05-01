@@ -2,7 +2,7 @@ import "dotenv/config"
 import { Resend } from "resend"
 
 async function testResend() {
-    const key = process.env.RESEND_API_KEY
+    const key = "re_MXDa3agX_HUHBAD3z1g1szXFNFMQ5cRDs"
     console.log(`[Test Resend] Testing Resend API key: ${key?.substring(0, 6)}...`)
     if (!key) {
         console.error("No RESEND_API_KEY found in process.env")
