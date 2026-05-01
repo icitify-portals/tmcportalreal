@@ -327,7 +327,7 @@ export const emailTemplates = {
       Download your access slip here: ${process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL}/programmes/registrations/${registrationId}/slip
     `,
   }),
-  programmeCertificateThankYou: (name: string, programmeTitle: string, registrationId: string) => ({
+  programmeCertificateThankYou: (name: string, programmeTitle: string, registrationId: string, materials: any[] = []) => ({
     subject: `Thank You for Attending: ${programmeTitle} - Certificate Included`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 12px;">
@@ -345,6 +345,20 @@ export const emailTemplates = {
           <a href="${process.env.NEXT_PUBLIC_APP_URL}/api/programmes/registrations/${registrationId}/certificate" style="background-color: #15803d; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Download My Certificate</a>
         </div>
         
+        ${materials.length > 0 ? `
+        <div style="margin: 32px 0; padding: 20px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
+            <h3 style="margin-top: 0; color: #1e293b; font-size: 16px;">Programme Materials</h3>
+            <p style="margin: 8px 0; font-size: 14px; color: #475569;">The following materials have been made available by the organizers:</p>
+            <ul style="list-style-type: none; padding-left: 0;">
+                ${materials.map(mat => `
+                <li style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #e2e8f0;">
+                    <a href="${mat.url}" style="color: #15803d; text-decoration: none; font-weight: bold;">📥 Download ${mat.title}</a>
+                </li>
+                `).join('')}
+            </ul>
+        </div>
+        ` : ''}
+
         <p>We hope to see you at our future programmes. Stay connected with TMC for more impactful engagements.</p>
         
         <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;">
@@ -360,6 +374,11 @@ export const emailTemplates = {
       
       Download your certificate here: ${process.env.NEXT_PUBLIC_APP_URL}/api/programmes/registrations/${registrationId}/certificate
       
+      ${materials.length > 0 ? `
+      Programme Materials:
+      ${materials.map(mat => `- ${mat.title}: ${mat.url}`).join('\n      ')}
+      ` : ''}
+
       Best regards,
       The Muslim Congress
     `,

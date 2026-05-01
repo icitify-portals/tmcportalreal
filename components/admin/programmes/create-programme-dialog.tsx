@@ -27,11 +27,12 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { createProgramme, getOffices, getOfficials } from "@/lib/actions/programmes"
+import { createProgramme, getOffices, getOfficials, addProgrammeMaterial } from "@/lib/actions/programmes"
 import { getOrganizations } from "@/lib/actions/organization"
 import { toast } from "sonner"
 import { Loader2, Plus } from "lucide-react"
 import { FileUpload as FileUploadInput } from "@/components/ui/file-upload"
+import { ProgrammeMaterialsField } from "./programme-materials-field"
 
 const ProgrammeSchema = z.object({
     title: z.string().min(1, "Title is required"),
@@ -61,6 +62,7 @@ const ProgrammeSchema = z.object({
     certPartnerLogo: z.string().optional(),
     certPartnerSignature: z.string().optional(),
     certPartnerSignatory: z.string().optional(),
+    materials: z.array(z.object({ title: z.string(), url: z.string(), fileType: z.string() })).default([]),
 })
 
 export function CreateProgrammeDialog({ organizationId, isSuperAdmin }: { organizationId: string; isSuperAdmin?: boolean }) {
@@ -99,6 +101,7 @@ export function CreateProgrammeDialog({ organizationId, isSuperAdmin }: { organi
             certPartnerLogo: "",
             certPartnerSignature: "",
             certPartnerSignatory: "",
+            materials: [],
         },
     })
 
@@ -120,8 +123,9 @@ export function CreateProgrammeDialog({ organizationId, isSuperAdmin }: { organi
     async function onSubmit(data: z.infer<typeof ProgrammeSchema>) {
         setIsSubmitting(true)
         try {
+            const { materials, ...programmeData } = data;
             const payload = {
-                ...data,
+                ...programmeData,
                 startDate: new Date(data.startDate),
                 endDate: data.endDate ? new Date(data.endDate) : undefined,
                 amount: parseFloat(data.amount || "0"),
@@ -132,7 +136,17 @@ export function CreateProgrammeDialog({ organizationId, isSuperAdmin }: { organi
 
             const result = await createProgramme(payload, data.organizationId)
 
-            if (result.success) {
+            if (result.success && result.programmeId) {
+                if (materials && materials.length > 0) {
+                    for (const mat of materials) {
+                        await addProgrammeMaterial({
+                            programmeId: result.programmeId,
+                            title: mat.title,
+                            url: mat.url,
+                            fileType: mat.fileType
+                        })
+                    }
+                }
                 toast.success("Programme created successfully")
                 setOpen(false)
                 form.reset({
@@ -528,12 +542,12 @@ export function CreateProgrammeDialog({ organizationId, isSuperAdmin }: { organi
                             )}
                         />
 
-                        <div className="space-y-4 border p-4 rounded-md bg-purple-50/30">
-                            <h3 className="text-sm font-bold text-purple-900 flex items-center gap-2">
+                        <div className="space-y-4 border p-4 rounded-md bg-green-50/30">
+                            <h3 className="text-sm font-bold text-black flex items-center gap-2">
                                 <Plus className="w-4 h-4" />
                                 Certificate Settings & Branding
                             </h3>
-                            <p className="text-xs text-purple-700">Configure how the certificates of participation should look.</p>
+                            <p className="text-xs text-black">Configure how the certificates of participation should look.</p>
                             
                             <FormField
                                 control={form.control}
@@ -559,8 +573,8 @@ export function CreateProgrammeDialog({ organizationId, isSuperAdmin }: { organi
                             />
 
                             {(form.watch("certTemplateType") === 'TMC_ONLY' || form.watch("certTemplateType") === 'BOTH') && (
-                                <div className="p-3 border border-purple-100 rounded-md bg-white/50 space-y-4">
-                                    <h4 className="text-[10px] font-bold text-purple-600 uppercase tracking-widest">TMC Branding</h4>
+                                <div className="p-3 border border-green-100 rounded-md bg-white/50 space-y-4">
+                                    <h4 className="text-[10px] font-bold text-green-700 uppercase tracking-widest">TMC Branding</h4>
                                     <FormField
                                         control={form.control}
                                         name="certTmcSignatory"
@@ -598,8 +612,8 @@ export function CreateProgrammeDialog({ organizationId, isSuperAdmin }: { organi
                             )}
 
                             {(form.watch("certTemplateType") === 'PARTNER_ONLY' || form.watch("certTemplateType") === 'BOTH') && (
-                                <div className="p-3 border border-purple-100 rounded-md bg-white/50 space-y-4">
-                                    <h4 className="text-[10px] font-bold text-purple-600 uppercase tracking-widest">Partner Branding</h4>
+                                <div className="p-3 border border-green-100 rounded-md bg-white/50 space-y-4">
+                                    <h4 className="text-[10px] font-bold text-green-700 uppercase tracking-widest">Partner Branding</h4>
                                     <FormField
                                         control={form.control}
                                         name="certPartnerName"
@@ -671,6 +685,8 @@ export function CreateProgrammeDialog({ organizationId, isSuperAdmin }: { organi
                                 </div>
                             )}
                         </div>
+
+                        <ProgrammeMaterialsField control={form.control} />
 
                         <DialogFooter>
                             <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={isSubmitting}>

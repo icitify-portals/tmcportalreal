@@ -36,7 +36,7 @@ async function cleanupOldBackups() {
     try {
         const files = await fs.readdir(localArchiveDir);
         const now = Date.now();
-        const localRetentionMs = 5 * 24 * 60 * 60 * 1000;
+        const localRetentionMs = 7 * 24 * 60 * 60 * 1000;
 
         for (const file of files) {
             const filePath = path.join(localArchiveDir, file);
@@ -54,7 +54,7 @@ async function cleanupOldBackups() {
     if (s3Client && S3_BUCKET) {
         try {
             const now = new Date();
-            const cloudRetentionMs = 14 * 24 * 60 * 60 * 1000;
+            const cloudRetentionMs = 7 * 24 * 60 * 60 * 1000;
             
             const listResponse = await s3Client.send(new ListObjectsV2Command({
                 Bucket: S3_BUCKET,

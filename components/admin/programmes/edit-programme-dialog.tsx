@@ -32,6 +32,7 @@ import { toast } from "sonner"
 import { Loader2, Edit, AlertCircle, XCircle, Plus } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { FileUpload } from "@/components/ui/file-upload"
+import { ProgrammeMaterialsManager } from "./programme-materials-manager"
 
 const ProgrammeSchema = z.object({
     title: z.string().min(1, "Title is required"),
@@ -492,12 +493,12 @@ export function EditProgrammeDialog({ programme, open, onOpenChange }: EditProgr
                             )}
                         />
 
-                        <div className="space-y-4 border p-4 rounded-md bg-purple-50/30">
-                            <h3 className="text-sm font-bold text-purple-900 flex items-center gap-2">
+                        <div className="space-y-4 border p-4 rounded-md bg-green-50/30">
+                            <h3 className="text-sm font-bold text-black flex items-center gap-2">
                                 <Plus className="w-4 h-4" />
                                 Certificate Settings & Branding
                             </h3>
-                            <p className="text-xs text-purple-700">Configure how the certificates of participation should look.</p>
+                            <p className="text-xs text-black">Configure how the certificates of participation should look.</p>
                             
                             <FormField
                                 control={form.control}
@@ -523,8 +524,8 @@ export function EditProgrammeDialog({ programme, open, onOpenChange }: EditProgr
                             />
 
                             {(form.watch("certTemplateType") === 'TMC_ONLY' || form.watch("certTemplateType") === 'BOTH') && (
-                                <div className="p-3 border border-purple-100 rounded-md bg-white/50 space-y-4">
-                                    <h4 className="text-[10px] font-bold text-purple-600 uppercase tracking-widest">TMC Branding</h4>
+                                <div className="p-3 border border-green-100 rounded-md bg-white/50 space-y-4">
+                                    <h4 className="text-[10px] font-bold text-green-700 uppercase tracking-widest">TMC Branding</h4>
                                     <FormField
                                         control={form.control}
                                         name="certTmcSignatory"
@@ -562,8 +563,8 @@ export function EditProgrammeDialog({ programme, open, onOpenChange }: EditProgr
                             )}
 
                             {(form.watch("certTemplateType") === 'PARTNER_ONLY' || form.watch("certTemplateType") === 'BOTH') && (
-                                <div className="p-3 border border-purple-100 rounded-md bg-white/50 space-y-4">
-                                    <h4 className="text-[10px] font-bold text-purple-600 uppercase tracking-widest">Partner Branding</h4>
+                                <div className="p-3 border border-green-100 rounded-md bg-white/50 space-y-4">
+                                    <h4 className="text-[10px] font-bold text-green-700 uppercase tracking-widest">Partner Branding</h4>
                                     <FormField
                                         control={form.control}
                                         name="certPartnerName"
@@ -635,6 +636,8 @@ export function EditProgrammeDialog({ programme, open, onOpenChange }: EditProgr
                                 </div>
                             )}
                         </div>
+
+                        <ProgrammeMaterialsManager programmeId={programme.id} />
 
                         <DialogFooter>
                             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>

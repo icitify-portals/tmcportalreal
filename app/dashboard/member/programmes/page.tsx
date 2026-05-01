@@ -6,6 +6,7 @@ import { Calendar, MapPin, Printer, CreditCard, MessageSquare } from "lucide-rea
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { CertificateDownloadButton } from "@/components/programme/certificate-download-button"
+import { ProgrammeMaterialsDownload } from "@/components/programme/programme-materials-download"
 import { format } from "date-fns"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { ClientDate } from "@/components/ui/client-date"
@@ -85,6 +86,10 @@ async function MyProgrammesList() {
                         ) : reg.status === 'ATTENDED' ? (
                             <p className="text-xs text-muted-foreground italic">No certificate involved</p>
                         ) : null}
+
+                        {reg.status === 'ATTENDED' && programme && (
+                            <ProgrammeMaterialsDownload programmeId={programme.id} />
+                        )}
                     </CardFooter>
                 </Card>
             ))}

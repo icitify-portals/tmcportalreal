@@ -2,7 +2,7 @@
 
 import { db } from "@/lib/db"
 import {
-    programmes, programmeRegistrations, programmeReports,
+    programmes, programmeRegistrations, programmeReports, programmeMaterials,
     programmeStatusEnum, registrationStatusEnum,
     users, organizations, offices, officials
 } from "@/lib/db/schema"
@@ -1247,6 +1247,8 @@ export async function sendSelectedCertificatesAction(registrationIds: string[]) 
         .innerJoin(programmes, eq(programmeRegistrations.programmeId, programmes.id))
         .where(inArray(programmeRegistrations.id, registrationIds))
 
+        const materials = await db.select().from(programmeMaterials).where(eq(programmeMaterials.programmeId, programmeId))
+
         let sentCount = 0
         for (const reg of registrations) {
             if (reg.status !== 'ATTENDED' || !reg.email) continue
@@ -1254,13 +1256,13 @@ export async function sendSelectedCertificatesAction(registrationIds: string[]) 
             const emailContent = emailTemplates.programmeCertificateThankYou(
                 reg.name,
                 reg.programmeTitle,
-                reg.id
+                reg.id,
+                materials
             )
 
             await sendEmail({
                 to: reg.email,
-                subject: `Certificate of Participation: ${reg.programmeTitle}`,
-                html: emailContent
+                ...emailContent
             })
             sentCount++
         }
@@ -1269,5 +1271,45 @@ export async function sendSelectedCertificatesAction(registrationIds: string[]) 
     } catch (error) {
         console.error("Send Selected Certificates Error:", error)
         return { success: false, error: "Failed to send certificates" }
+    }
+}
+
+export async function addProgrammeMaterial(data: { programmeId: string; title: string; url: string; fileType: string }) {
+    const session = await getServerSession()
+    if (!session?.user?.id) return { success: false, error: "Authentication required" }
+
+    try {
+        await db.insert(programmeMaterials).values({
+            programmeId: data.programmeId,
+            title: data.title,
+            url: data.url,
+            fileType: data.fileType,
+            uploadedBy: session.user.id
+        })
+        revalidatePath(`/dashboard/admin/programmes/${data.programmeId}`)
+        return { success: true }
+    } catch (error: any) {
+        return { success: false, error: error.message }
+    }
+}
+
+export async function getProgrammeMaterials(programmeId: string) {
+    try {
+        return await db.select().from(programmeMaterials).where(eq(programmeMaterials.programmeId, programmeId))
+    } catch (error) {
+        return []
+    }
+}
+
+export async function deleteProgrammeMaterial(materialId: string, programmeId: string) {
+    const session = await getServerSession()
+    if (!session?.user?.id) return { success: false, error: "Authentication required" }
+
+    try {
+        await db.delete(programmeMaterials).where(eq(programmeMaterials.id, materialId))
+        revalidatePath(`/dashboard/admin/programmes/${programmeId}`)
+        return { success: true }
+    } catch (error: any) {
+        return { success: false, error: error.message }
     }
 }

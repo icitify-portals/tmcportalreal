@@ -18,7 +18,7 @@ import { format } from "date-fns"
 import { ClientCurrency } from "@/components/ui/client-currency"
 import { MarkAttendanceButton } from "@/components/admin/programmes/mark-attendance-button"
 import { DeleteRegistrationButton } from "@/components/admin/programmes/delete-registration-button"
-import { markAttendanceAction, sendSelectedCertificatesAction } from "@/lib/actions/programmes"
+import { markAttendance, sendSelectedCertificatesAction } from "@/lib/actions/programmes"
 import { toast } from "sonner"
 
 export function RegistrationsClientTable({ 
@@ -56,7 +56,7 @@ export function RegistrationsClientTable({
             for (const id of selectedIds) {
                 const reg = registrations.find(r => r.id === id)
                 if (reg && reg.status !== 'ATTENDED') {
-                    const result = await markAttendanceAction(id, 'ATTENDED')
+                    const result = await markAttendance(id)
                     if (result.success) successCount++
                 }
             }

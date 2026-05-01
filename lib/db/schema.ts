@@ -1097,6 +1097,17 @@ export const programmeReports = mysqlTable("programme_reports", {
     submittedAt: timestamp("submittedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
 });
 
+// Programme Materials
+export const programmeMaterials = mysqlTable("programme_materials", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
+    programmeId: varchar("programmeId", { length: 255 }).notNull().references(() => programmes.id, { onDelete: "cascade" }),
+    title: varchar("title", { length: 255 }).notNull(),
+    url: varchar("url", { length: 500 }).notNull(),
+    fileType: varchar("fileType", { length: 100 }), // pdf, doc, slides, video
+    uploadedBy: varchar("uploadedBy", { length: 255 }).references(() => users.id),
+    createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+});
+
 // Finance Budgets
 export const financeBudgets = mysqlTable("finance_budgets", {
     id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
@@ -1568,10 +1579,22 @@ export const reportsRelations = relations(reports, ({ one }) => ({
     }),
 }));
 
-export const programmesRelationsUpdate = relations(programmes, ({ one }) => ({
+export const programmesRelationsUpdate = relations(programmes, ({ one, many }) => ({
     organizingOffice: one(offices, {
         fields: [programmes.organizingOfficeId],
         references: [offices.id],
+    }),
+    materials: many(programmeMaterials),
+}));
+
+export const programmeMaterialsRelations = relations(programmeMaterials, ({ one }) => ({
+    programme: one(programmes, {
+        fields: [programmeMaterials.programmeId],
+        references: [programmes.id],
+    }),
+    uploader: one(users, {
+        fields: [programmeMaterials.uploadedBy],
+        references: [users.id],
     }),
 }));
 
