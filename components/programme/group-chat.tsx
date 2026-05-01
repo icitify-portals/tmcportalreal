@@ -60,7 +60,7 @@ export function GroupChat({
             if (res.success) {
                 // Add the message to the messages list locally to reflect immediately
                 const newMessage: Message = {
-                    id: res.messageId || Math.random().toString(),
+                    id: (res as any).messageId || Math.random().toString(),
                     content: contentToSend,
                     createdAt: new Date(),
                     isAnnouncement: isAnnouncement,
