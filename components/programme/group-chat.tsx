@@ -119,11 +119,11 @@ export function GroupChat({
                                 </Avatar>
                                 <div className="space-y-1 max-w-[80%]">
                                     <div className="flex items-baseline gap-2">
-                                        <span className="text-xs font-black text-black tracking-tight">{msg.user.name}</span>
+                                        <span className="text-xs font-black text-black tracking-tight" style={{ color: "#000000" }}>{msg.user.name}</span>
                                         <span className="text-[10px] text-slate-600 font-bold">{format(new Date(msg.createdAt), 'p')}</span>
                                     </div>
                                     <div className="bg-slate-100/80 border border-slate-200/60 rounded-2xl rounded-tl-none p-3.5 shadow-sm">
-                                        <p className="text-sm text-black font-bold leading-relaxed">{msg.content}</p>
+                                        <p className="text-sm text-black font-extrabold leading-relaxed" style={{ color: "#000000" }}>{msg.content}</p>
                                     </div>
                                 </div>
                             </>
@@ -145,7 +145,8 @@ export function GroupChat({
                 )}
                 <Input 
                     placeholder={isAnnouncement ? "Post an announcement..." : "Type a message..."} 
-                    className="flex-1 bg-gray-50 border-2 border-gray-200 h-12 rounded-xl focus-visible:ring-green-500 text-black font-bold placeholder:text-gray-500"
+                    className="flex-1 bg-gray-50 border-2 border-gray-200 h-12 rounded-xl focus-visible:ring-green-500 text-black font-extrabold placeholder:text-gray-500"
+                    style={{ color: "#000000" }}
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSend()}
