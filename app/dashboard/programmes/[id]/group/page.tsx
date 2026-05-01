@@ -60,7 +60,7 @@ export default async function ProgrammeGroupPage({ params }: { params: Promise<{
                     </div>
                 </div>
 
-                <div className="flex-1 bg-gray-50/50 rounded-3xl border border-dashed border-gray-200 overflow-hidden shadow-inner">
+                <div className="flex-1 bg-white rounded-3xl border border-gray-200 overflow-hidden shadow-sm">
                     <GroupChat 
                         programmeId={id} 
                         initialMessages={messages} 

@@ -100,11 +100,11 @@ export function GroupChat({ programmeId, initialMessages, currentUserId, isAdmin
                                 </Avatar>
                                 <div className="space-y-1 max-w-[80%]">
                                     <div className="flex items-baseline gap-2">
-                                        <span className="text-[10px] font-black text-gray-900 uppercase tracking-tighter">{msg.user.name}</span>
-                                        <span className="text-[8px] text-gray-400 font-bold">{format(new Date(msg.createdAt), 'p')}</span>
+                                        <span className="text-xs font-bold text-slate-800 tracking-tight">{msg.user.name}</span>
+                                        <span className="text-[10px] text-slate-400 font-semibold">{format(new Date(msg.createdAt), 'p')}</span>
                                     </div>
-                                    <div className="bg-white border-2 border-gray-100 rounded-2xl rounded-tl-none p-3 shadow-sm">
-                                        <p className="text-sm text-black font-medium leading-relaxed">{msg.content}</p>
+                                    <div className="bg-slate-100/80 border border-slate-200/60 rounded-2xl rounded-tl-none p-3.5 shadow-sm">
+                                        <p className="text-sm text-slate-900 font-normal leading-relaxed">{msg.content}</p>
                                     </div>
                                 </div>
                             </>

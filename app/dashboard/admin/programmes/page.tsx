@@ -115,7 +115,7 @@ async function ProgrammeList({ type, orgId }: { type: 'MY_PROGRAMMES' | 'TO_APPR
                                         Analytics
                                     </a>
                                 </Button>
-                                <Button variant="outline" size="sm" asChild className="bg-purple-50 text-purple-700 hover:bg-purple-100 border-purple-100">
+                                <Button variant="default" size="sm" asChild className="bg-purple-600 hover:bg-purple-700 text-white border-none font-bold">
                                     <a href={`/dashboard/programmes/${p.id}/group`}>
                                         <MessageSquare className="w-4 h-4 mr-2" />
                                         Lounge
