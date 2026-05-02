@@ -78,11 +78,13 @@ export function ProgrammeActions({ programme }: ProgrammeActionsProps) {
                 </DropdownMenuContent>
             </DropdownMenu>
 
-            <EditProgrammeDialog
-                programme={programme}
-                open={editOpen}
-                onOpenChange={setEditOpen}
-            />
+            {editOpen && (
+                <EditProgrammeDialog
+                    programme={programme}
+                    open={editOpen}
+                    onOpenChange={setEditOpen}
+                />
+            )}
 
             <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
                 <AlertDialogContent>

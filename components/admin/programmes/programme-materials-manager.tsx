@@ -174,9 +174,30 @@ export function ProgrammeMaterialsManager({ programmeId }: { programmeId: string
                                     className="border-emerald-800/40 bg-emerald-950/20 text-emerald-100"
                                 />
                                 <FileUpload 
-                                    onUploadComplete={(url, file) => {
+                                    onUploadComplete={async (url, file) => {
                                         setNewUrl(url)
-                                        if (!newTitle && file?.name) setNewTitle(file.name)
+                                        const title = newTitle || file?.name || "Untitled Material"
+                                        setIsAdding(true)
+                                        try {
+                                            const res = await addProgrammeMaterial({
+                                                programmeId,
+                                                title,
+                                                url,
+                                                fileType: "DOCUMENT"
+                                            })
+                                            if (res.success) {
+                                                toast.success(`"${title}" added successfully`)
+                                                setNewTitle("")
+                                                setNewUrl("")
+                                                fetchMaterials()
+                                            } else {
+                                                toast.error(res.error || "Failed to add material")
+                                            }
+                                        } catch (error) {
+                                            toast.error("An unexpected error occurred")
+                                        } finally {
+                                            setIsAdding(false)
+                                        }
                                     }} 
                                     label="Upload"
                                 />
