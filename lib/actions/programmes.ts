@@ -438,6 +438,8 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
                 certPartnerSignature: validData.certPartnerSignature || null,
                 certPartnerSignatory: validData.certPartnerSignatory || null,
                 createdBy: finalCreatedBy,
+                createdAt: new Date(),
+                updatedAt: new Date(),
             })
         } catch (innerError: any) {
             console.error("Inner Insert Error fallback:", innerError)
@@ -475,6 +477,8 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
                 certPartnerSignature: validData.certPartnerSignature || null,
                 certPartnerSignatory: validData.certPartnerSignatory || null,
                 createdBy: finalCreatedBy,
+                createdAt: new Date(),
+                updatedAt: new Date(),
             })
         }
 
