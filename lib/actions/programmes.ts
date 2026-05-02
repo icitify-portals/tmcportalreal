@@ -378,7 +378,9 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
             initialStatus = 'PENDING_NATIONAL'
         }
 
-        const [newProgramme] = await db.insert(programmes).values({
+        const programmeId = crypto.randomUUID()
+        await db.insert(programmes).values({
+            id: programmeId,
             organizationId,
             level: org.level,
             title: validData.title,
@@ -411,10 +413,10 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
             certPartnerSignature: validData.certPartnerSignature,
             certPartnerSignatory: validData.certPartnerSignatory,
             createdBy: session.user.id,
-        }).$returningId()
+        })
 
         revalidatePath("/dashboard/admin/programmes")
-        return { success: true, programmeId: newProgramme.id }
+        return { success: true, programmeId }
     } catch (error: any) {
         console.error("Create Programme Error:", error)
         if (error instanceof z.ZodError) {
