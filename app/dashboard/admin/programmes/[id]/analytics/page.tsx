@@ -133,8 +133,8 @@ export default async function ProgrammeAnalyticsPage({ params }: { params: Promi
                                 return (
                                     <div key={state} className="space-y-1">
                                         <div className="flex items-center justify-between text-sm">
-                                            <span className="font-bold text-black uppercase tracking-tighter" style={{ color: "#000000" }}>{state}</span>
-                                            <span className="font-bold text-black" style={{ color: "#000000" }}>{count} ({percentage}%)</span>
+                                            <span className="font-bold text-white uppercase tracking-tighter" style={{ color: "#FFFFFF" }}>{state}</span>
+                                            <span className="font-bold text-white" style={{ color: "#FFFFFF" }}>{count} ({percentage}%)</span>
                                         </div>
                                         <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
                                             <div 
@@ -160,8 +160,8 @@ export default async function ProgrammeAnalyticsPage({ params }: { params: Promi
                                 return (
                                     <div key={lga} className="space-y-1">
                                         <div className="flex items-center justify-between text-sm">
-                                            <span className="font-bold text-black uppercase tracking-tighter" style={{ color: "#000000" }}>{lga}</span>
-                                            <span className="font-bold text-black" style={{ color: "#000000" }}>{count} ({percentage}%)</span>
+                                            <span className="font-bold text-white uppercase tracking-tighter" style={{ color: "#FFFFFF" }}>{lga}</span>
+                                            <span className="font-bold text-white" style={{ color: "#FFFFFF" }}>{count} ({percentage}%)</span>
                                         </div>
                                         <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
                                             <div 
