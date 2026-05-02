@@ -1470,7 +1470,8 @@ export async function addProgrammeMaterial(data: { programmeId: string; title: s
             title: data.title,
             url: data.url,
             fileType: data.fileType || "DOCUMENT",
-            uploadedBy: session.user.id
+            uploadedBy: session.user.id,
+            createdAt: new Date()
         })
         revalidatePath(`/dashboard/admin/programmes`)
         revalidatePath(`/dashboard/admin/programmes/${data.programmeId}/registrations`)
