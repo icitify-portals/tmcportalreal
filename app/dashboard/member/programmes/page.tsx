@@ -46,9 +46,11 @@ async function MyProgrammesList() {
                                     const paid = parseFloat(reg.amountPaid || "0");
                                     const outstanding = Math.max(0, total - paid);
                                     return outstanding > 0 ? (
-                                        <Badge variant="outline" className="border-red-200 text-red-700 bg-red-50 font-bold tracking-tight">
-                                            Outstanding: NGN {outstanding.toFixed(2)}
-                                        </Badge>
+                                        <Link href={`/programmes/registrations/${reg.id}/slip`} target="_blank">
+                                            <Badge variant="outline" className="border-red-200 text-red-700 bg-red-50 font-bold tracking-tight cursor-pointer hover:bg-red-100 transition-colors">
+                                                Outstanding: NGN {outstanding.toFixed(2)}
+                                            </Badge>
+                                        </Link>
                                     ) : null;
                                 })()}
                             </div>
