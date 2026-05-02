@@ -32,7 +32,7 @@ import { RegistrationsClientTable } from "@/components/admin/programmes/registra
 
 export const dynamic = "force-dynamic"
 
-async function RegistrationsList({ programmeId }: { programmeId: string }) {
+async function RegistrationsList({ programmeId, programmeAmount }: { programmeId: string, programmeAmount: string | null }) {
     const registrations = await getProgrammeRegistrations(programmeId)
 
     if (registrations.length === 0) {
@@ -43,7 +43,7 @@ async function RegistrationsList({ programmeId }: { programmeId: string }) {
         )
     }
 
-    return <RegistrationsClientTable registrations={registrations} programmeId={programmeId} />
+    return <RegistrationsClientTable registrations={registrations} programmeId={programmeId} programmeAmount={programmeAmount} />
 }
 
 export default async function ProgrammeRegistrationsPage({ params }: { params: Promise<{ id: string }> }) {
@@ -77,7 +77,7 @@ export default async function ProgrammeRegistrationsPage({ params }: { params: P
                 </div>
 
                 <Suspense fallback={<div className="h-64 animate-pulse bg-gray-100 rounded-lg border" />}>
-                    <RegistrationsList programmeId={id} />
+                    <RegistrationsList programmeId={id} programmeAmount={programme.amount} />
                 </Suspense>
             </div>
         </DashboardLayout>

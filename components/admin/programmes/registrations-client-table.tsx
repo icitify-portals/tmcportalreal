@@ -23,10 +23,12 @@ import { toast } from "sonner"
 
 export function RegistrationsClientTable({ 
     registrations, 
-    programmeId 
+    programmeId,
+    programmeAmount = "0.00"
 }: { 
     registrations: any[], 
-    programmeId: string 
+    programmeId: string,
+    programmeAmount?: string | null
 }) {
     const [selectedIds, setSelectedIds] = useState<string[]>([])
     const [isBulkLoading, setIsBulkLoading] = useState(false)
@@ -142,6 +144,7 @@ export function RegistrationsClientTable({
                             <TableHead className="font-bold text-gray-700 uppercase text-[11px] tracking-widest">Phone</TableHead>
                             <TableHead className="font-bold text-gray-700 uppercase text-[11px] tracking-widest">Type</TableHead>
                             <TableHead className="font-bold text-gray-700 uppercase text-[11px] tracking-widest">Payment</TableHead>
+                            <TableHead className="font-bold text-gray-700 uppercase text-[11px] tracking-widest">Outstanding</TableHead>
                             <TableHead className="font-bold text-gray-700 uppercase text-[11px] tracking-widest">Check-In</TableHead>
                             <TableHead className="font-bold text-gray-700 uppercase text-[11px] tracking-widest">Check-Out</TableHead>
                             <TableHead className="font-bold text-gray-700 uppercase text-[11px] tracking-widest">Status</TableHead>
@@ -173,6 +176,18 @@ export function RegistrationsClientTable({
                                 </TableCell>
                                 <TableCell className="py-4">
                                     <ClientCurrency amount={parseFloat(reg.amountPaid || "0")} className="font-bold text-black text-sm" />
+                                </TableCell>
+                                <TableCell className="py-4">
+                                    {(() => {
+                                        const total = parseFloat(programmeAmount || "0");
+                                        const paid = parseFloat(reg.amountPaid || "0");
+                                        const outstanding = Math.max(0, total - paid);
+                                        return outstanding > 0 ? (
+                                            <ClientCurrency amount={outstanding} className="font-bold text-red-600 text-sm" />
+                                        ) : (
+                                            <span className="font-bold text-green-600 text-sm">None</span>
+                                        );
+                                    })()}
                                 </TableCell>
                                 <TableCell className="py-4">
                                     {reg.checkInTime ? (

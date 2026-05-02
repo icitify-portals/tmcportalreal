@@ -38,7 +38,21 @@ async function MyProgrammesList() {
                                 {reg.status}
                             </Badge>
                         </div>
-                        <CardDescription>{programme?.level} Programme</CardDescription>
+                        <CardDescription>
+                            <div className="flex items-center justify-between gap-1 flex-wrap">
+                                <span>{programme?.level} Programme</span>
+                                {(() => {
+                                    const total = parseFloat(programme?.amount || "0");
+                                    const paid = parseFloat(reg.amountPaid || "0");
+                                    const outstanding = Math.max(0, total - paid);
+                                    return outstanding > 0 ? (
+                                        <Badge variant="outline" className="border-red-200 text-red-700 bg-red-50 font-bold tracking-tight">
+                                            Outstanding: NGN {outstanding.toFixed(2)}
+                                        </Badge>
+                                    ) : null;
+                                })()}
+                            </div>
+                        </CardDescription>
                     </CardHeader>
                     <CardContent className="flex-1 space-y-4">
                         {programme && (
@@ -56,20 +70,19 @@ async function MyProgrammesList() {
                     </CardContent>
                     <CardFooter className="flex-col gap-2">
                         {(reg.status === 'REGISTERED' || reg.status === 'PAID' || reg.status === 'ATTENDED') && (
-                            <div className="flex gap-2 w-full">
+                            <div className="flex flex-wrap gap-2 w-full">
                                 {programme?.format === 'VIRTUAL' || programme?.format === 'HYBRID' ? (
                                     <Button variant="default" size="sm" asChild className="flex-1 bg-green-600 hover:bg-green-700">
                                         <Link href={`/api/programmes/virtual-join/${reg.id}`} target="_blank">
-                                            <MapPin className="mr-2 h-4 w-4" /> Join Meeting
+                                            <MapPin className="mr-2 h-4 w-4" /> Join
                                         </Link>
                                     </Button>
-                                ) : (
-                                    <Button variant="outline" size="sm" asChild className="flex-1 border-green-200 text-green-700 hover:bg-green-50">
-                                        <Link href={`/programmes/registrations/${reg.id}/slip`} target="_blank">
-                                            <Printer className="mr-2 h-4 w-4" /> Slip
-                                        </Link>
-                                    </Button>
-                                )}
+                                ) : null}
+                                <Button variant="outline" size="sm" asChild className="flex-1 border-green-200 text-green-700 hover:bg-green-50">
+                                    <Link href={`/programmes/registrations/${reg.id}/slip`} target="_blank">
+                                        <Printer className="mr-2 h-4 w-4" /> Slip
+                                    </Link>
+                                </Button>
                                 <Button variant="secondary" size="sm" asChild className="flex-1 bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-100">
                                     <Link href={`/dashboard/programmes/${programme?.id}/group`}>
                                         <MessageSquare className="mr-2 h-4 w-4" /> Group
