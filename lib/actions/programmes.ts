@@ -379,6 +379,30 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
         }
 
         const programmeId = crypto.randomUUID()
+
+        let finalOfficeId: string | null = null
+        if (validData.organizingOfficeId && validData.organizingOfficeId !== "none") {
+            const officeExists = await db.select({ id: offices.id }).from(offices).where(eq(offices.id, validData.organizingOfficeId)).limit(1)
+            if (officeExists.length > 0) {
+                finalOfficeId = validData.organizingOfficeId
+            }
+        }
+
+        let finalOfficialId: string | null = null
+        if (validData.organizingOfficialId && validData.organizingOfficialId !== "none") {
+            const officialExists = await db.select({ id: officials.id }).from(officials).where(eq(officials.id, validData.organizingOfficialId)).limit(1)
+            if (officialExists.length > 0) {
+                finalOfficialId = validData.organizingOfficialId
+            }
+        }
+
+        let finalCreatedBy = session.user.id
+        const userExists = await db.select({ id: users.id }).from(users).where(eq(users.id, session.user.id)).limit(1)
+        if (userExists.length === 0) {
+            const [firstUser] = await db.select({ id: users.id }).from(users).limit(1)
+            if (firstUser) finalCreatedBy = firstUser.id
+        }
+
         await db.insert(programmes).values({
             id: programmeId,
             organizationId,
@@ -395,8 +419,8 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
             minInstallmentAmount: validData.minInstallmentAmount !== undefined && validData.minInstallmentAmount !== null ? Number(validData.minInstallmentAmount).toFixed(2) : "0.00",
             amount: validData.amount !== undefined && validData.amount !== null ? Number(validData.amount).toFixed(2) : "0.00",
             hasCertificate: validData.hasCertificate,
-            organizingOfficeId: (validData.organizingOfficeId && validData.organizingOfficeId !== "none") ? validData.organizingOfficeId : null,
-            organizingOfficialId: (validData.organizingOfficialId && validData.organizingOfficialId !== "none") ? validData.organizingOfficialId : null,
+            organizingOfficeId: finalOfficeId,
+            organizingOfficialId: finalOfficialId,
             format: validData.format,
             meetingUrl: validData.meetingUrl || null,
             frequency: validData.frequency,
@@ -412,7 +436,7 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
             certPartnerLogo: validData.certPartnerLogo || null,
             certPartnerSignature: validData.certPartnerSignature || null,
             certPartnerSignatory: validData.certPartnerSignatory || null,
-            createdBy: session.user.id,
+            createdBy: finalCreatedBy,
         })
 
         revalidatePath("/dashboard/admin/programmes")
