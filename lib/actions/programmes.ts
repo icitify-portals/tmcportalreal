@@ -250,22 +250,22 @@ const ProgrammeSchema = z.object({
     title: z.string().min(1, "Title is required"),
     description: z.string().min(10, "Description must be detailed"),
     venue: z.string().min(1, "Venue is required"),
-    startDate: z.date(),
-    endDate: z.date().optional(),
+    startDate: z.coerce.date(),
+    endDate: z.coerce.date().optional(),
     time: z.string().optional(),
     targetAudience: z.enum(['PUBLIC', 'MEMBERS', 'BROTHERS', 'SISTERS', 'CHILDREN', 'YOUTH', 'ELDERS']).default('PUBLIC'),
     hasCertificate: z.boolean().default(false),
     paymentRequired: z.boolean().default(false),
     allowInstallments: z.boolean().optional().default(false),
-    minInstallmentAmount: z.number().optional().default(0),
-    amount: z.number().nonnegative().default(0),
+    minInstallmentAmount: z.coerce.number().optional().default(0),
+    amount: z.coerce.number().nonnegative().default(0),
     organizingOfficeId: z.string().optional().nullable(),
     organizingOfficialId: z.string().optional().nullable(),
     // New Planner Fields
     format: z.enum(['PHYSICAL', 'VIRTUAL', 'HYBRID']).default('PHYSICAL'),
     meetingUrl: z.string().optional().nullable(),
     frequency: z.enum(['ONCE', 'WEEKLY', 'MONTHLY', 'QUARTERLY', 'BI-ANNUALLY', 'ANNUALLY']).default('ONCE'),
-    budget: z.number().nonnegative().default(0),
+    budget: z.coerce.number().nonnegative().default(0),
     objectives: z.string().optional(),
     committee: z.string().optional(),
     attendanceWindow: z.number().default(3),
@@ -415,9 +415,12 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
 
         revalidatePath("/dashboard/admin/programmes")
         return { success: true, programmeId: newProgramme.id }
-    } catch (error) {
+    } catch (error: any) {
         console.error("Create Programme Error:", error)
-        return { success: false, error: "Failed to create programme" }
+        if (error instanceof z.ZodError) {
+            return { success: false, error: "Validation Error: " + error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') }
+        }
+        return { success: false, error: error.message || "Failed to create programme" }
     }
 }
 
@@ -1092,9 +1095,12 @@ export async function updateProgramme(programmeId: string, data: Partial<z.infer
 
         revalidatePath("/dashboard/admin/programmes")
         return { success: true }
-    } catch (error) {
+    } catch (error: any) {
         console.error("Update Programme Error:", error)
-        return { success: false, error: "Failed to update programme" }
+        if (error instanceof z.ZodError) {
+            return { success: false, error: "Validation Error: " + error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') }
+        }
+        return { success: false, error: error.message || "Failed to update programme" }
     }
 }
 
