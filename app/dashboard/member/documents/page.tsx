@@ -4,7 +4,7 @@ import { getServerSession } from "@/lib/session"
 import { redirect } from "next/navigation"
 import { db } from "@/lib/db"
 import { occasionRequests, members, programmes, programmeRegistrations } from "@/lib/db/schema"
-import { eq, and, desc } from "drizzle-orm"
+import { eq, and, or, desc } from "drizzle-orm"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { FileText, Download, Award, ShieldCheck } from "lucide-react"
@@ -24,7 +24,7 @@ export default async function MemberDocumentsPage() {
             eq(occasionRequests.certificateNeeded, true)
         ))
 
-    // Fetch certificates from programmes if they have been attended
+    // Fetch certificates from programmes if they have been registered
     const attendedProgrammes = await db.select({
         programme: programmes,
         registration: programmeRegistrations
@@ -33,7 +33,11 @@ export default async function MemberDocumentsPage() {
         .innerJoin(programmes, eq(programmeRegistrations.programmeId, programmes.id))
         .where(and(
             eq(programmeRegistrations.userId, session.user.id),
-            eq(programmeRegistrations.status, 'ATTENDED'),
+            or(
+                eq(programmeRegistrations.status, 'REGISTERED'),
+                eq(programmeRegistrations.status, 'PAID'),
+                eq(programmeRegistrations.status, 'ATTENDED')
+            ),
             eq(programmes.hasCertificate, true)
         ))
 
@@ -100,7 +104,7 @@ export default async function MemberDocumentsPage() {
                                         <Award className="h-5 w-5 text-blue-500" />
                                         Programme Certificates
                                     </CardTitle>
-                                    <CardDescription>Certificates from programmes you've attended.</CardDescription>
+                                    <CardDescription>Certificates from programmes you've registered for or attended.</CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-3">
                                     {attendedProgrammes.map(({ programme, registration }) => (
@@ -111,14 +115,14 @@ export default async function MemberDocumentsPage() {
                                                 </div>
                                                 <div>
                                                     <p className="font-medium text-sm">{programme.title}</p>
-                                                    <p className="text-xs text-muted-foreground">Attended on {new Date(programme.startDate).toLocaleDateString()}</p>
+                                                    <p className="text-xs text-muted-foreground">Date: {new Date(programme.startDate).toLocaleDateString()}</p>
                                                 </div>
                                             </div>
-                                            <Link href="/dashboard/member/programmes">
-                                              <Button variant="ghost" size="sm">
+                                            <a href={`/api/programmes/registrations/${registration.id}/certificate`} target="_blank" rel="noopener noreferrer">
+                                              <Button variant="outline" size="sm" className="border-green-600 text-green-700 hover:bg-green-50">
                                                   <Download className="h-4 w-4 mr-2" /> Download
                                               </Button>
-                                            </Link>
+                                            </a>
                                         </div>
                                     ))}
                                 </CardContent>

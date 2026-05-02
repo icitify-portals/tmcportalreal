@@ -101,16 +101,14 @@ async function MyProgrammesList() {
                             </Button>
                         )}
 
-                        {reg.status === 'ATTENDED' && programme?.hasCertificate ? (
+                        {programme?.hasCertificate && (reg.status === 'REGISTERED' || reg.status === 'PAID' || reg.status === 'ATTENDED') ? (
                             <CertificateDownloadButton
                                 registrationId={reg.id}
                                 programmeTitle={programme.title}
                             />
-                        ) : reg.status === 'ATTENDED' ? (
-                            <p className="text-xs text-muted-foreground italic">No certificate involved</p>
                         ) : null}
 
-                        {reg.status === 'ATTENDED' && programme && (
+                        {programme && (reg.status === 'REGISTERED' || reg.status === 'PAID' || reg.status === 'ATTENDED') && (
                             <ProgrammeMaterialsDownload programmeId={programme.id} />
                         )}
                     </CardFooter>
