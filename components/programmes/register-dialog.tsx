@@ -18,6 +18,7 @@ import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Textarea } from "@/components/ui/textarea"
 import { registerForProgramme, initializeProgrammeRegistrationPayment } from "@/lib/actions/programmes"
+import { payWithWalletBalance } from "@/lib/actions/wallet"
 import { toast } from "sonner"
 import { Loader2, UserPlus, CreditCard, MapPin, Globe } from "lucide-react"
 import { nigerianStatesAndLgas } from "@/lib/nigeria-data"
@@ -51,6 +52,7 @@ export function RegisterForProgrammeDialog({
     const [open, setOpen] = useState(false)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [customAmount, setCustomAmount] = useState<string>(amount.toString())
+    const [paymentMethod, setPaymentMethod] = useState<"PAYSTACK" | "WALLET">("PAYSTACK")
     
     // Guest form state
     const [formData, setFormData] = useState({
@@ -76,13 +78,25 @@ export function RegisterForProgrammeDialog({
 
             if (result.success) {
                 if (result.paymentRequired) {
-                    toast.info("Registration saved. Redirecting to payment...")
                     const payAmount = parseFloat(customAmount || "0")
-                    const payResult = await initializeProgrammeRegistrationPayment(result.registrationId!, payAmount)
-                    if (payResult.success && payResult.authorizationUrl) {
-                        window.location.href = payResult.authorizationUrl
+                    if (session && paymentMethod === "WALLET") {
+                        toast.info("Processing wallet payment...")
+                        const payResult = await payWithWalletBalance(result.registrationId!, payAmount)
+                        if (payResult.success) {
+                            toast.success("Wallet payment successful")
+                            setOpen(false)
+                            window.location.reload()
+                        } else {
+                            toast.error(payResult.error || "Wallet payment failed")
+                        }
                     } else {
-                        toast.error(payResult.error || "Failed to initialize payment")
+                        toast.info("Registration saved. Redirecting to payment...")
+                        const payResult = await initializeProgrammeRegistrationPayment(result.registrationId!, payAmount)
+                        if (payResult.success && payResult.authorizationUrl) {
+                            window.location.href = payResult.authorizationUrl
+                        } else {
+                            toast.error(payResult.error || "Failed to initialize payment")
+                        }
                     }
                 } else {
                     toast.success("Successfully registered for programme")
@@ -167,6 +181,25 @@ export function RegisterForProgrammeDialog({
                     )}
 
                     <div className="py-2">
+                        {session && (
+                            <div className="border p-3 rounded-md bg-emerald-50/50 my-2 space-y-3">
+                                <Label className="text-xs font-bold uppercase tracking-wider text-emerald-800 block">Choose Payment Method</Label>
+                                <RadioGroup 
+                                    defaultValue="PAYSTACK" 
+                                    onValueChange={(v: "PAYSTACK" | "WALLET") => setPaymentMethod(v)}
+                                    className="flex gap-4"
+                                >
+                                    <div className="flex items-center space-x-2">
+                                        <RadioGroupItem value="PAYSTACK" id="method-paystack" />
+                                        <Label htmlFor="method-paystack" className="text-sm font-medium cursor-pointer">Direct Paystack</Label>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <RadioGroupItem value="WALLET" id="method-wallet" />
+                                        <Label htmlFor="method-wallet" className="text-sm font-medium cursor-pointer">Pay with Wallet</Label>
+                                    </div>
+                                </RadioGroup>
+                            </div>
+                        )}
                         {session && (
                             <p className="text-sm text-gray-600 mb-4">
                                 Your membership details will be automatically linked to this registration.

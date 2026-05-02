@@ -1,8 +1,9 @@
 "use client"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { CreditCard, Loader2 } from "lucide-react"
+import { CreditCard, Loader2, Wallet } from "lucide-react"
 import { initializeProgrammeRegistrationPayment } from "@/lib/actions/programmes"
+import { payWithWalletBalance } from "@/lib/actions/wallet"
 import { toast } from "sonner"
 
 export function ResumePaymentButton({ 
@@ -15,6 +16,7 @@ export function ResumePaymentButton({
     minInstallmentAmount?: number
 }) {
     const [isLoading, setIsLoading] = useState(false)
+    const [isWalletLoading, setIsWalletLoading] = useState(false)
     const [amount, setAmount] = useState<string>(balance ? balance.toString() : "")
 
     async function handlePayment() {
@@ -30,6 +32,23 @@ export function ResumePaymentButton({
             toast.error("An unexpected error occurred")
         } finally {
             setIsLoading(false)
+        }
+    }
+
+    async function handleWalletPayment() {
+        setIsWalletLoading(true)
+        try {
+            const result = await payWithWalletBalance(registrationId, parseFloat(amount || "0"))
+            if (result.success) {
+                toast.success(result.message || "Payment from wallet balance successful!")
+                window.location.reload()
+            } else {
+                toast.error(result.error || "Failed to pay with wallet")
+            }
+        } catch (error) {
+            toast.error("An unexpected error occurred with wallet balance")
+        } finally {
+            setIsWalletLoading(false)
         }
     }
 
@@ -54,18 +73,32 @@ export function ResumePaymentButton({
                     )}
                 </div>
             )}
-            <Button 
-                onClick={handlePayment}
-                disabled={isLoading || (!!balance && parseFloat(amount || "0") <= 0)}
-                className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold"
-            >
-                {isLoading ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                    <CreditCard className="w-4 h-4 mr-2" />
-                )}
-                {balance && balance > 0 ? `Pay ₦${amount || balance}` : "Proceed to Payment"}
-            </Button>
+            <div className="flex flex-col gap-2">
+                <Button 
+                    onClick={handlePayment}
+                    disabled={isLoading || isWalletLoading || (!!balance && parseFloat(amount || "0") <= 0)}
+                    className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold"
+                >
+                    {isLoading ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                        <CreditCard className="w-4 h-4 mr-2" />
+                    )}
+                    {balance && balance > 0 ? `Direct Paystack ₦${amount || balance}` : "Proceed to Payment"}
+                </Button>
+                <Button 
+                    onClick={handleWalletPayment}
+                    disabled={isLoading || isWalletLoading || (!!balance && parseFloat(amount || "0") <= 0)}
+                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+                >
+                    {isWalletLoading ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                        <Wallet className="w-4 h-4 mr-2" />
+                    )}
+                    {balance && balance > 0 ? `Pay with Wallet ₦${amount || balance}` : "Use Wallet Balance"}
+                </Button>
+            </div>
         </div>
     )
 }

@@ -1736,3 +1736,36 @@ export const programmeMessagesRelations = relations(programmeMessages, ({ one })
         references: [users.id],
     }),
 }));
+
+export const wallets = mysqlTable("wallets", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
+    userId: varchar("userId", { length: 255 }).notNull().references(() => users.id, { onDelete: "cascade" }),
+    balance: decimal("balance", { precision: 15, scale: 2 }).default("0.00").notNull(),
+    createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+});
+
+export const walletsRelations = relations(wallets, ({ one, many }) => ({
+    user: one(users, {
+        fields: [wallets.userId],
+        references: [users.id],
+    }),
+    transactions: many(walletTransactions),
+}));
+
+export const walletTransactions = mysqlTable("wallet_transactions", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
+    walletId: varchar("walletId", { length: 255 }).notNull().references(() => wallets.id, { onDelete: "cascade" }),
+    type: varchar("type", { length: 50 }).notNull(), // 'CREDIT' | 'DEBIT'
+    amount: decimal("amount", { precision: 15, scale: 2 }).notNull(),
+    description: varchar("description", { length: 255 }),
+    reference: varchar("reference", { length: 255 }),
+    createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+});
+
+export const walletTransactionsRelations = relations(walletTransactions, ({ one }) => ({
+    wallet: one(wallets, {
+        fields: [walletTransactions.walletId],
+        references: [wallets.id],
+    }),
+}));
