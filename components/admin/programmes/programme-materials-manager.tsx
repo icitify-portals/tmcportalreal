@@ -78,28 +78,28 @@ export function ProgrammeMaterialsManager({ programmeId }: { programmeId: string
     }
 
     return (
-        <div className="space-y-4 border p-4 rounded-md bg-green-50/30 mt-4">
+        <div className="space-y-4 border border-emerald-800/40 p-4 rounded-md bg-emerald-950/20 mt-4">
             <div>
-                <h3 className="text-sm font-bold text-black flex items-center gap-2">
+                <h3 className="text-sm font-bold text-emerald-100 flex items-center gap-2">
                     <FileText className="w-4 h-4" />
                     Programme Materials Manager
                 </h3>
-                <p className="text-xs text-black">Upload and manage post-programme materials (slides, docs). These will be emailed to attendees.</p>
+                <p className="text-xs text-emerald-200/80">Upload and manage post-programme materials (slides, docs). These will be emailed to attendees.</p>
             </div>
 
             {isLoading ? (
                 <div className="flex justify-center p-4">
-                    <Loader2 className="w-6 h-6 animate-spin text-green-600" />
+                    <Loader2 className="w-6 h-6 animate-spin text-emerald-600" />
                 </div>
             ) : (
                 <div className="space-y-4">
                     {materials.length > 0 ? (
                         <div className="space-y-2">
                             {materials.map((mat) => (
-                                <div key={mat.id} className="flex items-center justify-between p-3 bg-white border rounded-md">
+                                <div key={mat.id} className="flex items-center justify-between p-3 bg-emerald-950/30 border border-emerald-800/40 rounded-md">
                                     <div className="flex items-center gap-3">
-                                        <FileText className="w-4 h-4 text-green-600" />
-                                        <a href={mat.url} target="_blank" rel="noreferrer" className="text-sm font-medium text-green-700 hover:underline">
+                                        <FileText className="w-4 h-4 text-emerald-400" />
+                                        <a href={mat.url} target="_blank" rel="noreferrer" className="text-sm font-medium text-emerald-300 hover:underline">
                                             {mat.title}
                                         </a>
                                     </div>
@@ -107,7 +107,7 @@ export function ProgrammeMaterialsManager({ programmeId }: { programmeId: string
                                         type="button" 
                                         variant="ghost" 
                                         size="sm" 
-                                        className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                                        className="text-red-400 hover:bg-red-950/40 hover:text-red-300"
                                         onClick={() => handleDelete(mat.id)}
                                     >
                                         <Trash2 className="w-4 h-4" />
@@ -116,28 +116,30 @@ export function ProgrammeMaterialsManager({ programmeId }: { programmeId: string
                             ))}
                         </div>
                     ) : (
-                        <div className="text-center py-4 border border-dashed rounded-md bg-white/50">
-                            <p className="text-sm text-gray-500">No materials uploaded yet.</p>
+                        <div className="text-center py-4 border border-dashed border-emerald-800/40 rounded-md bg-emerald-950/10">
+                            <p className="text-sm text-emerald-100/60">No materials uploaded yet.</p>
                         </div>
                     )}
 
-                    <div className="grid grid-cols-1 md:grid-cols-[1fr_2fr_auto] gap-2 items-start p-3 border rounded-md bg-white">
+                    <div className="grid grid-cols-1 md:grid-cols-[1fr_2fr_auto] gap-2 items-start p-3 border border-emerald-800/40 rounded-md bg-emerald-950/30">
                         <div className="space-y-1">
-                            <label className="text-xs font-medium">Title</label>
+                            <label className="text-xs font-medium text-emerald-100">Title</label>
                             <Input 
                                 placeholder="e.g. Day 1 Slides" 
                                 value={newTitle} 
                                 onChange={(e) => setNewTitle(e.target.value)} 
+                                className="border-emerald-800/40 bg-emerald-950/20 text-emerald-100"
                             />
                         </div>
                         
                         <div className="space-y-1">
-                            <label className="text-xs font-medium">File Upload</label>
+                            <label className="text-xs font-medium text-emerald-100">File Upload</label>
                             <div className="flex items-center gap-2">
                                 <Input 
                                     placeholder="File URL" 
                                     value={newUrl} 
                                     onChange={(e) => setNewUrl(e.target.value)} 
+                                    className="border-emerald-800/40 bg-emerald-950/20 text-emerald-100"
                                 />
                                 <FileUpload 
                                     onUploadComplete={(url) => setNewUrl(url)} 
@@ -151,7 +153,7 @@ export function ProgrammeMaterialsManager({ programmeId }: { programmeId: string
                                 type="button" 
                                 onClick={handleAdd}
                                 disabled={isAdding || !newTitle || !newUrl}
-                                className="w-full bg-green-600 hover:bg-green-700 text-white"
+                                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
                             >
                                 {isAdding ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                                 <span className="ml-2">Add</span>

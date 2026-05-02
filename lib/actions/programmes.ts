@@ -835,22 +835,46 @@ export async function getRegistrationDetails(registrationId: string) {
     }
 }
 
-export async function initializeProgrammeRegistrationPayment(registrationId: string) {
+export async function initializeProgrammeRegistrationPayment(registrationId: string, customAmount?: number) {
     try {
         const registration = await getRegistrationDetails(registrationId)
         if (!registration) return { success: false, error: "Registration not found" }
         
-        const amount = parseFloat(registration.programme.amount || "0")
-        if (amount <= 0) return { success: false, error: "No payment required" }
+        const totalAmount = parseFloat(registration.programme.amount || "0")
+        if (totalAmount <= 0) return { success: false, error: "No payment required" }
+
+        const paidAlready = parseFloat(registration.amountPaid || "0")
+        const balance = Math.max(0, totalAmount - paidAlready)
+
+        // Determine the actual amount to pay right now
+        let currentPayAmount = totalAmount
+        if (customAmount && customAmount > 0) {
+            currentPayAmount = customAmount
+        }
+
+        if (currentPayAmount <= 0) return { success: false, error: "Invalid payment amount" }
+        if (currentPayAmount > balance) {
+            return { success: false, error: `Payment amount exceeds the remaining balance of ₦${balance}` }
+        }
+
+        // Validate minimum installment amount
+        if (registration.programme.allowInstallments) {
+            const minInstallmentAmount = parseFloat(registration.programme.minInstallmentAmount || "0")
+            // Only validate min installment if this is NOT a full payment of the remaining balance
+            if (currentPayAmount < balance && currentPayAmount < minInstallmentAmount) {
+                return { success: false, error: `Minimum installment amount allowed is ₦${minInstallmentAmount}` }
+            }
+        }
 
         const response = await initializePayment({
             email: registration.email,
-            amount: amount,
+            amount: currentPayAmount,
             callbackUrl: `${process.env.NEXT_PUBLIC_APP_URL}/programmes/registrations/${registrationId}/verify`,
             metadata: {
                 registrationId: registrationId,
                 type: "PROGRAMME_REGISTRATION",
-                programmeId: registration.programmeId
+                programmeId: registration.programmeId,
+                currentPayAmount: currentPayAmount
             }
         })
 
@@ -873,25 +897,34 @@ export async function verifyProgrammeRegistrationPayment(registrationId: string,
     try {
         const response = await verifyPayment(reference)
         if (response.success && response.data?.status === "success") {
+            const regDetails = await getRegistrationDetails(registrationId)
+            if (!regDetails) return { success: false, error: "Registration not found" }
+
+            const totalAmount = parseFloat(regDetails.programme.amount || "0")
+            const paidAlready = parseFloat(regDetails.amountPaid || "0")
+            const justPaidAmount = parseFloat(response.data?.amount?.toString() || "0")
+
+            const newPaidAmount = paidAlready + justPaidAmount
+            const newStatus = newPaidAmount >= totalAmount ? 'PAID' : 'PARTIALLY_PAID'
+
             await db.update(programmeRegistrations)
                 .set({ 
-                    status: 'PAID',
-                    amountPaid: response.data?.amount?.toString() || "0",
-                    paymentReference: reference
+                    status: newStatus,
+                    amountPaid: newPaidAmount.toString(),
+                    paymentReference: `${reference}:verified`
                 })
                 .where(eq(programmeRegistrations.id, registrationId))
             
             revalidatePath(`/programmes/registrations/${registrationId}/slip`)
 
             // Send confirmation email
-            const regDetails = await getRegistrationDetails(registrationId)
             if (regDetails) {
                 await sendEmail({
                     to: regDetails.email,
                     ...emailTemplates.programmeRegistrationReceipt(
                         regDetails.name,
                         regDetails.programme.title,
-                        parseFloat(regDetails.amountPaid || "0"),
+                        newPaidAmount,
                         registrationId,
                         regDetails.member?.memberId || undefined
                     )
@@ -1126,6 +1159,26 @@ export async function syncAllProgrammePayments(programmeId: string) {
     }
 }
 
+export async function toggleCheckInWaiver(registrationId: string) {
+    try {
+        const session = await getServerSession()
+        if (!session?.user?.id) return { success: false, error: "Unauthorized" }
+
+        const [reg] = await db.select().from(programmeRegistrations).where(eq(programmeRegistrations.id, registrationId)).limit(1)
+        if (!reg) return { success: false, error: "Registration not found" }
+
+        await db.update(programmeRegistrations)
+            .set({ checkInWaiver: !reg.checkInWaiver })
+            .where(eq(programmeRegistrations.id, registrationId))
+
+        revalidatePath(`/dashboard/admin/programmes`)
+        return { success: true, checkInWaiver: !reg.checkInWaiver }
+    } catch (error) {
+        console.error("Toggle CheckIn Waiver Error:", error)
+        return { success: false, error: "Failed to toggle check-in waiver" }
+    }
+}
+
 export async function sendCertificatesAction(programmeId: string) {
     try {
         const session = await getServerSession()
@@ -1325,13 +1378,15 @@ export async function addProgrammeMaterial(data: { programmeId: string; title: s
 
     try {
         await db.insert(programmeMaterials).values({
+            id: crypto.randomUUID(),
             programmeId: data.programmeId,
             title: data.title,
             url: data.url,
-            fileType: data.fileType,
+            fileType: data.fileType || "DOCUMENT",
             uploadedBy: session.user.id
         })
-        revalidatePath(`/dashboard/admin/programmes/${data.programmeId}`)
+        revalidatePath(`/dashboard/admin/programmes`)
+        revalidatePath(`/dashboard/admin/programmes/${data.programmeId}/registrations`)
         return { success: true }
     } catch (error: any) {
         return { success: false, error: error.message }

@@ -14,21 +14,21 @@ export function ProgrammeMaterialsField({ control }: { control: Control<any> }) 
     })
 
     return (
-        <div className="space-y-4 border p-4 rounded-md bg-green-50/30 mt-4">
+        <div className="space-y-4 border border-emerald-800/40 p-4 rounded-md bg-emerald-950/20 mt-4">
             <div className="flex items-center justify-between">
                 <div>
-                    <h3 className="text-sm font-bold text-black flex items-center gap-2">
+                    <h3 className="text-sm font-bold text-emerald-100 flex items-center gap-2">
                         <FileText className="w-4 h-4" />
                         Programme Materials
                     </h3>
-                    <p className="text-xs text-black">Add presentation slides, documents, or videos for participants.</p>
+                    <p className="text-xs text-emerald-200/80">Add presentation slides, documents, or videos for participants.</p>
                 </div>
                 <Button 
                     type="button" 
                     variant="outline" 
                     size="sm" 
                     onClick={() => append({ title: "", url: "", fileType: "DOCUMENT" })}
-                    className="border-green-200 text-green-700 hover:bg-green-50"
+                    className="border-emerald-700/40 bg-emerald-950/20 text-emerald-100 hover:bg-emerald-950/40 hover:text-emerald-50"
                 >
                     <Plus className="w-4 h-4 mr-2" /> Add Material
                 </Button>
@@ -37,15 +37,15 @@ export function ProgrammeMaterialsField({ control }: { control: Control<any> }) 
             {fields.length > 0 && (
                 <div className="space-y-4 mt-4">
                     {fields.map((field, index) => (
-                        <div key={field.id} className="grid grid-cols-1 md:grid-cols-[1fr_2fr_auto] gap-4 items-start p-3 border rounded-md bg-white">
+                        <div key={field.id} className="grid grid-cols-1 md:grid-cols-[1fr_2fr_auto] gap-4 items-start p-3 border border-emerald-800/40 rounded-md bg-emerald-950/30">
                             <FormField
                                 control={control}
                                 name={`materials.${index}.title`}
                                 render={({ field: inputField }) => (
                                     <FormItem>
-                                        <FormLabel className="text-xs">Title</FormLabel>
+                                        <FormLabel className="text-xs text-emerald-100">Title</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="e.g. Day 1 Slides" {...inputField} />
+                                            <Input placeholder="e.g. Day 1 Slides" {...inputField} className="border-emerald-800/40 bg-emerald-950/20 text-emerald-100" />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -57,10 +57,10 @@ export function ProgrammeMaterialsField({ control }: { control: Control<any> }) 
                                 name={`materials.${index}.url`}
                                 render={({ field: inputField }) => (
                                     <FormItem>
-                                        <FormLabel className="text-xs">File URL / Upload</FormLabel>
+                                        <FormLabel className="text-xs text-emerald-100">File URL / Upload</FormLabel>
                                         <div className="flex items-center gap-2">
                                             <FormControl>
-                                                <Input placeholder="URL or Upload ->" {...inputField} />
+                                                <Input placeholder="URL or Upload ->" {...inputField} className="border-emerald-800/40 bg-emerald-950/20 text-emerald-100" />
                                             </FormControl>
                                             <FileUpload 
                                                 onUploadComplete={(url) => inputField.onChange(url)} 
@@ -88,8 +88,8 @@ export function ProgrammeMaterialsField({ control }: { control: Control<any> }) 
             )}
             
             {fields.length === 0 && (
-                <div className="text-center py-6 border-2 border-dashed border-green-100 rounded-md bg-white/50">
-                    <p className="text-sm text-green-600/60">No materials added yet.</p>
+                <div className="text-center py-6 border-2 border-dashed border-emerald-800/40 rounded-md bg-emerald-950/10">
+                    <p className="text-sm text-emerald-200/60">No materials added yet.</p>
                 </div>
             )}
         </div>

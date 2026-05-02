@@ -45,7 +45,7 @@ export const transactionTypeEnum = mysqlEnum('type', ['INFLOW', 'OUTFLOW']);
 // Programme Enums
 export const programmeStatusEnum = mysqlEnum('status', ['DRAFT', 'PENDING_STATE', 'PENDING_NATIONAL', 'APPROVED', 'REJECTED', 'CANCELLED', 'COMPLETED']);
 export const targetAudienceEnum = mysqlEnum('targetAudience', ['PUBLIC', 'MEMBERS', 'BROTHERS', 'SISTERS', 'CHILDREN', 'YOUTH', 'ELDERS']);
-export const registrationStatusEnum = mysqlEnum('status', ['REGISTERED', 'PENDING_PAYMENT', 'PAID', 'ATTENDED', 'CANCELLED']);
+export const registrationStatusEnum = mysqlEnum('status', ['REGISTERED', 'PENDING_PAYMENT', 'PARTIALLY_PAID', 'PAID', 'ATTENDED', 'CANCELLED']);
 export const programmeFormatEnum = mysqlEnum('format', ['PHYSICAL', 'VIRTUAL', 'HYBRID']);
 export const programmeFrequencyEnum = mysqlEnum('frequency', ['WEEKLY', 'MONTHLY', 'QUARTERLY', 'BI-ANNUALLY', 'ANNUALLY', 'ONCE']);
 
@@ -1029,6 +1029,8 @@ export const programmes = mysqlTable("programmes", {
     isLateSubmission: boolean("isLateSubmission").default(false),
 
     paymentRequired: boolean("paymentRequired").default(false),
+    allowInstallments: boolean("allowInstallments").default(false),
+    minInstallmentAmount: decimal("minInstallmentAmount", { precision: 10, scale: 2 }).default("0.00"),
     amount: decimal("amount", { precision: 10, scale: 2 }).default("0.00"),
     hasCertificate: boolean("hasCertificate").default(false),
     certTemplateType: certTemplateTypeEnum.default('TMC_ONLY'),
@@ -1075,6 +1077,7 @@ export const programmeRegistrations = mysqlTable("programme_registrations", {
     checkOutTime: timestamp("checkOutTime", { mode: "date", fsp: 3 }),
     checkInBy: varchar("checkInBy", { length: 255 }).references(() => users.id),
     checkOutBy: varchar("checkOutBy", { length: 255 }).references(() => users.id),
+    checkInWaiver: boolean("checkInWaiver").default(false),
 
     registeredAt: timestamp("registeredAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
 });

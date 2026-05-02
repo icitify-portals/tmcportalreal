@@ -44,6 +44,8 @@ const ProgrammeSchema = z.object({
     targetAudience: z.enum(['PUBLIC', 'MEMBERS', 'BROTHERS', 'SISTERS', 'CHILDREN', 'YOUTH', 'ELDERS']).default('PUBLIC'),
     hasCertificate: z.boolean().default(false),
     paymentRequired: z.boolean().default(false),
+    allowInstallments: z.boolean().default(false),
+    minInstallmentAmount: z.string().default("0"),
     amount: z.string().default("0"),
     organizingOfficeId: z.string().optional(),
     organizingOfficialId: z.string().optional(),
@@ -92,6 +94,8 @@ export function EditProgrammeDialog({ programme, open, onOpenChange }: EditProgr
             targetAudience: programme.targetAudience,
             hasCertificate: programme.hasCertificate,
             paymentRequired: programme.paymentRequired,
+            allowInstallments: programme.allowInstallments || false,
+            minInstallmentAmount: programme.minInstallmentAmount?.toString() || "0",
             amount: programme.amount?.toString() || "0",
             organizingOfficeId: programme.organizingOfficeId || "",
             organizingOfficialId: programme.organizingOfficialId || "",
@@ -124,6 +128,8 @@ export function EditProgrammeDialog({ programme, open, onOpenChange }: EditProgr
                 time: programme.time || "",
                 targetAudience: programme.targetAudience,
                 paymentRequired: programme.paymentRequired,
+                allowInstallments: programme.allowInstallments || false,
+                minInstallmentAmount: programme.minInstallmentAmount?.toString() || "0",
                 amount: programme.amount?.toString() || "0",
                 organizingOfficeId: programme.organizingOfficeId || "",
                 organizingOfficialId: programme.organizingOfficialId || "",
@@ -153,6 +159,8 @@ export function EditProgrammeDialog({ programme, open, onOpenChange }: EditProgr
                 startDate: new Date(data.startDate),
                 endDate: data.endDate ? new Date(data.endDate) : undefined,
                 amount: parseFloat(data.amount || "0"),
+                allowInstallments: data.allowInstallments,
+                minInstallmentAmount: parseFloat(data.minInstallmentAmount || "0"),
                 budget: parseFloat(data.budget || "0"),
                 attendanceWindow: parseInt(data.attendanceWindow || "3"),
             }
@@ -458,7 +466,7 @@ export function EditProgrammeDialog({ programme, open, onOpenChange }: EditProgr
                             />
                         </div>
 
-                        <div className="flex items-center space-x-2 border p-4 rounded-md">
+                        <div className="border p-4 rounded-md space-y-4">
                             <FormField
                                 control={form.control}
                                 name="paymentRequired"
@@ -471,28 +479,62 @@ export function EditProgrammeDialog({ programme, open, onOpenChange }: EditProgr
                                             />
                                         </FormControl>
                                         <div className="space-y-1 leading-none">
-                                            <FormLabel>
-                                                Payment Required?
-                                            </FormLabel>
+                                            <FormLabel>Payment Required?</FormLabel>
                                         </div>
                                     </FormItem>
                                 )}
                             />
 
                             {form.watch("paymentRequired") && (
-                                <FormField
-                                    control={form.control}
-                                    name="amount"
-                                    render={({ field }) => (
-                                        <FormItem className="flex-1 ml-4">
-                                            <FormLabel>Amount (NGN)</FormLabel>
-                                            <FormControl>
-                                                <Input type="number" min="0" step="0.01" {...field} value={field.value || ''} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-t pt-4 mt-2">
+                                    <FormField
+                                        control={form.control}
+                                        name="amount"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Amount (NGN)</FormLabel>
+                                                <FormControl>
+                                                    <Input type="number" min="0" step="0.01" {...field} value={field.value || ''} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    <FormField
+                                        control={form.control}
+                                        name="allowInstallments"
+                                        render={({ field }) => (
+                                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 pt-8">
+                                                <FormControl>
+                                                    <Checkbox
+                                                        checked={field.value}
+                                                        onCheckedChange={field.onChange}
+                                                    />
+                                                </FormControl>
+                                                <div className="space-y-1 leading-none">
+                                                    <FormLabel>Allow Installments</FormLabel>
+                                                </div>
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    {form.watch("allowInstallments") && (
+                                        <FormField
+                                            control={form.control}
+                                            name="minInstallmentAmount"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Min Installment (NGN)</FormLabel>
+                                                    <FormControl>
+                                                        <Input type="number" min="0" step="0.01" {...field} value={field.value || ''} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
                                     )}
-                                />
+                                </div>
                             )}
                         </div>
 
@@ -500,37 +542,37 @@ export function EditProgrammeDialog({ programme, open, onOpenChange }: EditProgr
                             control={form.control}
                             name="attendanceWindow"
                             render={({ field }) => (
-                                <FormItem className="border p-4 rounded-md bg-gray-50/50">
-                                    <FormLabel className="text-gray-900 font-bold text-xs uppercase tracking-wider">Attendance Window (Hours before start)</FormLabel>
+                                <FormItem className="border border-emerald-800/40 p-4 rounded-md bg-emerald-950/20">
+                                    <FormLabel className="text-emerald-100 font-bold text-xs uppercase tracking-wider">Attendance Window (Hours before start)</FormLabel>
                                     <FormControl>
                                         <Input type="number" min="0" max="48" placeholder="3" {...field} value={field.value || ''} />
                                     </FormControl>
-                                    <FormDescription className="text-[10px]">Determine how many hours before the programme starts that scanning should be enabled.</FormDescription>
+                                    <FormDescription className="text-[10px] text-emerald-100/60">Determine how many hours before the programme starts that scanning should be enabled.</FormDescription>
                                     <FormMessage />
                                 </FormItem>
                             )}
                         />
 
-                        <div className="space-y-4 border p-4 rounded-md bg-green-50/30">
-                            <h3 className="text-sm font-bold text-black flex items-center gap-2">
+                        <div className="space-y-4 border border-emerald-800/40 p-4 rounded-md bg-emerald-950/20">
+                            <h3 className="text-sm font-bold text-emerald-100 flex items-center gap-2">
                                 <Plus className="w-4 h-4" />
                                 Certificate Settings & Branding
                             </h3>
-                            <p className="text-xs text-black">Configure how the certificates of participation should look.</p>
+                            <p className="text-xs text-emerald-200/80">Configure how the certificates of participation should look.</p>
                             
                             <FormField
                                 control={form.control}
                                 name="certTemplateType"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Certificate Template</FormLabel>
+                                        <FormLabel className="text-emerald-100">Certificate Template</FormLabel>
                                         <Select onValueChange={field.onChange} value={field.value}>
                                             <FormControl>
-                                                <SelectTrigger>
+                                                <SelectTrigger className="border-emerald-800/40 bg-emerald-950/20 text-emerald-100">
                                                     <SelectValue placeholder="Select template type" />
                                                 </SelectTrigger>
                                             </FormControl>
-                                            <SelectContent>
+                                            <SelectContent className="border-emerald-800/40 bg-emerald-950 text-emerald-100">
                                                 <SelectItem value="TMC_ONLY">TMC Only (Standard)</SelectItem>
                                                 <SelectItem value="PARTNER_ONLY">Partner Only (Hosted)</SelectItem>
                                                 <SelectItem value="BOTH">Partnership (TMC & Partner)</SelectItem>
@@ -542,14 +584,14 @@ export function EditProgrammeDialog({ programme, open, onOpenChange }: EditProgr
                             />
 
                             {(form.watch("certTemplateType") === 'TMC_ONLY' || form.watch("certTemplateType") === 'BOTH') && (
-                                <div className="p-3 border border-green-100 rounded-md bg-white/50 space-y-4">
-                                    <h4 className="text-[10px] font-bold text-green-700 uppercase tracking-widest">TMC Branding</h4>
+                                <div className="p-3 border border-emerald-800/40 rounded-md bg-emerald-950/30 space-y-4">
+                                    <h4 className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">TMC Branding</h4>
                                     <FormField
                                         control={form.control}
                                         name="certTmcSignatory"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>TMC Signatory Name/Title</FormLabel>
+                                                <FormLabel className="text-emerald-100">TMC Signatory Name/Title</FormLabel>
                                                 <FormControl>
                                                     <Input placeholder="e.g. National Amir" {...field} value={field.value || ''} />
                                                 </FormControl>
@@ -562,7 +604,7 @@ export function EditProgrammeDialog({ programme, open, onOpenChange }: EditProgr
                                         name="certTmcSignature"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>TMC Signature</FormLabel>
+                                                <FormLabel className="text-emerald-100">TMC Signature</FormLabel>
                                                 <div className="flex items-center gap-2">
                                                     <FormControl>
                                                         <Input {...field} placeholder="Signature URL" value={field.value || ''} />
@@ -581,14 +623,14 @@ export function EditProgrammeDialog({ programme, open, onOpenChange }: EditProgr
                             )}
 
                             {(form.watch("certTemplateType") === 'PARTNER_ONLY' || form.watch("certTemplateType") === 'BOTH') && (
-                                <div className="p-3 border border-green-100 rounded-md bg-white/50 space-y-4">
-                                    <h4 className="text-[10px] font-bold text-green-700 uppercase tracking-widest">Partner Branding</h4>
+                                <div className="p-3 border border-emerald-800/40 rounded-md bg-emerald-950/30 space-y-4">
+                                    <h4 className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">Partner Branding</h4>
                                     <FormField
                                         control={form.control}
                                         name="certPartnerName"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Partner Organization Name</FormLabel>
+                                                <FormLabel className="text-emerald-100">Partner Organization Name</FormLabel>
                                                 <FormControl>
                                                     <Input placeholder="e.g. Al-Hikmah University" {...field} value={field.value || ''} />
                                                 </FormControl>
@@ -601,7 +643,7 @@ export function EditProgrammeDialog({ programme, open, onOpenChange }: EditProgr
                                         name="certPartnerSignatory"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Partner Signatory Name/Title</FormLabel>
+                                                <FormLabel className="text-emerald-100">Partner Signatory Name/Title</FormLabel>
                                                 <FormControl>
                                                     <Input placeholder="e.g. Vice Chancellor" {...field} value={field.value || ''} />
                                                 </FormControl>
@@ -615,7 +657,7 @@ export function EditProgrammeDialog({ programme, open, onOpenChange }: EditProgr
                                             name="certPartnerLogo"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel>Partner Logo</FormLabel>
+                                                    <FormLabel className="text-emerald-100">Partner Logo</FormLabel>
                                                     <div className="flex items-center gap-2">
                                                         <FormControl>
                                                             <Input {...field} placeholder="Logo URL" value={field.value || ''} />
@@ -635,7 +677,7 @@ export function EditProgrammeDialog({ programme, open, onOpenChange }: EditProgr
                                             name="certPartnerSignature"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel>Partner Signature</FormLabel>
+                                                    <FormLabel className="text-emerald-100">Partner Signature</FormLabel>
                                                     <div className="flex items-center gap-2">
                                                         <FormControl>
                                                             <Input {...field} placeholder="Signature URL" value={field.value || ''} />

@@ -102,6 +102,8 @@ async function ProgrammeGrid({ level, state }: { level?: string, state?: string 
                                                         programmeId={p.id}
                                                         programmeTitle={p.title}
                                                         amount={parseFloat(p.amount || "0")}
+                                                        allowInstallments={p.allowInstallments || false}
+                                                        minInstallmentAmount={parseFloat(p.minInstallmentAmount || "0")}
                                                         triggerText="Restart"
                                                         variant="outline"
                                                     />
@@ -122,6 +124,8 @@ async function ProgrammeGrid({ level, state }: { level?: string, state?: string 
                                             programmeId={p.id}
                                             programmeTitle={p.title}
                                             amount={parseFloat(p.amount || "0")}
+                                            allowInstallments={p.allowInstallments || false}
+                                            minInstallmentAmount={parseFloat(p.minInstallmentAmount || "0")}
                                         />
                                     </div>
                                 )

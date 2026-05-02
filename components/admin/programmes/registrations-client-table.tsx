@@ -12,13 +12,13 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Printer, UserCheck, CheckCircle2 } from "lucide-react"
+import { Printer, UserCheck, CheckCircle2, ShieldAlert, ShieldCheck } from "lucide-react"
 import Link from "next/link"
 import { format } from "date-fns"
 import { ClientCurrency } from "@/components/ui/client-currency"
 import { MarkAttendanceButton } from "@/components/admin/programmes/mark-attendance-button"
 import { DeleteRegistrationButton } from "@/components/admin/programmes/delete-registration-button"
-import { markAttendance, sendSelectedCertificatesAction } from "@/lib/actions/programmes"
+import { markAttendance, sendSelectedCertificatesAction, toggleCheckInWaiver } from "@/lib/actions/programmes"
 import { toast } from "sonner"
 
 export function RegistrationsClientTable({ 
@@ -205,8 +205,9 @@ export function RegistrationsClientTable({
                                         {reg.status}
                                     </Badge>
                                 </TableCell>
-                                <TableCell className="py-4 text-right">
+                                 <TableCell className="py-4 text-right">
                                     <div className="flex items-center justify-end gap-1">
+                                        <WaiverToggleButton registrationId={reg.id} checkInWaiver={!!reg.checkInWaiver} />
                                         <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-blue-50" asChild title="Print Access Slip">
                                             <Link href={`/programmes/registrations/${reg.id}/slip`} target="_blank">
                                                 <Printer className="h-4 w-4 text-blue-600" />
@@ -224,5 +225,40 @@ export function RegistrationsClientTable({
                 </Table>
             </div>
         </div>
+    )
+}
+
+function WaiverToggleButton({ registrationId, checkInWaiver }: { registrationId: string, checkInWaiver: boolean }) {
+    const [isLoading, setIsLoading] = useState(false)
+    const [waiver, setWaiver] = useState(checkInWaiver)
+
+    const handleToggle = async () => {
+        setIsLoading(true)
+        try {
+            const result = await toggleCheckInWaiver(registrationId)
+            if (result.success) {
+                setWaiver(result.checkInWaiver!)
+                toast.success(result.checkInWaiver ? "Check-in waiver granted" : "Check-in waiver revoked")
+            } else {
+                toast.error(result.error || "Failed to toggle waiver")
+            }
+        } catch (error) {
+            toast.error("An unexpected error occurred")
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    return (
+        <Button 
+            size="icon" 
+            variant="ghost" 
+            className={`h-8 w-8 ${waiver ? 'hover:bg-amber-50 text-amber-600' : 'hover:bg-gray-50 text-gray-400'}`} 
+            onClick={handleToggle}
+            disabled={isLoading}
+            title={waiver ? "Revoke Waiver" : "Grant Waiver"}
+        >
+            {waiver ? <ShieldCheck className="h-4 w-4 text-amber-600" /> : <ShieldAlert className="h-4 w-4" />}
+        </Button>
     )
 }

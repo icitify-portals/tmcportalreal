@@ -31,7 +31,12 @@ export default async function AccessSlipPage({ params }: { params: Promise<{ id:
     const verificationUrl = `${appUrl}/programmes/verify/${registration.id}?hash=${registration.securityHash}`
     const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(verificationUrl)}`
 
-    const isPending = registration.status === 'PENDING_PAYMENT'
+    const isPending = (registration.status === 'PENDING_PAYMENT' || registration.status === 'PARTIALLY_PAID') && !registration.checkInWaiver
+
+    const totalAmount = parseFloat(registration.programme.amount || "0")
+    const paidAmount = parseFloat(registration.amountPaid || "0")
+    const balance = Math.max(0, totalAmount - paidAmount)
+    const minInstallment = parseFloat(registration.programme.minInstallmentAmount || "0")
 
     return (
         <div className="min-h-screen bg-gray-50 py-12 px-4 print:bg-white print:py-0 print:px-0">
@@ -73,14 +78,24 @@ export default async function AccessSlipPage({ params }: { params: Promise<{ id:
                                 <CreditCard className="w-10 h-10 text-amber-600" />
                             </div>
                             <div className="space-y-2">
-                                <h2 className="text-2xl font-bold text-gray-900">Payment Required</h2>
+                                <h2 className="text-2xl font-bold text-gray-900">
+                                    {registration.status === 'PARTIALLY_PAID' ? "Complete Payment" : "Payment Required"}
+                                </h2>
                                 <p className="text-gray-500">
-                                    Your registration for <span className="font-semibold text-gray-700">{registration.programme.title}</span> is pending payment. 
-                                    Please complete your payment to access your slip and QR code.
+                                    Your registration for <span className="font-semibold text-gray-700">{registration.programme.title}</span> is pending full payment. 
+                                    {registration.status === 'PARTIALLY_PAID' ? (
+                                        <> You have paid ₦{paidAmount} out of ₦{totalAmount}. Please pay the remaining balance of ₦{balance} to access your slip and QR code.</>
+                                    ) : (
+                                        <> Please complete your payment to access your slip and QR code.</>
+                                    )}
                                 </p>
                             </div>
                             <div className="flex flex-col gap-3 pt-4 print:hidden">
-                                <ResumePaymentButton registrationId={registration.id} />
+                                <ResumePaymentButton 
+                                    registrationId={registration.id} 
+                                    balance={balance}
+                                    minInstallmentAmount={minInstallment}
+                                />
                                 <VerifyPaymentStatusButton registrationId={registration.id} reference={registration.paymentReference || undefined} />
                                 <RefreshButton />
                             </div>
@@ -234,15 +249,23 @@ export default async function AccessSlipPage({ params }: { params: Promise<{ id:
                             </div>
                         </div>
 
-                        <div className="pt-4 flex items-center justify-between border-t border-gray-100">
-                            <div className="flex items-center gap-2">
-                                <CreditCard className="w-4 h-4 text-gray-400" />
-                                <span className="text-xs font-medium text-gray-500">Amount Paid:</span>
-                                <ClientCurrency amount={parseFloat(registration.amountPaid || "0")} className="font-bold text-gray-900" />
+                        <div className="pt-4 border-t border-gray-100 space-y-2">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <CreditCard className="w-4 h-4 text-gray-400" />
+                                    <span className="text-xs font-medium text-gray-500">Amount Paid:</span>
+                                    <ClientCurrency amount={parseFloat(registration.amountPaid || "0")} className="font-bold text-gray-900" />
+                                </div>
+                                <p className="text-[10px] font-mono text-gray-400">
+                                    REF: {registration.paymentReference || registration.id.substring(0, 8)}
+                                </p>
                             </div>
-                            <p className="text-[10px] font-mono text-gray-400">
-                                REF: {registration.paymentReference || registration.id.substring(0, 8)}
-                            </p>
+                            {balance > 0 && (
+                                <div className="flex items-center justify-between bg-amber-50/50 p-2 rounded-md border border-amber-100/50">
+                                    <span className="text-xs font-medium text-amber-800">Remaining Balance:</span>
+                                    <ClientCurrency amount={balance} className="font-bold text-amber-900" />
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

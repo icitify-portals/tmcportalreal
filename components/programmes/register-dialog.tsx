@@ -34,18 +34,23 @@ export function RegisterForProgrammeDialog({
     programmeId,
     programmeTitle,
     amount,
+    allowInstallments,
+    minInstallmentAmount,
     triggerText,
     variant
 }: {
     programmeId: string,
     programmeTitle: string,
     amount: number,
+    allowInstallments?: boolean,
+    minInstallmentAmount?: number,
     triggerText?: string,
     variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link"
 }) {
     const { data: session } = useSession()
     const [open, setOpen] = useState(false)
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const [customAmount, setCustomAmount] = useState<string>(amount.toString())
     
     // Guest form state
     const [formData, setFormData] = useState({
@@ -72,7 +77,8 @@ export function RegisterForProgrammeDialog({
             if (result.success) {
                 if (result.paymentRequired) {
                     toast.info("Registration saved. Redirecting to payment...")
-                    const payResult = await initializeProgrammeRegistrationPayment(result.registrationId!)
+                    const payAmount = parseFloat(customAmount || "0")
+                    const payResult = await initializeProgrammeRegistrationPayment(result.registrationId!, payAmount)
                     if (payResult.success && payResult.authorizationUrl) {
                         window.location.href = payResult.authorizationUrl
                     } else {
@@ -115,6 +121,50 @@ export function RegisterForProgrammeDialog({
                                 : "Please provide your details to register for this event."}
                         </DialogDescription>
                     </DialogHeader>
+
+                    {amount > 0 && allowInstallments && (
+                        <div className="border p-3 rounded-md bg-green-50/50 my-2 space-y-3">
+                            <Label className="text-xs font-bold uppercase tracking-wider text-green-800 block">Payment Options</Label>
+                            <RadioGroup 
+                                defaultValue="FULL" 
+                                onValueChange={(v) => {
+                                    if (v === "FULL") {
+                                        setCustomAmount(amount.toString())
+                                    } else {
+                                        setCustomAmount(minInstallmentAmount ? minInstallmentAmount.toString() : amount.toString())
+                                    }
+                                }}
+                                className="flex gap-4"
+                            >
+                                <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="FULL" id="full-pay" />
+                                    <Label htmlFor="full-pay" className="text-sm font-medium">Full Amount (₦{amount})</Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="PARTIAL" id="partial-pay" />
+                                    <Label htmlFor="partial-pay" className="text-sm font-medium">Pay in Installment</Label>
+                                </div>
+                            </RadioGroup>
+
+                            {customAmount !== amount.toString() && (
+                                <div className="space-y-1 animate-in fade-in slide-in-from-top-1">
+                                    <Label htmlFor="inst-amount" className="text-xs font-bold uppercase text-green-700">Installment Amount (₦)</Label>
+                                    <Input 
+                                        id="inst-amount"
+                                        type="number" 
+                                        min={minInstallmentAmount || 0}
+                                        max={amount} 
+                                        value={customAmount}
+                                        onChange={(e) => setCustomAmount(e.target.value)}
+                                        className="bg-white"
+                                    />
+                                    {minInstallmentAmount && (
+                                        <p className="text-[10px] text-green-600">Minimum installment allowed: ₦{minInstallmentAmount}</p>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                     <div className="py-2">
                         {session && (
