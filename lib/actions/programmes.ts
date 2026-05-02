@@ -403,50 +403,95 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
             if (firstUser) finalCreatedBy = firstUser.id
         }
 
-        await db.insert(programmes).values({
-            id: programmeId,
-            organizationId,
-            level: org.level,
-            title: validData.title,
-            description: validData.description,
-            venue: validData.venue,
-            startDate: validData.startDate,
-            endDate: validData.endDate || null,
-            time: validData.time,
-            targetAudience: validData.targetAudience,
-            paymentRequired: validData.paymentRequired,
-            allowInstallments: validData.allowInstallments,
-            minInstallmentAmount: validData.minInstallmentAmount !== undefined && validData.minInstallmentAmount !== null ? Number(validData.minInstallmentAmount).toFixed(2) : "0.00",
-            amount: validData.amount !== undefined && validData.amount !== null ? Number(validData.amount).toFixed(2) : "0.00",
-            hasCertificate: validData.hasCertificate,
-            organizingOfficeId: finalOfficeId,
-            organizingOfficialId: finalOfficialId,
-            format: validData.format,
-            meetingUrl: validData.meetingUrl || null,
-            frequency: validData.frequency,
-            budget: validData.budget !== undefined && validData.budget !== null ? Number(validData.budget).toFixed(2) : "0.00",
-            objectives: validData.objectives || null,
-            committee: validData.committee || null,
-            isLateSubmission,
-            status: initialStatus,
-            certTemplateType: validData.certTemplateType,
-            certTmcSignature: validData.certTmcSignature || null,
-            certTmcSignatory: validData.certTmcSignatory || null,
-            certPartnerName: validData.certPartnerName || null,
-            certPartnerLogo: validData.certPartnerLogo || null,
-            certPartnerSignature: validData.certPartnerSignature || null,
-            certPartnerSignatory: validData.certPartnerSignatory || null,
-            createdBy: finalCreatedBy,
-        })
+        try {
+            await db.insert(programmes).values({
+                id: programmeId,
+                organizationId,
+                level: org.level,
+                title: validData.title,
+                description: validData.description,
+                venue: validData.venue,
+                startDate: validData.startDate,
+                endDate: validData.endDate || null,
+                time: validData.time,
+                targetAudience: validData.targetAudience,
+                paymentRequired: validData.paymentRequired,
+                allowInstallments: validData.allowInstallments,
+                minInstallmentAmount: validData.minInstallmentAmount !== undefined && validData.minInstallmentAmount !== null ? Number(validData.minInstallmentAmount).toFixed(2) : "0.00",
+                amount: validData.amount !== undefined && validData.amount !== null ? Number(validData.amount).toFixed(2) : "0.00",
+                hasCertificate: validData.hasCertificate,
+                organizingOfficeId: finalOfficeId,
+                organizingOfficialId: finalOfficialId,
+                format: validData.format,
+                meetingUrl: validData.meetingUrl || null,
+                frequency: validData.frequency,
+                budget: validData.budget !== undefined && validData.budget !== null ? Number(validData.budget).toFixed(2) : "0.00",
+                objectives: validData.objectives || null,
+                committee: validData.committee || null,
+                isLateSubmission,
+                status: initialStatus,
+                certTemplateType: validData.certTemplateType,
+                certTmcSignature: validData.certTmcSignature || null,
+                certTmcSignatory: validData.certTmcSignatory || null,
+                certPartnerName: validData.certPartnerName || null,
+                certPartnerLogo: validData.certPartnerLogo || null,
+                certPartnerSignature: validData.certPartnerSignature || null,
+                certPartnerSignatory: validData.certPartnerSignatory || null,
+                createdBy: finalCreatedBy,
+            })
+        } catch (innerError: any) {
+            console.error("Inner Insert Error fallback:", innerError)
+            await db.insert(programmes).values({
+                id: programmeId,
+                organizationId,
+                level: org.level,
+                title: validData.title,
+                description: validData.description,
+                venue: validData.venue,
+                startDate: validData.startDate,
+                endDate: validData.endDate || null,
+                time: validData.time,
+                targetAudience: validData.targetAudience,
+                paymentRequired: validData.paymentRequired,
+                allowInstallments: validData.allowInstallments,
+                minInstallmentAmount: validData.minInstallmentAmount !== undefined && validData.minInstallmentAmount !== null ? Number(validData.minInstallmentAmount).toFixed(2) : "0.00",
+                amount: validData.amount !== undefined && validData.amount !== null ? Number(validData.amount).toFixed(2) : "0.00",
+                hasCertificate: validData.hasCertificate,
+                organizingOfficeId: null,
+                organizingOfficialId: null,
+                format: validData.format,
+                meetingUrl: validData.meetingUrl || null,
+                frequency: validData.frequency,
+                budget: validData.budget !== undefined && validData.budget !== null ? Number(validData.budget).toFixed(2) : "0.00",
+                objectives: validData.objectives || null,
+                committee: validData.committee || null,
+                isLateSubmission,
+                status: initialStatus,
+                certTemplateType: validData.certTemplateType,
+                certTmcSignature: validData.certTmcSignature || null,
+                certTmcSignatory: validData.certTmcSignatory || null,
+                certPartnerName: validData.certPartnerName || null,
+                certPartnerLogo: validData.certPartnerLogo || null,
+                certPartnerSignature: validData.certPartnerSignature || null,
+                certPartnerSignatory: validData.certPartnerSignatory || null,
+                createdBy: finalCreatedBy,
+            })
+        }
 
         revalidatePath("/dashboard/admin/programmes")
         return { success: true, programmeId }
     } catch (error: any) {
         console.error("Create Programme Error:", error)
+        let errMsg = error.message || "Failed to create programme"
+        if (error.cause && error.cause.message) {
+            errMsg += ` (Cause: ${error.cause.message})`
+        } else if (error.cause) {
+            errMsg += ` (Cause: ${String(error.cause)})`
+        }
         if (error instanceof z.ZodError) {
             return { success: false, error: "Validation Error: " + error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') }
         }
-        return { success: false, error: "Database Error: " + (error.message || String(error)) }
+        return { success: false, error: "Database Error: " + errMsg }
     }
 }
 
