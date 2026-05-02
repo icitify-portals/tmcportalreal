@@ -23,15 +23,33 @@ export function ProgrammeMaterialsField({ control }: { control: Control<any> }) 
                     </h3>
                     <p className="text-xs text-emerald-200/80">Add presentation slides, documents, or videos for participants.</p>
                 </div>
-                <Button 
-                    type="button" 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => append({ title: "", url: "", fileType: "DOCUMENT" })}
-                    className="border-emerald-700/40 bg-emerald-950/20 text-emerald-100 hover:bg-emerald-950/40 hover:text-emerald-50"
-                >
-                    <Plus className="w-4 h-4 mr-2" /> Add Material
-                </Button>
+                <div className="flex items-center gap-2">
+                    <FileUpload 
+                        multiple
+                        onUploadComplete={() => {}}
+                        onUploadMultipleComplete={(urls, files) => {
+                            urls.forEach((url, i) => {
+                                append({ 
+                                    title: files[i]?.name || `Material ${fields.length + i + 1}`, 
+                                    url, 
+                                    fileType: "DOCUMENT" 
+                                })
+                            })
+                        }}
+                        label="Upload Files"
+                        variant="secondary"
+                        className="bg-emerald-950/40 text-emerald-100 hover:bg-emerald-950/60"
+                    />
+                    <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => append({ title: "", url: "", fileType: "DOCUMENT" })}
+                        className="border-emerald-700/40 bg-emerald-950/20 text-emerald-100 hover:bg-emerald-950/40 hover:text-emerald-50"
+                    >
+                        <Plus className="w-4 h-4 mr-2" /> Add Single
+                    </Button>
+                </div>
             </div>
 
             {fields.length > 0 && (

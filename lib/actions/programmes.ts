@@ -387,20 +387,20 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
             description: validData.description,
             venue: validData.venue,
             startDate: validData.startDate,
-            endDate: validData.endDate,
+            endDate: validData.endDate || null,
             time: validData.time,
             targetAudience: validData.targetAudience,
             paymentRequired: validData.paymentRequired,
             allowInstallments: validData.allowInstallments,
-            minInstallmentAmount: validData.minInstallmentAmount ? validData.minInstallmentAmount.toString() : "0.00",
-            amount: validData.amount.toString(),
+            minInstallmentAmount: validData.minInstallmentAmount !== undefined && validData.minInstallmentAmount !== null ? Number(validData.minInstallmentAmount).toFixed(2) : "0.00",
+            amount: validData.amount !== undefined && validData.amount !== null ? Number(validData.amount).toFixed(2) : "0.00",
             hasCertificate: validData.hasCertificate,
             organizingOfficeId: (validData.organizingOfficeId && validData.organizingOfficeId !== "none") ? validData.organizingOfficeId : null,
             organizingOfficialId: (validData.organizingOfficialId && validData.organizingOfficialId !== "none") ? validData.organizingOfficialId : null,
             format: validData.format,
             meetingUrl: validData.meetingUrl || null,
             frequency: validData.frequency,
-            budget: validData.budget ? validData.budget.toString() : "0.00",
+            budget: validData.budget !== undefined && validData.budget !== null ? Number(validData.budget).toFixed(2) : "0.00",
             objectives: validData.objectives || null,
             committee: validData.committee || null,
             isLateSubmission,
@@ -422,7 +422,7 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
         if (error instanceof z.ZodError) {
             return { success: false, error: "Validation Error: " + error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') }
         }
-        return { success: false, error: error.message || "Failed to create programme" }
+        return { success: false, error: "Database Error: " + (error.message || String(error)) }
     }
 }
 
