@@ -26,12 +26,25 @@ export async function POST(request: NextRequest) {
             "video/",
             "application/pdf",
             "text/plain",
+            "text/csv",
             "application/msword",
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "application/vnd.ms-excel",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "application/vnd.ms-powerpoint",
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            "application/zip",
+            "application/x-zip-compressed",
+            "application/x-rar-compressed",
+            "application/octet-stream"
         ];
-        if (!allowedTypes.some(type => file.type.startsWith(type) || allowedTypes.includes(file.type))) {
-            return NextResponse.json({ error: "Only image, audio, video, and document files are allowed." }, { status: 400 });
+        const allowedExtensions = [".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt", ".csv", ".zip", ".rar"];
+        const fileExt = file.name ? file.name.substring(file.name.lastIndexOf(".")).toLowerCase() : "";
+
+        if (!allowedTypes.some(type => file.type.startsWith(type) || allowedTypes.includes(file.type)) && !allowedExtensions.includes(fileExt)) {
+            return NextResponse.json({ error: "Only image, audio, video, and valid document/archive files are allowed." }, { status: 400 });
         }
+
 
         // Sanitize category to prevent directory traversal (allowing slashes for subdirectories)
         const sanitizedCategory = category.replace(/[^a-zA-Z0-9_\-\/]/g, "");
