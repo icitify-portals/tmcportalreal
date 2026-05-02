@@ -121,6 +121,38 @@ export function ProgrammeMaterialsManager({ programmeId }: { programmeId: string
                         </div>
                     )}
 
+                    <div className="flex flex-col md:flex-row items-center justify-between p-3 border border-emerald-800/40 rounded-md bg-emerald-950/30 gap-4">
+                        <div>
+                            <p className="text-xs font-semibold text-emerald-100 uppercase tracking-wider">Quick Multiple Uploads</p>
+                            <p className="text-[11px] text-emerald-300">Upload multiple files at once. The filename will automatically be used as the material title.</p>
+                        </div>
+                        <FileUpload 
+                            multiple={true}
+                            onUploadComplete={() => {}}
+                            onUploadMultipleComplete={async (urls, files) => {
+                                setIsAdding(true)
+                                try {
+                                    for (let i = 0; i < urls.length; i++) {
+                                        await addProgrammeMaterial({
+                                            programmeId,
+                                            title: files[i]?.name || `Material ${i + 1}`,
+                                            url: urls[i],
+                                            fileType: "DOCUMENT"
+                                        })
+                                    }
+                                    toast.success(`${urls.length} materials uploaded successfully`)
+                                    fetchMaterials()
+                                } catch (err) {
+                                    toast.error("Error adding some files")
+                                } finally {
+                                    setIsAdding(false)
+                                }
+                            }}
+                            label="Choose Multiple Files"
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+                        />
+                    </div>
+
                     <div className="grid grid-cols-1 md:grid-cols-[1fr_2fr_auto] gap-2 items-start p-3 border border-emerald-800/40 rounded-md bg-emerald-950/30">
                         <div className="space-y-1">
                             <label className="text-xs font-medium text-emerald-100">Title</label>
@@ -142,7 +174,10 @@ export function ProgrammeMaterialsManager({ programmeId }: { programmeId: string
                                     className="border-emerald-800/40 bg-emerald-950/20 text-emerald-100"
                                 />
                                 <FileUpload 
-                                    onUploadComplete={(url) => setNewUrl(url)} 
+                                    onUploadComplete={(url, file) => {
+                                        setNewUrl(url)
+                                        if (!newTitle && file?.name) setNewTitle(file.name)
+                                    }} 
                                     label="Upload"
                                 />
                             </div>
