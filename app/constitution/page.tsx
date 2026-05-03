@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { ConstitutionContent } from "@/components/constitution/constitution-content"
 import { getApprovedConstitution } from "@/lib/actions/constitution"
 
