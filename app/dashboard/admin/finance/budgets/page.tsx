@@ -28,7 +28,7 @@ export default async function BudgetsPage({
         if (firstOrg) organizationId = firstOrg.id
     }
 
-    const budgets = await getBudgets(organizationId) || []
+    const budgets = await getBudgets(organizationId || "") || []
     const jurisdictions = await getAvailableJurisdictions()
 
     return (
