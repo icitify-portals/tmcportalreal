@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation"
 import { getProgrammeFeedbackSummary, saveProgrammeFeedbackFields } from "@/lib/actions/programme-feedback"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Plus, Trash2, Loader2, GripVertical, Award, MessageSquare, Clipboard, CheckCircle2, BarChart2, Calendar, FileText, Send, Share2 } from "lucide-react"
+import { ArrowLeft, Plus, Trash2, Loader2, GripVertical, Award, MessageSquare, Clipboard, CheckCircle2, BarChart2, Calendar, FileText, Send, Share2, TrendingUp, Users } from "lucide-react"
 import Link from "next/link"
 
 export default function ProgrammeFeedbackAdminPage() {
@@ -17,6 +17,7 @@ export default function ProgrammeFeedbackAdminPage() {
     const [title, setTitle] = useState("")
     const [fields, setFields] = useState<any[]>([])
     const [submissions, setSubmissions] = useState<any[]>([])
+    const [registrations, setRegistrations] = useState<any[]>([])
 
     const [loading, setLoading] = useState(true)
     const [submitting, setSubmitting] = useState(false)
@@ -54,6 +55,9 @@ export default function ProgrammeFeedbackAdminPage() {
 
                     if (data.submissions && Array.isArray(data.submissions)) {
                         setSubmissions(data.submissions)
+                    }
+                    if (data.registrations && Array.isArray(data.registrations)) {
+                        setRegistrations(data.registrations)
                     }
                 } else {
                     setError("Programme not found.")
@@ -134,33 +138,113 @@ export default function ProgrammeFeedbackAdminPage() {
         )
     }
 
-    // --- Dynamic Feedback Analytics & Analysis Generation ---
+    // --- Dynamic Advanced Analytics generation ---
+    const positiveKeywords = ["good", "great", "excellent", "nice", "well", "amazing", "satisfied", "enjoyed", "best", "perfect", "clear", "informative"]
+    const negativeKeywords = ["poor", "bad", "worst", "unclear", "dissatisfied", "disappointed", "slow", "hard", "difficult", "confusing", "failed"]
+
+    const getSentiment = (text: string) => {
+        if (!text) return "Neutral"
+        const lowercase = text.toLowerCase()
+        let score = 0
+        positiveKeywords.forEach(word => {
+            if (lowercase.includes(word)) score++
+        })
+        negativeKeywords.forEach(word => {
+            if (lowercase.includes(word)) score--
+        })
+        if (score > 0) return "Positive"
+        if (score < 0) return "Negative"
+        return "Neutral"
+    }
+
     const getAnalysis = () => {
         if (submissions.length === 0) return null
 
-        // Group fields and parse answers
-        const analysisByField: Record<string, { label: string; type: string; answers: any[]; counts?: Record<string, number> }> = {}
+        const mappedSubmissions = submissions.map(sub => {
+            const reg = registrations.find(r => r.userId === sub.userId)
+            return {
+                ...sub,
+                gender: reg?.gender || "Guest / Unspecified",
+                state: reg?.state || "Unspecified",
+                branch: reg?.branch || "Unspecified",
+                regStatus: reg?.status || "Guest"
+            }
+        })
+
+        const analysisByField: Record<string, {
+            label: string;
+            type: string;
+            answers: any[];
+            counts?: Record<string, number>;
+            npsScore?: number;
+            sentimentCounts?: { Positive: number; Neutral: number; Negative: number };
+            demographicsBreakdown?: Record<string, Record<string, number>>;
+        }> = {}
 
         fields.forEach(field => {
             analysisByField[field.id] = {
                 label: field.label,
                 type: field.type,
                 answers: [],
-                counts: field.type === "select" ? {} : undefined
+                counts: field.type === "select" ? {} : undefined,
+                sentimentCounts: field.type === "textarea" ? { Positive: 0, Neutral: 0, Negative: 0 } : undefined,
+                demographicsBreakdown: field.type === "select" ? {} : undefined
             }
         })
 
-        submissions.forEach(sub => {
+        mappedSubmissions.forEach(sub => {
             if (sub.data && typeof sub.data === "object") {
                 Object.keys(sub.data).forEach(key => {
                     const value = sub.data[key]
                     if (analysisByField[key] && value !== undefined && value !== "") {
                         analysisByField[key].answers.push(value)
+                        
+                        // Count choices
                         if (analysisByField[key].counts) {
-                            analysisByField[key].counts[value] = (analysisByField[key].counts[value] || 0) + 1
+                            analysisByField[key].counts![value] = (analysisByField[key].counts![value] || 0) + 1
+                        }
+
+                        // Text sentiment classifying
+                        if (analysisByField[key].sentimentCounts && typeof value === "string") {
+                            const sentiment = getSentiment(value)
+                            analysisByField[key].sentimentCounts![sentiment] = (analysisByField[key].sentimentCounts![sentiment] || 0) + 1
+                        }
+
+                        // Demographics cross-tabulation
+                        if (analysisByField[key].demographicsBreakdown && sub.gender) {
+                            const groupKey = `${sub.gender} (${sub.state})`
+                            if (!analysisByField[key].demographicsBreakdown![groupKey]) {
+                                analysisByField[key].demographicsBreakdown![groupKey] = {}
+                            }
+                            analysisByField[key].demographicsBreakdown![groupKey]![value] = (analysisByField[key].demographicsBreakdown![groupKey]![value] || 0) + 1
                         }
                     }
                 })
+            }
+        })
+
+        // Derive NPS Score for choice/rating dropdowns
+        const promoterWords = ["excellent", "very satisfied", "extremely satisfied", "very good", "good", "satisfied", "5", "4"]
+        const passiveWords = ["fair", "neutral", "average", "3"]
+        const detractorWords = ["poor", "bad", "worst", "dissatisfied", "very dissatisfied", "2", "1"]
+
+        Object.keys(analysisByField).forEach(key => {
+            const ana = analysisByField[key]
+            if (ana.type === "select" && ana.answers.length > 0) {
+                let promoters = 0
+                let passives = 0
+                let detractors = 0
+
+                ana.answers.forEach(ans => {
+                    const val = ans.toString().toLowerCase()
+                    if (promoterWords.some(w => val.includes(w))) promoters++
+                    else if (detractorWords.some(w => val.includes(w))) detractors++
+                    else passives++
+                })
+
+                const promoterPercent = (promoters / ana.answers.length) * 100
+                const detractorPercent = (detractors / ana.answers.length) * 100
+                ana.npsScore = Math.round(promoterPercent - detractorPercent)
             }
         })
 
@@ -182,10 +266,10 @@ export default function ProgrammeFeedbackAdminPage() {
                         </Link>
                         <h1 className="text-3xl font-bold tracking-tight text-gray-900 flex items-center gap-2">
                             <MessageSquare className="h-7 w-7 text-green-600" />
-                            Programme Feedback Management
+                            Programme Feedback & Analytics
                         </h1>
                         <p className="text-gray-500 text-sm mt-1">
-                            Customize questionnaire fields and analyze the submitted feedback for <span className="font-semibold text-gray-700">{title}</span>.
+                            Customize questionnaire fields and view smart analysis for <span className="font-semibold text-gray-700">{title}</span>.
                         </p>
                     </div>
 
@@ -220,7 +304,7 @@ export default function ProgrammeFeedbackAdminPage() {
                             activeTab === "analysis" ? "border-green-600 text-green-700" : "border-transparent text-gray-500 hover:text-gray-800"
                         }`}
                     >
-                        📊 Submissions Analysis ({submissions.length})
+                        📊 Smart Analysis ({submissions.length})
                     </button>
                 </div>
 
@@ -232,7 +316,7 @@ export default function ProgrammeFeedbackAdminPage() {
 
                 {activeTab === "design" && (
                     <form onSubmit={handleSubmit} className="space-y-6">
-                        <div className="bg-white rounded-xl border p-6 space-y-4">
+                        <div className="bg-white rounded-xl border p-6 space-y-4 shadow-sm">
                             <div className="flex items-center justify-between">
                                 <h2 className="font-semibold text-gray-800 text-lg flex items-center gap-1">
                                     <Clipboard className="h-5 w-5 text-gray-500" />
@@ -351,55 +435,136 @@ export default function ProgrammeFeedbackAdminPage() {
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 gap-6">
-                                {/* Analytics Summarizer */}
+                                {/* Enhanced Analysis Panel */}
                                 <div className="bg-white rounded-xl border p-6 shadow-sm space-y-6">
                                     <h2 className="font-bold text-xl text-gray-800 flex items-center gap-2">
                                         <BarChart2 className="h-5 w-5 text-green-600" />
-                                        Analysis of Feedback Responses
+                                        Advanced Feedback Evaluation
                                     </h2>
 
                                     {fieldAnalysis && Object.keys(fieldAnalysis).map(fieldId => {
                                         const analysis = fieldAnalysis[fieldId]
                                         return (
-                                            <div key={fieldId} className="p-4 bg-gray-50/50 rounded-lg border border-gray-100">
-                                                <h3 className="font-semibold text-gray-800 text-base mb-3 flex items-center justify-between">
-                                                    <span>{analysis.label}</span>
-                                                    <span className="text-xs font-medium px-2 py-1 bg-green-50 border border-green-100 text-green-700 rounded select-none">
-                                                        {analysis.answers.length} responses
-                                                    </span>
-                                                </h3>
+                                            <div key={fieldId} className="p-4 bg-gray-50/50 rounded-lg border border-gray-100 space-y-4">
+                                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-3">
+                                                    <h3 className="font-bold text-gray-800 text-base">
+                                                        {analysis.label}
+                                                    </h3>
+                                                    <div className="flex items-center gap-2 select-none">
+                                                        <span className="text-xs font-semibold px-2 py-1 bg-green-50 border border-green-100 text-green-700 rounded">
+                                                            {analysis.answers.length} responses
+                                                        </span>
+                                                        {analysis.npsScore !== undefined && (
+                                                            <span className={`text-xs font-semibold px-2 py-1 border rounded ${
+                                                                analysis.npsScore >= 30 ? "bg-emerald-50 border-emerald-100 text-emerald-700" :
+                                                                analysis.npsScore >= 0 ? "bg-amber-50 border-amber-100 text-amber-700" :
+                                                                "bg-red-50 border-red-100 text-red-700"
+                                                            }`}>
+                                                                NPS Score: {analysis.npsScore}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
 
-                                                {analysis.type === "select" && analysis.counts ? (
-                                                    <div className="space-y-3">
-                                                        {Object.keys(analysis.counts).map(option => {
-                                                            const count = analysis.counts![option] || 0
+                                                {/* Text Sentiment breakdown */}
+                                                {analysis.type === "textarea" && analysis.sentimentCounts && (
+                                                    <div className="grid grid-cols-3 gap-3">
+                                                        {Object.keys(analysis.sentimentCounts).map(sentKey => {
+                                                            const count = (analysis.sentimentCounts as any)[sentKey]
                                                             const percent = analysis.answers.length ? Math.round((count / analysis.answers.length) * 100) : 0
                                                             return (
-                                                                <div key={option} className="space-y-1">
-                                                                    <div className="flex justify-between text-sm font-medium text-gray-700">
-                                                                        <span>{option}</span>
-                                                                        <span>{count} ({percent}%)</span>
-                                                                    </div>
-                                                                    <div className="w-full bg-gray-200 h-2.5 rounded-full overflow-hidden">
-                                                                        <div
-                                                                            className="bg-green-600 h-2.5 rounded-full"
-                                                                            style={{ width: `${percent}%` }}
-                                                                        />
-                                                                    </div>
+                                                                <div key={sentKey} className="bg-white p-3 rounded-lg border border-gray-100 flex flex-col items-center">
+                                                                    <span className="text-xs font-semibold text-gray-500 uppercase">{sentKey}</span>
+                                                                    <span className="text-lg font-bold text-gray-800 mt-1">{count}</span>
+                                                                    <span className="text-xs text-gray-400">{percent}%</span>
                                                                 </div>
                                                             )
                                                         })}
+                                                    </div>
+                                                )}
+
+                                                {/* Choices bars & Demographics Cross-Tabulation */}
+                                                {analysis.type === "select" && analysis.counts ? (
+                                                    <div className="space-y-4">
+                                                        <div className="space-y-3">
+                                                            {Object.keys(analysis.counts).map(option => {
+                                                                const count = analysis.counts![option] || 0
+                                                                const percent = analysis.answers.length ? Math.round((count / analysis.answers.length) * 100) : 0
+                                                                return (
+                                                                    <div key={option} className="space-y-1">
+                                                                        <div className="flex justify-between text-sm font-medium text-gray-700">
+                                                                            <span>{option}</span>
+                                                                            <span>{count} ({percent}%)</span>
+                                                                        </div>
+                                                                        <div className="w-full bg-gray-200 h-2.5 rounded-full overflow-hidden">
+                                                                            <div
+                                                                                className="bg-green-600 h-2.5 rounded-full"
+                                                                                style={{ width: `${percent}%` }}
+                                                                            />
+                                                                        </div>
+                                                                    </div>
+                                                                )
+                                                            })}
+                                                        </div>
+
+                                                        {/* Demographics crosstab breakdown section */}
+                                                        {analysis.demographicsBreakdown && Object.keys(analysis.demographicsBreakdown).length > 0 && (
+                                                            <div className="mt-4 p-3 bg-white border border-gray-200 rounded-xl space-y-2">
+                                                                <h4 className="font-semibold text-sm text-gray-800 flex items-center gap-1">
+                                                                    <Users className="h-4 w-4 text-gray-500" />
+                                                                    Demographics Breakdown (Gender & State)
+                                                                </h4>
+                                                                <div className="overflow-x-auto">
+                                                                    <table className="w-full text-xs text-left text-gray-500 border-collapse">
+                                                                        <thead>
+                                                                            <tr className="bg-gray-50 border-b border-gray-100">
+                                                                                <th className="px-3 py-2 text-gray-700 font-bold">Demographic Layer</th>
+                                                                                {Object.keys(analysis.counts).map(opt => (
+                                                                                    <th key={opt} className="px-3 py-2 text-gray-700 font-bold text-right">{opt}</th>
+                                                                                ))}
+                                                                            </tr>
+                                                                        </thead>
+                                                                        <tbody className="divide-y divide-gray-50">
+                                                                            {Object.keys(analysis.demographicsBreakdown).map(demoKey => {
+                                                                                const counts = analysis.demographicsBreakdown![demoKey] || {}
+                                                                                return (
+                                                                                    <tr key={demoKey} className="hover:bg-gray-50/60 transition-colors">
+                                                                                        <td className="px-3 py-2 font-medium text-gray-800">{demoKey}</td>
+                                                                                        {Object.keys(analysis.counts!).map(opt => (
+                                                                                            <td key={opt} className="px-3 py-2 text-right font-semibold text-gray-600">
+                                                                                                {counts[opt] || 0}
+                                                                                            </td>
+                                                                                        ))}
+                                                                                    </tr>
+                                                                                )
+                                                                            })}
+                                                                        </tbody>
+                                                                    </table>
+                                                                </div>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 ) : (
                                                     <div className="max-h-48 overflow-y-auto space-y-2 pr-1">
                                                         {analysis.answers.length > 0 ? (
                                                             analysis.answers.map((ans, idx) => (
-                                                                <div key={idx} className="text-sm bg-white p-3 border rounded-lg text-gray-700">
-                                                                    {ans}
+                                                                <div key={idx} className="text-sm bg-white p-3 border rounded-lg text-gray-700 flex flex-col justify-between gap-1">
+                                                                    <div>{ans}</div>
+                                                                    {analysis.type === "textarea" && (
+                                                                        <div className="flex justify-end select-none">
+                                                                            <span className={`text-[10px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded ${
+                                                                                getSentiment(ans) === "Positive" ? "bg-emerald-50 text-emerald-700 border border-emerald-200/50" :
+                                                                                getSentiment(ans) === "Negative" ? "bg-red-50 text-red-700 border border-red-200/50" :
+                                                                                "bg-gray-50 text-gray-700 border border-gray-200/50"
+                                                                            }`}>
+                                                                                {getSentiment(ans)}
+                                                                            </span>
+                                                                        </div>
+                                                                    )}
                                                                 </div>
                                                             ))
                                                         ) : (
-                                                            <div className="text-sm text-gray-400 italic">No text provided.</div>
+                                                            <div className="text-sm text-gray-400 italic">No responses provided.</div>
                                                         )}
                                                     </div>
                                                 )}

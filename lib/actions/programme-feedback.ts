@@ -61,6 +61,8 @@ export async function getProgrammeFeedbackSubmissions(programmeId: string) {
     }
 }
 
+import { programmeRegistrations } from "@/lib/db/schema"
+
 export async function getProgrammeFeedbackSummary(programmeId: string) {
     try {
         const [prog] = await db.select().from(programmes).where(eq(programmes.id, programmeId)).limit(1)
@@ -70,9 +72,14 @@ export async function getProgrammeFeedbackSummary(programmeId: string) {
             .from(programmeFeedbackSubmissions)
             .where(eq(programmeFeedbackSubmissions.programmeId, programmeId))
 
+        const registrations = await db.select()
+            .from(programmeRegistrations)
+            .where(eq(programmeRegistrations.programmeId, programmeId))
+
         return {
             programme: prog,
             submissions,
+            registrations,
         }
     } catch (err) {
         console.error("getProgrammeFeedbackSummary error:", err)
