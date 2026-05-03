@@ -21,7 +21,7 @@ export default async function BudgetsPage({
     if (!session?.user?.id) return notFound()
 
     const { orgId } = await searchParams || {}
-    let organizationId = orgId
+    let organizationId = orgId || ""
 
     if (!organizationId) {
         const [firstOrg] = await db.select().from(organizations).limit(1)
