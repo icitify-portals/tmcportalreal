@@ -1133,6 +1133,7 @@ export const financeBudgets = mysqlTable("finance_budgets", {
     approvedBy: varchar("approvedBy", { length: 255 }).references(() => users.id),
     approvedAt: timestamp("approvedAt", { mode: "date", fsp: 3 }),
     comments: text("comments"),
+    programmeId: varchar("programmeId", { length: 255 }),
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
     updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
 });

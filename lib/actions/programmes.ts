@@ -4,7 +4,8 @@ import { db } from "@/lib/db"
 import {
     programmes, programmeRegistrations, programmeReports, programmeMaterials,
     programmeStatusEnum, registrationStatusEnum,
-    users, organizations, offices, officials, notifications
+    users, organizations, offices, officials, notifications,
+    financeBudgets, financeBudgetItems
 } from "@/lib/db/schema"
 import { getYearPlannerSettings } from "@/lib/actions/settings"
 import { eq, desc, and, or, aliasedTable, inArray, sql, asc } from "drizzle-orm"
@@ -478,8 +479,24 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
                 certPartnerSignatory: validData.certPartnerSignatory || null,
                 createdBy: finalCreatedBy,
                 createdAt: new Date(),
-                updatedAt: new Date(),
             })
+        }
+
+        if (validData.budget && parseFloat(validData.budget.toString()) > 0) {
+            try {
+                const totalAmount = parseFloat(validData.budget.toString());
+                await db.insert(financeBudgets).values({
+                    organizationId,
+                    year: new Date(validData.startDate).getFullYear(),
+                    title: `Budget for Programme: ${validData.title}`,
+                    totalAmount: totalAmount.toString(),
+                    status: 'APPROVED',
+                    createdBy: finalCreatedBy,
+                    programmeId: programmeId
+                });
+            } catch (err) {
+                console.error("Failed to add programme budget to finance module:", err);
+            }
         }
 
         revalidatePath("/dashboard/admin/programmes")
@@ -1096,6 +1113,7 @@ export async function deleteProgramme(programmeId: string) {
 
         // Optional: Check permissions (e.g. only Admin or Creator)
 
+        await db.delete(financeBudgets).where(eq(financeBudgets.programmeId, programmeId))
         await db.delete(programmes).where(eq(programmes.id, programmeId))
 
         revalidatePath("/dashboard/admin/programmes")
