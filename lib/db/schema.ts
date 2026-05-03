@@ -1044,6 +1044,7 @@ export const programmes = mysqlTable("programmes", {
     staticAttendanceToken: varchar("staticAttendanceToken", { length: 255 }),
     attendanceWindow: int("attendanceWindow").default(3),
 
+    feedbackFields: json("feedbackFields"),
     createdBy: varchar("createdBy", { length: 255 }).notNull().references(() => users.id),
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
     updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
@@ -1110,6 +1111,14 @@ export const programmeMaterials = mysqlTable("programme_materials", {
     fileType: varchar("fileType", { length: 100 }), // pdf, doc, slides, video
     uploadedBy: varchar("uploadedBy", { length: 255 }).references(() => users.id),
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+});
+
+export const programmeFeedbackSubmissions = mysqlTable("programme_feedback_submissions", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
+    programmeId: varchar("programmeId", { length: 255 }).notNull().references(() => programmes.id, { onDelete: "cascade" }),
+    userId: varchar("userId", { length: 255 }).references(() => users.id),
+    data: json("data").notNull(),
+    submittedAt: timestamp("submittedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
 });
 
 // Finance Budgets

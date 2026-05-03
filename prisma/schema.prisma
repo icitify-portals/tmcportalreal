@@ -788,8 +788,11 @@ model Programme {
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
+  feedbackFields     Json?
+
   registrations      ProgrammeRegistration[]
   report             ProgrammeReport?
+  feedbackSubmissions ProgrammeFeedbackSubmission[]
 
   @@index([organizationId])
   @@map("programmes")
@@ -856,6 +859,18 @@ model ProgrammeMaterial {
   createdAt   DateTime @default(now())
 
   @@map("programme_materials")
+}
+
+model ProgrammeFeedbackSubmission {
+  id           String   @id @default(cuid())
+  programmeId  String
+  programme    Programme @relation(fields: [programmeId], references: [id], onDelete: Cascade)
+  userId       String?
+  data         Json
+  submittedAt  DateTime @default(now())
+
+  @@index([programmeId])
+  @@map("programme_feedback_submissions")
 }
 
 // Special Programmes
