@@ -1,9 +1,38 @@
 "use server"
 
 import { db } from "@/lib/db"
-import { members } from "@/lib/db/schema"
+import { members, users } from "@/lib/db/schema"
 import { sql, eq, count } from "drizzle-orm"
 import { getServerSession } from "@/lib/session"
+
+export async function getUserStats() {
+    const session = await getServerSession()
+    if (!session?.user) return { success: false, error: "Unauthorized" }
+
+    try {
+        const [totalRes] = await db.select({ value: count() }).from(users)
+        const total = totalRes.value
+
+        const [notMembersRes] = await db.select({ value: count() })
+            .from(users)
+            .leftJoin(members, eq(users.id, members.userId))
+            .where(sql`${members.userId} IS NULL`)
+        const notMembers = notMembersRes.value
+
+        const [membersRes] = await db.select({ value: count() }).from(members)
+        const totalMembers = membersRes.value
+
+        return {
+            success: true,
+            total,
+            notMembers,
+            totalMembers
+        }
+    } catch (error) {
+        console.error("User Stats Error:", error)
+        return { success: false, error: "Failed to fetch user stats" }
+    }
+}
 
 export async function getMemberStats() {
     const session = await getServerSession()

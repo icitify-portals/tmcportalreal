@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { UserStatsDialog } from "@/components/admin/users/user-stats-dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
     Table,
@@ -219,11 +220,14 @@ export default async function UsersPage(props: {
     return (
         <DashboardLayout>
             <div className="space-y-6">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">User Management</h1>
-                    <p className="text-muted-foreground mt-1">
-                        View users and assign system roles.
-                    </p>
+                <div className="flex justify-between items-center">
+                    <div>
+                        <h1 className="text-3xl font-bold tracking-tight">User Management</h1>
+                        <p className="text-muted-foreground mt-1">
+                            View users and assign system roles.
+                        </p>
+                    </div>
+                    <UserStatsDialog />
                 </div>
 
                 <Card className="bg-green-50/50 border-green-100">

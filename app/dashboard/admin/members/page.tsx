@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { db } from "@/lib/db"
 import { members, users, organizations } from "@/lib/db/schema"
-import { desc, and, eq, sql } from "drizzle-orm"
+import { desc, and, eq, sql, or } from "drizzle-orm"
 import Link from "next/link"
 import { Plus, Search, Filter } from "lucide-react"
 import { MemberStatsDialog } from "@/components/admin/members/member-stats-dialog"
@@ -45,45 +45,46 @@ export default async function MembersPage(props: {
     conditions.push(sql`JSON_UNQUOTE(JSON_EXTRACT(${members.metadata}, '$.lga')) = ${lgaFilter}`)
   }
   if (branchFilter && branchFilter !== "all") {
-    conditions.push(sql`JSON_UNQUOTE(JSON_EXTRACT(${members.metadata}, '$.branch')) = ${branchFilter}`)
+    conditions.push(sql`JSON_UNQUOTE(JSON_EXTRACT(${members.metadata}, '$.branch')) LIKE ${`%${branchFilter}%`}`)
   }
   if (searchQuery) {
-    // Basic search on name/email would require join, for now let's skip or implement if needed
-    // The user had 'search' in params but it wasn't used in the original code's conditions
+    conditions.push(or(
+      sql`${users.name} LIKE ${`%${searchQuery}%`}`,
+      sql`${users.email} LIKE ${`%${searchQuery}%`}`
+    ))
   }
 
   // 0. Fetch Total Count for pagination
   const [totalRes] = await db.select({ count: sql<number>`count(*)` })
     .from(members)
+    .innerJoin(users, eq(members.userId, users.id))
     .where(conditions.length > 0 ? and(...conditions) : undefined);
   
   const totalCount = Number(totalRes?.count || 0);
 
   // Fetch members
-  const rawMembers = await db.select()
+  const rawMembersWithUsers = await db.select({
+    member: members,
+    user: { id: users.id, name: users.name, email: users.email, phone: users.phone }
+  })
     .from(members)
+    .innerJoin(users, eq(members.userId, users.id))
     .where(conditions.length > 0 ? and(...conditions) : undefined)
     .orderBy(desc(members.createdAt))
     .limit(limit)
     .offset(offset)
 
   // Manually fetch related data
-  const userIds = [...new Set(rawMembers.map(m => m.userId).filter(Boolean))] as string[]
-  const orgIds = [...new Set(rawMembers.map(m => m.organizationId).filter(Boolean))] as string[]
-
-  const usersData = userIds.length > 0 ? await db.query.users.findMany({
-    where: (users, { inArray }) => inArray(users.id, userIds),
-    columns: { id: true, name: true, email: true, phone: true }
-  }) : []
+  const orgIds = [...new Set(rawMembersWithUsers.map(m => m.member.organizationId).filter(Boolean))] as string[]
 
   const orgsData = orgIds.length > 0 ? await db.query.organizations.findMany({
     where: (organizations, { inArray }) => inArray(organizations.id, orgIds),
     columns: { id: true, name: true, level: true }
   }) : []
 
-  const membersList = rawMembers.map(member => ({
+  const membersList = rawMembersWithUsers.map(({ member, user }) => ({
     ...member,
-    user: usersData.find(u => u.id === member.userId) || { name: 'Unknown', email: '', phone: '' },
+    user,
     organization: orgsData.find(o => o.id === member.organizationId) || { name: 'Unknown', level: '' }
   }))
 
@@ -108,7 +109,17 @@ export default async function MembersPage(props: {
 
         <Card className="bg-green-50/50 border-green-100">
           <CardContent className="pt-6">
-            <form className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <form className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <div className="space-y-2">
+                <Label className="text-xs">Search</Label>
+                <Input
+                  name="search"
+                  placeholder="Name or email..."
+                  defaultValue={searchQuery}
+                  className="bg-white"
+                />
+              </div>
+
               <div className="space-y-2">
                 <Label className="text-xs">State</Label>
                 <Select name="state" defaultValue={stateFilter || "all"}>
@@ -154,7 +165,7 @@ export default async function MembersPage(props: {
                   <Search className="mr-2 h-4 w-4" />
                   Filter
                 </Button>
-                {(stateFilter || lgaFilter || branchFilter) && (
+                {(stateFilter || lgaFilter || branchFilter || searchQuery) && (
                   <Link href="/dashboard/admin/members">
                     <Button variant="outline" type="button">Reset</Button>
                   </Link>
@@ -252,7 +263,7 @@ export default async function MembersPage(props: {
                 page={page} 
                 limit={limit} 
                 baseUrl="/dashboard/admin/members" 
-                searchParams={{ state: stateFilter, lga: lgaFilter, branch: branchFilter }} 
+                searchParams={{ state: stateFilter, lga: lgaFilter, branch: branchFilter, search: searchQuery }} 
             />
           </CardContent>
         </Card>

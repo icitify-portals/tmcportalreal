@@ -112,6 +112,8 @@ export function CreateProgrammeDialog({ organizationId, isSuperAdmin }: { organi
     })
 
     const selectedOrgId = form.watch("organizationId")
+    const [officeSearch, setOfficeSearch] = useState("")
+    const [officialSearch, setOfficialSearch] = useState("")
 
     useEffect(() => {
         if (open && selectedOrgId) {
@@ -271,49 +273,76 @@ export function CreateProgrammeDialog({ organizationId, isSuperAdmin }: { organi
                             <FormField
                                 control={form.control}
                                 name="organizingOfficeId"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Organizing Office (Department)</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <FormControl>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Select office" />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent>
-                                                <SelectItem value="none">None</SelectItem>
-                                                {offices.map(office => (
-                                                    <SelectItem key={office.id} value={office.id}>{office.name}</SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
+                                render={({ field }) => {
+                                    const filteredOffices = offices.filter(o => 
+                                        o.name.toLowerCase().includes(officeSearch.toLowerCase())
+                                    )
+                                    return (
+                                        <FormItem>
+                                            <FormLabel>Organizing Office (Department)</FormLabel>
+                                            <div className="space-y-1">
+                                                <Input 
+                                                    placeholder="Search office..." 
+                                                    value={officeSearch}
+                                                    onChange={(e) => setOfficeSearch(e.target.value)}
+                                                    className="h-8 text-xs bg-white border-emerald-100"
+                                                />
+                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Select office" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        <SelectItem value="none">None</SelectItem>
+                                                        {filteredOffices.map(office => (
+                                                            <SelectItem key={office.id} value={office.id}>{office.name}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )
+                                }}
                             />
 
                             <FormField
                                 control={form.control}
                                 name="organizingOfficialId"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Organizing Officer (Person)</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <FormControl>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Select official" />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent>
-                                                <SelectItem value="none">None</SelectItem>
-                                                {officials.map(official => (
-                                                    <SelectItem key={official.id} value={official.id}>{official.name} ({official.position})</SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
+                                render={({ field }) => {
+                                    const filteredOfficials = officials.filter(o => 
+                                        o.name.toLowerCase().includes(officialSearch.toLowerCase()) ||
+                                        o.position?.toLowerCase().includes(officialSearch.toLowerCase())
+                                    )
+                                    return (
+                                        <FormItem>
+                                            <FormLabel>Organizing Officer (Person)</FormLabel>
+                                            <div className="space-y-1">
+                                                <Input 
+                                                    placeholder="Search official..." 
+                                                    value={officialSearch}
+                                                    onChange={(e) => setOfficialSearch(e.target.value)}
+                                                    className="h-8 text-xs bg-white border-emerald-100"
+                                                />
+                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Select official" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        <SelectItem value="none">None</SelectItem>
+                                                        {filteredOfficials.map(official => (
+                                                            <SelectItem key={official.id} value={official.id}>{official.name} ({official.position})</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )
+                                }}
                             />
 
                             <FormField

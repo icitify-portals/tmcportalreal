@@ -27,7 +27,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { updateProgramme, getOffices } from "@/lib/actions/programmes"
+import { updateProgramme, getOffices, getOfficials } from "@/lib/actions/programmes"
 import { toast } from "sonner"
 import { Loader2, Edit, AlertCircle, XCircle, Plus } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -75,10 +75,14 @@ interface EditProgrammeDialogProps {
 export function EditProgrammeDialog({ programme, open, onOpenChange }: EditProgrammeDialogProps) {
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [offices, setOffices] = useState<any[]>([])
+    const [officials, setOfficials] = useState<any[]>([])
+    const [officeSearch, setOfficeSearch] = useState("")
+    const [officialSearch, setOfficialSearch] = useState("")
 
     useEffect(() => {
         if (open && programme.organizationId) {
             getOffices(programme.organizationId).then(setOffices)
+            getOfficials(programme.organizationId).then(setOfficials)
         }
     }, [open, programme.organizationId])
 
@@ -249,24 +253,76 @@ export function EditProgrammeDialog({ programme, open, onOpenChange }: EditProgr
                             <FormField
                                 control={form.control}
                                 name="organizingOfficeId"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Organizing Office</FormLabel>
-                                        <Select onValueChange={field.onChange} value={field.value}>
-                                            <FormControl>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Select office" />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent>
-                                                {offices.map(office => (
-                                                    <SelectItem key={office.id} value={office.id}>{office.name}</SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
+                                render={({ field }) => {
+                                    const filteredOffices = offices.filter(o => 
+                                        o.name.toLowerCase().includes(officeSearch.toLowerCase())
+                                    )
+                                    return (
+                                        <FormItem>
+                                            <FormLabel>Organizing Office</FormLabel>
+                                            <div className="space-y-1">
+                                                <Input 
+                                                    placeholder="Search office..." 
+                                                    value={officeSearch}
+                                                    onChange={(e) => setOfficeSearch(e.target.value)}
+                                                    className="h-8 text-xs bg-white border-emerald-100"
+                                                />
+                                                <Select onValueChange={field.onChange} value={field.value}>
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Select office" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        <SelectItem value="none">None</SelectItem>
+                                                        {filteredOffices.map(office => (
+                                                            <SelectItem key={office.id} value={office.id}>{office.name}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )
+                                }}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="organizingOfficialId"
+                                render={({ field }) => {
+                                    const filteredOfficials = officials.filter(o => 
+                                        o.name.toLowerCase().includes(officialSearch.toLowerCase()) ||
+                                        o.position?.toLowerCase().includes(officialSearch.toLowerCase())
+                                    )
+                                    return (
+                                        <FormItem>
+                                            <FormLabel>Organizing Officer</FormLabel>
+                                            <div className="space-y-1">
+                                                <Input 
+                                                    placeholder="Search official..." 
+                                                    value={officialSearch}
+                                                    onChange={(e) => setOfficialSearch(e.target.value)}
+                                                    className="h-8 text-xs bg-white border-emerald-100"
+                                                />
+                                                <Select onValueChange={field.onChange} value={field.value}>
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Select official" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        <SelectItem value="none">None</SelectItem>
+                                                        {filteredOfficials.map(official => (
+                                                            <SelectItem key={official.id} value={official.id}>{official.name} ({official.position})</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )
+                                }}
                             />
 
                             <FormField
