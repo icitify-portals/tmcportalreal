@@ -846,6 +846,18 @@ model ProgrammeReport {
   @@map("programme_reports")
 }
 
+model ProgrammeMaterial {
+  id          String   @id @default(cuid())
+  programmeId String
+  title       String
+  url         String   @db.VarChar(500)
+  fileType    String?  @db.VarChar(100)
+  uploadedBy  String?
+  createdAt   DateTime @default(now())
+
+  @@map("programme_materials")
+}
+
 // Special Programmes
 model SpecialProgramme {
   id             String   @id @default(cuid())

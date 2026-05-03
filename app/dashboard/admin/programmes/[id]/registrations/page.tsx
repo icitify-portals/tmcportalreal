@@ -52,7 +52,12 @@ export default async function ProgrammeRegistrationsPage({ params }: { params: P
     const [programme] = await db.select().from(programmes).where(eq(programmes.id, id)).limit(1)
     if (!programme) redirect("/dashboard/admin/programmes")
 
-    const materials = await db.select().from(programmeMaterials).where(eq(programmeMaterials.programmeId, id))
+    let materials: any[] = []
+    try {
+        materials = await db.select().from(programmeMaterials).where(eq(programmeMaterials.programmeId, id))
+    } catch (error) {
+        console.error("[Materials Query Error] Table or database missing:", error)
+    }
 
     return (
         <DashboardLayout>
