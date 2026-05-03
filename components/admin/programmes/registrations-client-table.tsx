@@ -12,7 +12,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Printer, UserCheck, CheckCircle2, ShieldAlert, ShieldCheck } from "lucide-react"
+import { Printer, UserCheck, CheckCircle2, ShieldAlert, ShieldCheck, Award } from "lucide-react"
 import Link from "next/link"
 import { format } from "date-fns"
 import { ClientCurrency } from "@/components/ui/client-currency"
@@ -228,6 +228,13 @@ export function RegistrationsClientTable({
                                                 <Printer className="h-4 w-4 text-blue-600" />
                                             </Link>
                                         </Button>
+                                        {(reg.status === 'PAID' || reg.status === 'ATTENDED' || reg.status === 'REGISTERED') && (
+                                            <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-green-50" asChild title="Download Certificate">
+                                                <Link href={`/api/programmes/registrations/${reg.id}/certificate`} target="_blank">
+                                                    <Award className="h-4 w-4 text-green-600" />
+                                                </Link>
+                                            </Button>
+                                        )}
                                         {(reg.status === 'PAID' || reg.status === 'REGISTERED' || reg.status === 'ATTENDED') && (
                                             <MarkAttendanceButton registrationId={reg.id} status={reg.status} userName={reg.name} checkOutTime={reg.checkOutTime} />
                                         )}

@@ -24,7 +24,7 @@ import { SyncPaymentsButton } from "@/components/admin/programmes/sync-payments-
 import { ResetAttendanceButton } from "@/components/admin/programmes/reset-attendance-button"
 import { SendCertificatesButton } from "@/components/admin/programmes/send-certificates-button"
 import { db } from "@/lib/db"
-import { programmes } from "@/lib/db/schema"
+import { programmes, programmeMaterials } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
 import { redirect } from "next/navigation"
 
@@ -52,6 +52,8 @@ export default async function ProgrammeRegistrationsPage({ params }: { params: P
     const [programme] = await db.select().from(programmes).where(eq(programmes.id, id)).limit(1)
     if (!programme) redirect("/dashboard/admin/programmes")
 
+    const materials = await db.select().from(programmeMaterials).where(eq(programmeMaterials.programmeId, id))
+
     return (
         <DashboardLayout>
             <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -68,6 +70,16 @@ export default async function ProgrammeRegistrationsPage({ params }: { params: P
                         <p className="text-muted-foreground">
                             Manage and track attendees for this programme.
                         </p>
+                        {materials && materials.length > 0 && (
+                            <div className="mt-2 flex flex-wrap gap-2">
+                                <span className="text-xs font-bold uppercase text-gray-400 self-center">Attached Documents:</span>
+                                {materials.map((mat) => (
+                                    <a key={mat.id} href={mat.url} target="_blank" className="text-xs font-semibold px-2 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded hover:bg-emerald-100 transition-colors">
+                                        📥 {mat.title}
+                                    </a>
+                                ))}
+                            </div>
+                        )}
                     </div>
                     <div className="flex items-center gap-2">
                         <Suspense fallback={<Button variant="outline" disabled><Download className="mr-2 h-4 w-4" /> Export CSV</Button>}>

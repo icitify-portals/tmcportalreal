@@ -55,6 +55,7 @@ async function UserList({ searchParams }: {
     const stateFilter = searchParams?.state
     const lgaFilter = searchParams?.lga
     const branchFilter = searchParams?.branch
+    const filter = searchParams?.filter
     console.log(`[DEBUG] Fetching User List with searchParams:`, searchParams)
     const page = parseInt(searchParams?.page || "1")
     const limit = parseInt(searchParams?.limit || "50")
@@ -75,6 +76,9 @@ async function UserList({ searchParams }: {
     if (branchFilter && branchFilter !== "all") {
         // Partial match for branch as it's a string input usually
         conditions.push(sql`JSON_UNQUOTE(JSON_EXTRACT(${membersTable.metadata}, '$.branch')) LIKE ${`%${branchFilter}%`}`)
+    }
+    if (filter === "non-members") {
+        conditions.push(sql`${membersTable.id} IS NULL`)
     }
 
     // 0. Fetch Total Count for pagination
@@ -313,6 +317,9 @@ export default async function UsersPage(props: {
     }
     if (searchParams.branch && searchParams.branch !== "all") {
         conditions.push(sql`JSON_UNQUOTE(JSON_EXTRACT(${membersTable.metadata}, '$.branch')) LIKE ${`%${searchParams.branch}%`}`)
+    }
+    if (searchParams.filter === "non-members") {
+        conditions.push(sql`${membersTable.id} IS NULL`)
     }
 
     const exportData = await db.select({
