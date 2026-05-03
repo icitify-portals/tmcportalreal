@@ -1088,7 +1088,7 @@ export function ConstitutionContent({
                             {sections.map((section, index) => (
                                 <AccordionItem value={`item-${index}`} key={index}>
                                     <AccordionTrigger className="text-lg font-semibold text-left">{section.title}</AccordionTrigger>
-                                    <AccordionContent className="whitespace-pre-line text-muted-foreground p-4 bg-muted/30 rounded-lg">
+                                    <AccordionContent className="whitespace-pre-line text-green-900 font-medium p-4 bg-green-50/40 border border-green-100/60 rounded-lg leading-relaxed">
                                         {section.content}
                                     </AccordionContent>
                                 </AccordionItem>

@@ -318,7 +318,7 @@ export function ConstitutionManager({ drafts }: ConstitutionManagerProps) {
                                     className="w-full border border-gray-200 font-mono text-sm leading-relaxed"
                                 />
                             ) : (
-                                <div className="whitespace-pre-line text-gray-800 leading-relaxed font-medium bg-gray-50/50 p-4 rounded-xl border border-gray-100 max-h-[60vh] overflow-y-auto">
+                                <div className="whitespace-pre-line text-green-900 leading-relaxed font-medium bg-green-50/40 p-4 rounded-xl border border-green-100/60 max-h-[60vh] overflow-y-auto">
                                     {selectedDraft.content}
                                 </div>
                             )}
