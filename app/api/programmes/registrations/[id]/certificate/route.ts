@@ -15,6 +15,16 @@ async function getBase64Image(url: string): Promise<string | null> {
     }
 }
 
+function getImageFormat(base64: string): "JPEG" | "PNG" | "WEBP" {
+    const match = base64.match(/^data:image\/(png|jpeg|jpg|webp);base64,/i);
+    if (!match) return "JPEG";
+    const fmt = match[1].toLowerCase();
+    if (fmt === "jpg" || fmt === "jpeg") return "JPEG";
+    if (fmt === "png") return "PNG";
+    if (fmt === "webp") return "WEBP";
+    return "JPEG";
+}
+
 export async function GET(
     req: NextRequest,
     { params }: { params: Promise<{ id: string }> }
@@ -25,13 +35,11 @@ export async function GET(
         const [result] = await db.select({
             registration: programmeRegistrations,
             programme: programmes,
-            organization: organizations,
-            user: users
+            organization: organizations
         })
         .from(programmeRegistrations)
         .innerJoin(programmes, eq(programmeRegistrations.programmeId, programmes.id))
         .innerJoin(organizations, eq(programmes.organizationId, organizations.id))
-        .innerJoin(users, eq(programmeRegistrations.userId, users.id))
         .where(eq(programmeRegistrations.id, registrationId))
         .limit(1);
 
@@ -121,12 +129,18 @@ export async function GET(
         // Draw Logos
         if (template === "TMC_ONLY" || template === "BOTH") {
             const logoBase64 = await getBase64Image(tmcLogo);
-            if (logoBase64) doc.addImage(logoBase64, "PNG", 20, 15, 25, 25);
+            if (logoBase64) {
+                const fmt = getImageFormat(logoBase64);
+                doc.addImage(logoBase64, fmt, 20, 15, 25, 25);
+            }
         }
         if (template === "PARTNER_ONLY" || template === "BOTH") {
             if (partnerLogo) {
                 const logoBase64 = await getBase64Image(partnerLogo);
-                if (logoBase64) doc.addImage(logoBase64, "PNG", width - 45, 15, 25, 25);
+                if (logoBase64) {
+                    const fmt = getImageFormat(logoBase64);
+                    doc.addImage(logoBase64, fmt, width - 45, 15, 25, 25);
+                }
             }
         }
 
@@ -136,7 +150,10 @@ export async function GET(
             // Center TMC signature
             if (tmcSig) {
                 const sigBase64 = await getBase64Image(tmcSig);
-                if (sigBase64) doc.addImage(sigBase64, "PNG", width / 2 - 20, sigY - 15, 40, 15);
+                if (sigBase64) {
+                    const fmt = getImageFormat(sigBase64);
+                    doc.addImage(sigBase64, fmt, width / 2 - 20, sigY - 15, 40, 15);
+                }
             }
             doc.line(width / 2 - 30, sigY, width / 2 + 30, sigY);
             doc.setFontSize(10);
@@ -146,7 +163,10 @@ export async function GET(
             // Center Partner signature
             if (partnerSig) {
                 const sigBase64 = await getBase64Image(partnerSig);
-                if (sigBase64) doc.addImage(sigBase64, "PNG", width / 2 - 20, sigY - 15, 40, 15);
+                if (sigBase64) {
+                    const fmt = getImageFormat(sigBase64);
+                    doc.addImage(sigBase64, fmt, width / 2 - 20, sigY - 15, 40, 15);
+                }
             }
             doc.line(width / 2 - 30, sigY, width / 2 + 30, sigY);
             doc.setFontSize(10);
@@ -157,7 +177,10 @@ export async function GET(
             // TMC (Left)
             if (tmcSig) {
                 const sigBase64 = await getBase64Image(tmcSig);
-                if (sigBase64) doc.addImage(sigBase64, "PNG", 40, sigY - 15, 40, 15);
+                if (sigBase64) {
+                    const fmt = getImageFormat(sigBase64);
+                    doc.addImage(sigBase64, fmt, 40, sigY - 15, 40, 15);
+                }
             }
             doc.line(30, sigY, 90, sigY);
             doc.setFontSize(10);
@@ -167,7 +190,10 @@ export async function GET(
             // Partner (Right)
             if (partnerSig) {
                 const sigBase64 = await getBase64Image(partnerSig);
-                if (sigBase64) doc.addImage(sigBase64, "PNG", width - 80, sigY - 15, 40, 15);
+                if (sigBase64) {
+                    const fmt = getImageFormat(sigBase64);
+                    doc.addImage(sigBase64, fmt, width - 80, sigY - 15, 40, 15);
+                }
             }
             doc.line(width - 90, sigY, width - 30, sigY);
             doc.text(result.programme.certPartnerSignatory || "Partner Signatory", width - 60, sigY + 5, { align: "center" });
