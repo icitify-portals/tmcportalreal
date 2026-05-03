@@ -61,6 +61,8 @@ const adminNavItems = [
   { href: "/dashboard/admin/planner", label: "Year Planner", icon: Calendar },
   { href: "/dashboard/admin/meetings", label: "Meetings", icon: Users },
   { href: "/dashboard/admin/posts", label: "News & Posts", icon: Newspaper },
+  { href: "/dashboard/admin/constitution", label: "Constitution Workspace", icon: FileText },
+  { href: "/constitution", label: "View Live Constitution", icon: BookOpen },
   { href: "/dashboard/admin/galleries", label: "Galleries", icon: Image },
   { href: "/dashboard/admin/adhkar", label: "Adhkar Centres", icon: MapPin },
   { href: "/dashboard/admin/teskiyah", label: "Teskiyah Centres", icon: MapPin },

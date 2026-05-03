@@ -10,9 +10,9 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { MoreHorizontal, Edit, Trash, Loader2, Users } from "lucide-react"
+import { MoreHorizontal, Edit, Trash, Loader2, Users, Calendar, XCircle } from "lucide-react"
 import { EditProgrammeDialog } from "./edit-programme-dialog"
-import { deleteProgramme } from "@/lib/actions/programmes"
+import { deleteProgramme, postponeProgramme, cancelProgramme } from "@/lib/actions/programmes"
 import { toast } from "sonner"
 import Link from "next/link"
 import {
@@ -71,6 +71,24 @@ export function ProgrammeActions({ programme }: ProgrammeActionsProps) {
                             <Users className="mr-2 h-4 w-4" /> Registrations
                         </Link>
                     </DropdownMenuItem>
+                    {programme.status === 'APPROVED' && (
+                        <>
+                            <DropdownMenuItem onClick={async () => {
+                                const res = await postponeProgramme(programme.id)
+                                if (res.success) toast.success("Programme postponed")
+                                else toast.error(res.error || "Action failed")
+                            }}>
+                                <Calendar className="mr-2 h-4 w-4 text-orange-600" /> Postpone
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={async () => {
+                                const res = await cancelProgramme(programme.id)
+                                if (res.success) toast.success("Programme cancelled")
+                                else toast.error(res.error || "Action failed")
+                            }}>
+                                <XCircle className="mr-2 h-4 w-4 text-red-500" /> Cancel
+                            </DropdownMenuItem>
+                        </>
+                    )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => setDeleteOpen(true)} className="text-red-600 focus:text-red-600">
                         <Trash className="mr-2 h-4 w-4" /> Delete

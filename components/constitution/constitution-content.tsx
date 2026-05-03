@@ -970,7 +970,27 @@ A patron shall cease to be a patron if:
     }
 ];
 
-export function ConstitutionContent() {
+export function ConstitutionContent({
+    initialApproved
+}: {
+    initialApproved?: { id: string; title: string; content: string } | null
+}) {
+    let sections = constitutionSections;
+    if (initialApproved?.content) {
+        try {
+            const parsed = JSON.parse(initialApproved.content);
+            if (Array.isArray(parsed) && parsed.length > 0 && parsed[0]?.title) {
+                sections = parsed;
+            } else if (typeof initialApproved.content === 'string' && initialApproved.content) {
+                sections = [{ title: initialApproved.title, content: initialApproved.content }];
+            }
+        } catch {
+            if (initialApproved.content) {
+                sections = [{ title: initialApproved.title, content: initialApproved.content }];
+            }
+        }
+    }
+
     const handleDownloadPDF = async () => {
         const doc = new jsPDF();
         const pageWidth = doc.internal.pageSize.getWidth();
@@ -1029,7 +1049,7 @@ export function ConstitutionContent() {
         yPosition += 10;
 
         // Content
-        constitutionSections.forEach((section) => {
+        sections.forEach((section) => {
             // Check for new page before starting a section title if low on space
             if (yPosition > pageHeight - 40) {
                 doc.addPage();
@@ -1065,7 +1085,7 @@ export function ConstitutionContent() {
                     </CardHeader>
                     <CardContent>
                         <Accordion type="single" collapsible className="w-full">
-                            {constitutionSections.map((section, index) => (
+                            {sections.map((section, index) => (
                                 <AccordionItem value={`item-${index}`} key={index}>
                                     <AccordionTrigger className="text-lg font-semibold text-left">{section.title}</AccordionTrigger>
                                     <AccordionContent className="whitespace-pre-line text-muted-foreground p-4 bg-muted/30 rounded-lg">

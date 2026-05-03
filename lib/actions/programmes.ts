@@ -1124,6 +1124,37 @@ export async function deleteProgramme(programmeId: string) {
     }
 }
 
+export async function postponeProgramme(programmeId: string) {
+    try {
+        const session = await getServerSession()
+        if (!session?.user?.id) return { success: false, error: "Unauthorized" }
+
+        await db.update(programmes).set({ status: 'POSTPONED' }).where(eq(programmes.id, programmeId))
+
+        revalidatePath("/dashboard/admin/programmes")
+        return { success: true }
+    } catch (error) {
+        console.error("Postpone Programme Error:", error)
+        return { success: false, error: "Failed to postpone programme" }
+    }
+}
+
+export async function cancelProgramme(programmeId: string) {
+    try {
+        const session = await getServerSession()
+        if (!session?.user?.id) return { success: false, error: "Unauthorized" }
+
+        await db.update(programmes).set({ status: 'CANCELLED' }).where(eq(programmes.id, programmeId))
+
+        revalidatePath("/dashboard/admin/programmes")
+        return { success: true }
+    } catch (error) {
+        console.error("Cancel Programme Error:", error)
+        return { success: false, error: "Failed to cancel programme" }
+    }
+}
+
+
 export async function updateProgramme(programmeId: string, data: Partial<z.infer<typeof ProgrammeSchema>>) {
     try {
         const session = await getServerSession()

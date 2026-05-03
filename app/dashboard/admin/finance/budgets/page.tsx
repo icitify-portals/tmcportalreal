@@ -1,5 +1,6 @@
 export const dynamic = 'force-dynamic'
 import { getBudgets, approveBudget } from "@/lib/actions/finance"
+import { getAvailableJurisdictions } from "@/lib/actions/analytics"
 import { CreateBudgetDialog } from "@/components/admin/finance/create-budget-dialog"
 import { getServerSession } from "@/lib/session"
 import { notFound } from "next/navigation"
@@ -7,45 +8,49 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { formatCurrency } from "@/lib/utils"
-// import { approveBudgetAction } from "./actions" // We can use a client component wrapper for actions or form actions
+import { db } from "@/lib/db"
+import { organizations } from "@/lib/db/schema"
+import { JurisdictionFilter } from "../analytics/jurisdiction-filter"
 
-
-export default async function BudgetsPage() {
+export default async function BudgetsPage({
+    searchParams
+}: {
+    searchParams: Promise<{ orgId?: string }>
+}) {
     const session = await getServerSession()
-    if (!session?.user?.id) return notFound() // Or redirect
+    if (!session?.user?.id) return notFound()
 
-    // TODO: Get real Organization ID context. Using a placeholder or finding one.
-    // For now assuming the user belongs to an org or we fetch their org.
-    // Let's assume we can get it from somewhere. Since this is "admin", maybe they manage their own org.
-    // We'll pass a placeholder or try to fetch it.
+    const { orgId } = await searchParams || {}
+    let organizationId = orgId
 
-    // HACK for demo: Fetch the first organization found or a specific one if known.
-    // In a real app, this page is under /dashboard/admin which usually implies a specific context.
-    // Let's assume we can get it. For now, I'll pass a dummy ID or fetch the user's org.
-    const organizationId = "default-org-id" // REPLACE THIS with actual logic
-
-    // Real implementation:
-    // const userOrg = await db.query.members.findFirst(...)
-
-    // Since I don't have easy context here without checking other files, I'll pass a string.
-    // But wait, the previous code used `organizationId`. 
-    // Let's assume the user is an admin of an org.
-
-    // Fetch budgets
-    // Note: getBudgets expects organizationId.
-    // I will check if there is an existing convention for getting orgId in this codebase.
-    // Usually it comes from params if route is /dashboard/[orgId]/... but here it is /dashboard/admin/...
-    // implying singular admin dashboard? 
-
-    // Let's peek at `app/dashboard/admin/page.tsx` or similar to see how they get orgId.
-    // If not found, I will use a placeholder query.
+    if (!organizationId) {
+        const [firstOrg] = await db.select().from(organizations).limit(1)
+        if (firstOrg) organizationId = firstOrg.id
+    }
 
     const budgets = await getBudgets(organizationId) || []
+    const jurisdictions = await getAvailableJurisdictions()
 
     return (
             <div className="space-y-6">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h1 className="text-3xl font-bold">Annual Budgets</h1>
+                        <p className="text-muted-foreground">Manage organizational budgets and line items.</p>
+                    </div>
+
+                    {jurisdictions.length > 0 && (
+                        <div className="w-full md:w-64">
+                            <JurisdictionFilter
+                                jurisdictions={jurisdictions}
+                                currentId={organizationId}
+                            />
+                        </div>
+                    )}
+                </div>
+
                 <div className="flex justify-between items-center">
-                    <h3 className="text-lg font-medium">Annual Budgets</h3>
+                    <h3 className="text-lg font-medium">Budgets List</h3>
                     <CreateBudgetDialog organizationId={organizationId} />
                 </div>
 
@@ -53,7 +58,7 @@ export default async function BudgetsPage() {
                     {budgets.length === 0 ? (
                         <Card>
                             <CardContent className="p-8 text-center text-muted-foreground">
-                                No budgets found. Create one to get started.
+                                No budgets found for this organization. Create one to get started.
                             </CardContent>
                         </Card>
                     ) : budgets.map((budget) => (

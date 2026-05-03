@@ -1548,3 +1548,15 @@ enum CompetitionStatus {
   CLOSED
   COMPLETED
 }
+
+model Constitution {
+  id        String   @id @default(cuid())
+  title     String
+  content   String   @db.Text
+  status    String   @default("DRAFT")
+  createdBy String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("constitutions")
+}

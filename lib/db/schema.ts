@@ -43,7 +43,7 @@ export const requestStatusEnum = mysqlEnum('status', ['PENDING', 'RECOMMENDED', 
 export const transactionTypeEnum = mysqlEnum('type', ['INFLOW', 'OUTFLOW']);
 
 // Programme Enums
-export const programmeStatusEnum = mysqlEnum('status', ['DRAFT', 'PENDING_STATE', 'PENDING_NATIONAL', 'APPROVED', 'REJECTED', 'CANCELLED', 'COMPLETED']);
+export const programmeStatusEnum = mysqlEnum('status', ['DRAFT', 'PENDING_STATE', 'PENDING_NATIONAL', 'APPROVED', 'REJECTED', 'CANCELLED', 'COMPLETED', 'POSTPONED']);
 export const targetAudienceEnum = mysqlEnum('targetAudience', ['PUBLIC', 'MEMBERS', 'BROTHERS', 'SISTERS', 'CHILDREN', 'YOUTH', 'ELDERS']);
 export const registrationStatusEnum = mysqlEnum('status', ['REGISTERED', 'PENDING_PAYMENT', 'PARTIALLY_PAID', 'PAID', 'ATTENDED', 'CANCELLED']);
 export const programmeFormatEnum = mysqlEnum('format', ['PHYSICAL', 'VIRTUAL', 'HYBRID']);
@@ -1779,3 +1779,14 @@ export const walletTransactionsRelations = relations(walletTransactions, ({ one 
         references: [wallets.id],
     }),
 }));
+
+export const constitutions = mysqlTable("constitutions", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
+    title: varchar("title", { length: 255 }).notNull(),
+    content: text("content").notNull(),
+    status: varchar("status", { length: 50 }).notNull().default("DRAFT"),
+    createdBy: varchar("createdBy", { length: 255 }).notNull().references(() => users.id),
+    createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+});
+
