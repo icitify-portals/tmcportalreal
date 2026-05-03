@@ -34,7 +34,7 @@ import { ExportCSV } from "@/components/admin/shared/export-csv"
 // For dashboard pages, direct DB access is standard in Next.js Server Components.
 
 async function UserList({ searchParams }: {
-    searchParams: { q?: string; state?: string; lga?: string; branch?: string; page?: string; limit?: string }
+    searchParams: { q?: string; state?: string; lga?: string; branch?: string; page?: string; limit?: string; filter?: string }
 }) {
     // Need to dynamically import to use searchParams in Server Component correctly in Next 15+? 
     // Actually props are fine.
@@ -211,7 +211,7 @@ async function UserList({ searchParams }: {
 }
 
 export default async function UsersPage(props: {
-    searchParams: Promise<{ q?: string; state?: string; lga?: string; branch?: string; page?: string; limit?: string }>
+    searchParams: Promise<{ q?: string; state?: string; lga?: string; branch?: string; page?: string; limit?: string; filter?: string }>
 }) {
     const searchParams = await props.searchParams;
 
