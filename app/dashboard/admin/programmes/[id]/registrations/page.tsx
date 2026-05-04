@@ -65,14 +65,14 @@ export default async function ProgrammeRegistrationsPage({ params }: { params: P
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
                         <div className="flex items-center gap-2 mb-1">
-                            <Link href="/dashboard/admin/programmes" className="text-sm text-green-700 hover:underline">
+                            <Link href="/dashboard/admin/programmes" className="text-sm text-green-300 hover:underline">
                                 Programmes
                             </Link>
-                            <span className="text-muted-foreground">/</span>
-                            <span className="text-sm font-medium">Registrations</span>
+                            <span className="text-gray-400">/</span>
+                            <span className="text-sm font-medium text-gray-200">Registrations</span>
                         </div>
-                        <h2 className="text-3xl font-bold tracking-tight text-gray-900">{programme.title}</h2>
-                        <p className="text-muted-foreground">
+                        <h2 className="text-3xl font-bold tracking-tight text-white">{programme.title}</h2>
+                        <p className="text-gray-200">
                             Manage and track attendees for this programme.
                         </p>
                         {materials && materials.length > 0 && (

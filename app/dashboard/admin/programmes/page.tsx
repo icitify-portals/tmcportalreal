@@ -125,7 +125,7 @@ async function ProgrammeList({ type, orgId }: { type: 'MY_PROGRAMMES' | 'TO_APPR
                                         </a>
                                     </Button>
                                 </div>
-                                {p.status === 'COMPLETED' && (
+                                {(p.status === 'COMPLETED' || new Date(p.startDate) < new Date()) && (
                                     <SubmitReportDialog programmeId={p.id} programmeTitle={p.title} />
                                 )}
                             </div>
