@@ -108,12 +108,19 @@ const officialNavItems = [
   { href: "/", label: "Home", icon: Home },
   { href: "/dashboard/official", label: "Dashboard", icon: LayoutDashboard },
   { href: "/dashboard/broadcasts", label: "Broadcasts", icon: Radio },
-  { href: "/dashboard/messages", label: "Messages", icon: MessageSquare },
-  { href: "/dashboard/official/members", label: "Members", icon: Users },
+  { href: "/dashboard/member/profile", label: "My Profile", icon: Users },
   { href: "/dashboard/member/programmes", label: "My Programmes", icon: Calendar },
   { href: "/programmes/special", label: "Media Library", icon: Library },
+  { href: "/dashboard/member/occasions", label: "My Occasions", icon: Handshake },
+  { href: "/dashboard/member/meetings", label: "Meetings", icon: Users },
+  { href: "/dashboard/messages", label: "Messages", icon: MessageSquare },
+  { href: "/dashboard/official/members", label: "Members", icon: Users, isJurisdictionHeadOnly: true },
   { href: "/dashboard/official/payments", label: "Payments", icon: CreditCard },
-  { href: "/dashboard/official/documents", label: "Documents", icon: FileText },
+  { href: "/dashboard/member/finance", label: "Levies & Dues", icon: Banknote },
+  { href: "/dashboard/member/documents", label: "Documents", icon: FileText },
+  { href: "/dashboard/official/documents", label: "Official Documents", icon: FileText },
+  { href: "/dashboard/user/promotions", label: "My Promotions", icon: Megaphone },
+  { href: "/dashboard/burial", label: "Burial Requests", icon: HeartHandshake },
 ]
 
 const councilNavItems = [
@@ -127,7 +134,7 @@ const councilNavItems = [
 export function Sidebar({ userRole, isRealAdmin, adminLevel, className, onNavigate, onViewModeChange }: SidebarProps & { className?: string; onNavigate?: () => void }) {
   const pathname = usePathname()
 
-  const navItems =
+  let navItems =
     userRole === "admin"
       ? adminNavItems
       : userRole === "official"
@@ -135,6 +142,15 @@ export function Sidebar({ userRole, isRealAdmin, adminLevel, className, onNaviga
         : userRole === "council"
           ? councilNavItems
           : memberNavItems
+
+  if (userRole === "official") {
+    navItems = navItems.filter(item => {
+      if ((item as any).isJurisdictionHeadOnly) {
+        return !!adminLevel || isRealAdmin
+      }
+      return true
+    })
+  }
 
   return (
     <div className={cn("flex h-screen w-64 flex-col border-r bg-background", className)}>

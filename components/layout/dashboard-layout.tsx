@@ -57,7 +57,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           <Sidebar 
             userRole={userRole} 
             isRealAdmin={isAdmin} 
-            adminLevel={session?.user?.isSuperAdmin ? "SUPER_ADMIN" : session?.user?.roles?.[0]?.jurisdictionLevel} 
+            adminLevel={session?.user?.isSuperAdmin ? "SUPER_ADMIN" : session?.user?.officialLevel || session?.user?.roles?.[0]?.jurisdictionLevel} 
             onViewModeChange={handleViewModeChange}
           />
         )}
@@ -79,7 +79,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                 <Sidebar
                   userRole={userRole}
                   isRealAdmin={isAdmin}
-                  adminLevel={session?.user?.isSuperAdmin ? "SUPER_ADMIN" : session?.user?.roles?.[0]?.jurisdictionLevel}
+                  adminLevel={session?.user?.isSuperAdmin ? "SUPER_ADMIN" : session?.user?.officialLevel || session?.user?.roles?.[0]?.jurisdictionLevel}
                   className="w-full h-full border-none"
                   onNavigate={() => setIsMobileMenuOpen(false)}
                   onViewModeChange={handleViewModeChange}
