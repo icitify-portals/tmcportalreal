@@ -30,19 +30,22 @@ export default function ProgrammeFeedbackPublicPage() {
                     } else {
                         // Set up defaults if none are configured yet
                         setFields([
-                            {
-                                id: `field_rating`,
-                                label: "How would you rate the programme overall?",
-                                type: "select",
-                                required: true,
-                                options: ["Excellent", "Good", "Fair", "Poor"]
-                            },
-                            {
-                                id: `field_comments`,
-                                label: "What areas can we improve on?",
-                                type: "textarea",
-                                required: false,
-                            }
+                            { id: "field_1", label: "1. Level in The Muslim Congress", type: "select", required: true, options: ["Branch Officer", "Local Government Officer", "State Officer", "National Officer"] },
+                            { id: "field_2", label: "2. Mode of Participation", type: "select", required: true, options: ["Physically (On-site)", "Virtually (Online)"] },
+                            { id: "field_3", label: "3. Venue rating (1-5)", type: "select", required: false, options: ["5", "4", "3", "2", "1"] },
+                            { id: "field_4", label: "4. Was the venue conducive?", type: "select", required: false, options: ["Yes", "No"] },
+                            { id: "field_5", label: "5. Food rating (1-5)", type: "select", required: false, options: ["5", "4", "3", "2", "1"] },
+                            { id: "field_6", label: "6. Was food sufficient and well-timed?", type: "select", required: false, options: ["Yes", "No"] },
+                            { id: "field_7", label: "7. Was the online experience effective?", type: "select", required: false, options: ["Yes", "No"] },
+                            { id: "field_8", label: "8. Was audio/video quality satisfactory?", type: "select", required: false, options: ["Yes", "No"] },
+                            { id: "field_9", label: "9. Lecturers & topics rating (1-5)", type: "select", required: false, options: ["5", "4", "3", "2", "1"] },
+                            { id: "field_10", label: "10. Were the sessions engaging?", type: "select", required: false, options: ["Yes", "No"] },
+                            { id: "field_11", label: "11. Did you have enough opportunity to participate?", type: "select", required: false, options: ["Yes", "No"] },
+                            { id: "field_12", label: "12. Overall organisation rating (1-5)", type: "select", required: false, options: ["5", "4", "3", "2", "1"] },
+                            { id: "field_13", label: "13. Was the schedule convenient?", type: "select", required: false, options: ["Yes", "No"] },
+                            { id: "field_14", label: "14. Overall satisfaction (1-5)", type: "select", required: false, options: ["5", "4", "3", "2", "1"] },
+                            { id: "field_15", label: "15. Would you recommend this workshop?", type: "select", required: false, options: ["Yes", "No"] },
+                            { id: "field_16", label: "16. Key takeaway / suggestions", type: "textarea", required: false }
                         ])
                     }
                 } else {
