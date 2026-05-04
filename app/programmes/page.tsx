@@ -5,7 +5,7 @@ import { RegisterForProgrammeDialog } from "@/components/programmes/register-dia
 import { PublicNav } from "@/components/layout/public-nav"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { CalendarIcon, MapPinIcon, ClockIcon, UsersIcon, Filter, CheckCircle2, CreditCard } from "lucide-react"
+import { CalendarIcon, MapPinIcon, ClockIcon, UsersIcon, Filter, CheckCircle2, CreditCard, XCircle } from "lucide-react"
 import { format } from "date-fns"
 import { Metadata } from "next"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
