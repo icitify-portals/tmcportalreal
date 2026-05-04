@@ -46,18 +46,18 @@ async function ProgrammeList({ type, orgId }: { type: 'MY_PROGRAMMES' | 'TO_APPR
     }
 
     return (
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {programmes.map((p) => (
-                <Card key={p.id}>
-                    <CardHeader className="pb-3 bg-gray-50/50">
-                        <div className="flex justify-between items-start">
+                <div key={p.id} className="bg-[#031408] border border-green-800/30 shadow-xl rounded-2xl overflow-hidden hover:border-green-700/50 transition-all flex flex-col justify-between">
+                    <div>
+                        <div className="pb-3 bg-[#0c2413]/40 border-b border-green-800/20 p-5 flex justify-between items-start">
                             <div className="space-y-1">
-                                <CardTitle className="text-xl font-bold text-gray-900">{p.title}</CardTitle>
-                                <CardDescription className="text-gray-600 font-medium">
+                                <h3 className="text-xl font-bold text-white tracking-tight">{p.title}</h3>
+                                <div className="text-green-300 font-medium text-sm mt-1">
                                     <ClientDate date={p.startDate} formatString="PPP" /> @ {p.venue}
-                                </CardDescription>
+                                </div>
                                 {p.office && (
-                                    <Badge variant="outline" className="mt-1 border-green-200 text-green-700 bg-green-50">
+                                    <Badge variant="outline" className="mt-1 border-emerald-800 text-emerald-300 bg-emerald-950/60">
                                         {p.office.name}
                                     </Badge>
                                 )}
@@ -72,29 +72,31 @@ async function ProgrammeList({ type, orgId }: { type: 'MY_PROGRAMMES' | 'TO_APPR
                                 <ProgrammeActions programme={p} />
                             </div>
                         </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4 pt-4">
-                        <p className="text-sm text-gray-800 font-medium leading-relaxed">{p.description}</p>
-                        
-                        {p.status === 'REJECTED' && p.rejectionReason && (
-                            <Alert variant="destructive" className="bg-red-50/80 border-red-200">
-                                <XCircle className="h-4 w-4 text-red-600" />
-                                <AlertTitle className="text-red-900 text-xs font-bold uppercase tracking-wider">Rejection Reason</AlertTitle>
-                                <AlertDescription className="text-red-800 text-sm font-medium">
-                                    {p.rejectionReason}
-                                </AlertDescription>
-                            </Alert>
-                        )}
-
-                        <div className="flex justify-between items-center text-sm font-medium text-gray-700 pt-2">
-                            <span>Target: {p.targetAudience}</span>
-                            {p.paymentRequired ? (
-                                <ClientCurrency amount={p.amount || 0} className="text-green-800 font-bold" />
-                            ) : (
-                                <span className="text-green-700">Free</span>
+                        <div className="p-5 space-y-4 bg-[#031408]">
+                            <p className="text-sm text-green-50/90 font-normal leading-relaxed">{p.description}</p>
+                            
+                            {p.status === 'REJECTED' && p.rejectionReason && (
+                                <Alert variant="destructive" className="bg-red-950/40 border-red-900/60 text-red-100">
+                                    <XCircle className="h-4 w-4 text-red-400" />
+                                    <AlertTitle className="text-red-300 text-xs font-bold uppercase tracking-wider">Rejection Reason</AlertTitle>
+                                    <AlertDescription className="text-red-200 text-sm font-medium">
+                                        {p.rejectionReason}
+                                    </AlertDescription>
+                                </Alert>
                             )}
-                        </div>
 
+                            <div className="flex justify-between items-center text-sm font-semibold text-green-200/80 pt-2">
+                                <span>Target: {p.targetAudience}</span>
+                                {p.paymentRequired ? (
+                                    <ClientCurrency amount={p.amount || 0} className="text-emerald-400 font-bold" />
+                                ) : (
+                                    <span className="text-emerald-400 font-bold">Free</span>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="p-5 bg-[#0c2413]/20 border-t border-green-800/10 flex flex-wrap gap-2 justify-between items-center mt-auto">
                         {/* Approval Actions */}
                         {type === 'TO_APPROVE' && (
                             <ReviewActions programmeId={p.id} status={p.status || ""} />
@@ -102,30 +104,32 @@ async function ProgrammeList({ type, orgId }: { type: 'MY_PROGRAMMES' | 'TO_APPR
 
                         {/* Reporting & Registration Actions */}
                         {type === 'MY_PROGRAMMES' && p.status === 'APPROVED' && (
-                            <div className="mt-4 pt-4 border-t flex justify-between items-center">
-                                <Button variant="outline" size="sm" asChild>
-                                    <a href={`/dashboard/admin/programmes/${p.id}/registrations`}>
-                                        <UserCheck className="w-4 h-4 mr-2" />
-                                        Registrations
-                                    </a>
-                                </Button>
-                                <Button variant="outline" size="sm" asChild className="bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-100">
-                                    <a href={`/dashboard/admin/programmes/${p.id}/analytics`}>
-                                        <BarChart3 className="w-4 h-4 mr-2" />
-                                        Analytics
-                                    </a>
-                                </Button>
-                                <Button variant="default" size="sm" asChild className="bg-purple-600 hover:bg-purple-700 text-white border-none font-bold">
-                                    <a href={`/dashboard/programmes/${p.id}/group`}>
-                                        <MessageSquare className="w-4 h-4 mr-2" />
-                                        Lounge
-                                    </a>
-                                </Button>
+                            <div className="flex flex-wrap items-center gap-2 w-full justify-between">
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <Button variant="outline" size="sm" asChild className="bg-green-950/60 hover:bg-green-900/80 border border-green-800/40 text-green-300 font-semibold px-3 py-1.5 text-xs rounded-lg transition-colors">
+                                        <a href={`/dashboard/admin/programmes/${p.id}/registrations`}>
+                                            <UserCheck className="w-4 h-4 mr-2" />
+                                            Registrations
+                                        </a>
+                                    </Button>
+                                    <Button variant="outline" size="sm" asChild className="bg-green-950/60 hover:bg-green-900/80 border border-green-800/40 text-green-300 font-semibold px-3 py-1.5 text-xs rounded-lg transition-colors">
+                                        <a href={`/dashboard/admin/programmes/${p.id}/analytics`}>
+                                            <BarChart3 className="w-4 h-4 mr-2" />
+                                            Analytics
+                                        </a>
+                                    </Button>
+                                    <Button variant="outline" size="sm" asChild className="bg-green-950/60 hover:bg-green-900/80 border border-green-800/40 text-green-300 font-semibold px-3 py-1.5 text-xs rounded-lg transition-colors">
+                                        <a href={`/dashboard/programmes/${p.id}/group`}>
+                                            <MessageSquare className="w-4 h-4 mr-2" />
+                                            Lounge
+                                        </a>
+                                    </Button>
+                                </div>
                                 <SubmitReportDialog programmeId={p.id} programmeTitle={p.title} />
                             </div>
                         )}
-                    </CardContent>
-                </Card>
+                    </div>
+                </div>
             ))}
         </div>
     )
