@@ -48,12 +48,20 @@ async function ProgrammeGrid({ level, state }: { level?: string, state?: string 
                 const isPaid = p.paymentRequired && (parseFloat(p.amount || "0") > 0);
 
                 return (
-                    <Card key={p.id} className="flex flex-col h-full hover:shadow-md transition-shadow">
+                    <Card key={p.id} className="flex flex-col h-full hover:shadow-md transition-shadow relative overflow-hidden">
                         <CardHeader>
                             <div className="flex justify-between items-start mb-2">
-                                <Badge variant={isPaid ? "default" : "secondary"} className="mb-2">
-                                    {isPaid ? "Paid Event" : "Free Entry"}
-                                </Badge>
+                                <div className="flex gap-1.5 flex-wrap">
+                                    <Badge variant={isPaid ? "default" : "secondary"} className="mb-2">
+                                        {isPaid ? "Paid Event" : "Free Entry"}
+                                    </Badge>
+                                    {p.status === 'POSTPONED' && (
+                                        <Badge className="bg-orange-600 hover:bg-orange-700 text-white font-bold mb-2">POSTPONED</Badge>
+                                    )}
+                                    {p.status === 'CANCELLED' && (
+                                        <Badge className="bg-red-600 hover:bg-red-700 text-white font-bold mb-2">CANCELLED</Badge>
+                                    )}
+                                </div>
                                 <Badge variant="outline">{p.organization?.name || p.level}</Badge>
                             </div>
                             <CardTitle className="line-clamp-2">{p.title}</CardTitle>
@@ -86,6 +94,23 @@ async function ProgrammeGrid({ level, state }: { level?: string, state?: string 
                         </CardContent>
                         <CardFooter className="pt-4 border-t bg-gray-50/50 flex gap-2 w-full">
                             {(() => {
+                                if (p.status === 'CANCELLED') {
+                                    return (
+                                        <Button className="w-full bg-red-100 hover:bg-red-100 border-red-200 text-red-700" variant="outline" disabled>
+                                            <XCircle className="mr-2 h-4 w-4" />
+                                            Programme Cancelled
+                                        </Button>
+                                    )
+                                }
+                                if (p.status === 'POSTPONED') {
+                                    return (
+                                        <Button className="w-full bg-orange-100 hover:bg-orange-100 border-orange-200 text-orange-700" variant="outline" disabled>
+                                            <CalendarIcon className="mr-2 h-4 w-4" />
+                                            Programme Postponed
+                                        </Button>
+                                    )
+                                }
+
                                 const reg = registeredProgrammesMap.get(p.id);
                                 if (reg) {
                                     if (reg.status === 'PENDING_PAYMENT') {

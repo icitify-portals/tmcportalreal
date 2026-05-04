@@ -25,6 +25,16 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Checkbox } from "@/components/ui/checkbox"
 
 interface ProgrammeActionsProps {
     programme: any
@@ -34,6 +44,12 @@ export function ProgrammeActions({ programme }: ProgrammeActionsProps) {
     const [editOpen, setEditOpen] = useState(false)
     const [deleteOpen, setDeleteOpen] = useState(false)
     const [isDeleting, setIsDeleting] = useState(false)
+
+    // Postpone state
+    const [postponeOpen, setPostponeOpen] = useState(false)
+    const [newDate, setNewDate] = useState("")
+    const [postponedIndefinitely, setPostponedIndefinitely] = useState(false)
+    const [isPostponing, setIsPostponing] = useState(false)
 
     async function handleDelete() {
         setIsDeleting(true)
@@ -49,6 +65,27 @@ export function ProgrammeActions({ programme }: ProgrammeActionsProps) {
         } finally {
             setIsDeleting(false)
             setDeleteOpen(false)
+        }
+    }
+
+    async function handlePostpone() {
+        if (!postponedIndefinitely && !newDate) {
+            toast.error("Please enter a new date or choose to postpone indefinitely")
+            return
+        }
+        setIsPostponing(true)
+        try {
+            const res = await postponeProgramme(programme.id, postponedIndefinitely ? undefined : newDate)
+            if (res.success) {
+                toast.success("Programme postponed")
+                setPostponeOpen(false)
+            } else {
+                toast.error(res.error || "Failed to postpone")
+            }
+        } catch (error) {
+            toast.error("An error occurred")
+        } finally {
+            setIsPostponing(false)
         }
     }
 
@@ -73,11 +110,7 @@ export function ProgrammeActions({ programme }: ProgrammeActionsProps) {
                     </DropdownMenuItem>
                     {programme.status === 'APPROVED' && (
                         <>
-                            <DropdownMenuItem onClick={async () => {
-                                const res = await postponeProgramme(programme.id)
-                                if (res.success) toast.success("Programme postponed")
-                                else toast.error(res.error || "Action failed")
-                            }}>
+                            <DropdownMenuItem onClick={() => setPostponeOpen(true)}>
                                 <Calendar className="mr-2 h-4 w-4 text-orange-600" /> Postpone
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={async () => {
@@ -103,6 +136,49 @@ export function ProgrammeActions({ programme }: ProgrammeActionsProps) {
                     onOpenChange={setEditOpen}
                 />
             )}
+
+            {/* Postpone Modal */}
+            <Dialog open={postponeOpen} onOpenChange={setPostponeOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Postpone Programme</DialogTitle>
+                        <DialogDescription>
+                            Please choose a new date or mark the programme as postponed indefinitely.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-2">
+                        <div className="flex items-center space-x-2">
+                            <Checkbox 
+                                id="indefinitely" 
+                                checked={postponedIndefinitely}
+                                onCheckedChange={(checked) => setPostponedIndefinitely(checked === true)}
+                            />
+                            <label htmlFor="indefinitely" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                Postpone Indefinitely
+                            </label>
+                        </div>
+
+                        {!postponedIndefinitely && (
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">New Date</label>
+                                <Input 
+                                    type="date"
+                                    value={newDate}
+                                    onChange={(e) => setNewDate(e.target.value)}
+                                />
+                            </div>
+                        )}
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setPostponeOpen(false)} disabled={isPostponing}>
+                            Cancel
+                        </Button>
+                        <Button onClick={handlePostpone} disabled={isPostponing} className="bg-orange-600 hover:bg-orange-700 text-white">
+                            {isPostponing ? <Loader2 className="h-4 w-4 animate-spin" /> : "Postpone"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
                 <AlertDialogContent>

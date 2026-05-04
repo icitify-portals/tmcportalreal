@@ -47,7 +47,7 @@ const ProgrammeSchema = z.object({
     allowInstallments: z.boolean().default(false),
     minInstallmentAmount: z.string().default("0"),
     amount: z.string().default("0"),
-    organizingOfficeId: z.string().optional(),
+    organizingOfficeId: z.string().min(1, "Organizing Office is required"),
     organizingOfficialId: z.string().optional(),
     // New fields
     format: z.enum(['PHYSICAL', 'VIRTUAL', 'HYBRID']).default('PHYSICAL'),
@@ -274,7 +274,6 @@ export function EditProgrammeDialog({ programme, open, onOpenChange }: EditProgr
                                                         </SelectTrigger>
                                                     </FormControl>
                                                     <SelectContent>
-                                                        <SelectItem value="none">None</SelectItem>
                                                         {filteredOffices.map(office => (
                                                             <SelectItem key={office.id} value={office.id}>{office.name}</SelectItem>
                                                         ))}

@@ -103,7 +103,7 @@ async function ProgrammeList({ type, orgId }: { type: 'MY_PROGRAMMES' | 'TO_APPR
                         )}
 
                         {/* Reporting & Registration Actions */}
-                        {type === 'MY_PROGRAMMES' && p.status === 'APPROVED' && (
+                        {type === 'MY_PROGRAMMES' && (p.status === 'APPROVED' || p.status === 'COMPLETED') && (
                             <div className="flex flex-wrap items-center gap-2 w-full justify-between">
                                 <div className="flex flex-wrap items-center gap-2">
                                     <Button variant="outline" size="sm" asChild className="bg-green-950/60 hover:bg-green-900/80 border border-green-800/40 text-green-300 font-semibold px-3 py-1.5 text-xs rounded-lg transition-colors">
@@ -125,7 +125,9 @@ async function ProgrammeList({ type, orgId }: { type: 'MY_PROGRAMMES' | 'TO_APPR
                                         </a>
                                     </Button>
                                 </div>
-                                <SubmitReportDialog programmeId={p.id} programmeTitle={p.title} />
+                                {p.status === 'COMPLETED' && (
+                                    <SubmitReportDialog programmeId={p.id} programmeTitle={p.title} />
+                                )}
                             </div>
                         )}
                     </div>

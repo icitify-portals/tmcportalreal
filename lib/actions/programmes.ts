@@ -584,7 +584,7 @@ export async function getProgrammes(filters?: { level?: string, state?: string, 
     // Explicit joins for compatibility query
     const org = aliasedTable(organizations, "org")
 
-    let conditions = [eq(programmes.status, 'APPROVED')] // Default only approved for public
+    let conditions = [inArray(programmes.status, ['APPROVED', 'POSTPONED', 'CANCELLED'])]
 
     if (filters?.level) {
         conditions.push(eq(programmes.level as any, filters.level))
@@ -1124,12 +1124,17 @@ export async function deleteProgramme(programmeId: string) {
     }
 }
 
-export async function postponeProgramme(programmeId: string) {
+export async function postponeProgramme(programmeId: string, newDate?: string) {
     try {
         const session = await getServerSession()
         if (!session?.user?.id) return { success: false, error: "Unauthorized" }
 
-        await db.update(programmes).set({ status: 'POSTPONED' }).where(eq(programmes.id, programmeId))
+        const updateObj: any = { status: 'POSTPONED' }
+        if (newDate) {
+            updateObj.startDate = new Date(newDate)
+        }
+
+        await db.update(programmes).set(updateObj).where(eq(programmes.id, programmeId))
 
         revalidatePath("/dashboard/admin/programmes")
         return { success: true }
