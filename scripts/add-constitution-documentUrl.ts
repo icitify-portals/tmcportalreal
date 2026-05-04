@@ -3,7 +3,26 @@ import { sql } from "drizzle-orm";
 
 async function main() {
     try {
-        console.log("Altering constitutions table to add documentUrl...");
+        console.log("Checking if constitutions table exists and creating if not...");
+        try {
+            await db.execute(sql`
+                CREATE TABLE IF NOT EXISTS constitutions (
+                    id VARCHAR(255) NOT NULL PRIMARY KEY,
+                    title VARCHAR(255) NOT NULL,
+                    content TEXT NOT NULL,
+                    status VARCHAR(50) NOT NULL DEFAULT 'DRAFT',
+                    documentUrl TEXT NULL,
+                    createdBy VARCHAR(255) NOT NULL,
+                    createdAt TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP(3),
+                    updatedAt TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            `);
+            console.log("Successfully created/ensured constitutions table.");
+        } catch (e: any) {
+            console.log("Error or already exists in constitutions create:", e.message);
+        }
+
+        console.log("Altering constitutions table to ensure documentUrl exists...");
         try {
             await db.execute(sql`ALTER TABLE constitutions ADD COLUMN documentUrl TEXT NULL`);
             console.log("Successfully altered constitutions table.");
