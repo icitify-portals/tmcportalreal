@@ -110,9 +110,9 @@ const officialNavItems = [
   { href: "/dashboard/broadcasts", label: "Broadcasts", icon: Radio },
   { href: "/dashboard/messages", label: "Messages", icon: MessageSquare },
   { href: "/dashboard/official/members", label: "Members", icon: Users },
-  { href: "/dashboard/admin/finance/analytics", label: "Finance Analytics", icon: BarChart3 },
+  { href: "/dashboard/member/programmes", label: "My Programmes", icon: Calendar },
+  { href: "/programmes/special", label: "Media Library", icon: Library },
   { href: "/dashboard/official/payments", label: "Payments", icon: CreditCard },
-  { href: "/dashboard/admin/reports", label: "Activity Reports", icon: FileText },
   { href: "/dashboard/official/documents", label: "Documents", icon: FileText },
 ]
 
