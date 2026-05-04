@@ -75,6 +75,27 @@ export default function ProgrammeFeedbackAdminPage() {
         fetchFeedbackData()
     }, [id])
 
+    const resetToDefaultTemplate = () => {
+        setFields([
+            { id: "field_1", label: "1. Level in The Muslim Congress", type: "select", required: true, options: ["Branch Officer", "Local Government Officer", "State Officer", "National Officer"] },
+            { id: "field_2", label: "2. Mode of Participation", type: "select", required: true, options: ["Physically (On-site)", "Virtually (Online)"] },
+            { id: "field_3", label: "3. Venue rating (1-5)", type: "select", required: false, options: ["5", "4", "3", "2", "1"] },
+            { id: "field_4", label: "4. Was the venue conducive?", type: "select", required: false, options: ["Yes", "No"] },
+            { id: "field_5", label: "5. Food rating (1-5)", type: "select", required: false, options: ["5", "4", "3", "2", "1"] },
+            { id: "field_6", label: "6. Was food sufficient and well-timed?", type: "select", required: false, options: ["Yes", "No"] },
+            { id: "field_7", label: "7. Was the online experience effective?", type: "select", required: false, options: ["Yes", "No"] },
+            { id: "field_8", label: "8. Was audio/video quality satisfactory?", type: "select", required: false, options: ["Yes", "No"] },
+            { id: "field_9", label: "9. Lecturers & topics rating (1-5)", type: "select", required: false, options: ["5", "4", "3", "2", "1"] },
+            { id: "field_10", label: "10. Were the sessions engaging?", type: "select", required: false, options: ["Yes", "No"] },
+            { id: "field_11", label: "11. Did you have enough opportunity to participate?", type: "select", required: false, options: ["Yes", "No"] },
+            { id: "field_12", label: "12. Overall organisation rating (1-5)", type: "select", required: false, options: ["5", "4", "3", "2", "1"] },
+            { id: "field_13", label: "13. Was the schedule convenient?", type: "select", required: false, options: ["Yes", "No"] },
+            { id: "field_14", label: "14. Overall satisfaction (1-5)", type: "select", required: false, options: ["5", "4", "3", "2", "1"] },
+            { id: "field_15", label: "15. Would you recommend this workshop?", type: "select", required: false, options: ["Yes", "No"] },
+            { id: "field_16", label: "16. Key takeaway / suggestions", type: "textarea", required: false }
+        ])
+    }
+
     const addField = () => {
         setFields(prev => [
             ...prev,
@@ -325,13 +346,22 @@ export default function ProgrammeFeedbackAdminPage() {
                                     <Clipboard className="h-5 w-5 text-gray-500" />
                                     Questionnaire Fields Builder
                                 </h2>
-                                <button
-                                    type="button"
-                                    onClick={addField}
-                                    className="inline-flex items-center gap-1 text-sm bg-green-50 text-green-700 border border-green-200 px-3 py-1.5 rounded-md hover:bg-green-100 font-medium transition-colors"
-                                >
-                                    <Plus className="h-4 w-4" /> Add Field
-                                </button>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={resetToDefaultTemplate}
+                                        className="inline-flex items-center gap-1 text-sm bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1.5 rounded-md hover:bg-emerald-100 font-medium transition-colors"
+                                    >
+                                        Use Default NLW Template
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={addField}
+                                        className="inline-flex items-center gap-1 text-sm bg-green-50 text-green-700 border border-green-200 px-3 py-1.5 rounded-md hover:bg-green-100 font-medium transition-colors"
+                                    >
+                                        <Plus className="h-4 w-4" /> Add Field
+                                    </button>
+                                </div>
                             </div>
 
                             <div className="space-y-3">
