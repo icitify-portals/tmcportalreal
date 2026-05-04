@@ -1,7 +1,7 @@
 "use server"
 
 import { db } from "@/lib/db"
-import { constitutions, constitutionReviewers, constitutionFeedback, users } from "@/lib/db/schema"
+import { constitutions, constitutionReviewers, constitutionFeedback, users, notifications } from "@/lib/db/schema"
 import { eq, desc, and, like, or } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { getServerSession } from "@/lib/session"
@@ -137,6 +137,21 @@ export async function assignConstitutionReviewer(constitutionId: string, userId:
             userId,
             assignedBy: session.user.id,
             assignedAt: new Date(),
+        })
+
+        // Get draft title for the notification
+        const [draft] = await db.select({ title: constitutions.title }).from(constitutions)
+            .where(eq(constitutions.id, constitutionId)).limit(1)
+
+        // Send in-app notification to the reviewer
+        await db.insert(notifications).values({
+            userId,
+            title: "Constitution Review Assignment",
+            message: `You have been assigned to review the constitution draft: "${draft?.title || 'Untitled'}". Please log in to the portal to review and provide your feedback.`,
+            type: "INFO",
+            actionUrl: "/dashboard/admin/constitution",
+            createdAt: new Date(),
+            updatedAt: new Date(),
         })
 
         revalidatePath("/dashboard/admin/constitution")
