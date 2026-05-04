@@ -6,7 +6,7 @@ import { eq, desc } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { getServerSession } from "@/lib/session"
 
-export async function createConstitutionDraft(title: string, content: string) {
+export async function createConstitutionDraft(title: string, content: string, documentUrl?: string) {
     try {
         const session = await getServerSession()
         if (!session?.user?.id) return { success: false, error: "Unauthorized" }
@@ -15,6 +15,7 @@ export async function createConstitutionDraft(title: string, content: string) {
             title,
             content,
             status: "DRAFT",
+            documentUrl: documentUrl || null,
             createdBy: session.user.id,
             createdAt: new Date(),
             updatedAt: new Date(),
@@ -28,7 +29,7 @@ export async function createConstitutionDraft(title: string, content: string) {
     }
 }
 
-export async function updateConstitutionDraft(id: string, title: string, content: string) {
+export async function updateConstitutionDraft(id: string, title: string, content: string, documentUrl?: string) {
     try {
         const session = await getServerSession()
         if (!session?.user?.id) return { success: false, error: "Unauthorized" }
@@ -36,6 +37,7 @@ export async function updateConstitutionDraft(id: string, title: string, content
         await db.update(constitutions).set({
             title,
             content,
+            documentUrl: documentUrl || null,
             updatedAt: new Date(),
         }).where(eq(constitutions.id, id))
 

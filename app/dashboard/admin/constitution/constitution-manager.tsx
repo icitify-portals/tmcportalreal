@@ -34,6 +34,8 @@ import {
     deleteConstitutionDraft,
 } from "@/lib/actions/constitution"
 
+import { FileUpload } from "@/components/ui/file-upload"
+
 interface ConstitutionManagerProps {
     drafts: any[]
 }
@@ -41,6 +43,7 @@ interface ConstitutionManagerProps {
 export function ConstitutionManager({ drafts }: ConstitutionManagerProps) {
     const [title, setTitle] = useState("")
     const [content, setContent] = useState("")
+    const [documentUrl, setDocumentUrl] = useState("")
     const [createOpen, setCreateOpen] = useState(false)
     const [isSaving, setIsSaving] = useState(false)
 
@@ -49,23 +52,26 @@ export function ConstitutionManager({ drafts }: ConstitutionManagerProps) {
     const [editMode, setEditMode] = useState(false)
     const [editTitle, setEditTitle] = useState("")
     const [editContent, setEditContent] = useState("")
+    const [editDocumentUrl, setEditDocumentUrl] = useState("")
 
     // Delete alert state
     const [deleteId, setDeleteId] = useState<string | null>(null)
 
     async function handleCreateDraft() {
-        if (!title.trim() || !content.trim()) {
-            toast.error("Please enter a title and content for the draft.")
+        if (!title.trim() || (!content.trim() && !documentUrl.trim())) {
+            toast.error("Please enter a title, content, or upload a document.")
             return
         }
         setIsSaving(true)
         try {
-            const res = await createConstitutionDraft(title, content)
+            const finalContent = content.trim() || "Document uploaded for review. Click Download to view original."
+            const res = await createConstitutionDraft(title, finalContent, documentUrl)
             if (res.success) {
                 toast.success("Draft saved successfully.")
                 setCreateOpen(false)
                 setTitle("")
                 setContent("")
+                setDocumentUrl("")
             } else {
                 toast.error(res.error || "Failed to save draft.")
             }
@@ -77,20 +83,22 @@ export function ConstitutionManager({ drafts }: ConstitutionManagerProps) {
     }
 
     async function handleUpdateDraft() {
-        if (!editTitle.trim() || !editContent.trim()) {
-            toast.error("Please enter a title and content.")
+        if (!editTitle.trim() || (!editContent.trim() && !editDocumentUrl.trim())) {
+            toast.error("Please enter a title and content/document.")
             return
         }
         setIsSaving(true)
         try {
-            const res = await updateConstitutionDraft(selectedDraft.id, editTitle, editContent)
+            const finalContent = editContent.trim() || "Document uploaded for review. Click Download to view original."
+            const res = await updateConstitutionDraft(selectedDraft.id, editTitle, finalContent, editDocumentUrl)
             if (res.success) {
                 toast.success("Draft updated successfully.")
                 setEditMode(false)
                 setSelectedDraft({
                     ...selectedDraft,
                     title: editTitle,
-                    content: editContent,
+                    content: finalContent,
+                    documentUrl: editDocumentUrl,
                 })
             } else {
                 toast.error(res.error || "Failed to update draft.")
@@ -170,6 +178,16 @@ export function ConstitutionManager({ drafts }: ConstitutionManagerProps) {
                                         rows={12}
                                         className="border border-gray-200 font-mono text-sm"
                                     />
+                                <div className="space-y-1">
+                                    <label className="text-sm font-semibold text-gray-700">Word Document (Optional)</label>
+                                    <FileUpload
+                                        accept=".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                                        onUploadComplete={(url) => setDocumentUrl(url)}
+                                        label={documentUrl ? "Replace File" : "Upload Document"}
+                                    />
+                                    {documentUrl && (
+                                        <p className="text-xs text-green-600 font-medium truncate">File: {documentUrl}</p>
+                                    )}
                                 </div>
                             </div>
                             <DialogFooter className="gap-2">
@@ -198,6 +216,7 @@ export function ConstitutionManager({ drafts }: ConstitutionManagerProps) {
                                     setEditMode(false)
                                     setEditTitle(d.title)
                                     setEditContent(d.content)
+                                    setEditDocumentUrl(d.documentUrl || "")
                                 }}
                                 className={`cursor-pointer transition-all border shadow-sm ${
                                     selectedDraft?.id === d.id
@@ -309,17 +328,44 @@ export function ConstitutionManager({ drafts }: ConstitutionManagerProps) {
                                 )}
                             </div>
                         </CardHeader>
-                        <CardContent className="p-6">
+                        <CardContent className="p-6 space-y-4">
                             {editMode ? (
-                                <Textarea
-                                    value={editContent}
-                                    onChange={(e) => setEditContent(e.target.value)}
-                                    rows={20}
-                                    className="w-full border border-gray-200 font-mono text-sm leading-relaxed"
-                                />
+                                <div className="space-y-3">
+                                    <Textarea
+                                        value={editContent}
+                                        onChange={(e) => setEditContent(e.target.value)}
+                                        rows={20}
+                                        className="w-full border border-gray-200 font-mono text-sm leading-relaxed"
+                                    />
+                                    <div className="space-y-1">
+                                        <label className="text-sm font-semibold text-gray-700">Word Document (Optional)</label>
+                                        <FileUpload
+                                            accept=".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                                            onUploadComplete={(url) => setEditDocumentUrl(url)}
+                                            label={editDocumentUrl ? "Replace File" : "Upload Document"}
+                                        />
+                                        {editDocumentUrl && (
+                                            <p className="text-xs text-green-600 font-medium truncate">File: {editDocumentUrl}</p>
+                                        )}
+                                    </div>
+                                </div>
                             ) : (
-                                <div className="whitespace-pre-line text-green-900 leading-relaxed font-medium bg-green-50/40 p-4 rounded-xl border border-green-100/60 max-h-[60vh] overflow-y-auto">
-                                    {selectedDraft.content}
+                                <div className="space-y-3">
+                                    <div className="whitespace-pre-line text-green-900 leading-relaxed font-medium bg-green-50/40 p-4 rounded-xl border border-green-100/60 max-h-[60vh] overflow-y-auto">
+                                        {selectedDraft.content}
+                                    </div>
+                                    {selectedDraft.documentUrl && (
+                                        <div className="flex justify-end pt-2">
+                                            <a
+                                                href={selectedDraft.documentUrl}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="inline-flex items-center text-sm font-semibold bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 px-3 py-2 rounded-lg transition-colors cursor-pointer"
+                                            >
+                                                📥 Download / Review Original Document
+                                            </a>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </CardContent>

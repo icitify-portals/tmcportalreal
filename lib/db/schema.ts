@@ -1790,6 +1790,7 @@ export const constitutions = mysqlTable("constitutions", {
     title: varchar("title", { length: 255 }).notNull(),
     content: text("content").notNull(),
     status: varchar("status", { length: 50 }).notNull().default("DRAFT"),
+    documentUrl: text("documentUrl"),
     createdBy: varchar("createdBy", { length: 255 }).notNull().references(() => users.id),
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
     updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
