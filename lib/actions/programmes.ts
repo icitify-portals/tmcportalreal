@@ -286,6 +286,10 @@ const ReportSchema = z.object({
     attendeesMale: z.number().int().nonnegative().default(0),
     attendeesFemale: z.number().int().nonnegative().default(0),
     amountSpent: z.number().nonnegative().default(0),
+    startTime: z.string().optional(),
+    endTime: z.string().optional(),
+    lecturers: z.string().optional(),
+    topic: z.string().optional(),
     images: z.array(z.string().url()).optional(),
 })
 
@@ -1056,6 +1060,10 @@ export async function submitProgrammeReport(programmeId: string, data: z.infer<t
             attendeesMale: validData.attendeesMale,
             attendeesFemale: validData.attendeesFemale,
             amountSpent: validData.amountSpent.toString(),
+            startTime: validData.startTime || null,
+            endTime: validData.endTime || null,
+            lecturers: validData.lecturers || null,
+            topic: validData.topic || null,
             images: validData.images || null,
             submittedBy: session.user.id,
         })

@@ -1096,6 +1096,11 @@ export const programmeReports = mysqlTable("programme_reports", {
     attendeesFemale: int("attendeesFemale").default(0),
     amountSpent: decimal("amountSpent", { precision: 15, scale: 2 }).default("0.00"), // Expenses for the event
 
+    startTime: varchar("startTime", { length: 255 }),
+    endTime: varchar("endTime", { length: 255 }),
+    lecturers: text("lecturers"),
+    topic: text("topic"),
+
     images: json("images"), // Array of image URLs
 
     submittedBy: varchar("submittedBy", { length: 255 }).notNull().references(() => users.id),

@@ -35,6 +35,10 @@ const ReportSchema = z.object({
     attendeesMale: z.string().default("0"), // Input as string
     attendeesFemale: z.string().default("0"),
     amountSpent: z.string().default("0"),
+    startTime: z.string().optional(),
+    endTime: z.string().optional(),
+    lecturers: z.string().optional(),
+    topic: z.string().optional(),
 })
 
 export function SubmitReportDialog({ programmeId, programmeTitle }: { programmeId: string, programmeTitle: string }) {
@@ -48,6 +52,10 @@ export function SubmitReportDialog({ programmeId, programmeTitle }: { programmeI
             attendeesMale: "0",
             attendeesFemale: "0",
             amountSpent: "0",
+            startTime: "",
+            endTime: "",
+            lecturers: "",
+            topic: "",
         },
     })
 
@@ -145,6 +153,63 @@ export function SubmitReportDialog({ programmeId, programmeTitle }: { programmeI
                                     <FormLabel>Amount Spent (NGN)</FormLabel>
                                     <FormControl>
                                         <Input type="number" min="0" step="0.01" {...field} value={field.value || ''} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <FormField
+                                control={form.control}
+                                name="startTime"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Time of Commencement</FormLabel>
+                                        <FormControl>
+                                            <Input type="time" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="endTime"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Time End</FormLabel>
+                                        <FormControl>
+                                            <Input type="time" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+
+                        <FormField
+                            control={form.control}
+                            name="lecturers"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Name(s) of Lecturers</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="Enter name or names of lecturers" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <FormField
+                            control={form.control}
+                            name="topic"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Topic of Discussion</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="Enter topic of discussion" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>

@@ -841,6 +841,10 @@ model ProgrammeReport {
   attendeesMale   Int      @default(0)
   attendeesFemale Int      @default(0)
   amountSpent     Decimal? @default(0.00) @db.Decimal(15, 2)
+  startTime       String?  @db.VarChar(255)
+  endTime         String?  @db.VarChar(255)
+  lecturers       String?  @db.Text
+  topic           String?  @db.Text
   images          Json?
   submittedBy     String
   submitter       User     @relation(fields: [submittedBy], references: [id])
