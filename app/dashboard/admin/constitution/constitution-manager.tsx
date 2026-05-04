@@ -178,6 +178,7 @@ export function ConstitutionManager({ drafts }: ConstitutionManagerProps) {
                                         rows={12}
                                         className="border border-gray-200 font-mono text-sm"
                                     />
+                                </div>
                                 <div className="space-y-1">
                                     <label className="text-sm font-semibold text-gray-700">Word Document (Optional)</label>
                                     <FileUpload
