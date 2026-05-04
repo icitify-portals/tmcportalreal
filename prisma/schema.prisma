@@ -1565,3 +1565,24 @@ model Constitution {
 
   @@map("constitutions")
 }
+
+model ConstitutionReviewer {
+  id             String   @id @default(cuid())
+  constitutionId String
+  userId         String
+  assignedAt     DateTime @default(now())
+  assignedBy     String
+
+  @@map("constitution_reviewers")
+}
+
+model ConstitutionFeedback {
+  id             String   @id @default(cuid())
+  constitutionId String
+  userId         String
+  comment        String   @db.Text
+  section        String?
+  createdAt      DateTime @default(now())
+
+  @@map("constitution_feedback")
+}

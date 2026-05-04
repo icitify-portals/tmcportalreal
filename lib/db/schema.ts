@@ -1796,3 +1796,20 @@ export const constitutions = mysqlTable("constitutions", {
     updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
 });
 
+export const constitutionReviewers = mysqlTable("constitution_reviewers", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
+    constitutionId: varchar("constitutionId", { length: 255 }).notNull().references(() => constitutions.id, { onDelete: "cascade" }),
+    userId: varchar("userId", { length: 255 }).notNull().references(() => users.id),
+    assignedAt: timestamp("assignedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+    assignedBy: varchar("assignedBy", { length: 255 }).notNull().references(() => users.id),
+});
+
+export const constitutionFeedback = mysqlTable("constitution_feedback", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
+    constitutionId: varchar("constitutionId", { length: 255 }).notNull().references(() => constitutions.id, { onDelete: "cascade" }),
+    userId: varchar("userId", { length: 255 }).notNull().references(() => users.id),
+    comment: text("comment").notNull(),
+    section: varchar("section", { length: 255 }),
+    createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+});
+
