@@ -3,8 +3,8 @@ import { ClientOnly } from "@/components/shared/client-only"
 import Link from "next/link"
 import { db } from "@/lib/db"
 import { getOrganizationTree } from "@/lib/org-helper"
-import { organizations, galleries, galleryImages, fundraisingCampaigns } from "@/lib/db/schema"
-import { eq, and, desc, inArray } from "drizzle-orm"
+import { organizations, galleries, galleryImages, fundraisingCampaigns, programmes } from "@/lib/db/schema"
+import { eq, and, desc, inArray, gte, asc } from "drizzle-orm"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Facebook, Twitter, Instagram, Linkedin, Calendar, Newspaper, ArrowRight, Heart } from "lucide-react"
@@ -55,6 +55,25 @@ async function NationalContent() {
     ),
     orderBy: [desc(fundraisingCampaigns.createdAt)],
   })
+
+  // Fetch Upcoming Approved Programmes
+  const upcomingProgrammes = await db.select({
+    id: programmes.id,
+    title: programmes.title,
+    venue: programmes.venue,
+    startDate: programmes.startDate,
+    time: programmes.time,
+    format: programmes.format,
+  })
+  .from(programmes)
+  .where(
+    and(
+      eq(programmes.status, "APPROVED"),
+      gte(programmes.startDate, new Date())
+    )
+  )
+  .orderBy(asc(programmes.startDate))
+  .limit(4)
 
   // Manual fetch of images to avoid LATERAL JOIN
   const galleriesWithImages = await Promise.all(rawGalleries.map(async (gallery) => {
@@ -160,13 +179,41 @@ async function NationalContent() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-6">
-                <div className="text-center py-8">
-                  <div className="bg-muted inline-flex p-3 rounded-full mb-3">
-                    <Calendar className="h-6 w-6 text-muted-foreground" />
+                {upcomingProgrammes.length === 0 ? (
+                  <div className="text-center py-8">
+                    <div className="bg-muted inline-flex p-3 rounded-full mb-3">
+                      <Calendar className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    <p className="text-sm text-muted-foreground">No upcoming events scheduled at the moment.</p>
+                    <Link href="/programmes">
+                      <Button variant="link" className="mt-2 text-green-600">View All Programmes &rarr;</Button>
+                    </Link>
                   </div>
-                  <p className="text-sm text-muted-foreground">No upcoming events scheduled at the moment.</p>
-                  <Button variant="link" className="mt-2 text-green-600">Check Calendar &rarr;</Button>
-                </div>
+                ) : (
+                  <div className="space-y-4">
+                    {upcomingProgrammes.map((prog) => (
+                      <Link key={prog.id} href={`/programmes`} className="block group">
+                        <div className="flex gap-3 items-start p-3 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors border border-transparent hover:border-green-100">
+                          <div className="shrink-0 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-400 rounded-lg w-12 h-12 flex flex-col items-center justify-center text-center">
+                            <span className="text-xs font-bold leading-none">{new Date(prog.startDate).toLocaleDateString('en-US', { month: 'short' })}</span>
+                            <span className="text-lg font-bold leading-none">{new Date(prog.startDate).getDate()}</span>
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 group-hover:text-green-700 truncate">{prog.title}</p>
+                            <p className="text-xs text-muted-foreground truncate">{prog.venue}</p>
+                            {prog.time && <p className="text-xs text-green-600 font-medium mt-0.5">{prog.time}</p>}
+                          </div>
+                          {prog.format && prog.format !== 'PHYSICAL' && (
+                            <Badge variant="outline" className="shrink-0 text-[10px] border-green-200 text-green-700 ml-auto">{prog.format}</Badge>
+                          )}
+                        </div>
+                      </Link>
+                    ))}
+                    <Link href="/programmes" className="block text-center">
+                      <Button variant="link" size="sm" className="text-green-600 text-xs">View All Programmes &rarr;</Button>
+                    </Link>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
