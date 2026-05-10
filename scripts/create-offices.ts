@@ -37,7 +37,9 @@ async function main() {
                 organizationId: nat.id,
                 name: name,
                 description: `Department of ${name}`,
-                isActive: true
+                isActive: true,
+                createdAt: new Date(),
+                updatedAt: new Date()
             });
             console.log(`Created: ${name}`);
         } else {
