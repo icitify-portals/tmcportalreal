@@ -14,7 +14,7 @@ import { CheckCircle2, AlertCircle, XCircle, UserCheck, BarChart3, MessageSquare
 import { format } from "date-fns"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { db } from "@/lib/db"
-import { organizations, userRoles, roles, officials } from "@/lib/db/schema"
+import { organizations, userRoles, roles, officials, offices } from "@/lib/db/schema"
 import { eq, and, desc } from "drizzle-orm"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { ProgrammeActions } from "@/components/admin/programmes/programme-actions"
