@@ -68,7 +68,19 @@ const ProgrammeSchema = z.object({
     materials: z.array(z.object({ title: z.string(), url: z.string(), fileType: z.string() })).default([]),
 })
 
-export function CreateProgrammeDialog({ organizationId, isSuperAdmin }: { organizationId: string; isSuperAdmin?: boolean }) {
+export function CreateProgrammeDialog({ 
+    organizationId, 
+    isSuperAdmin, 
+    userOfficialId, 
+    userOfficeId,
+    userLevel 
+}: { 
+    organizationId: string; 
+    isSuperAdmin?: boolean; 
+    userOfficialId?: string;
+    userOfficeId?: string;
+    userLevel?: string;
+}) {
     const [open, setOpen] = useState(false)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [offices, setOffices] = useState<any[]>([])
@@ -111,6 +123,12 @@ export function CreateProgrammeDialog({ organizationId, isSuperAdmin }: { organi
         },
     })
 
+    const [mounted, setMounted] = useState(false)
+    useEffect(() => {
+        setMounted(true)
+    }, [])
+
+    const isNationalAdmin = isSuperAdmin || userLevel === 'NATIONAL'
     const selectedOrgId = form.watch("organizationId")
     const [officeSearch, setOfficeSearch] = useState("")
     const [officialSearch, setOfficialSearch] = useState("")
@@ -128,6 +146,13 @@ export function CreateProgrammeDialog({ organizationId, isSuperAdmin }: { organi
         }
     }, [open, isSuperAdmin])
 
+    useEffect(() => {
+        if (open && !isNationalAdmin) {
+            if (userOfficialId) form.setValue("organizingOfficialId", userOfficialId)
+            if (userOfficeId) form.setValue("organizingOfficeId", userOfficeId)
+        }
+    }, [open, userOfficialId, userOfficeId, isNationalAdmin])
+
     async function onSubmit(data: z.infer<typeof ProgrammeSchema>) {
         setIsSubmitting(true)
         try {
@@ -141,7 +166,7 @@ export function CreateProgrammeDialog({ organizationId, isSuperAdmin }: { organi
                 minInstallmentAmount: parseFloat(data.minInstallmentAmount || "0"),
                 budget: parseFloat(data.budget || "0"),
                 attendanceWindow: parseInt(data.attendanceWindow || "3"),
-                hasCertificate: false,
+                hasCertificate: data.hasCertificate,
             }
 
             const result = await createProgramme(payload, data.organizationId)
@@ -182,12 +207,13 @@ export function CreateProgrammeDialog({ organizationId, isSuperAdmin }: { organi
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button>
+                <Button disabled={!mounted} suppressHydrationWarning>
                     <Plus className="mr-2 h-4 w-4" />
                     New Programme
                 </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            {mounted && (
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>Create New Programme</DialogTitle>
                     <DialogDescription>
@@ -204,8 +230,7 @@ export function CreateProgrammeDialog({ organizationId, isSuperAdmin }: { organi
                                 <FormItem>
                                     <FormLabel>Title</FormLabel>
                                     <FormControl>
-                                        <input
-                                            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                                        <Input
                                             placeholder="Programme Title"
                                             {...field}
                                             value={field.value || ''}
@@ -252,7 +277,7 @@ export function CreateProgrammeDialog({ organizationId, isSuperAdmin }: { organi
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>Jurisdiction / Organization</FormLabel>
-                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!isSuperAdmin}>
                                                 <FormControl>
                                                     <SelectTrigger>
                                                         <SelectValue placeholder="Select organization" />
@@ -281,24 +306,34 @@ export function CreateProgrammeDialog({ organizationId, isSuperAdmin }: { organi
                                         <FormItem>
                                             <FormLabel>Organizing Office (Department)</FormLabel>
                                             <div className="space-y-1">
-                                                <Input 
-                                                    placeholder="Search office..." 
-                                                    value={officeSearch}
-                                                    onChange={(e) => setOfficeSearch(e.target.value)}
-                                                    className="h-8 text-xs bg-white border-emerald-100"
-                                                />
-                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                    <FormControl>
-                                                        <SelectTrigger>
-                                                            <SelectValue placeholder="Select office" />
-                                                        </SelectTrigger>
-                                                    </FormControl>
-                                                    <SelectContent>
-                                                        {filteredOffices.map(office => (
-                                                            <SelectItem key={office.id} value={office.id}>{office.name}</SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
+                                                {!isNationalAdmin ? (
+                                                    <Input 
+                                                        disabled 
+                                                        value={offices.find(o => o.id === field.value)?.name || "Default Office"} 
+                                                        className="bg-muted"
+                                                    />
+                                                ) : (
+                                                    <>
+                                                        <Input 
+                                                            placeholder="Search office..." 
+                                                            value={officeSearch}
+                                                            onChange={(e) => setOfficeSearch(e.target.value)}
+                                                            className="h-8 text-xs bg-white border-emerald-100"
+                                                        />
+                                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                            <FormControl>
+                                                                <SelectTrigger>
+                                                                    <SelectValue placeholder="Select office" />
+                                                                </SelectTrigger>
+                                                            </FormControl>
+                                                            <SelectContent>
+                                                                {filteredOffices.map(office => (
+                                                                    <SelectItem key={office.id} value={office.id}>{office.name}</SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </>
+                                                )}
                                             </div>
                                             <FormMessage />
                                         </FormItem>
@@ -318,25 +353,35 @@ export function CreateProgrammeDialog({ organizationId, isSuperAdmin }: { organi
                                         <FormItem>
                                             <FormLabel>Organizing Officer (Person)</FormLabel>
                                             <div className="space-y-1">
-                                                <Input 
-                                                    placeholder="Search official..." 
-                                                    value={officialSearch}
-                                                    onChange={(e) => setOfficialSearch(e.target.value)}
-                                                    className="h-8 text-xs bg-white border-emerald-100"
-                                                />
-                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                    <FormControl>
-                                                        <SelectTrigger>
-                                                            <SelectValue placeholder="Select official" />
-                                                        </SelectTrigger>
-                                                    </FormControl>
-                                                    <SelectContent>
-                                                        <SelectItem value="none">None</SelectItem>
-                                                        {filteredOfficials.map(official => (
-                                                            <SelectItem key={official.id} value={official.id}>{official.name} ({official.position})</SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
+                                                {!isNationalAdmin ? (
+                                                    <Input 
+                                                        disabled 
+                                                        value={officials.find(o => o.id === field.value)?.name || "Assigned Official"} 
+                                                        className="bg-muted"
+                                                    />
+                                                ) : (
+                                                    <>
+                                                        <Input 
+                                                            placeholder="Search official..." 
+                                                            value={officialSearch}
+                                                            onChange={(e) => setOfficialSearch(e.target.value)}
+                                                            className="h-8 text-xs bg-white border-emerald-100"
+                                                        />
+                                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                            <FormControl>
+                                                                <SelectTrigger>
+                                                                    <SelectValue placeholder="Select official" />
+                                                                </SelectTrigger>
+                                                            </FormControl>
+                                                            <SelectContent>
+                                                                <SelectItem value="none">None</SelectItem>
+                                                                {filteredOfficials.map(official => (
+                                                                    <SelectItem key={official.id} value={official.id}>{official.name} ({official.position})</SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </>
+                                                )}
                                             </div>
                                             <FormMessage />
                                         </FormItem>
@@ -628,149 +673,6 @@ export function CreateProgrammeDialog({ organizationId, isSuperAdmin }: { organi
                             )}
                         />
 
-                        <div className="space-y-4 border border-emerald-800/40 p-4 rounded-md bg-emerald-950/20">
-                            <h3 className="text-sm font-bold text-emerald-100 flex items-center gap-2">
-                                <Plus className="w-4 h-4" />
-                                Certificate Settings & Branding
-                            </h3>
-                            <p className="text-xs text-emerald-200/80">Configure how the certificates of participation should look.</p>
-                            
-                            <FormField
-                                control={form.control}
-                                name="certTemplateType"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel className="text-emerald-100">Certificate Template</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <FormControl>
-                                                <SelectTrigger className="border-emerald-800/40 bg-emerald-950/20 text-emerald-100">
-                                                    <SelectValue placeholder="Select template type" />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent className="border-emerald-800/40 bg-emerald-950 text-emerald-100">
-                                                <SelectItem value="TMC_ONLY">TMC Only (Standard)</SelectItem>
-                                                <SelectItem value="PARTNER_ONLY">Partner Only (Hosted)</SelectItem>
-                                                <SelectItem value="BOTH">Partnership (TMC & Partner)</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            {(form.watch("certTemplateType") === 'TMC_ONLY' || form.watch("certTemplateType") === 'BOTH') && (
-                                <div className="p-3 border border-emerald-800/40 rounded-md bg-emerald-950/30 space-y-4">
-                                    <h4 className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">TMC Branding</h4>
-                                    <FormField
-                                        control={form.control}
-                                        name="certTmcSignatory"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel className="text-emerald-100">TMC Signatory Name/Title</FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder="e.g. National Amir" {...field} value={field.value || ''} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <FormField
-                                        control={form.control}
-                                        name="certTmcSignature"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel className="text-emerald-100">TMC Signature</FormLabel>
-                                                <div className="flex items-center gap-2">
-                                                    <FormControl>
-                                                        <Input {...field} placeholder="Signature URL" value={field.value || ''} />
-                                                    </FormControl>
-                                                    <FileUploadInput 
-                                                        onUploadComplete={(url) => field.onChange(url)} 
-                                                        label="Upload"
-                                                        accept="image/*"
-                                                    />
-                                                </div>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </div>
-                            )}
-
-                            {(form.watch("certTemplateType") === 'PARTNER_ONLY' || form.watch("certTemplateType") === 'BOTH') && (
-                                <div className="p-3 border border-emerald-800/40 rounded-md bg-emerald-950/30 space-y-4">
-                                    <h4 className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">Partner Branding</h4>
-                                    <FormField
-                                        control={form.control}
-                                        name="certPartnerName"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel className="text-emerald-100">Partner Organization Name</FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder="e.g. Al-Hikmah University" {...field} value={field.value || ''} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <FormField
-                                        control={form.control}
-                                        name="certPartnerSignatory"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel className="text-emerald-100">Partner Signatory Name/Title</FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder="e.g. Vice Chancellor" {...field} value={field.value || ''} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <FormField
-                                            control={form.control}
-                                            name="certPartnerLogo"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel className="text-emerald-100">Partner Logo</FormLabel>
-                                                    <div className="flex items-center gap-2">
-                                                        <FormControl>
-                                                            <Input {...field} placeholder="Logo URL" value={field.value || ''} />
-                                                        </FormControl>
-                                                        <FileUploadInput 
-                                                            onUploadComplete={(url) => field.onChange(url)} 
-                                                            label="Upload"
-                                                            accept="image/*"
-                                                        />
-                                                    </div>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="certPartnerSignature"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel className="text-emerald-100">Partner Signature</FormLabel>
-                                                    <div className="flex items-center gap-2">
-                                                        <FormControl>
-                                                            <Input {...field} placeholder="Signature URL" value={field.value || ''} />
-                                                        </FormControl>
-                                                        <FileUploadInput 
-                                                            onUploadComplete={(url) => field.onChange(url)} 
-                                                            label="Upload"
-                                                            accept="image/*"
-                                                        />
-                                                    </div>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
-                                </div>
-                            )}
-                        </div>
 
                         <ProgrammeMaterialsField control={form.control} />
 
@@ -786,6 +688,7 @@ export function CreateProgrammeDialog({ organizationId, isSuperAdmin }: { organi
                     </form>
                 </Form>
             </DialogContent>
+            )}
         </Dialog>
     )
 }

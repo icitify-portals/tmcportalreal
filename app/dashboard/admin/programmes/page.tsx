@@ -14,8 +14,8 @@ import { CheckCircle2, AlertCircle, XCircle, UserCheck, BarChart3, MessageSquare
 import { format } from "date-fns"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { db } from "@/lib/db"
-import { organizations, userRoles, roles } from "@/lib/db/schema"
-import { eq, and } from "drizzle-orm"
+import { organizations, userRoles, roles, officials } from "@/lib/db/schema"
+import { eq, and, desc } from "drizzle-orm"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { ProgrammeActions } from "@/components/admin/programmes/programme-actions"
 import { ClientDate } from "@/components/ui/client-date"
@@ -99,7 +99,7 @@ async function ProgrammeList({ type, orgId }: { type: 'MY_PROGRAMMES' | 'TO_APPR
                     <div className="p-5 bg-[#0c2413]/20 border-t border-green-800/10 flex flex-wrap gap-2 justify-between items-center mt-auto">
                         {/* Approval Actions */}
                         {type === 'TO_APPROVE' && (
-                            <ReviewActions programmeId={p.id} status={p.status || ""} />
+                            <ReviewActions programmeId={p.id} status={p.status || ""} hasCertificate={p.hasCertificate} />
                         )}
 
                         {/* Reporting & Registration Actions */}
@@ -141,24 +141,26 @@ export default async function ProgrammesPage() {
     const session = await getServerSession()
     if (!session?.user?.id) redirect("/login")
 
-    // Logic to determine Organization ID
+    // Logic to determine Organization ID and Admin Status
+    const userRolesList = await db.select({
+        organizationId: userRoles.organizationId,
+        roleCode: roles.code
+    })
+        .from(userRoles)
+        .innerJoin(roles, eq(userRoles.roleId, roles.id))
+        .where(
+            and(
+                eq(userRoles.userId, session.user.id),
+                eq(userRoles.isActive, true)
+            )
+        )
+
+    const roleCodes = userRolesList.map(r => r.roleCode)
+    const isAdmin = session.user.isSuperAdmin || roleCodes.some(code => code.endsWith('_ADMIN'))
+    const canApprove = isAdmin
     let organizationId = session.user.officialOrganizationId
 
     if (!organizationId) {
-        // 1. Check User Roles
-        const userRolesList = await db.select({
-            organizationId: userRoles.organizationId
-        })
-            .from(userRoles)
-            .innerJoin(roles, eq(userRoles.roleId, roles.id))
-            .where(
-                and(
-                    eq(userRoles.userId, session.user.id),
-                    eq(userRoles.isActive, true)
-                )
-            )
-            .limit(1)
-
         organizationId = userRolesList[0]?.organizationId
     }
 
@@ -180,36 +182,46 @@ export default async function ProgrammesPage() {
     // Special case for SuperAdmin: if still no org found (shouldn't happen with National fallback), 
     // but at least don't show the "Not Found" error if they are SYSTEM level.
     const isSuperAdmin = session.user.isSuperAdmin
+    // Fetch current user's official and office details if they are an official
+    const userOfficial = await db.select({ 
+        id: officials.id, 
+        organizationId: officials.organizationId
+    })
+    .from(officials)
+    .where(eq(officials.userId, session.user.id))
+    .limit(1)
 
-    if (!organizationId && !isSuperAdmin) {
-        return (
-            <DashboardLayout>
-                <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
-                    <AlertCircle className="h-12 w-12 text-yellow-500" />
-                    <h2 className="text-xl font-semibold">Jurisdiction Not Found</h2>
-                    <p className="text-muted-foreground text-center max-w-md">
-                        Your account is not currently associated with an official jurisdiction.
-                        Please contact the administrator or join an organization.
-                    </p>
-                </div>
-            </DashboardLayout>
-        )
+    const userOfficialId = userOfficial[0]?.id
+    
+    let userOfficeId = ""
+    if (userOfficial[0]?.organizationId) {
+        const firstOffice = await db.select({ id: offices.id })
+            .from(offices)
+            .where(eq(offices.organizationId, userOfficial[0].organizationId))
+            .limit(1)
+        userOfficeId = firstOffice[0]?.id || ""
     }
-
+    
     return (
         <DashboardLayout>
             <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
                 <div className="flex items-center justify-between space-y-2">
                     <h2 className="text-3xl font-bold tracking-tight">Programmes</h2>
                     <div className="flex items-center space-x-2">
-                        <CreateProgrammeDialog organizationId={organizationId || ""} isSuperAdmin={isSuperAdmin} />
+                        <CreateProgrammeDialog 
+                            organizationId={organizationId || ""} 
+                            isSuperAdmin={isSuperAdmin}
+                            userOfficialId={userOfficialId}
+                            userOfficeId={userOfficeId}
+                            userLevel={session.user.officialLevel}
+                        />
                     </div>
                 </div>
 
                 <Tabs defaultValue="my-programmes" className="space-y-4">
                     <TabsList>
                         <TabsTrigger value="my-programmes">My Programmes</TabsTrigger>
-                        <TabsTrigger value="approvals">Approvals Required</TabsTrigger>
+                        {canApprove && <TabsTrigger value="approvals">Approvals Required</TabsTrigger>}
                     </TabsList>
 
                     <TabsContent value="my-programmes" className="space-y-4">

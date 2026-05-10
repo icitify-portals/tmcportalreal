@@ -540,7 +540,7 @@ export async function approveProgrammeState(programmeId: string) {
     }
 }
 
-export async function approveProgrammeNational(programmeId: string) {
+export async function approveProgrammeNational(programmeId: string, certData?: any) {
     try {
         const session = await getServerSession()
         if (!session?.user?.id) return { success: false, error: "Unauthorized" }
@@ -551,16 +551,65 @@ export async function approveProgrammeNational(programmeId: string) {
             return { success: false, error: "Self-approval is not allowed. Must be approved by another admin or assigned officer." }
         }
 
-        await db.update(programmes).set({
+        const updateData: any = {
             status: 'APPROVED',
             approvedNationalBy: session.user.id,
             approvedNationalAt: new Date(),
-        }).where(eq(programmes.id, programmeId))
+        }
+
+        if (certData) {
+            updateData.certTemplateType = certData.certTemplateType
+            updateData.certTmcSignature = certData.certTmcSignature
+            updateData.certTmcSignatory = certData.certTmcSignatory
+            updateData.certPartnerName = certData.certPartnerName
+            updateData.certPartnerLogo = certData.certPartnerLogo
+            updateData.certPartnerSignature = certData.certPartnerSignature
+            updateData.certPartnerSignatory = certData.certPartnerSignatory
+        }
+
+        await db.update(programmes).set(updateData).where(eq(programmes.id, programmeId))
 
         revalidatePath("/dashboard/admin/programmes")
         return { success: true }
     } catch (error) {
         return { success: false, error: "Approval failed" }
+    }
+}
+
+export async function getRecentCertificateAssets() {
+    try {
+        const results = await db.select({
+            tmcSignature: programmes.certTmcSignature,
+            tmcSignatory: programmes.certTmcSignatory,
+            partnerLogo: programmes.certPartnerLogo,
+            partnerSignature: programmes.certPartnerSignature,
+            partnerName: programmes.certPartnerName,
+            partnerSignatory: programmes.certPartnerSignatory
+        })
+        .from(programmes)
+        .where(or(
+            sql`${programmes.certTmcSignature} IS NOT NULL`,
+            sql`${programmes.certPartnerLogo} IS NOT NULL`
+        ))
+        .orderBy(desc(programmes.createdAt))
+        .limit(50)
+
+        // Extract unique assets
+        const signatures = [...new Set(results.map(r => r.tmcSignature).filter(Boolean))]
+        const signatories = [...new Set(results.map(r => r.tmcSignatory).filter(Boolean))]
+        const partnerLogos = [...new Set(results.map(r => r.partnerLogo).filter(Boolean))]
+        const partnerSignatures = [...new Set(results.map(r => r.partnerSignature).filter(Boolean))]
+        const partnerNames = [...new Set(results.map(r => r.partnerName).filter(Boolean))]
+
+        return {
+            signatures,
+            signatories,
+            partnerLogos,
+            partnerSignatures,
+            partnerNames
+        }
+    } catch (error) {
+        return { signatures: [], signatories: [], partnerLogos: [], partnerSignatures: [], partnerNames: [] }
     }
 }
 
