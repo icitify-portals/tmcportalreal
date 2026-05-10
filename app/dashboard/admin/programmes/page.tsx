@@ -99,7 +99,7 @@ async function ProgrammeList({ type, orgId }: { type: 'MY_PROGRAMMES' | 'TO_APPR
                     <div className="p-5 bg-[#0c2413]/20 border-t border-green-800/10 flex flex-wrap gap-2 justify-between items-center mt-auto">
                         {/* Approval Actions */}
                         {type === 'TO_APPROVE' && (
-                            <ReviewActions programmeId={p.id} status={p.status || ""} hasCertificate={p.hasCertificate} />
+                            <ReviewActions programmeId={p.id} status={p.status || ""} hasCertificate={p.hasCertificate ?? false} />
                         )}
 
                         {/* Reporting & Registration Actions */}
