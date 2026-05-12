@@ -6,8 +6,11 @@ import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { db } from "@/lib/db"
 import { officials, members, organizations } from "@/lib/db/schema"
-import { eq, count } from "drizzle-orm"
+import { eq, count, sql, and } from "drizzle-orm"
 import { format } from "date-fns"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { Users } from "lucide-react"
 
 export default async function OfficialDashboardPage() {
   const session = await getServerSession()
@@ -35,11 +38,26 @@ export default async function OfficialDashboardPage() {
 
   const official = officialData ? { ...officialData, organization: organizationData } : null;
 
+  // Jurisdiction-aware member count
   let memberCount = 0;
-  if (official?.organizationId) {
+  if (official) {
+    const { positionLevel, organizationId, organization } = official;
+    let conditions = [];
+
+    if (positionLevel === 'STATE') {
+        conditions.push(sql`JSON_UNQUOTE(JSON_EXTRACT(${members.metadata}, '$.state')) = ${organization?.state}`);
+    } else if (positionLevel === 'LOCAL_GOVERNMENT') {
+        conditions.push(sql`JSON_UNQUOTE(JSON_EXTRACT(${members.metadata}, '$.state')) = ${organization?.state}`);
+        conditions.push(sql`JSON_UNQUOTE(JSON_EXTRACT(${members.metadata}, '$.lga')) = ${organization?.city}`);
+    } else if (positionLevel === 'BRANCH') {
+        conditions.push(eq(members.organizationId, organizationId));
+    } else if (positionLevel === 'NATIONAL') {
+        // No filter for National officials on the total count
+    }
+
     const res = await db.select({ count: count() })
       .from(members)
-      .where(eq(members.organizationId, official.organizationId));
+      .where(conditions.length > 0 ? and(...conditions) : undefined);
     memberCount = res[0]?.count ?? 0;
   }
 
@@ -75,12 +93,20 @@ export default async function OfficialDashboardPage() {
           </Card>
 
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0">
               <CardTitle>Organization Statistics</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{memberCount}</div>
-              <p className="text-sm text-muted-foreground">Total Members</p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-2xl font-bold">{memberCount}</div>
+                  <p className="text-sm text-muted-foreground">Total Members in Jurisdiction</p>
+                </div>
+                <Link href="/dashboard/official/members">
+                    <Button variant="outline" size="sm">View All Members</Button>
+                </Link>
+              </div>
             </CardContent>
           </Card>
         </div>

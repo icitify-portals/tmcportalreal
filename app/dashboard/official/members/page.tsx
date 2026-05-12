@@ -1,0 +1,327 @@
+export const dynamic = 'force-dynamic'
+
+import { getServerSession } from "@/lib/session"
+import { requirePermission } from "@/lib/rbac-v2"
+import { DashboardLayout } from "@/components/layout/dashboard-layout"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { db } from "@/lib/db"
+import { members, users, organizations, officials } from "@/lib/db/schema"
+import { desc, and, eq, sql, or } from "drizzle-orm"
+import Link from "next/link"
+import { Search, Filter } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { locationData } from "@/lib/location-data"
+import { Pagination } from "@/components/admin/shared/pagination"
+import { ExportCSV } from "@/components/admin/shared/export-csv"
+import { Suspense } from "react"
+import { notFound } from "next/navigation"
+
+export default async function OfficialMembersPage(props: {
+  searchParams: Promise<{ state?: string; lga?: string; branch?: string; search?: string; page?: string; limit?: string }>
+}) {
+  const searchParams = await props.searchParams
+  const session = await getServerSession()
+  
+  // 1. Check permission
+  requirePermission(session, "members:read")
+
+  if (!session?.user?.officialId) {
+    return (
+      <DashboardLayout>
+        <div className="p-6 text-center">
+          <h1 className="text-2xl font-bold">Official Access Required</h1>
+          <p className="text-muted-foreground mt-2">You must be an assigned official to view this page.</p>
+        </div>
+      </DashboardLayout>
+    )
+  }
+
+  // 2. Fetch Official's jurisdiction
+  const officialData = await db.query.officials.findFirst({
+    where: eq(officials.id, session.user.officialId),
+    with: {
+      organization: true
+    }
+  })
+
+  if (!officialData) return notFound()
+
+  const { organization, positionLevel } = officialData
+  const adminState = organization.state
+  const adminLga = organization.city // Assuming city maps to LGA for LOCAL_GOVERNMENT orgs
+
+  // 3. Build conditions based on jurisdiction
+  let conditions = []
+
+  // Jurisdiction Enforcement
+  if (positionLevel === 'STATE') {
+    conditions.push(sql`JSON_UNQUOTE(JSON_EXTRACT(${members.metadata}, '$.state')) = ${adminState}`)
+  } else if (positionLevel === 'LOCAL_GOVERNMENT') {
+    conditions.push(sql`JSON_UNQUOTE(JSON_EXTRACT(${members.metadata}, '$.state')) = ${adminState}`)
+    conditions.push(sql`JSON_UNQUOTE(JSON_EXTRACT(${members.metadata}, '$.lga')) = ${adminLga}`)
+  } else if (positionLevel === 'BRANCH') {
+    conditions.push(eq(members.organizationId, organization.id))
+  }
+
+  // Apply filters from searchParams (within jurisdiction)
+  const lgaFilter = searchParams.lga
+  const branchFilter = searchParams.branch
+  const searchQuery = searchParams.search
+  const page = parseInt(searchParams.page || "1")
+  const limit = parseInt(searchParams.limit || "50")
+  const offset = (page - 1) * limit
+
+  if (positionLevel === 'STATE' && lgaFilter && lgaFilter !== "all") {
+    conditions.push(sql`JSON_UNQUOTE(JSON_EXTRACT(${members.metadata}, '$.lga')) = ${lgaFilter}`)
+  }
+  if (branchFilter && branchFilter !== "all") {
+    conditions.push(sql`JSON_UNQUOTE(JSON_EXTRACT(${members.metadata}, '$.branch')) LIKE ${`%${branchFilter}%`}`)
+  }
+  if (searchQuery) {
+    conditions.push(or(
+      sql`${users.name} LIKE ${`%${searchQuery}%`}`,
+      sql`${users.email} LIKE ${`%${searchQuery}%`}`
+    ))
+  }
+
+  // 4. Fetch Data
+  const [totalRes] = await db.select({ count: sql<number>`count(*)` })
+    .from(members)
+    .innerJoin(users, eq(members.userId, users.id))
+    .where(conditions.length > 0 ? and(...conditions) : undefined);
+  
+  const totalCount = Number(totalRes?.count || 0);
+
+  const rawMembersWithUsers = await db.select({
+    member: members,
+    user: { id: users.id, name: users.name, email: users.email, phone: users.phone }
+  })
+    .from(members)
+    .innerJoin(users, eq(members.userId, users.id))
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .orderBy(desc(members.createdAt))
+    .limit(limit)
+    .offset(offset)
+
+  // Manually fetch related organizations
+  const orgIds = [...new Set(rawMembersWithUsers.map(m => m.member.organizationId).filter(Boolean))] as string[]
+  const orgsData = orgIds.length > 0 ? await db.query.organizations.findMany({
+    where: (organizations, { inArray }) => inArray(organizations.id, orgIds),
+    columns: { id: true, name: true, level: true }
+  }) : []
+
+  const membersList = rawMembersWithUsers.map(({ member, user }) => ({
+    ...member,
+    user,
+    organization: orgsData.find(o => o.id === member.organizationId) || { name: 'Unknown', level: '' }
+  }))
+
+  return (
+    <DashboardLayout>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Members</h1>
+            <p className="text-muted-foreground">
+                {positionLevel === 'STATE' ? `Members in ${adminState} State` : 
+                 positionLevel === 'LOCAL_GOVERNMENT' ? `Members in ${adminLga} LGA` : 
+                 `Members in ${organization.name}`}
+            </p>
+          </div>
+        </div>
+
+        <Card className="bg-green-50/50 border-green-100">
+          <CardContent className="pt-6">
+            <form className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="space-y-2">
+                <Label className="text-xs">Search</Label>
+                <Input
+                  name="search"
+                  placeholder="Name or email..."
+                  defaultValue={searchQuery}
+                  className="bg-white"
+                />
+              </div>
+
+              {positionLevel === 'STATE' && (
+                <div className="space-y-2">
+                    <Label className="text-xs">LGA</Label>
+                    <Select name="lga" defaultValue={lgaFilter || "all"}>
+                    <SelectTrigger className="bg-white">
+                        <SelectValue placeholder="All LGAs" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All LGAs</SelectItem>
+                        {(locationData as any)[adminState!]?.lgas.map((l: any) => (
+                        <SelectItem key={l.name} value={l.name}>{l.name}</SelectItem>
+                        ))}
+                    </SelectContent>
+                    </Select>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label className="text-xs">Branch Keyword</Label>
+                <Input
+                  name="branch"
+                  placeholder="Filter branch..."
+                  defaultValue={branchFilter}
+                  className="bg-white"
+                />
+              </div>
+
+              <div className="flex items-end gap-2">
+                <Button type="submit" className="flex-1 bg-green-700 hover:bg-green-800 text-white">
+                  <Search className="mr-2 h-4 w-4" />
+                  Filter
+                </Button>
+                {(lgaFilter || branchFilter || searchQuery) && (
+                  <Link href="/dashboard/official/members">
+                    <Button variant="outline" type="button">Reset</Button>
+                  </Link>
+                )}
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <div>
+              <CardTitle>Member List</CardTitle>
+              <CardDescription>Members under your jurisdiction</CardDescription>
+            </div>
+            <Suspense fallback={<Button variant="outline" size="sm" disabled>Exporting...</Button>}>
+              <MemberExportWrapper conditions={conditions} />
+            </Suspense>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {membersList.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left p-2 w-12 text-muted-foreground text-xs font-normal">S/N</th>
+                        <th className="text-left p-2">Member ID</th>
+                        <th className="text-left p-2">Name</th>
+                        <th className="text-left p-2">LGA</th>
+                        <th className="text-left p-2">Branch / Org</th>
+                        <th className="text-left p-2">Status</th>
+                        <th className="text-left p-2">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {membersList.map((member, index) => {
+                        const metadata = member.metadata as any || {}
+                        return (
+                          <tr key={member.id} className="border-b">
+                            <td className="p-2 text-muted-foreground text-xs">{offset + index + 1}</td>
+                            <td className="p-2 font-mono text-sm">{member.memberId || "Pending"}</td>
+                            <td className="p-2">
+                              <div>{member.user.name}</div>
+                              <div className="text-xs text-muted-foreground">{member.user.email}</div>
+                            </td>
+                            <td className="p-2">{metadata.lga || "-"}</td>
+                            <td className="p-2">
+                              {metadata.branch ? (
+                                <div className="text-sm">
+                                  <span className="font-medium">{metadata.branch}</span>
+                                  <br />
+                                  <Badge variant="outline" className="text-[10px]">{member.organization.name}</Badge>
+                                </div>
+                              ) : (
+                                <Badge variant="outline">{member.organization.name}</Badge>
+                              )}
+                            </td>
+                            <td className="p-2">
+                              <Badge
+                                variant={
+                                  member.status === "ACTIVE"
+                                    ? "default"
+                                    : member.status === "PENDING"
+                                      ? "secondary"
+                                      : "destructive"
+                                }
+                              >
+                                {member.status}
+                              </Badge>
+                            </td>
+                            <td className="p-2">
+                              <Link href={`/dashboard/official/members/${member.id}`}>
+                                <Button variant="ghost" size="sm">
+                                  View
+                                </Button>
+                              </Link>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-64 text-muted-foreground border rounded-md">
+                  No members found matching your search.
+                </div>
+              )}
+            </div>
+            <Pagination 
+                total={totalCount} 
+                page={page} 
+                limit={limit} 
+                baseUrl="/dashboard/official/members" 
+                searchParams={{ lga: lgaFilter, branch: branchFilter, search: searchQuery }} 
+            />
+          </CardContent>
+        </Card>
+      </div>
+    </DashboardLayout>
+  )
+}
+
+async function MemberExportWrapper({ conditions }: { conditions: any[] }) {
+    const rawExport = await db.select()
+        .from(members)
+        .where(conditions.length > 0 ? and(...conditions) : undefined)
+        .orderBy(desc(members.createdAt))
+        .limit(1000);
+
+    const userIds = rawExport.map(m => m.userId).filter(Boolean) as string[]
+    const usersData = userIds.length > 0 ? await db.query.users.findMany({
+        where: (u, { inArray }) => inArray(u.id, userIds),
+        columns: { id: true, name: true, email: true }
+    }) : []
+
+    const exportData = rawExport.map(m => {
+        const user = usersData.find(u => u.id === m.userId)
+        const meta = m.metadata as any || {}
+        return {
+            memberId: m.memberId || "PENDING",
+            name: user?.name || "Unknown",
+            email: user?.email || "",
+            state: meta.state || "",
+            lga: meta.lga || "",
+            branch: meta.branch || "",
+            status: m.status,
+            createdAt: m.createdAt
+        }
+    })
+
+    const headers = [
+        { key: 'memberId', label: 'Member ID' },
+        { key: 'name', label: 'Name' },
+        { key: 'email', label: 'Email' },
+        { key: 'state', label: 'State' },
+        { key: 'lga', label: 'LGA' },
+        { key: 'branch', label: 'Branch' },
+        { key: 'status', label: 'Status' },
+        { key: 'createdAt', label: 'Joined' },
+    ]
+
+    return <ExportCSV data={exportData} filename="members" headers={headers} />
+}
