@@ -52,7 +52,7 @@ export default async function OfficialMemberDetailsPage({ params }: { params: Pr
         organization = mockOrg || { id: "mock-id", name: `Mock ${mock.level}`, level: mock.level, state: mock.state, city: mock.lga }
     } else {
         const officialData = await db.query.officials.findFirst({
-            where: eq(officials.id, session.user.officialId!),
+            where: eq(officials.id, session!.user.officialId!),
             with: {
                 organization: true
             }

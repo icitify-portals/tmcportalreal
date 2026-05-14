@@ -174,7 +174,7 @@ export default async function ProgrammesPage() {
         })
         organizationId = mockOrg?.id || ""
     } else {
-        organizationId = session.user.officialOrganizationId || userRolesList[0]?.organizationId || session.user.organizationId || ""
+        organizationId = session!.user.officialOrganizationId || userRolesList[0]?.organizationId || session!.user.organizationId || ""
     }
 
     if (!organizationId) {

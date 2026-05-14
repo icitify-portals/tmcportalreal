@@ -53,7 +53,7 @@ export default async function OfficialDashboardPage() {
     }
   } else {
     const officialData = await db.query.officials.findFirst({
-        where: eq(officials.id, authSession.user.officialId!),
+        where: eq(officials.id, authSession!.user.officialId!),
     })
     const organizationData = officialData?.organizationId ? await db.query.organizations.findFirst({
         where: eq(organizations.id, officialData.organizationId)
