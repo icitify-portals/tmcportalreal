@@ -65,7 +65,7 @@ export default async function OfficialMemberDetailsPage({ params }: { params: Pr
     const meta = rawMember.metadata as any || {}
 
     let canAccess = false
-    if (session.user.isSuperAdmin) {
+    if (session!.user.isSuperAdmin) {
         canAccess = true
     } else if (positionLevel === 'STATE') {
         canAccess = meta.state === organization.state

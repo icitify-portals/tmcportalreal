@@ -151,13 +151,13 @@ export default async function ProgrammesPage() {
         .innerJoin(roles, eq(userRoles.roleId, roles.id))
         .where(
             and(
-                eq(userRoles.userId, session.user.id),
+                eq(userRoles.userId, session!.user.id),
                 eq(userRoles.isActive, true)
             )
         )
 
     const roleCodes = userRolesList.map(r => r.roleCode)
-    const isSuperAdmin = session.user.isSuperAdmin
+    const isSuperAdmin = session!.user.isSuperAdmin
     const isAdmin = isSuperAdmin || roleCodes.some(code => code.endsWith('_ADMIN'))
     const canApprove = isAdmin
     const mock = await getMockJurisdiction()
@@ -195,7 +195,7 @@ export default async function ProgrammesPage() {
         organizationId: officials.organizationId
     })
     .from(officials)
-    .where(eq(officials.userId, session.user.id))
+    .where(eq(officials.userId, session!.user.id))
     .limit(1)
 
     const userOfficialId = userOfficial[0]?.id
