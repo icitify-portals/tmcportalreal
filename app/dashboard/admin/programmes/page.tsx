@@ -157,7 +157,8 @@ export default async function ProgrammesPage() {
         )
 
     const roleCodes = userRolesList.map(r => r.roleCode)
-    const isAdmin = session.user.isSuperAdmin || roleCodes.some(code => code.endsWith('_ADMIN'))
+    const isSuperAdmin = session.user.isSuperAdmin
+    const isAdmin = isSuperAdmin || roleCodes.some(code => code.endsWith('_ADMIN'))
     const canApprove = isAdmin
     const mock = await getMockJurisdiction()
     let organizationId = ""
