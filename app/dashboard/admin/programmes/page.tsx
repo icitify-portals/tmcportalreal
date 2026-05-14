@@ -189,7 +189,6 @@ export default async function ProgrammesPage() {
 
     // Special case for SuperAdmin: if still no org found (shouldn't happen with National fallback), 
     // but at least don't show the "Not Found" error if they are SYSTEM level.
-    const isSuperAdmin = session.user.isSuperAdmin
     // Fetch current user's official and office details if they are an official
     const userOfficial = await db.select({ 
         id: officials.id, 
