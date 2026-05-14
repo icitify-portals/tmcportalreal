@@ -3,6 +3,7 @@ import { Suspense } from "react"
 import { getServerSession } from "@/lib/session"
 import { redirect } from "next/navigation"
 import { getAdminProgrammes, approveProgrammeState, approveProgrammeNational } from "@/lib/actions/programmes"
+import { getMockJurisdiction } from "@/lib/mock-jurisdiction"
 import { CreateProgrammeDialog } from "@/components/admin/programmes/create-programme-dialog"
 import { SubmitReportDialog } from "@/components/admin/programmes/submit-report-dialog"
 import { ReviewActions } from "@/components/admin/programmes/review-actions"
@@ -158,19 +159,25 @@ export default async function ProgrammesPage() {
     const roleCodes = userRolesList.map(r => r.roleCode)
     const isAdmin = session.user.isSuperAdmin || roleCodes.some(code => code.endsWith('_ADMIN'))
     const canApprove = isAdmin
-    let organizationId = session.user.officialOrganizationId
+    const mock = await getMockJurisdiction()
+    let organizationId = ""
 
-    if (!organizationId) {
-        organizationId = userRolesList[0]?.organizationId
+    if (isSuperAdmin && mock) {
+        const mockOrg = await db.query.organizations.findFirst({
+            where: (org, { and, eq }) => {
+                const conds = [eq(org.level, mock.level)]
+                if (mock.state) conds.push(eq(org.state, mock.state))
+                if (mock.lga) conds.push(eq(org.city, mock.lga))
+                return and(...conds)
+            }
+        })
+        organizationId = mockOrg?.id || ""
+    } else {
+        organizationId = session.user.officialOrganizationId || userRolesList[0]?.organizationId || session.user.organizationId || ""
     }
 
     if (!organizationId) {
-        // 2. Fallback to session broad org
-        organizationId = session.user.organizationId
-    }
-
-    if (!organizationId) {
-        // 3. Final Fallback: National Org or allow SuperAdmin to see all
+        // 3. Final Fallback: National Org
         const nationalOrg = await db.select({ id: organizations.id })
             .from(organizations)
             .where(eq(organizations.level, 'NATIONAL'))

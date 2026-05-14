@@ -12,6 +12,8 @@ import { Button } from "@/components/ui/button"
 import { format } from "date-fns"
 import { requirePermission } from "@/lib/rbac-v2"
 
+import { getMockJurisdiction } from "@/lib/mock-jurisdiction"
+
 export default async function OfficialMemberDetailsPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
     const session = await getServerSession()
@@ -19,7 +21,10 @@ export default async function OfficialMemberDetailsPage({ params }: { params: Pr
     // 1. Check permission
     requirePermission(session, "members:read")
 
-    if (!session?.user?.officialId) {
+    const mock = await getMockJurisdiction()
+    const isSuperAdmin = session?.user?.roles?.some((r: any) => r.jurisdictionLevel === "SYSTEM")
+
+    if (!session?.user?.officialId && !(isSuperAdmin && mock)) {
         return redirect("/dashboard/official")
     }
 
@@ -31,17 +36,33 @@ export default async function OfficialMemberDetailsPage({ params }: { params: Pr
     if (!rawMember) return notFound()
 
     // 3. Jurisdiction Check
-    const officialData = await db.query.officials.findFirst({
-        where: eq(officials.id, session.user.officialId),
-        with: {
-            organization: true
-        }
-    })
+    let organization: any = null
+    let positionLevel = ""
 
-    if (!officialData) return notFound()
+    if (isSuperAdmin && mock) {
+        positionLevel = mock.level
+        const mockOrg = await db.query.organizations.findFirst({
+            where: (org, { and, eq }) => {
+                const conds = [eq(org.level, mock.level)]
+                if (mock.state) conds.push(eq(org.state, mock.state))
+                if (mock.lga) conds.push(eq(org.city, mock.lga))
+                return and(...conds)
+            }
+        })
+        organization = mockOrg || { id: "mock-id", name: `Mock ${mock.level}`, level: mock.level, state: mock.state, city: mock.lga }
+    } else {
+        const officialData = await db.query.officials.findFirst({
+            where: eq(officials.id, session.user.officialId!),
+            with: {
+                organization: true
+            }
+        })
+        if (!officialData) return notFound()
+        organization = officialData.organization
+        positionLevel = officialData.positionLevel || ""
+    }
 
     const meta = rawMember.metadata as any || {}
-    const { organization, positionLevel } = officialData
 
     let canAccess = false
     if (session.user.isSuperAdmin) {

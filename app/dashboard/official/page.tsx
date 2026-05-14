@@ -12,11 +12,16 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Users } from "lucide-react"
 
+import { getMockJurisdiction } from "@/lib/mock-jurisdiction"
+
 export default async function OfficialDashboardPage() {
   const session = await getServerSession()
   const authSession = requireAuth(session)
 
-  if (!authSession.user.officialId) {
+  const mock = await getMockJurisdiction()
+  const isSuperAdmin = session?.user?.roles?.some((r: any) => r.jurisdictionLevel === "SYSTEM")
+
+  if (!authSession.user.officialId && !(isSuperAdmin && mock)) {
     return (
       <DashboardLayout>
         <div className="space-y-6">
@@ -27,16 +32,34 @@ export default async function OfficialDashboardPage() {
     )
   }
 
-  const officialData = await db.query.officials.findFirst({
-    where: eq(officials.id, authSession.user.officialId),
-  })
+  // Fetch/Mock Official Data
+  let official: any = null
 
-  // Manually fetch organization to avoid LATERAL JOIN in older MariaDB
-  const organizationData = officialData?.organizationId ? await db.query.organizations.findFirst({
-    where: eq(organizations.id, officialData.organizationId)
-  }) : null;
-
-  const official = officialData ? { ...officialData, organization: organizationData } : null;
+  if (isSuperAdmin && mock) {
+    const mockOrg = await db.query.organizations.findFirst({
+        where: (org, { and, eq }) => {
+            const conds = [eq(org.level, mock.level)]
+            if (mock.state) conds.push(eq(org.state, mock.state))
+            if (mock.lga) conds.push(eq(org.city, mock.lga))
+            return and(...conds)
+        }
+    })
+    
+    official = {
+        position: `Mock ${mock.level} Admin`,
+        positionLevel: mock.level,
+        organization: mockOrg || { name: `Mock ${mock.level}`, state: mock.state, city: mock.lga },
+        termStart: new Date()
+    }
+  } else {
+    const officialData = await db.query.officials.findFirst({
+        where: eq(officials.id, authSession.user.officialId!),
+    })
+    const organizationData = officialData?.organizationId ? await db.query.organizations.findFirst({
+        where: eq(organizations.id, officialData.organizationId)
+    }) : null;
+    official = officialData ? { ...officialData, organization: organizationData } : null;
+  }
 
   // Jurisdiction-aware member count
   let memberCount = 0;

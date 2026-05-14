@@ -42,8 +42,11 @@ interface SidebarProps {
   userRole: "admin" | "member" | "official" | "council"
   isRealAdmin?: boolean
   adminLevel?: string
-  onViewModeChange?: (mode: "admin" | "member" | "official" | "council", level?: string) => void
+  onViewModeChange?: (mode: "admin" | "member" | "official" | "council", level?: string, jurisdiction?: { state?: string; lga?: string; branch?: string }) => void
 }
+
+import { MockJurisdictionDialog } from "@/components/admin/mock-jurisdiction-dialog"
+import { useState } from "react"
 
 const adminNavItems = [
   { href: "/", label: "Home", icon: Home },
@@ -154,9 +157,21 @@ export function Sidebar({ userRole, isRealAdmin, adminLevel, className, onNaviga
     })
   }
 
+  const [mockDialogOpen, setMockDialogOpen] = useState(false)
+  const [pendingMode, setPendingMode] = useState<{ role: "admin" | "member" | "official" | "council", level?: string } | null>(null)
+
   const onViewChange = (role: "admin" | "member" | "official" | "council", level?: string) => {
-    if (onViewModeChange) {
+    if (role === "official" && (level === "STATE" || level === "LOCAL_GOVERNMENT" || level === "BRANCH")) {
+      setPendingMode({ role, level })
+      setMockDialogOpen(true)
+    } else if (onViewModeChange) {
       onViewModeChange(role, level)
+    }
+  }
+
+  const handleMockConfirm = (jurisdiction: { state?: string; lga?: string; branch?: string }) => {
+    if (onViewModeChange && pendingMode) {
+      onViewModeChange(pendingMode.role, pendingMode.level, jurisdiction)
     }
   }
 
@@ -235,6 +250,22 @@ export function Sidebar({ userRole, isRealAdmin, adminLevel, className, onNaviga
                 <LayoutDashboard className="mr-2 h-3 w-3" /> Member View
               </Button>
             </div>
+            {adminLevel && adminLevel !== "SUPER_ADMIN" && (
+                <div className="mt-2 p-2 bg-green-50 border border-green-100 rounded text-[10px] text-green-800 animate-in fade-in zoom-in duration-300">
+                    <p className="font-bold uppercase tracking-tight">Active Mock Mode:</p>
+                    <p className="opacity-80">Level: {adminLevel.replace("_", " ")}</p>
+                    {typeof window !== 'undefined' && (
+                        <>
+                            {document.cookie.includes("tmc_mock_state") && (
+                                <p className="opacity-80">State: {document.cookie.split('tmc_mock_state=')[1]?.split(';')[0]}</p>
+                            )}
+                            {document.cookie.includes("tmc_mock_lga") && (
+                                <p className="opacity-80">LGA: {decodeURIComponent(document.cookie.split('tmc_mock_lga=')[1]?.split(';')[0])}</p>
+                            )}
+                        </>
+                    )}
+                </div>
+            )}
           </div>
         )}
         <div className="flex items-center justify-between">
@@ -254,6 +285,13 @@ export function Sidebar({ userRole, isRealAdmin, adminLevel, className, onNaviga
           Sign Out
         </Button>
       </div>
+
+      <MockJurisdictionDialog 
+        open={mockDialogOpen} 
+        onOpenChange={setMockDialogOpen} 
+        level={(pendingMode?.level as any) || "STATE"} 
+        onConfirm={handleMockConfirm}
+      />
     </div>
   )
 }

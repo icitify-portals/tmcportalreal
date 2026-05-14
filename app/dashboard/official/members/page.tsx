@@ -1,5 +1,4 @@
 export const dynamic = 'force-dynamic'
-
 import { getServerSession } from "@/lib/session"
 import { requirePermission } from "@/lib/rbac-v2"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
@@ -19,6 +18,8 @@ import { Pagination } from "@/components/admin/shared/pagination"
 import { ExportCSV } from "@/components/admin/shared/export-csv"
 import { Suspense } from "react"
 import { notFound } from "next/navigation"
+import { getMockJurisdiction } from "@/lib/mock-jurisdiction"
+import { organizations as organizationsTable } from "@/lib/db/schema"
 
 export default async function OfficialMembersPage(props: {
   searchParams: Promise<{ state?: string; lga?: string; branch?: string; search?: string; page?: string; limit?: string }>
@@ -29,7 +30,10 @@ export default async function OfficialMembersPage(props: {
   // 1. Check permission
   requirePermission(session, "members:read")
 
-  if (!session?.user?.officialId) {
+  const mock = await getMockJurisdiction()
+  const isSuperAdmin = session?.user?.roles?.some((r: any) => r.jurisdictionLevel === "SYSTEM")
+
+  if (!session?.user?.officialId && !(isSuperAdmin && mock)) {
     return (
       <DashboardLayout>
         <div className="p-6 text-center">
@@ -40,19 +44,40 @@ export default async function OfficialMembersPage(props: {
     )
   }
 
-  // 2. Fetch Official's jurisdiction
-  const officialData = await db.query.officials.findFirst({
-    where: eq(officials.id, session.user.officialId),
-    with: {
-      organization: true
-    }
-  })
+  // 2. Fetch/Mock Official's jurisdiction
+  let organization: any = null
+  let positionLevel = ""
+  let adminState = ""
+  let adminLga = ""
 
-  if (!officialData) return notFound()
-
-  const { organization, positionLevel } = officialData
-  const adminState = organization.state
-  const adminLga = organization.city // Assuming city maps to LGA for LOCAL_GOVERNMENT orgs
+  if (isSuperAdmin && mock) {
+    positionLevel = mock.level
+    adminState = mock.state || ""
+    adminLga = mock.lga || ""
+    
+    // Find a matching organization for this level/state/lga
+    const mockOrg = await db.query.organizations.findFirst({
+        where: (org, { and, eq }) => {
+            const conds = [eq(org.level, mock.level)]
+            if (mock.state) conds.push(eq(org.state, mock.state))
+            if (mock.lga) conds.push(eq(org.city, mock.lga))
+            return and(...conds)
+        }
+    })
+    organization = mockOrg || { id: "mock-org-id", name: `Mock ${mock.level}`, level: mock.level, state: mock.state, city: mock.lga }
+  } else {
+    const officialData = await db.query.officials.findFirst({
+        where: eq(officials.id, session.user.officialId!),
+        with: {
+          organization: true
+        }
+    })
+    if (!officialData) return notFound()
+    organization = officialData.organization
+    positionLevel = officialData.positionLevel || ""
+    adminState = organization.state || ""
+    adminLga = organization.city || ""
+  }
 
   // 3. Build conditions based on jurisdiction
   let conditions = []

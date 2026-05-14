@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Menu } from "lucide-react"
 import { NotificationListener } from "@/components/dashboard/notification-listener"
 import { ImpersonationBanner } from "./impersonation-banner"
+import { ViewAsBanner } from "./view-as-banner"
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -53,24 +54,38 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
   const adminLevel = overrideAdminLevel || realAdminLevel
 
-  const handleViewModeChange = (mode: "admin" | "member" | "official" | "council", level?: string) => {
+  const handleViewModeChange = (mode: "admin" | "member" | "official" | "council", level?: string, jurisdiction?: { state?: string; lga?: string; branch?: string }) => {
     setOverrideRole(mode)
     localStorage.setItem('tmc_view_mode', mode)
     
     if (level) {
       setOverrideAdminLevel(level)
       localStorage.setItem('tmc_view_level', level)
+      document.cookie = `tmc_mock_level=${level}; path=/`
     } else {
       setOverrideAdminLevel(null)
       localStorage.removeItem('tmc_view_level')
+      document.cookie = `tmc_mock_level=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`
+    }
+
+    if (jurisdiction) {
+      if (jurisdiction.state) document.cookie = `tmc_mock_state=${jurisdiction.state}; path=/`
+      if (jurisdiction.lga) document.cookie = `tmc_mock_lga=${jurisdiction.lga}; path=/`
+      if (jurisdiction.branch) document.cookie = `tmc_mock_branch=${jurisdiction.branch}; path=/`
+    } else {
+      document.cookie = `tmc_mock_state=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`
+      document.cookie = `tmc_mock_lga=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`
+      document.cookie = `tmc_mock_branch=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`
     }
     
     setIsMobileMenuOpen(false)
+    window.location.reload() // Reload to apply server-side mocking
   }
 
   return (
     <div className="flex flex-col h-screen overflow-hidden">
       {mounted && <ImpersonationBanner />}
+      {mounted && <ViewAsBanner />}
       <div className="flex flex-1 overflow-hidden">
       {/* Desktop Sidebar */}
       <div className="hidden md:flex">
