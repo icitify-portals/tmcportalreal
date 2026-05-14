@@ -166,7 +166,7 @@ export default async function ProgrammesPage() {
     if (isSuperAdmin && mock) {
         const mockOrg = await db.query.organizations.findFirst({
             where: (org, { and, eq }) => {
-                const conds = [eq(org.level, mock.level)]
+                const conds = [eq(org.level, mock.level as any)]
                 if (mock.state) conds.push(eq(org.state, mock.state))
                 if (mock.lga) conds.push(eq(org.city, mock.lga))
                 return and(...conds)

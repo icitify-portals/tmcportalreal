@@ -43,7 +43,7 @@ export default async function OfficialMemberDetailsPage({ params }: { params: Pr
         positionLevel = mock.level
         const mockOrg = await db.query.organizations.findFirst({
             where: (org, { and, eq }) => {
-                const conds = [eq(org.level, mock.level)]
+                const conds = [eq(org.level, mock.level as any)]
                 if (mock.state) conds.push(eq(org.state, mock.state))
                 if (mock.lga) conds.push(eq(org.city, mock.lga))
                 return and(...conds)
