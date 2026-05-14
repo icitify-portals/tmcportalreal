@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
 
     if (existingUser) {
       return NextResponse.json(
-        { error: "Email already registered" },
+        { error: "Email already exist try login or reset password" },
         { status: 400, headers: { "Content-Type": "application/json" } }
       )
     }

@@ -22,6 +22,13 @@ export function SignInForm() {
         setIsLoading(true)
 
         try {
+            // Check for internet connection first
+            if (typeof window !== "undefined" && !window.navigator.onLine) {
+                toast.error("No internet connection. Please check your network and try again.")
+                setIsLoading(false)
+                return
+            }
+
             const result = await signIn("credentials", {
                 email,
                 password,
@@ -29,12 +36,15 @@ export function SignInForm() {
             })
 
             if (result?.error) {
-                // NextAuth wraps thrown errors in a 'CredentialsSignin' or similar string sometimes, 
-                // but usually the raw message is available if properly handled.
-                // In v5/beta, it might be in different places.
-                const errorMessage = result.error.includes("CredentialsSignin")
-                    ? "Invalid email or password"
-                    : result.error;
+                let errorMessage = "Invalid email or password"
+                
+                if (result.error.includes("CredentialsSignin")) {
+                    errorMessage = "Invalid email or password"
+                } else if (result.error === "Configuration") {
+                    errorMessage = "Server configuration error. Please try again later."
+                } else if (result.error) {
+                    errorMessage = result.error
+                }
 
                 toast.error(errorMessage)
             } else {
@@ -42,8 +52,13 @@ export function SignInForm() {
                 router.push("/dashboard")
                 router.refresh()
             }
-        } catch (error) {
-            toast.error("An error occurred. Please try again.")
+        } catch (error: any) {
+            console.error("Signin error:", error)
+            if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
+                toast.error("Network error. Please check your internet connection.")
+            } else {
+                toast.error("An error occurred. Please try again.")
+            }
         } finally {
             setIsLoading(false)
         }

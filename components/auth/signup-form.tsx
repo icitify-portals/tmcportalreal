@@ -81,6 +81,13 @@ export function SignUpForm() {
         }
 
         try {
+            // Check for internet connection first
+            if (typeof window !== "undefined" && !window.navigator.onLine) {
+                toast.error("No internet connection. Please check your network and try again.")
+                setIsLoading(false)
+                return
+            }
+
             const response = await fetch("/api/auth/signup", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -115,7 +122,12 @@ export function SignUpForm() {
                 router.push("/auth/verify-email?email=" + encodeURIComponent(formData.email))
             }, 1000)
         } catch (error: any) {
-            toast.error(error.message || "An error occurred. Please try again.")
+            console.error("Signup fetch error:", error)
+            if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
+                toast.error("Network error. Please check your internet connection.")
+            } else {
+                toast.error(error.message || "An error occurred. Please try again.")
+            }
         } finally {
             setIsLoading(false)
         }

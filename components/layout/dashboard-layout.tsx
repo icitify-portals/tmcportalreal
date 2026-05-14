@@ -17,12 +17,17 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession()
   const [mounted, setMounted] = useState(false)
   const [overrideRole, setOverrideRole] = useState<"admin" | "member" | "official" | "council" | null>(null)
+  const [overrideAdminLevel, setOverrideAdminLevel] = useState<string | null>(null)
 
   useEffect(() => {
     setMounted(true)
     const savedMode = localStorage.getItem('tmc_view_mode') as "admin" | "member" | "official" | "council" | null
+    const savedLevel = localStorage.getItem('tmc_view_level')
     if (savedMode) {
       setOverrideRole(savedMode)
+    }
+    if (savedLevel) {
+      setOverrideAdminLevel(savedLevel)
     }
   }, [])
 
@@ -40,10 +45,26 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         : "member"
 
   const userRole = overrideRole || baseUserRole
+  
+  // Real Admin Level (from session)
+  const realAdminLevel = session?.user?.isSuperAdmin 
+    ? "SUPER_ADMIN" 
+    : session?.user?.officialLevel || session?.user?.roles?.[0]?.jurisdictionLevel;
 
-  const handleViewModeChange = (mode: "admin" | "member" | "official" | "council") => {
+  const adminLevel = overrideAdminLevel || realAdminLevel
+
+  const handleViewModeChange = (mode: "admin" | "member" | "official" | "council", level?: string) => {
     setOverrideRole(mode)
     localStorage.setItem('tmc_view_mode', mode)
+    
+    if (level) {
+      setOverrideAdminLevel(level)
+      localStorage.setItem('tmc_view_level', level)
+    } else {
+      setOverrideAdminLevel(null)
+      localStorage.removeItem('tmc_view_level')
+    }
+    
     setIsMobileMenuOpen(false)
   }
 
@@ -57,7 +78,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           <Sidebar 
             userRole={userRole} 
             isRealAdmin={isAdmin} 
-            adminLevel={session?.user?.isSuperAdmin ? "SUPER_ADMIN" : session?.user?.officialLevel || session?.user?.roles?.[0]?.jurisdictionLevel} 
+            adminLevel={adminLevel} 
             onViewModeChange={handleViewModeChange}
           />
         )}
@@ -79,7 +100,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                 <Sidebar
                   userRole={userRole}
                   isRealAdmin={isAdmin}
-                  adminLevel={session?.user?.isSuperAdmin ? "SUPER_ADMIN" : session?.user?.officialLevel || session?.user?.roles?.[0]?.jurisdictionLevel}
+                  adminLevel={adminLevel}
                   className="w-full h-full border-none"
                   onNavigate={() => setIsMobileMenuOpen(false)}
                   onViewModeChange={handleViewModeChange}

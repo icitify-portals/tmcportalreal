@@ -42,7 +42,7 @@ interface SidebarProps {
   userRole: "admin" | "member" | "official" | "council"
   isRealAdmin?: boolean
   adminLevel?: string
-  onViewModeChange?: (mode: "admin" | "member" | "official" | "council") => void
+  onViewModeChange?: (mode: "admin" | "member" | "official" | "council", level?: string) => void
 }
 
 const adminNavItems = [
@@ -154,6 +154,12 @@ export function Sidebar({ userRole, isRealAdmin, adminLevel, className, onNaviga
     })
   }
 
+  const onViewChange = (role: "admin" | "member" | "official" | "council", level?: string) => {
+    if (onViewModeChange) {
+      onViewModeChange(role, level)
+    }
+  }
+
   return (
     <div className={cn("flex h-screen w-64 flex-col border-r bg-background", className)}>
       <div className="flex h-16 items-center border-b px-6">
@@ -186,19 +192,49 @@ export function Sidebar({ userRole, isRealAdmin, adminLevel, className, onNaviga
       <div className="border-t p-4 space-y-4">
         {isRealAdmin && (
           <div className="space-y-2">
-            <span className="text-sm font-medium text-muted-foreground block">View Mode</span>
-            <Button
-              variant="outline"
-              className="w-full justify-start text-sm"
-              onClick={() => {
-                if (onViewModeChange) {
-                  onViewModeChange(userRole === "admin" ? "member" : "admin")
-                }
-              }}
-            >
-              <Briefcase className="mr-2 h-4 w-4" />
-              {userRole === "admin" ? "Switch to Member View" : "Switch to Admin View"}
-            </Button>
+            <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1">View As</span>
+            <div className="grid grid-cols-1 gap-1">
+              <Button
+                variant={userRole === "admin" && (!adminLevel || adminLevel === "SUPER_ADMIN") ? "default" : "outline"}
+                size="sm"
+                className="w-full justify-start text-[11px] h-8"
+                onClick={() => onViewChange("admin", "SUPER_ADMIN")}
+              >
+                <Shield className="mr-2 h-3 w-3" /> National Admin
+              </Button>
+              <Button
+                variant={userRole === "official" && adminLevel === "STATE" ? "default" : "outline"}
+                size="sm"
+                className="w-full justify-start text-[11px] h-8"
+                onClick={() => onViewChange("official", "STATE")}
+              >
+                <Building2 className="mr-2 h-3 w-3" /> State Admin
+              </Button>
+              <Button
+                variant={userRole === "official" && adminLevel === "LOCAL_GOVERNMENT" ? "default" : "outline"}
+                size="sm"
+                className="w-full justify-start text-[11px] h-8"
+                onClick={() => onViewChange("official", "LOCAL_GOVERNMENT")}
+              >
+                <MapPin className="mr-2 h-3 w-3" /> LGA Admin
+              </Button>
+              <Button
+                variant={userRole === "official" && adminLevel === "BRANCH" ? "default" : "outline"}
+                size="sm"
+                className="w-full justify-start text-[11px] h-8"
+                onClick={() => onViewChange("official", "BRANCH")}
+              >
+                <Users className="mr-2 h-3 w-3" /> Branch Admin
+              </Button>
+              <Button
+                variant={userRole === "member" ? "default" : "outline"}
+                size="sm"
+                className="w-full justify-start text-[11px] h-8"
+                onClick={() => onViewChange("member")}
+              >
+                <LayoutDashboard className="mr-2 h-3 w-3" /> Member View
+              </Button>
+            </div>
           </div>
         )}
         <div className="flex items-center justify-between">
