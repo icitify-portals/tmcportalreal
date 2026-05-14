@@ -101,9 +101,12 @@ export const locationData = {
   },
   Kwara: {
     lgas: [
-      { name: "Ilorin East", branches: ["AGAKA","APALARA","Basin Branch","Fate Branch","ITA OLOGBIN","OLOJOKU","Osere Branch","SANI OKIN"] },
-      { name: "Ilorin South", branches: ["AL-HARAMAIN","Apalara Branch","Asa-Dam Branch","BASIN","GBIGBA ADUA","Irewolede Branch","OSE OLOHUN"] },
-      { name: "Ilorin West", branches: ["Adewole Branch","Agaka Branch","OSERE"] },
+      { name: "Ilorin West", branches: ["Osere branch", "Irewolede branch", "Asa - Dam branch"] },
+      { name: "Ilorin South", branches: ["Basin branch", "Fate Branch"] },
+      { name: "Ilorin East", branches: ["Adewole branch", "Agaka branch", "Apalara branch"] },
+      { name: "Asa", branches: ["Eyenkrin Branch"] },
+      { name: "Offa", branches: ["Offa branch"] },
+      { name: "Ifelodun", branches: ["Igbaja branch"] },
     ],
   },
   Edo: {
