@@ -1648,7 +1648,6 @@ export async function deleteProgrammeMaterial(materialId: string, programmeId: s
 }
 
 
-}
 
 export async function generateWaiverLink(programmeId: string) {
     const session = await getServerSession()
