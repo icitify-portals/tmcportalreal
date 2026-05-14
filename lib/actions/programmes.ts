@@ -756,7 +756,7 @@ export async function getAdminProgrammes(organizationId: string, type: 'MY_PROGR
 
 // --- Registration ---
 
-export async function registerForProgramme(programmeId: string, data?: z.infer<typeof RegistrationSchema>) {
+export async function registerForProgramme(programmeId: string, data?: z.infer<typeof RegistrationSchema>, waiverCode?: string) {
     const session = await getServerSession()
     
     try {
@@ -796,8 +796,24 @@ export async function registerForProgramme(programmeId: string, data?: z.infer<t
                 }
             }
             
+            // Handle Waiver Re-submission
+            if (waiverCode && programme.waiverCode && waiverCode === programme.waiverCode) {
+                const now = new Date()
+                const isPast = programme.endDate ? now > new Date(programme.endDate) : now > new Date(programme.startDate)
+                
+                await db.update(programmeRegistrations).set({
+                    status: isPast ? 'ATTENDED' : 'PAID',
+                    amountPaid: programme.amount || "0.00",
+                    paymentReference: 'WAIVER_BYPASS_UPDATE',
+                    checkInTime: isPast ? (programme.startDate || now) : null
+                }).where(eq(programmeRegistrations.id, existingReg.id))
+
+                return { success: true, registrationId: existingReg.id, isWaiver: true }
+            }
+
             // If it's a paid programme and they haven't paid yet
             if (programme.paymentRequired && parseFloat(programme.amount || "0") > 0) {
+                 // Update details if provided
                  if (data && !session?.user) {
                      const validData = RegistrationSchema.parse(data)
                      await db.update(programmeRegistrations).set({
@@ -828,9 +844,26 @@ export async function registerForProgramme(programmeId: string, data?: z.infer<t
             }
         }
 
+        // New Registration Logic
+        let initialStatus: any = programme.paymentRequired && parseFloat(programme.amount || "0") > 0 ? 'PENDING_PAYMENT' : 'REGISTERED'
+        let paymentRef = null
+        let checkInTime = null
+        
+        // Apply Waiver logic
+        if (waiverCode && programme.waiverCode && waiverCode === programme.waiverCode) {
+            const now = new Date()
+            const isPast = programme.endDate ? now > new Date(programme.endDate) : now > new Date(programme.startDate)
+            initialStatus = isPast ? 'ATTENDED' : 'PAID'
+            paymentRef = 'WAIVER_BYPASS_NEW'
+            if (isPast) checkInTime = programme.startDate || now
+        }
+
         let registrationData: any = {
             programmeId,
-            status: programme.paymentRequired && parseFloat(programme.amount || "0") > 0 ? 'PENDING_PAYMENT' : 'REGISTERED',
+            status: initialStatus,
+            paymentReference: paymentRef,
+            checkInTime: checkInTime,
+            amountPaid: (initialStatus === 'PAID' || initialStatus === 'ATTENDED') ? (programme.amount || "0.00") : "0.00"
         }
 
         if (session?.user) {
@@ -886,7 +919,7 @@ export async function registerForProgramme(programmeId: string, data?: z.infer<t
 
         const [newReg] = await db.insert(programmeRegistrations).values(registrationData).$returningId()
         
-        if (registrationData.status === 'REGISTERED') {
+        if (registrationData.status === 'REGISTERED' || registrationData.status === 'PAID' || registrationData.status === 'ATTENDED') {
             // Fetch member info for ID if exists
             const [member] = registrationData.memberId 
                 ? await db.select().from(members).where(eq(members.id, registrationData.memberId)).limit(1)
@@ -897,7 +930,7 @@ export async function registerForProgramme(programmeId: string, data?: z.infer<t
                 ...emailTemplates.programmeRegistrationReceipt(
                     registrationData.name,
                     programme.title,
-                    0,
+                    parseFloat(registrationData.amountPaid || "0"),
                     newReg.id,
                     member?.memberId || undefined
                 )
@@ -908,7 +941,8 @@ export async function registerForProgramme(programmeId: string, data?: z.infer<t
             success: true, 
             registrationId: newReg.id, 
             paymentRequired: registrationData.status === 'PENDING_PAYMENT',
-            amount: programme.amount
+            amount: programme.amount,
+            isWaiver: !!waiverCode
         }
     } catch (e) {
         console.error("Registration Error:", e)
@@ -1614,3 +1648,135 @@ export async function deleteProgrammeMaterial(materialId: string, programmeId: s
 }
 
 
+}
+
+export async function generateWaiverLink(programmeId: string) {
+    const session = await getServerSession()
+    if (!session?.user?.id) return { success: false, error: "Unauthorized" }
+
+    try {
+        const [programme] = await db.select().from(programmes).where(eq(programmes.id, programmeId)).limit(1)
+        if (!programme) return { success: false, error: "Programme not found" }
+
+        let waiverCode = programme.waiverCode
+        if (!waiverCode) {
+            waiverCode = crypto.randomBytes(12).toString("hex").toUpperCase()
+            await db.update(programmes).set({ waiverCode }).where(eq(programmes.id, programmeId))
+        }
+
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://tmcng.net"
+        const url = `${appUrl}/programmes/${programmeId}/register?waiver=${waiverCode}`
+
+        return { success: true, url, waiverCode }
+    } catch (error: any) {
+        return { success: false, error: error.message }
+    }
+}
+
+export async function bulkAdminEnrollAction(programmeId: string, participants: any[]) {
+    const session = await getServerSession()
+    if (!session?.user?.id) return { success: false, error: "Unauthorized" }
+
+    try {
+        const [programme] = await db.select().from(programmes).where(eq(programmes.id, programmeId)).limit(1)
+        if (!programme) return { success: false, error: "Programme not found" }
+
+        const now = new Date()
+        let enrolledCount = 0
+
+        for (const p of participants) {
+            // Check if participant is a member (by ID, UserID, or Email)
+            let memberId = null
+            let userId = null
+            
+            if (p.memberId) {
+                const [member] = await db.select().from(members).where(eq(members.id, p.memberId)).limit(1)
+                if (member) {
+                    memberId = member.id
+                    userId = member.userId
+                }
+            } else if (p.userId) {
+                const [member] = await db.select().from(members).where(eq(members.userId, p.userId)).limit(1)
+                if (member) {
+                    memberId = member.id
+                    userId = member.userId
+                } else {
+                    userId = p.userId
+                }
+            } else if (p.email) {
+                const [user] = await db.select().from(users).where(eq(users.email, p.email)).limit(1)
+                if (user) {
+                    userId = user.id
+                    const [member] = await db.select().from(members).where(eq(members.userId, user.id)).limit(1)
+                    if (member) memberId = member.id
+                }
+            }
+
+            // Check existing registration
+            const [existing] = await db.select().from(programmeRegistrations)
+                .where(and(
+                    eq(programmeRegistrations.programmeId, programmeId),
+                    eq(programmeRegistrations.email, p.email)
+                )).limit(1)
+
+            if (existing) {
+                if (existing.status !== 'ATTENDED') {
+                    await db.update(programmeRegistrations).set({
+                        status: 'ATTENDED',
+                        amountPaid: programme.amount || "0.00",
+                        paymentReference: 'ADMIN_OFFLINE_BYPASS',
+                        checkInTime: programme.startDate || now
+                    }).where(eq(programmeRegistrations.id, existing.id))
+                    enrolledCount++
+                }
+                continue
+            }
+
+            // Create new registration
+            await db.insert(programmeRegistrations).values({
+                id: crypto.randomUUID(),
+                programmeId,
+                userId,
+                memberId,
+                name: p.name,
+                email: p.email,
+                phone: p.phone || null,
+                gender: p.gender || 'MALE',
+                status: 'ATTENDED',
+                amountPaid: programme.amount || "0.00",
+                paymentReference: 'ADMIN_OFFLINE_BYPASS',
+                checkInTime: programme.startDate || now,
+                registeredAt: now
+            })
+            enrolledCount++
+        }
+
+        revalidatePath(`/dashboard/admin/programmes/${programmeId}/registrations`)
+        revalidatePath("/dashboard/admin/programmes")
+        
+        return { success: true, count: enrolledCount }
+    } catch (error: any) {
+        console.error("Bulk Enroll Error:", error)
+        return { success: false, error: error.message }
+    }
+}
+
+export async function getProgrammeDetailsAction(id: string) {
+    try {
+        const [programme] = await db.select({
+            id: programmes.id,
+            title: programmes.title,
+            description: programmes.description,
+            startDate: programmes.startDate,
+            endDate: programmes.endDate,
+            amount: programmes.amount,
+            paymentRequired: programmes.paymentRequired,
+            waiverCode: programmes.waiverCode
+        }).from(programmes).where(eq(programmes.id, id)).limit(1)
+        
+        if (!programme) return { success: false, error: "Programme not found" }
+        return { success: true, programme }
+    } catch (error: any) {
+        return { success: false, error: error.message }
+    }
+}

@@ -18,16 +18,20 @@ import { format } from "date-fns"
 import { ClientCurrency } from "@/components/ui/client-currency"
 import { MarkAttendanceButton } from "@/components/admin/programmes/mark-attendance-button"
 import { DeleteRegistrationButton } from "@/components/admin/programmes/delete-registration-button"
-import { markAttendance, sendSelectedCertificatesAction, toggleCheckInWaiver } from "@/lib/actions/programmes"
+import { markAttendance, sendSelectedCertificatesAction, toggleCheckInWaiver, generateWaiverLink } from "@/lib/actions/programmes"
 import { toast } from "sonner"
+import { AddParticipantsDialog } from "./add-participants-dialog"
+import { Link as LinkIcon, Copy, UserPlus } from "lucide-react"
 
 export function RegistrationsClientTable({ 
     registrations, 
     programmeId,
+    programmeTitle = "Programme",
     programmeAmount = "0.00"
 }: { 
     registrations: any[], 
     programmeId: string,
+    programmeTitle?: string,
     programmeAmount?: string | null
 }) {
     const [selectedIds, setSelectedIds] = useState<string[]>([])
@@ -93,6 +97,23 @@ export function RegistrationsClientTable({
         }
     }
 
+    const handleCopyWaiverLink = async () => {
+        setIsBulkLoading(true)
+        try {
+            const result = await generateWaiverLink(programmeId)
+            if (result.success && result.url) {
+                await navigator.clipboard.writeText(result.url)
+                toast.success("Waiver link copied to clipboard!")
+            } else {
+                toast.error(result.error || "Failed to generate waiver link")
+            }
+        } catch (error) {
+            toast.error("An error occurred")
+        } finally {
+            setIsBulkLoading(false)
+        }
+    }
+
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -122,6 +143,20 @@ export function RegistrationsClientTable({
                             </div>
                         </div>
                     )}
+                    <div className="flex items-center gap-2">
+                        <AddParticipantsDialog programmeId={programmeId} programmeTitle={programmeTitle} />
+                        <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={handleCopyWaiverLink}
+                            disabled={isBulkLoading}
+                            className="border-emerald-600 text-emerald-700 hover:bg-emerald-50 font-bold h-9"
+                            title="Copy priority registration link with payment waived"
+                        >
+                            <LinkIcon className="mr-2 h-4 w-4" />
+                            {isBulkLoading ? "Generating..." : "Copy Waiver Link"}
+                        </Button>
+                    </div>
                 </div>
                 <div className="text-xs text-muted-foreground font-medium">
                     Showing {registrations.length} registrations

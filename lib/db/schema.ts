@@ -1043,6 +1043,7 @@ export const programmes = mysqlTable("programmes", {
     rejectionReason: text("rejectionReason"),
     staticAttendanceToken: varchar("staticAttendanceToken", { length: 255 }),
     attendanceWindow: int("attendanceWindow").default(3),
+    waiverCode: varchar("waiverCode", { length: 255 }),
 
     feedbackFields: json("feedbackFields"),
     createdBy: varchar("createdBy", { length: 255 }).notNull().references(() => users.id),

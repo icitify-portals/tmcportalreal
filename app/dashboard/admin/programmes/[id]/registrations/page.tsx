@@ -29,21 +29,25 @@ import { eq } from "drizzle-orm"
 import { redirect } from "next/navigation"
 
 import { RegistrationsClientTable } from "@/components/admin/programmes/registrations-client-table"
+import { AddParticipantsDialog } from "@/components/admin/programmes/add-participants-dialog"
 
 export const dynamic = "force-dynamic"
 
-async function RegistrationsList({ programmeId, programmeAmount }: { programmeId: string, programmeAmount: string | null }) {
+async function RegistrationsList({ programmeId, programmeTitle, programmeAmount }: { programmeId: string, programmeTitle: string, programmeAmount: string | null }) {
     const registrations = await getProgrammeRegistrations(programmeId)
 
     if (registrations.length === 0) {
         return (
             <div className="p-12 text-center border-2 border-dashed rounded-lg bg-gray-50/50">
                 <p className="text-muted-foreground font-medium">No registrations yet for this programme.</p>
+                <div className="mt-4">
+                    <AddParticipantsDialog programmeId={programmeId} programmeTitle={programmeTitle} />
+                </div>
             </div>
         )
     }
 
-    return <RegistrationsClientTable registrations={registrations} programmeId={programmeId} programmeAmount={programmeAmount} />
+    return <RegistrationsClientTable registrations={registrations} programmeId={programmeId} programmeTitle={programmeTitle} programmeAmount={programmeAmount} />
 }
 
 export default async function ProgrammeRegistrationsPage({ params }: { params: Promise<{ id: string }> }) {
@@ -94,7 +98,7 @@ export default async function ProgrammeRegistrationsPage({ params }: { params: P
                 </div>
 
                 <Suspense fallback={<div className="h-64 animate-pulse bg-gray-100 rounded-lg border" />}>
-                    <RegistrationsList programmeId={id} programmeAmount={programme.amount} />
+                    <RegistrationsList programmeId={id} programmeTitle={programme.title} programmeAmount={programme.amount} />
                 </Suspense>
             </div>
         </DashboardLayout>
