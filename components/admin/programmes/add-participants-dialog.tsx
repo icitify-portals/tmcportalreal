@@ -26,7 +26,7 @@ interface AddParticipantsDialogProps {
 }
 
 interface Participant {
-    id?: string // For existing users
+    userId?: string // For existing users
     name: string
     email: string
     phone?: string
