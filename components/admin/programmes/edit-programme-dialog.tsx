@@ -78,6 +78,7 @@ export function EditProgrammeDialog({ programme, open, onOpenChange }: EditProgr
     const [officials, setOfficials] = useState<any[]>([])
     const [officeSearch, setOfficeSearch] = useState("")
     const [officialSearch, setOfficialSearch] = useState("")
+    const [applyToSeries, setApplyToSeries] = useState(false)
 
     useEffect(() => {
         if (open && programme.organizationId) {
@@ -169,7 +170,7 @@ export function EditProgrammeDialog({ programme, open, onOpenChange }: EditProgr
                 attendanceWindow: parseInt(data.attendanceWindow || "3"),
             }
 
-            const result = await updateProgramme(programme.id, payload)
+            const result = await updateProgramme(programme.id, payload, applyToSeries)
 
             if (result.success) {
                 toast.success("Programme updated successfully")
@@ -753,6 +754,24 @@ export function EditProgrammeDialog({ programme, open, onOpenChange }: EditProgr
                         </div>
 
                         <ProgrammeMaterialsManager programmeId={programme.id} />
+
+                        {programme.seriesId && programme.frequency !== 'ONCE' && (
+                            <div className="flex items-center space-x-2 mt-4 p-4 bg-emerald-50 rounded-md border border-emerald-100">
+                                <Checkbox 
+                                    id="applyToSeries" 
+                                    checked={applyToSeries}
+                                    onCheckedChange={(checked) => setApplyToSeries(checked as boolean)}
+                                />
+                                <div className="space-y-1 leading-none">
+                                    <label htmlFor="applyToSeries" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-emerald-900">
+                                        Apply changes to all future occurrences in this series
+                                    </label>
+                                    <p className="text-xs text-emerald-700">
+                                        Updates will only affect occurrences starting from {new Date(programme.startDate).toLocaleDateString()}.
+                                    </p>
+                                </div>
+                            </div>
+                        )}
 
                         <DialogFooter>
                             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>

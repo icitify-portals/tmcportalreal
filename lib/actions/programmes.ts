@@ -408,16 +408,33 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
             if (firstUser) finalCreatedBy = firstUser.id
         }
 
-        try {
-            await db.insert(programmes).values({
-                id: programmeId,
+        const programmeInstances: any[] = [];
+        const budgetInstances: any[] = [];
+        
+        const firstProgrammeId = programmeId;
+        const seriesId = crypto.randomUUID();
+
+        let currentDate = new Date(validData.startDate);
+        const endDateOriginal = validData.endDate ? new Date(validData.endDate) : null;
+        let durationMs = endDateOriginal ? endDateOriginal.getTime() - currentDate.getTime() : 0;
+
+        while (currentDate <= yearSettings.programYearEnd) {
+            const currentProgrammeId = programmeInstances.length === 0 ? firstProgrammeId : crypto.randomUUID();
+            
+            let currentEndDate = null;
+            if (endDateOriginal) {
+                currentEndDate = new Date(currentDate.getTime() + durationMs);
+            }
+
+            programmeInstances.push({
+                id: currentProgrammeId,
                 organizationId,
                 level: org.level,
                 title: validData.title,
                 description: validData.description,
                 venue: validData.venue,
-                startDate: validData.startDate,
-                endDate: validData.endDate || null,
+                startDate: new Date(currentDate),
+                endDate: currentEndDate,
                 time: validData.time,
                 targetAudience: validData.targetAudience,
                 paymentRequired: validData.paymentRequired,
@@ -427,6 +444,7 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
                 hasCertificate: validData.hasCertificate,
                 organizingOfficeId: finalOfficeId,
                 organizingOfficialId: finalOfficialId,
+                seriesId: seriesId,
                 format: validData.format,
                 meetingUrl: validData.meetingUrl || null,
                 frequency: validData.frequency,
@@ -445,61 +463,54 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
                 createdBy: finalCreatedBy,
                 createdAt: new Date(),
                 updatedAt: new Date(),
-            })
-        } catch (innerError: any) {
-            console.error("Inner Insert Error fallback:", innerError)
-            await db.insert(programmes).values({
-                id: programmeId,
-                organizationId,
-                level: org.level,
-                title: validData.title,
-                description: validData.description,
-                venue: validData.venue,
-                startDate: validData.startDate,
-                endDate: validData.endDate || null,
-                time: validData.time,
-                targetAudience: validData.targetAudience,
-                paymentRequired: validData.paymentRequired,
-                allowInstallments: validData.allowInstallments,
-                minInstallmentAmount: validData.minInstallmentAmount !== undefined && validData.minInstallmentAmount !== null ? Number(validData.minInstallmentAmount).toFixed(2) : "0.00",
-                amount: validData.amount !== undefined && validData.amount !== null ? Number(validData.amount).toFixed(2) : "0.00",
-                hasCertificate: validData.hasCertificate,
-                organizingOfficeId: null,
-                organizingOfficialId: null,
-                format: validData.format,
-                meetingUrl: validData.meetingUrl || null,
-                frequency: validData.frequency,
-                budget: validData.budget !== undefined && validData.budget !== null ? Number(validData.budget).toFixed(2) : "0.00",
-                objectives: validData.objectives || null,
-                committee: validData.committee || null,
-                isLateSubmission,
-                status: initialStatus,
-                certTemplateType: validData.certTemplateType,
-                certTmcSignature: validData.certTmcSignature || null,
-                certTmcSignatory: validData.certTmcSignatory || null,
-                certPartnerName: validData.certPartnerName || null,
-                certPartnerLogo: validData.certPartnerLogo || null,
-                certPartnerSignature: validData.certPartnerSignature || null,
-                certPartnerSignatory: validData.certPartnerSignatory || null,
-                createdBy: finalCreatedBy,
-                createdAt: new Date(),
-            })
-        }
+            });
 
-        if (validData.budget && parseFloat(validData.budget.toString()) > 0) {
-            try {
+            if (validData.budget && parseFloat(validData.budget.toString()) > 0) {
                 const totalAmount = parseFloat(validData.budget.toString());
-                await db.insert(financeBudgets).values({
+                budgetInstances.push({
                     organizationId,
-                    year: new Date(validData.startDate).getFullYear(),
+                    year: currentDate.getFullYear(),
                     title: `Budget for Programme: ${validData.title}`,
                     totalAmount: totalAmount.toString(),
                     status: 'APPROVED',
                     createdBy: finalCreatedBy,
-                    programmeId: programmeId
+                    programmeId: currentProgrammeId
                 });
+            }
+
+            if (validData.frequency === 'ONCE') break;
+
+            const nextDate = new Date(currentDate);
+            switch (validData.frequency) {
+                case 'WEEKLY': nextDate.setDate(nextDate.getDate() + 7); break;
+                case 'MONTHLY': nextDate.setMonth(nextDate.getMonth() + 1); break;
+                case 'QUARTERLY': nextDate.setMonth(nextDate.getMonth() + 3); break;
+                case 'BI-ANNUALLY': nextDate.setMonth(nextDate.getMonth() + 6); break;
+                case 'ANNUALLY': nextDate.setFullYear(nextDate.getFullYear() + 1); break;
+                default: break;
+            }
+            if (nextDate.getTime() === currentDate.getTime()) break; // Prevent infinite loops
+            currentDate = nextDate;
+        }
+
+        try {
+            await db.insert(programmes).values(programmeInstances)
+        } catch (innerError: any) {
+            console.error("Inner Insert Error fallback:", innerError)
+            // Fallback: Try without office/official IDs
+            const fallbackInstances = programmeInstances.map(p => ({
+                ...p,
+                organizingOfficeId: null,
+                organizingOfficialId: null
+            }));
+            await db.insert(programmes).values(fallbackInstances);
+        }
+
+        if (budgetInstances.length > 0) {
+            try {
+                await db.insert(financeBudgets).values(budgetInstances);
             } catch (err) {
-                console.error("Failed to add programme budget to finance module:", err);
+                console.error("Failed to add programme budgets to finance module:", err);
             }
         }
 
@@ -1251,7 +1262,7 @@ export async function cancelProgramme(programmeId: string) {
 }
 
 
-export async function updateProgramme(programmeId: string, data: Partial<z.infer<typeof ProgrammeSchema>>) {
+export async function updateProgramme(programmeId: string, data: Partial<z.infer<typeof ProgrammeSchema>>, applyToSeries?: boolean) {
     try {
         const session = await getServerSession()
         if (!session?.user?.id) return { success: false, error: "Unauthorized" }
@@ -1280,7 +1291,7 @@ export async function updateProgramme(programmeId: string, data: Partial<z.infer
             rejectionReason = null // Clear reason on re-submission
         }
 
-        await db.update(programmes).set({
+        const updatePayload = {
             title: validData.title,
             description: validData.description,
             venue: validData.venue,
@@ -1311,7 +1322,39 @@ export async function updateProgramme(programmeId: string, data: Partial<z.infer
             certPartnerSignature: validData.certPartnerSignature,
             certPartnerSignatory: validData.certPartnerSignatory,
             updatedAt: new Date()
-        }).where(eq(programmes.id, programmeId))
+        };
+
+        if (applyToSeries && current.seriesId) {
+            await db.update(programmes).set(updatePayload)
+                .where(and(
+                    eq(programmes.seriesId, current.seriesId),
+                    sql`${programmes.startDate} >= ${current.startDate}`
+                ));
+            
+            if (validData.budget !== undefined) {
+                const affectedProgrammes = await db.select({ id: programmes.id })
+                    .from(programmes)
+                    .where(and(
+                        eq(programmes.seriesId, current.seriesId),
+                        sql`${programmes.startDate} >= ${current.startDate}`
+                    ));
+                
+                const affectedIds = affectedProgrammes.map(p => p.id);
+                if (affectedIds.length > 0) {
+                     await db.update(financeBudgets)
+                         .set({ totalAmount: validData.budget.toString() })
+                         .where(inArray(financeBudgets.programmeId, affectedIds));
+                }
+            }
+        } else {
+            await db.update(programmes).set(updatePayload).where(eq(programmes.id, programmeId));
+            
+            if (validData.budget !== undefined) {
+                await db.update(financeBudgets)
+                    .set({ totalAmount: validData.budget.toString() })
+                    .where(eq(financeBudgets.programmeId, programmeId));
+            }
+        }
 
         revalidatePath("/dashboard/admin/programmes")
         return { success: true }

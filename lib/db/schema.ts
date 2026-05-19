@@ -1017,6 +1017,7 @@ export const programmes = mysqlTable("programmes", {
 
     organizingOfficeId: varchar("organizingOfficeId", { length: 255 }).references(() => offices.id),
     organizingOfficialId: varchar("organizingOfficialId", { length: 255 }).references(() => officials.id),
+    seriesId: varchar("seriesId", { length: 255 }), // Added for recurring programmes grouping
     // Year Planner Fields
     format: programmeFormatEnum.default('PHYSICAL'),
     meetingUrl: varchar("meetingUrl", { length: 500 }),
