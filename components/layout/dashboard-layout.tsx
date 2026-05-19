@@ -24,13 +24,27 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     setMounted(true)
     const savedMode = localStorage.getItem('tmc_view_mode') as "admin" | "member" | "official" | "council" | null
     const savedLevel = localStorage.getItem('tmc_view_level')
+    
+    // Safety check: if user is not actually a Super/National Admin, clear any stuck view overrides
+    const isRealAdmin = session?.user?.isSuperAdmin || (session?.user?.roles && session?.user.roles.some((r: any) => ["SUPER_ADMIN", "NATIONAL_ADMIN"].includes(r.code) || ["SYSTEM", "NATIONAL"].includes(r.jurisdictionLevel)));
+    
+    if (!isRealAdmin && (savedMode || savedLevel)) {
+        localStorage.removeItem('tmc_view_mode')
+        localStorage.removeItem('tmc_view_level')
+        document.cookie = `tmc_mock_level=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`
+        document.cookie = `tmc_mock_state=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`
+        document.cookie = `tmc_mock_lga=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`
+        document.cookie = `tmc_mock_branch=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`
+        return; // Don't apply overrides
+    }
+
     if (savedMode) {
       setOverrideRole(savedMode)
     }
     if (savedLevel) {
       setOverrideAdminLevel(savedLevel)
     }
-  }, [])
+  }, [session])
 
   // Determine role based on session data
   const isAdmin = session?.user?.isSuperAdmin || (session?.user?.roles && session.user.roles.some((r: any) => ["SUPER_ADMIN", "NATIONAL_ADMIN"].includes(r.code) || ["SYSTEM", "NATIONAL"].includes(r.jurisdictionLevel)));
