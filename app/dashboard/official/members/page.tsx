@@ -20,6 +20,7 @@ import { Suspense } from "react"
 import { notFound } from "next/navigation"
 import { getMockJurisdiction } from "@/lib/mock-jurisdiction"
 import { organizations as organizationsTable } from "@/lib/db/schema"
+import { getOrganizationAncestry } from "@/lib/org-helper"
 
 export default async function OfficialMembersPage(props: {
   searchParams: Promise<{ state?: string; lga?: string; branch?: string; search?: string; page?: string; limit?: string }>
@@ -75,8 +76,13 @@ export default async function OfficialMembersPage(props: {
     if (!officialData) return notFound()
     organization = officialData.organization
     positionLevel = officialData.positionLevel || ""
-    adminState = organization.state || ""
-    adminLga = organization.city || ""
+    
+    const ancestry = await getOrganizationAncestry(organization.id)
+    const stateOrg = ancestry.find(o => o.level === 'STATE')
+    const lgaOrg = ancestry.find(o => o.level === 'LOCAL_GOVERNMENT')
+    
+    adminState = stateOrg?.name || organization.state || ""
+    adminLga = lgaOrg?.name || organization.city || ""
   }
 
   // 3. Build conditions based on jurisdiction

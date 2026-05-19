@@ -155,7 +155,15 @@ export default async function MemberProfilePage() {
                             </div>
                             <div>
                                 <p className="opacity-60 mb-1">JURISDICTION</p>
-                                <p className="truncate">{organization?.name || "NATIONAL"}</p>
+                                {member.metadata ? (
+                                    <div className="space-y-0.5 leading-tight">
+                                        <p className="truncate font-medium">{((member.metadata as any).state) || "NATIONAL"}</p>
+                                        {((member.metadata as any).lga) && <p className="truncate text-[10px] opacity-90">{((member.metadata as any).lga)}</p>}
+                                        {((member.metadata as any).branch) && <p className="truncate text-[10px] opacity-90">{((member.metadata as any).branch)}</p>}
+                                    </div>
+                                ) : (
+                                    <p className="truncate">{organization?.name || "NATIONAL"}</p>
+                                )}
                             </div>
                         </div>
                     </CardContent>
