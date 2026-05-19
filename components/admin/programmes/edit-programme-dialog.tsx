@@ -47,7 +47,7 @@ const ProgrammeSchema = z.object({
     allowInstallments: z.boolean().default(false),
     minInstallmentAmount: z.string().default("0"),
     amount: z.string().default("0"),
-    organizingOfficeId: z.string().min(1, "Organizing Office is required"),
+    organizingOfficeId: z.string().optional(),
     organizingOfficialId: z.string().optional(),
     // New fields
     format: z.enum(['PHYSICAL', 'VIRTUAL', 'HYBRID']).default('PHYSICAL'),
