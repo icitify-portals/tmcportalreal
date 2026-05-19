@@ -33,9 +33,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   }, [])
 
   // Determine role based on session data
-  const isAdmin = session?.user?.isSuperAdmin || (session?.user?.roles && session.user.roles.length > 0 && session.user.roles.some((r: any) => r.code !== "COUNCIL"));
+  const isAdmin = session?.user?.isSuperAdmin || (session?.user?.roles && session.user.roles.some((r: any) => ["SUPER_ADMIN", "NATIONAL_ADMIN"].includes(r.code) || ["SYSTEM", "NATIONAL"].includes(r.jurisdictionLevel)));
   const isCouncil = session?.user?.roles?.some((r: any) => r.code === "COUNCIL");
-  const isOfficial = !!session?.user?.officialId;
+  const isOfficial = !!session?.user?.officialId || (session?.user?.roles && session.user.roles.some((r: any) => ["STATE_ADMIN", "LOCAL_GOVERNMENT_ADMIN", "BRANCH_ADMIN", "OFFICIAL"].includes(r.code) || ["STATE", "LOCAL_GOVERNMENT", "BRANCH"].includes(r.jurisdictionLevel)));
 
   const baseUserRole = isAdmin
     ? "admin"
