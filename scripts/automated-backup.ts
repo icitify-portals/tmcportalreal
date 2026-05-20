@@ -36,7 +36,7 @@ async function cleanupOldBackups() {
     try {
         const files = await fs.readdir(localArchiveDir);
         const now = Date.now();
-        const localRetentionMs = 7 * 24 * 60 * 60 * 1000;
+        const localRetentionMs = 5 * 24 * 60 * 60 * 1000;
 
         for (const file of files) {
             const filePath = path.join(localArchiveDir, file);
@@ -50,7 +50,7 @@ async function cleanupOldBackups() {
         console.warn("Local cleanup skipped or failed (likely no archive yet).");
     }
 
-    // 2. Wasabi Retention (14 Days)
+    // 2. Wasabi Retention (7 Days)
     if (s3Client && S3_BUCKET) {
         try {
             const now = new Date();
