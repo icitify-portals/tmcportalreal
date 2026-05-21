@@ -1348,15 +1348,17 @@ model ChatParticipant {
 }
 
 model Message {
-  id        String   @id @default(cuid())
-  chatId    String
-  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
-  senderId  String
-  sender    User     @relation(fields: [senderId], references: [id])
-  content   String?  @db.Text
-  mediaUrl  String?
-  readBy    Json?    // Array of user IDs or map of ID -> timestamp
-  createdAt DateTime @default(now())
+  id            String   @id @default(cuid())
+  chatId        String
+  chat          Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  senderId      String
+  sender        User     @relation(fields: [senderId], references: [id])
+  content       String?  @db.Text
+  mediaUrl      String?
+  readBy        Json?    // Array of user IDs or map of ID -> timestamp
+  type          String?  @default("TEXT")
+  encryptedKeys Json?
+  createdAt     DateTime @default(now())
 
   @@index([chatId])
   @@index([senderId])
