@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -18,7 +18,7 @@ export function ChatView({ chatId, chat, onBack, currentUserId }: any) {
     const [newMessage, setNewMessage] = useState("")
     const [isSending, setIsSending] = useState(false)
     const [loadingMessages, setLoadingMessages] = useState(true)
-    const messagesEndRef = React.useRef<HTMLDivElement>(null)
+    const messagesEndRef = useRef<HTMLDivElement>(null)
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
