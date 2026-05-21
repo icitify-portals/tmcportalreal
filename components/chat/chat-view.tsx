@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Loader2, Send, ArrowLeft, Lock } from "lucide-react"
+import { Loader2, Send, ArrowLeft, Lock, Paperclip, X, File, Image as ImageIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 // E2EE Imports
 import { CryptoSetupDialog } from "./crypto-setup-dialog"
@@ -16,6 +16,8 @@ export function ChatView({ chatId, chat, onBack, currentUserId }: any) {
     const [messages, setMessages] = useState<any[]>([])
     const [participants, setParticipants] = useState<any[]>([])
     const [newMessage, setNewMessage] = useState("")
+    const [attachment, setAttachment] = useState<File | null>(null)
+    const fileInputRef = useRef<HTMLInputElement>(null)
     const [isSending, setIsSending] = useState(false)
     const [loadingMessages, setLoadingMessages] = useState(true)
     const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -73,10 +75,16 @@ export function ChatView({ chatId, chat, onBack, currentUserId }: any) {
                                 // 1. Decrypt Message Key
                                 const msgKey = await cryptoLib.decryptMessageKey(msg.encryptedKeys[currentUserId], privateKey)
                                 // 2. Decrypt Content
-                                const content = await cryptoLib.decryptMessageContent(msg.content, msgKey)
-                                return { ...msg, content: content, isDecrypted: true }
+                                const contentStr = await cryptoLib.decryptMessageContent(msg.content, msgKey)
+                                let payload;
+                                try {
+                                    payload = JSON.parse(contentStr)
+                                } catch(e) {
+                                    payload = { text: contentStr }
+                                }
+                                return { ...msg, payload, isDecrypted: true, msgKey }
                             } catch (e) {
-                                return { ...msg, content: "⚠️ Decryption Failed", isDecrypted: false }
+                                return { ...msg, payload: { text: "⚠️ Decryption Failed" }, isDecrypted: false }
                             }
                         }
                         return msg
@@ -124,7 +132,7 @@ export function ChatView({ chatId, chat, onBack, currentUserId }: any) {
 
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!newMessage.trim()) return
+        if (!newMessage.trim() && !attachment) return
 
         if (!privateKey) {
             if (!isKeysSetup) {
@@ -142,8 +150,33 @@ export function ChatView({ chatId, chat, onBack, currentUserId }: any) {
             // 1. Generate Session Key
             const messageKey = await cryptoLib.generateMessageKey()
 
+            let finalMediaUrl = ""
+            if (attachment) {
+                const encryptedBlob = await cryptoLib.encryptFileBlob(attachment, messageKey)
+                const formData = new FormData()
+                formData.append("file", encryptedBlob, attachment.name)
+                formData.append("category", "chat-media")
+                
+                const uploadRes = await fetch("/api/upload", {
+                    method: "POST",
+                    body: formData
+                })
+                if (uploadRes.ok) {
+                    const data = await uploadRes.json()
+                    finalMediaUrl = data.url
+                } else {
+                    throw new Error("Failed to upload encrypted file")
+                }
+            }
+
             // 2. Encrypt Content
-            const encryptedContent = await cryptoLib.encryptMessageContent(newMessage, messageKey)
+            const payloadObj = {
+                text: newMessage,
+                mediaUrl: finalMediaUrl,
+                mimeType: attachment?.type || "",
+                fileName: attachment?.name || ""
+            }
+            const encryptedContent = await cryptoLib.encryptMessageContent(JSON.stringify(payloadObj), messageKey)
 
             // 3. Encrypt Session Key for Each Participant
             const encryptedKeys: Record<string, string> = {}
@@ -179,6 +212,8 @@ export function ChatView({ chatId, chat, onBack, currentUserId }: any) {
 
             if (res.ok) {
                 setNewMessage("")
+                setAttachment(null)
+                if (fileInputRef.current) fileInputRef.current.value = ""
                 fetchMessages()
             } else {
                 const errData = await res.json()
@@ -292,7 +327,19 @@ export function ChatView({ chatId, chat, onBack, currentUserId }: any) {
                                             <Lock className="h-3 w-3" /> Encrypted message
                                         </div>
                                     ) : (
-                                        msg.content
+                                        <div className="flex flex-col gap-2">
+                                            {msg.payload?.mediaUrl && msg.msgKey && (
+                                                <EncryptedMediaItem 
+                                                    mediaUrl={msg.payload.mediaUrl}
+                                                    mimeType={msg.payload.mimeType}
+                                                    fileName={msg.payload.fileName}
+                                                    msgKey={msg.msgKey}
+                                                />
+                                            )}
+                                            {msg.payload?.text && <div>{msg.payload.text}</div>}
+                                            {/* Legacy fallback */}
+                                            {!msg.payload && msg.content && <div>{msg.content}</div>}
+                                        </div>
                                     )}
 
                                     <div className={cn("text-[10px] mt-1 opacity-70 text-right")} suppressHydrationWarning>
@@ -306,8 +353,35 @@ export function ChatView({ chatId, chat, onBack, currentUserId }: any) {
                 <div ref={messagesEndRef} />
             </CardContent>
 
+            {attachment && (
+                <div className="p-2 border-t bg-muted/30 flex items-center gap-2 text-sm">
+                    <div className="flex-1 truncate flex items-center gap-2">
+                        <Paperclip className="h-4 w-4" />
+                        {attachment.name} ({(attachment.size / 1024 / 1024).toFixed(2)}MB)
+                    </div>
+                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
+                        setAttachment(null)
+                        if (fileInputRef.current) fileInputRef.current.value = ""
+                    }}>
+                        <X className="h-4 w-4" />
+                    </Button>
+                </div>
+            )}
             <div className="p-4 border-t bg-background">
                 <form onSubmit={handleSendMessage} className="flex gap-2">
+                    <input 
+                        type="file" 
+                        ref={fileInputRef} 
+                        className="hidden" 
+                        onChange={(e) => {
+                            if (e.target.files && e.target.files[0]) {
+                                setAttachment(e.target.files[0])
+                            }
+                        }} 
+                    />
+                    <Button type="button" variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} disabled={isSending}>
+                        <Paperclip className="h-4 w-4" />
+                    </Button>
                     <Input
                         value={newMessage}
                         onChange={e => setNewMessage(e.target.value)}
@@ -315,11 +389,58 @@ export function ChatView({ chatId, chat, onBack, currentUserId }: any) {
                         disabled={isSending}
                         autoComplete="off"
                     />
-                    <Button type="submit" size="icon" disabled={isSending || !newMessage.trim()}>
+                    <Button type="submit" size="icon" disabled={isSending || (!newMessage.trim() && !attachment)}>
                         {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                     </Button>
                 </form>
             </div>
         </Card>
+    )
+}
+
+function EncryptedMediaItem({ mediaUrl, mimeType, fileName, msgKey }: { mediaUrl: string, mimeType: string, fileName: string, msgKey: CryptoKey }) {
+    const [mediaSrc, setMediaSrc] = useState<string | null>(null)
+    const [loading, setLoading] = useState(true)
+
+    useEffect(() => {
+        const load = async () => {
+            try {
+                const res = await fetch(mediaUrl)
+                if (!res.ok) throw new Error("Failed to fetch media blob")
+                const encryptedBlob = await res.blob()
+                const decryptedBlob = await cryptoLib.decryptFileBlob(encryptedBlob, msgKey)
+                // We recreate the blob with the correct mime type
+                const typedBlob = new Blob([decryptedBlob], { type: mimeType })
+                const url = URL.createObjectURL(typedBlob)
+                setMediaSrc(url)
+            } catch (e) {
+                console.error("Failed to decrypt media", e)
+            } finally {
+                setLoading(false)
+            }
+        }
+        load()
+        return () => {
+            if (mediaSrc) URL.revokeObjectURL(mediaSrc)
+        }
+    }, [mediaUrl, msgKey])
+
+    if (loading) return <div className="h-32 w-32 flex items-center justify-center bg-muted animate-pulse rounded-md"><Loader2 className="animate-spin h-6 w-6" /></div>
+    if (!mediaSrc) return <div className="text-xs text-red-500">Failed to load media</div>
+
+    if (mimeType.startsWith('image/')) {
+        return <img src={mediaSrc} alt={fileName} className="max-w-[250px] max-h-[300px] object-cover rounded-md" />
+    }
+    if (mimeType.startsWith('video/')) {
+        return <video src={mediaSrc} controls className="max-w-[250px] max-h-[300px] rounded-md" />
+    }
+    if (mimeType.startsWith('audio/')) {
+        return <audio src={mediaSrc} controls className="max-w-[250px]" />
+    }
+    return (
+        <a href={mediaSrc} download={fileName} className="flex items-center gap-2 p-2 bg-muted/50 border rounded-md text-sm hover:bg-muted transition-colors">
+            <File className="h-4 w-4 flex-shrink-0" />
+            <span className="truncate max-w-[200px]">{fileName}</span>
+        </a>
     )
 }

@@ -289,3 +289,44 @@ export function generateRecoveryKey(): string {
     const bytes = window.crypto.getRandomValues(new Uint8Array(32));
     return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
 }
+
+// --- File Encryption ---
+
+export async function encryptFileBlob(file: File | Blob, messageKey: CryptoKey): Promise<Blob> {
+    const arrayBuffer = await file.arrayBuffer();
+    const iv = window.crypto.getRandomValues(new Uint8Array(IV_LENGTH));
+
+    const encrypted = await window.crypto.subtle.encrypt(
+        {
+            name: ALGO_AES,
+            iv: iv as BufferSource
+        },
+        messageKey,
+        arrayBuffer as BufferSource
+    );
+
+    // Combine IV and Ciphertext
+    const combined = new Uint8Array(iv.length + encrypted.byteLength);
+    combined.set(iv);
+    combined.set(new Uint8Array(encrypted), iv.length);
+
+    return new Blob([combined], { type: 'application/octet-stream' });
+}
+
+export async function decryptFileBlob(encryptedBlob: Blob, messageKey: CryptoKey): Promise<Blob> {
+    const arrayBuffer = await encryptedBlob.arrayBuffer();
+    const combined = new Uint8Array(arrayBuffer);
+    const iv = combined.slice(0, IV_LENGTH);
+    const ciphertext = combined.slice(IV_LENGTH);
+
+    const decrypted = await window.crypto.subtle.decrypt(
+        {
+            name: ALGO_AES,
+            iv: iv as BufferSource
+        },
+        messageKey,
+        ciphertext as BufferSource
+    );
+
+    return new Blob([decrypted]);
+}
