@@ -79,6 +79,7 @@ export default function MessagesClientPage() {
                 {selectedChatId ? (
                     <ChatView
                         chatId={selectedChatId}
+                        chat={chats.find(c => c.id === selectedChatId)}
                         onBack={() => setSelectedChatId(null)}
                         currentUserId={session?.user?.id}
                     />

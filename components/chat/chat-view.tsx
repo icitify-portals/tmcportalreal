@@ -12,12 +12,21 @@ import { PinResetDialog } from "./pin-reset-dialog"
 import * as cryptoLib from "@/lib/crypto"
 import { toast } from "sonner"
 
-export function ChatView({ chatId, onBack, currentUserId }: any) {
+export function ChatView({ chatId, chat, onBack, currentUserId }: any) {
     const [messages, setMessages] = useState<any[]>([])
     const [participants, setParticipants] = useState<any[]>([])
     const [newMessage, setNewMessage] = useState("")
     const [isSending, setIsSending] = useState(false)
     const [loadingMessages, setLoadingMessages] = useState(true)
+    const messagesEndRef = React.useRef<HTMLDivElement>(null)
+
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+    }
+
+    useEffect(() => {
+        scrollToBottom()
+    }, [messages])
 
     // Crypto State
     const [isKeysSetup, setIsKeysSetup] = useState<boolean | null>(null) // null = checking
@@ -180,6 +189,13 @@ export function ChatView({ chatId, onBack, currentUserId }: any) {
         }
     }
 
+    const getChatName = () => {
+        if (!chat) return "Chat"
+        if (chat.isGroup) return chat.name || "Group"
+        const other = chat.participants?.find((p: any) => p.id !== currentUserId)
+        return other?.name || "Unknown User"
+    }
+
     // -- RENDER STATES --
 
     // 1. Loading
@@ -241,7 +257,7 @@ export function ChatView({ chatId, onBack, currentUserId }: any) {
                 </Button>
                 <div>
                     <CardTitle className="text-base flex items-center gap-2">
-                        Chat
+                        {getChatName()}
                         <Lock className="h-3 w-3 text-green-500" />
                     </CardTitle>
                 </div>
@@ -283,6 +299,7 @@ export function ChatView({ chatId, onBack, currentUserId }: any) {
                         )
                     })
                 )}
+                <div ref={messagesEndRef} />
             </CardContent>
 
             <div className="p-4 border-t bg-background">
