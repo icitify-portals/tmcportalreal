@@ -254,14 +254,16 @@ export async function POST(request: NextRequest) {
             // Existing logic to check 1-on-1 existence could go here
         }
 
-        const newChatResult = await db.insert(chats).values({
+        const { v4: uuidv4 } = require("uuid")
+        const newChatId = uuidv4()
+
+        await db.insert(chats).values({
+            id: newChatId,
             name: body.isGroup ? body.name || "New Group" : null,
             isGroup: body.isGroup,
             createdAt: new Date(),
             updatedAt: new Date()
-        }).$returningId()
-
-        const newChatId = newChatResult[0].id
+        })
 
         const participantsToAdd = [
             {
