@@ -143,7 +143,10 @@ export function ChatList({ chats, isLoading, selectedChatId, onSelectChat, onCha
                                                 className="flex items-center gap-2 p-2 hover:bg-muted rounded cursor-pointer"
                                                 onClick={() => toggleUser(user.id)}
                                             >
-                                                <Checkbox checked={selectedUserIds.includes(user.id)} />
+                                                <Checkbox 
+                                                    checked={selectedUserIds.includes(user.id)} 
+                                                    onCheckedChange={() => toggleUser(user.id)}
+                                                />
                                                 <Avatar className="h-6 w-6">
                                                     <AvatarImage src={user.image} />
                                                     <AvatarFallback>{user.name[0]}</AvatarFallback>

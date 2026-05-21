@@ -180,6 +180,10 @@ export function ChatView({ chatId, chat, onBack, currentUserId }: any) {
             if (res.ok) {
                 setNewMessage("")
                 fetchMessages()
+            } else {
+                const errData = await res.json()
+                toast.error(errData.error || "Failed to send message")
+                console.error("Message send error:", errData)
             }
         } catch (error) {
             console.error("Failed to send", error)
