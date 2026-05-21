@@ -118,7 +118,12 @@ export function ChatView({ chatId, onBack, currentUserId }: any) {
         if (!newMessage.trim()) return
 
         if (!privateKey) {
-            toast.error("Please unlock your secure keys first")
+            if (!isKeysSetup) {
+                setShowSetup(true)
+                toast.error("Please set up your secure keys to start chatting")
+            } else {
+                toast.error("Please unlock your secure keys first")
+            }
             return
         }
 

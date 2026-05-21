@@ -62,6 +62,10 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: "User not found" }, { status: 404 })
         }
 
+        if (!user.publicKey) {
+            return NextResponse.json({ error: "Keys not found" }, { status: 404 })
+        }
+
         // Return keys (if they exist) so client knows if setup is done
         return NextResponse.json(user)
 
