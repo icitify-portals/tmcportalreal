@@ -1,7 +1,7 @@
 "use server"
 
 import { db } from "@/lib/db"
-import { programmes, offices, organizations } from "@/lib/db/schema"
+import { programmes, offices, organizations, financeBudgets } from "@/lib/db/schema"
 import { getServerSession } from "@/lib/session"
 import { revalidatePath } from "next/cache"
 import * as XLSX from "xlsx"
@@ -188,7 +188,7 @@ export async function importYearPlannerData(data: PlannerPreviewItem[]) {
                 initialStatus = 'PENDING_NATIONAL'
             }
 
-            await db.insert(programmes).values({
+            const [insertedProg] = await db.insert(programmes).values({
                 organizationId,
                 title: item.title,
                 description: item.title,
@@ -207,7 +207,24 @@ export async function importYearPlannerData(data: PlannerPreviewItem[]) {
                 committee: item.committee,
 
                 createdBy: session.user.id
-            })
+            }).$returningId()
+
+            if (item.budget && !isNaN(parseFloat(item.budget.toString())) && parseFloat(item.budget.toString()) > 0) {
+                try {
+                    await db.insert(financeBudgets).values({
+                        organizationId,
+                        year: new Date(item.startDate).getFullYear() || new Date().getFullYear(),
+                        title: `Budget for Programme: ${item.title}`,
+                        totalAmount: parseFloat(item.budget.toString()).toFixed(2),
+                        status: 'APPROVED',
+                        createdBy: session.user.id,
+                        programmeId: insertedProg.id
+                    });
+                } catch (err) {
+                    console.error("Failed to insert budget for imported programme:", err);
+                }
+            }
+
             count++;
         }
 
