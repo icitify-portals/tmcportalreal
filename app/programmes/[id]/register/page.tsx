@@ -115,7 +115,11 @@ function RegistrationContent() {
                     router.push(`/dashboard/member/programmes`)
                 }
             } else if (result.registrationId) {
-                toast.info("You are already registered.")
+                if (result.status === 'PARTIALLY_PAID' || result.status === 'PENDING_PAYMENT') {
+                    toast.info(result.error || "Incomplete registration found. Redirecting to payment slip...")
+                } else {
+                    toast.info(result.error || "You are already registered.")
+                }
                 router.push(`/programmes/registrations/${result.registrationId}/slip`)
             } else {
                 toast.error(result.error || "Failed to register")

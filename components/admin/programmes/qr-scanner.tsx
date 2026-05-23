@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Html5QrcodeScanner } from "html5-qrcode"
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { CheckCircle2, XCircle, Loader2, User, Mail, CreditCard, ShieldCheck } from "lucide-react"
@@ -25,13 +25,19 @@ export function QRScanner({ programmeId }: { programmeId: string }) {
             handleVerify(regId)
         }
 
-        const scanner = new Html5QrcodeScanner(
-            "reader",
-            { fps: 10, qrbox: { width: 250, height: 250 } },
-            false
-        )
+        let scanner: any = null;
 
-        scanner.render(onScanSuccess, onScanFailure)
+        import("html5-qrcode").then((module) => {
+            scanner = new module.Html5QrcodeScanner(
+                "reader",
+                { fps: 10, qrbox: { width: 250, height: 250 } },
+                false
+            )
+
+            scanner.render(onScanSuccess, onScanFailure)
+        }).catch(err => {
+            console.error("Failed to load html5-qrcode", err);
+        })
 
         function onScanSuccess(decodedText: string) {
             let regId = decodedText
@@ -46,7 +52,7 @@ export function QRScanner({ programmeId }: { programmeId: string }) {
             
             setScanResult(regId)
             handleVerify(regId)
-            scanner.clear()
+            if (scanner) scanner.clear()
         }
 
         function onScanFailure(error: any) {
@@ -54,7 +60,9 @@ export function QRScanner({ programmeId }: { programmeId: string }) {
         }
 
         return () => {
-            scanner.clear().catch(e => console.error("Scanner cleanup error", e))
+            if (scanner) {
+                scanner.clear().catch((e: any) => console.error("Scanner cleanup error", e))
+            }
         }
     }, [])
 

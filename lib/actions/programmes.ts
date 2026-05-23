@@ -839,11 +839,10 @@ export async function registerForProgramme(programmeId: string, data?: z.infer<t
                  }
                  
                  return { 
-                    success: true, 
-                    registrationId: existingReg.id, 
-                    paymentRequired: true,
-                    amount: programme.amount,
-                    isResume: true
+                    success: false, 
+                    error: "Incomplete registration found. Redirecting to payment slip...",
+                    registrationId: existingReg.id,
+                    status: existingReg.status
                 }
             }
 
@@ -851,7 +850,8 @@ export async function registerForProgramme(programmeId: string, data?: z.infer<t
             return { 
                 success: false, 
                 error: "You have already registered for this programme.",
-                registrationId: existingReg.id
+                registrationId: existingReg.id,
+                status: existingReg.status
             }
         }
 

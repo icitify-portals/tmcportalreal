@@ -95,10 +95,25 @@ async function MyProgrammesList() {
                         
                         {reg.status === 'PENDING_PAYMENT' && (
                             <Button size="sm" className="w-full bg-orange-600 hover:bg-orange-700" asChild>
-                                <Link href={`/programmes/registrations/${reg.id}/verify`}>
+                                <Link href={`/programmes/registrations/${reg.id}/slip`}>
                                     <CreditCard className="mr-2 h-4 w-4" /> Pay Now
                                 </Link>
                             </Button>
+                        )}
+
+                        {reg.status === 'PARTIALLY_PAID' && (
+                            <div className="flex flex-wrap gap-2 w-full">
+                                <Button size="sm" className="flex-1 bg-orange-600 hover:bg-orange-700" asChild>
+                                    <Link href={`/programmes/registrations/${reg.id}/slip`}>
+                                        <CreditCard className="mr-2 h-4 w-4" /> Pay Balance
+                                    </Link>
+                                </Button>
+                                <Button variant="outline" size="sm" className="flex-1 border-green-200 text-green-700 hover:bg-green-50" asChild>
+                                    <Link href={`/programmes/registrations/${reg.id}/slip`} target="_blank">
+                                        <Printer className="mr-2 h-4 w-4" /> Receipt
+                                    </Link>
+                                </Button>
+                            </div>
                         )}
 
                         {programme?.hasCertificate && (reg.status === 'REGISTERED' || reg.status === 'PAID' || reg.status === 'ATTENDED') ? (
