@@ -218,7 +218,9 @@ export async function importYearPlannerData(data: PlannerPreviewItem[]) {
                         totalAmount: parseFloat(item.budget.toString()).toFixed(2),
                         status: 'APPROVED',
                         createdBy: session.user.id,
-                        programmeId: insertedProg.id
+                        programmeId: insertedProg.id,
+                        createdAt: new Date(),
+                        updatedAt: new Date()
                     });
                 } catch (err) {
                     console.error("Failed to insert budget for imported programme:", err);

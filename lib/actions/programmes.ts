@@ -474,7 +474,9 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
                     totalAmount: totalAmount.toString(),
                     status: 'APPROVED',
                     createdBy: finalCreatedBy,
-                    programmeId: currentProgrammeId
+                    programmeId: currentProgrammeId,
+                    createdAt: new Date(),
+                    updatedAt: new Date()
                 });
             }
 

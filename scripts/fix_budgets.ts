@@ -37,7 +37,9 @@ async function fixBudgets() {
                     totalAmount: totalAmount,
                     status: 'APPROVED',
                     createdBy: prog.createdBy,
-                    programmeId: prog.id
+                    programmeId: prog.id,
+                    createdAt: new Date(),
+                    updatedAt: new Date()
                 });
                 console.log(`✅ Created budget for programme: ${prog.title} (ID: ${prog.id})`);
                 createdCount++;
