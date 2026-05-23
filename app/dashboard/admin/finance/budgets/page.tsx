@@ -12,6 +12,7 @@ import { db } from "@/lib/db"
 import { organizations } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
 import { JurisdictionFilter } from "../analytics/jurisdiction-filter"
+import { BudgetsTable } from "@/components/admin/finance/budgets-table"
 
 export default async function BudgetsPage({
     searchParams
@@ -64,53 +65,13 @@ export default async function BudgetsPage({
                     <CreateBudgetDialog organizationId={organizationId} />
                 </div>
 
-                <div className="grid gap-4">
-                    {budgets.length === 0 ? (
-                        <Card>
-                            <CardContent className="p-8 text-center text-muted-foreground">
-                                No budgets found for this organization. Create one to get started.
-                            </CardContent>
-                        </Card>
-                    ) : budgets.map((budget) => (
-                        <Card key={budget.id}>
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <div className="space-y-1">
-                                    <CardTitle className="text-xl">{budget.title}</CardTitle>
-                                    <CardDescription>Year: {budget.year} • Created by {budget.creator?.name}</CardDescription>
-                                </div>
-                                <Badge variant={budget.status === 'APPROVED' ? 'default' : 'secondary'}>
-                                    {budget.status}
-                                </Badge>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="mt-2 space-y-4">
-                                    <div className="text-2xl font-bold">{formatCurrency(parseFloat(budget.totalAmount))}</div>
-
-                                    <div className="border rounded-md p-4">
-                                        <h4 className="text-sm font-semibold mb-2">Line Items</h4>
-                                        <ul className="space-y-2">
-                                            {budget.items.map((item: any) => (
-                                                <li key={item.id} className="flex justify-between text-sm">
-                                                    <span>{item.category}: {item.description}</span>
-                                                    <span>{formatCurrency(parseFloat(item.amount))}</span>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </div>
-
-                                    {budget.status !== 'APPROVED' && (
-                                        <form action={async () => {
-                                            "use server"
-                                            await approveBudget(budget.id)
-                                        }}>
-                                            <Button size="sm">Approve Budget</Button>
-                                        </form>
-                                    )}
-                                </div>
-                            </CardContent>
-                        </Card>
-                    ))}
-                </div>
+                <BudgetsTable 
+                    budgets={budgets} 
+                    approveAction={async (id) => {
+                        "use server"
+                        return await approveBudget(id)
+                    }} 
+                />
             </div>
     )
 }
