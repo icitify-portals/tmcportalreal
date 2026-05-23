@@ -27,7 +27,7 @@ export default async function BudgetsPage({
     if (!organizationId) {
         // Try to default to TMC Headquarters first
         const [hqOrg] = await db.select().from(organizations)
-            .where(eq(organizations.name, 'TMC Headquarters'))
+            .where(eq(organizations.name, 'The Muslim Congress (National)'))
             .limit(1)
         
         if (hqOrg) {
