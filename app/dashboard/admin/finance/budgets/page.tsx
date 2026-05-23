@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { formatCurrency } from "@/lib/utils"
 import { db } from "@/lib/db"
 import { organizations } from "@/lib/db/schema"
+import { eq } from "drizzle-orm"
 import { JurisdictionFilter } from "../analytics/jurisdiction-filter"
 
 export default async function BudgetsPage({
@@ -24,8 +25,17 @@ export default async function BudgetsPage({
     let organizationId = orgId || ""
 
     if (!organizationId) {
-        const [firstOrg] = await db.select().from(organizations).limit(1)
-        if (firstOrg) organizationId = firstOrg.id
+        // Try to default to TMC Headquarters first
+        const [hqOrg] = await db.select().from(organizations)
+            .where(eq(organizations.name, 'TMC Headquarters'))
+            .limit(1)
+        
+        if (hqOrg) {
+            organizationId = hqOrg.id
+        } else {
+            const [firstOrg] = await db.select().from(organizations).limit(1)
+            if (firstOrg) organizationId = firstOrg.id
+        }
     }
 
     const budgets = await getBudgets(organizationId || "") || []
