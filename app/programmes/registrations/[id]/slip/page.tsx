@@ -1,4 +1,7 @@
 import { getRegistrationDetails, verifyProgrammeRegistrationPayment } from "@/lib/actions/programmes"
+import { db } from "@/lib/db"
+import { members, organizations } from "@/lib/db/schema"
+import { eq } from "drizzle-orm"
 import { redirect } from "next/navigation"
 import Image from "next/image"
 import { MapPin, Calendar, Clock, User, ShieldCheck, Mail, Phone, CreditCard, Printer } from "lucide-react"
@@ -15,6 +18,32 @@ export default async function AccessSlipPage({ params }: { params: Promise<{ id:
     if (!registration) {
         redirect("/programmes")
         return null // unreachable but satisfies TS
+    }
+
+    let displayState = registration.state || ""
+    let displayLga = registration.lga || ""
+    let displayBranch = registration.branch || ""
+
+    if ((!displayState || !displayLga || !displayBranch) && registration.memberId) {
+        try {
+            const [memberOrg] = await db.select({
+                state: organizations.state,
+                city: organizations.city,
+                name: organizations.name,
+            })
+            .from(members)
+            .innerJoin(organizations, eq(members.organizationId, organizations.id))
+            .where(eq(members.id, registration.memberId))
+            .limit(1)
+
+            if (memberOrg) {
+                displayState = displayState || memberOrg.state || ""
+                displayLga = displayLga || memberOrg.city || ""
+                displayBranch = displayBranch || memberOrg.name || ""
+            }
+        } catch (error) {
+            console.error("Error fetching member org:", error)
+        }
     }
 
     // Auto-verify if pending and has a reference (Self-healing UX)
@@ -41,32 +70,37 @@ export default async function AccessSlipPage({ params }: { params: Promise<{ id:
     const minInstallment = parseFloat(registration.programme.minInstallmentAmount || "0")
 
     return (
-        <div className="min-h-screen bg-gray-50 py-12 px-4 print:bg-white print:py-0 print:px-0">
+        <div className="min-h-screen bg-gray-50 py-12 px-4 print:bg-white print:py-0 print:px-0 flex justify-center print:block print:w-full">
             <style dangerouslySetInnerHTML={{ __html: `
                 @media print {
                     @page { 
-                        size: portrait; 
-                        margin: 10mm; 
+                        size: A4 portrait; 
+                        margin: 0; 
                     }
                     body { 
                         -webkit-print-color-adjust: exact !important; 
                         print-color-adjust: exact !important;
                         background: white !important;
-                        height: auto !important;
-                        min-height: 0 !important;
+                        height: 100vh !important;
+                        min-height: 100vh !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        overflow: hidden !important;
                     }
                     .print-card { 
                         width: 100% !important; 
                         max-width: 100% !important; 
-                        border: 1px solid #e5e7eb !important; 
+                        border: none !important; 
                         box-shadow: none !important;
                         margin: 0 !important;
-                        border-radius: 12px !important;
+                        border-radius: 0 !important;
                         page-break-inside: avoid !important;
+                        transform: scale(0.95);
+                        transform-origin: top center;
                     }
-                    .print-p-4 { padding: 1rem !important; }
-                    .print-gap-4 { gap: 1rem !important; }
-                    .print-mt-4 { margin-top: 1rem !important; }
+                    .print-p-4 { padding: 0.75rem !important; }
+                    .print-gap-4 { gap: 0.75rem !important; }
+                    .print-mt-4 { margin-top: 0.75rem !important; }
                     .no-print { display: none !important; }
                 }
             `}} />
@@ -233,13 +267,13 @@ export default async function AccessSlipPage({ params }: { params: Promise<{ id:
                                 <div className="space-y-1">
                                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">State / LGA</p>
                                     <p className="font-medium text-gray-600 text-sm">
-                                        {registration.state || "N/A"} {registration.lga ? `/ ${registration.lga}` : ""}
+                                        {displayState || "N/A"} {displayLga ? `/ ${displayLga}` : ""}
                                     </p>
                                 </div>
-                                {registration.branch && (
+                                {displayBranch && (
                                     <div className="space-y-1 col-span-2">
                                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Branch/Unit</p>
-                                        <p className="font-medium text-gray-600 text-sm">{registration.branch}</p>
+                                        <p className="font-medium text-gray-600 text-sm">{displayBranch}</p>
                                     </div>
                                 )}
                             </div>
