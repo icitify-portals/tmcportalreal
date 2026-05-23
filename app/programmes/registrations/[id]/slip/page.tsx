@@ -31,7 +31,9 @@ export default async function AccessSlipPage({ params }: { params: Promise<{ id:
     const verificationUrl = `${appUrl}/programmes/verify/${registration.id}?hash=${registration.securityHash}`
     const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(verificationUrl)}`
 
-    const isPending = (registration.status === 'PENDING_PAYMENT' || registration.status === 'PARTIALLY_PAID') && !registration.checkInWaiver
+    const isUnpaid = registration.status === 'PENDING_PAYMENT' && !registration.checkInWaiver
+    const isPartiallyPaid = registration.status === 'PARTIALLY_PAID' && !registration.checkInWaiver
+    const isPending = isUnpaid || isPartiallyPaid
 
     const totalAmount = parseFloat(registration.programme.amount || "0")
     const paidAmount = parseFloat(registration.amountPaid || "0")
@@ -71,7 +73,7 @@ export default async function AccessSlipPage({ params }: { params: Promise<{ id:
             <div className="max-w-3xl mx-auto bg-white border-2 border-gray-200 rounded-2xl shadow-xl overflow-hidden print:shadow-none print:border-1 print:max-w-full relative print-card">
                 
                 {/* Unpaid Watermark/Overlay for print protection */}
-                {isPending && (
+                {isUnpaid && (
                     <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/95 backdrop-blur-sm print:bg-white print:backdrop-blur-none">
                         <div className="max-w-md w-full p-8 text-center space-y-6">
                             <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mx-auto">
@@ -106,6 +108,33 @@ export default async function AccessSlipPage({ params }: { params: Promise<{ id:
                     </div>
                 )}
 
+                {/* Partial Payment Banner */}
+                {isPartiallyPaid && (
+                    <div className="bg-amber-100 p-6 text-center border-b-2 border-amber-200 print:bg-white print:border-b-0 print:border-t-2 print:p-4">
+                        <div className="max-w-xl mx-auto space-y-4">
+                            <h2 className="text-xl font-bold text-amber-900 print:text-gray-900">
+                                Partial Payment Receipt
+                            </h2>
+                            <p className="text-amber-800 text-sm print:text-gray-600">
+                                You have paid ₦{paidAmount} out of ₦{totalAmount}. 
+                                <br className="hidden print:block" />
+                                <strong className="print:text-gray-900">Please pay the remaining balance of ₦{balance}.</strong>
+                                <br />
+                                <span className="text-red-600 font-bold">Disclaimer: This does not grant entry until full payment is made.</span>
+                            </p>
+                            <div className="flex flex-col gap-3 pt-2 print:hidden justify-center items-center">
+                                <ResumePaymentButton 
+                                    registrationId={registration.id} 
+                                    balance={balance}
+                                    minInstallmentAmount={minInstallment}
+                                />
+                                <VerifyPaymentStatusButton registrationId={registration.id} reference={registration.paymentReference || undefined} />
+                                <RefreshButton />
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* Header with Logo */}
                 <div className="bg-green-700 text-white p-8 print:p-6 flex justify-between items-center relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl" />
@@ -122,13 +151,15 @@ export default async function AccessSlipPage({ params }: { params: Promise<{ id:
                             </div>
                             <div>
                                 <h1 className="text-xl font-bold tracking-tight">THE MUSLIM CONGRESS</h1>
-                                <p className="text-xs text-green-100 font-medium tracking-widest uppercase">Official Programme Access Pass</p>
+                                <p className="text-xs text-green-100 font-medium tracking-widest uppercase">
+                                    {isPartiallyPaid ? 'Official Payment Receipt' : 'Official Programme Access Pass'}
+                                </p>
                             </div>
                         </div>
                     </div>
                     <div className="text-right relative z-10">
                         <Badge variant="outline" className="bg-white/20 border-white/30 text-white text-[10px] font-bold uppercase tracking-widest">
-                            {registration.status === 'PAID' ? 'CONFIRMED' : isPending ? 'PENDING' : 'ACCESS GRANTED'}
+                            {registration.status === 'PAID' ? 'CONFIRMED' : isPartiallyPaid ? 'PARTIALLY PAID' : isPending ? 'PENDING' : 'ACCESS GRANTED'}
                         </Badge>
                     </div>
                 </div>
@@ -153,7 +184,7 @@ export default async function AccessSlipPage({ params }: { params: Promise<{ id:
                         <div className="text-center">
                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Scan to Verify</p>
                             <div className="p-2 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50">
-                                {!isPending ? (
+                                {!isUnpaid ? (
                                     <Image src={qrCodeUrl} alt="Verification QR Code" width={120} height={120} />
                                 ) : (
                                     <div className="w-[120px] h-[120px] flex items-center justify-center bg-gray-200 rounded-lg">
@@ -166,7 +197,7 @@ export default async function AccessSlipPage({ params }: { params: Promise<{ id:
                         <div className="mt-auto pt-4 text-center">
                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Security Key</p>
                             <code className="text-lg font-mono font-bold text-green-700 tracking-tighter">
-                                {!isPending ? registration.securityHash : "********"}
+                                {!isUnpaid ? registration.securityHash : "********"}
                             </code>
                         </div>
                     </div>
@@ -272,12 +303,13 @@ export default async function AccessSlipPage({ params }: { params: Promise<{ id:
 
                 <div className="bg-gray-50 p-6 border-t border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-4 print:hidden">
                     <p className="text-xs text-gray-400 italic">
-                        {isPending 
+                        {isUnpaid 
                             ? "Payment is required to validate this access slip."
+                            : isPartiallyPaid ? "This receipt does not grant entry. Full payment required."
                             : "Please present this slip at the venue for entry."}
                     </p>
                     <div className="flex items-center gap-3">
-                        {!isPending && <PrintButton />}
+                        {!isUnpaid && <PrintButton />}
                     </div>
                 </div>
             </div>

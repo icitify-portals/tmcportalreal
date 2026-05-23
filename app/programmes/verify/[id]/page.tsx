@@ -26,6 +26,11 @@ export default async function PublicVerifyPage({
     const isValid = hash === expectedHash
 
     const isPaid = registration.status === 'PAID' || registration.status === 'ATTENDED'
+    const isPartiallyPaid = registration.status === 'PARTIALLY_PAID'
+
+    const totalAmount = parseFloat(registration.programme.amount || "0")
+    const paidAmount = parseFloat(registration.amountPaid || "0")
+    const balance = Math.max(0, totalAmount - paidAmount)
     const hasCheckedIn = !!registration.checkInTime
     const hasCheckedOut = !!registration.checkOutTime
 
@@ -33,11 +38,15 @@ export default async function PublicVerifyPage({
         <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
             <div className="max-w-md w-full bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100">
                 {/* Status Header */}
-                <div className={`p-8 text-center ${isValid && isPaid ? 'bg-green-600' : 'bg-red-600'} text-white`}>
+                <div className={`p-8 text-center ${isValid && isPaid ? 'bg-green-600' : (isValid && isPartiallyPaid ? 'bg-amber-500' : 'bg-red-600')} text-white`}>
                     <div className="flex justify-center mb-4">
                         {isValid && isPaid ? (
                             <div className="bg-white/20 p-3 rounded-full backdrop-blur-md">
                                 <BadgeCheck className="w-12 h-12" />
+                            </div>
+                        ) : isValid && isPartiallyPaid ? (
+                            <div className="bg-white/20 p-3 rounded-full backdrop-blur-md">
+                                <ShieldCheck className="w-12 h-12" />
                             </div>
                         ) : (
                             <div className="bg-white/20 p-3 rounded-full backdrop-blur-md">
@@ -46,7 +55,7 @@ export default async function PublicVerifyPage({
                         )}
                     </div>
                     <h1 className="text-2xl font-bold uppercase tracking-tight">
-                        {isValid && isPaid ? 'Entry Verified' : !isValid ? 'Invalid Slip' : 'Payment Required'}
+                        {isValid && isPaid ? 'Entry Verified' : isValid && isPartiallyPaid ? 'Partially Paid' : !isValid ? 'Invalid Slip' : 'Payment Required'}
                     </h1>
                     <p className="text-white/80 text-sm mt-1">
                         TMC Programme Access Control
@@ -99,6 +108,18 @@ export default async function PublicVerifyPage({
                         </div>
                     </div>
 
+                    {isValid && isPartiallyPaid && (
+                        <div className="bg-amber-50 rounded-2xl p-5 border border-amber-100 space-y-2 mt-4 text-center">
+                            <p className="text-amber-800 font-medium text-sm">
+                                Outstanding Balance
+                            </p>
+                            <p className="text-amber-900 font-bold text-2xl">
+                                ₦{balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </p>
+                            <p className="text-xs text-amber-700">Please direct attendee to complete payment.</p>
+                        </div>
+                    )}
+
                     {/* Attendance Logs */}
                     {(hasCheckedIn || hasCheckedOut) && (
                         <div className="bg-blue-50 rounded-2xl p-5 border border-blue-100 space-y-4">
@@ -150,7 +171,7 @@ export default async function PublicVerifyPage({
                     <div className="pt-6 border-t border-gray-100 flex items-center justify-between">
                         <div className="flex flex-col">
                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Status</p>
-                            <Badge variant={isPaid ? 'default' : 'destructive'} className={isPaid ? 'bg-green-100 text-green-700 hover:bg-green-100' : ''}>
+                            <Badge variant={isPaid ? 'default' : isPartiallyPaid ? 'secondary' : 'destructive'} className={isPaid ? 'bg-green-100 text-green-700 hover:bg-green-100' : isPartiallyPaid ? 'bg-amber-100 text-amber-700 hover:bg-amber-100' : ''}>
                                 {registration.status}
                             </Badge>
                         </div>
