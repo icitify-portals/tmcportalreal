@@ -1,35 +1,55 @@
-
 import { db } from "@/lib/db";
-import { sql } from "drizzle-orm";
+import { programmes } from "@/lib/db/schema";
+import { eq, and } from "drizzle-orm";
+
+export const dynamic = "force-dynamic";
 
 export async function GET() {
     try {
-        console.log("1. Testing connection...");
-        await db.execute(sql`SELECT 1`);
-        console.log("Connection OK.");
+        console.log("Safely looking for test programmes to delete...");
 
-        console.log("2. Testing write permissions (create simple table)...");
-        await db.execute(sql`CREATE TABLE IF NOT EXISTS test_simple_debug (id int)`);
-        console.log("Write OK.");
+        // Safety criteria based on exact match of what was requested to be removed
+        const targetProgrammes = await db.select({
+            id: programmes.id,
+            title: programmes.title,
+            format: programmes.format,
+            venue: programmes.venue,
+            frequency: programmes.frequency,
+            status: programmes.status
+        }).from(programmes).where(
+            and(
+                eq(programmes.title, "Test programme"),
+                eq(programmes.format, "VIRTUAL"),
+                eq(programmes.venue, "Virtual Room"),
+                eq(programmes.frequency, "ONCE")
+            )
+        );
 
-        console.log("3. Creating system_settings...");
-        await db.execute(sql`
-            CREATE TABLE IF NOT EXISTS system_settings (
-                id varchar(255) PRIMARY KEY,
-                settingKey varchar(100) NOT NULL UNIQUE,
-                settingValue text,
-                category enum('EMAIL', 'NOTIFICATION', 'GENERAL', 'AI') NOT NULL,
-                isEncrypted boolean DEFAULT false,
-                description varchar(500),
-                updatedBy varchar(255),
-                updatedAt timestamp(3) DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
-                createdAt timestamp(3) DEFAULT CURRENT_TIMESTAMP(3)
-            );
-        `);
+        if (targetProgrammes.length === 0) {
+            return new Response(JSON.stringify({ 
+                success: true, 
+                message: "No test programmes matching the exact criteria were found." 
+            }), { status: 200, headers: { "Content-Type": "application/json" } });
+        }
 
-        return new Response("Success: system_settings table created.", { status: 200 });
+        let deletedCount = 0;
+        const deletedIds = [];
+
+        // Delete each found record one by one
+        for (const p of targetProgrammes) {
+            await db.delete(programmes).where(eq(programmes.id, p.id));
+            deletedIds.push(p.id);
+            deletedCount++;
+        }
+
+        return new Response(JSON.stringify({ 
+            success: true, 
+            message: `Carefully removed ${deletedCount} test programme(s).`,
+            deletedIds 
+        }), { status: 200, headers: { "Content-Type": "application/json" } });
+
     } catch (error: any) {
-        console.error("In-app fix failed:", error);
-        return new Response("Error: " + JSON.stringify({ message: error.message, code: error.code, sqlMessage: error.sqlMessage }, null, 2), { status: 500 });
+        console.error("Deletion failed:", error);
+        return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: { "Content-Type": "application/json" } });
     }
 }
