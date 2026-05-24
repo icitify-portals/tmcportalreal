@@ -202,7 +202,8 @@ export async function getAvailableJurisdictions() {
             return await db.select({
                 id: organizations.id,
                 name: organizations.name,
-                level: organizations.level
+                level: organizations.level,
+                parentId: organizations.parentId
             }).from(organizations)
         }
 
