@@ -203,7 +203,7 @@ export async function getAvailableJurisdictions() {
                 id: organizations.id,
                 name: organizations.name,
                 level: organizations.level
-            }).from(organizations).where(inArray(organizations.level, ['NATIONAL', 'STATE']))
+            }).from(organizations)
         }
 
         return []
