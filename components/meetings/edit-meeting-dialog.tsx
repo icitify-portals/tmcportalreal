@@ -44,6 +44,7 @@ const formSchema = z.object({
     meetingLink: z.string().optional(),
     attendees: z.array(z.string()).default([]), // User IDs
     previousMinutesUrl: z.string().optional(),
+    targetAudience: z.enum(['OFFICIALS_ONLY', 'ALL_MEMBERS_JURISDICTION', 'ALL_MEMBERS_GLOBAL']).default('ALL_MEMBERS_JURISDICTION'),
 })
 
 interface EditMeetingDialogProps {
@@ -92,7 +93,8 @@ export function EditMeetingDialog({ meeting, members }: EditMeetingDialogProps) 
             meetingLink: meeting.meetingLink || "",
             isOnline: meeting.isOnline || false,
             attendees: meeting.attendees?.map((a: any) => a.user?.id).filter(Boolean) || [],
-            previousMinutesUrl: ""
+            previousMinutesUrl: "",
+            targetAudience: meeting.targetAudience || "ALL_MEMBERS_JURISDICTION"
         },
     })
 
@@ -141,6 +143,7 @@ export function EditMeetingDialog({ meeting, members }: EditMeetingDialogProps) 
                 scheduledAt: date.toISOString(),
                 organizationId: meeting.organizationId,
                 previousMinutesUrl: minuteUrl || undefined,
+                targetAudience: values.targetAudience as any,
             })
 
             if (res.success) {
@@ -176,6 +179,24 @@ export function EditMeetingDialog({ meeting, members }: EditMeetingDialogProps) 
                             <FormItem>
                                 <FormLabel>Title</FormLabel>
                                 <FormControl><Input placeholder="e.g. Monthly Exco Meeting" {...field} /></FormControl>
+                            </FormItem>
+                        )} />
+
+                        <FormField control={form.control} name="targetAudience" render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Target Audience</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select who gets invited" />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        <SelectItem value="OFFICIALS_ONLY">Officials Only</SelectItem>
+                                        <SelectItem value="ALL_MEMBERS_JURISDICTION">All Members in Jurisdiction</SelectItem>
+                                        <SelectItem value="ALL_MEMBERS_GLOBAL">All Members Globally (Across Board)</SelectItem>
+                                    </SelectContent>
+                                </Select>
                             </FormItem>
                         )} />
 
