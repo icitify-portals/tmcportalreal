@@ -103,8 +103,12 @@ export function CreateMeetingDialog({ members, currentOrgId, isSuperAdmin }: Cre
     const selectedOrgId = form.watch("organizationId")
 
     useEffect(() => {
-        if (open && selectedOrgId) {
-            getMeetingGroups(selectedOrgId).then(setGroups)
+        if (open) {
+            if (selectedOrgId) {
+                getMeetingGroups(selectedOrgId).then(setGroups)
+            } else {
+                setGroups([])
+            }
         }
     }, [open, selectedOrgId])
 

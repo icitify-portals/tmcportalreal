@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -23,12 +23,11 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
-import { createMeetingGroup } from "@/lib/actions/meetings"
-import { getOrganizations } from "@/lib/actions/organization"
+import { createMeetingGroup, getAvailableMembers } from "@/lib/actions/meetings"
 import { toast } from "sonner"
 import { Loader2, Users } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { FormJurisdictionSelector } from "./form-jurisdiction-selector"
 
 const formSchema = z.object({
     name: z.string().min(1, "Group name is required"),
@@ -42,9 +41,11 @@ interface CreateMeetingGroupDialogProps {
     isSuperAdmin?: boolean
 }
 
-export function CreateMeetingGroupDialog({ availableMembers, currentOrgId, isSuperAdmin }: CreateMeetingGroupDialogProps) {
+export function CreateMeetingGroupDialog({ availableMembers: initialMembers, currentOrgId, isSuperAdmin }: CreateMeetingGroupDialogProps) {
     const [open, setOpen] = useState(false)
     const [isPending, setIsPending] = useState(false)
+    const [dynamicMembers, setDynamicMembers] = useState(initialMembers)
+    const [isLoadingMembers, setIsLoadingMembers] = useState(false)
     const [organizationsList, setOrganizationsList] = useState<any[]>([])
 
     const form = useForm({
@@ -55,6 +56,39 @@ export function CreateMeetingGroupDialog({ availableMembers, currentOrgId, isSup
             members: [],
         },
     })
+
+    const selectedOrgId = form.watch("organizationId")
+
+    useEffect(() => {
+        if (open && isSuperAdmin) {
+            import("@/lib/actions/organization").then(({ getOrganizations }) => {
+                getOrganizations().then(setOrganizationsList)
+            })
+        }
+    }, [open, isSuperAdmin])
+
+    useEffect(() => {
+        async function fetchMembers() {
+            if (!selectedOrgId) return
+            setIsLoadingMembers(true)
+            try {
+                const fetched = await getAvailableMembers(selectedOrgId)
+                setDynamicMembers(fetched)
+                // Remove selected members that are no longer in the list
+                const fetchedIds = new Set(fetched.map(m => m.id))
+                const currentSelected = form.getValues("members")
+                const filtered = currentSelected.filter(id => fetchedIds.has(id))
+                if (filtered.length !== currentSelected.length) {
+                    form.setValue("members", filtered)
+                }
+            } catch (error) {
+                console.error(error)
+            } finally {
+                setIsLoadingMembers(false)
+            }
+        }
+        fetchMembers()
+    }, [selectedOrgId])
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
         setIsPending(true)
@@ -110,62 +144,64 @@ export function CreateMeetingGroupDialog({ availableMembers, currentOrgId, isSup
                                 name="organizationId"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Jurisdiction / Organization</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <FormControl>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Select organization" />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent>
-                                                {organizationsList.map(org => (
-                                                    <SelectItem key={org.id} value={org.id}>{org.name} ({org.level})</SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
+                                        <FormLabel>Meeting Jurisdiction</FormLabel>
+                                        <FormControl>
+                                            <FormJurisdictionSelector
+                                                organizations={organizationsList}
+                                                value={field.value}
+                                                onChange={field.onChange}
+                                            />
+                                        </FormControl>
                                     </FormItem>
                                 )}
                             />
                         )}
 
                         <div className="space-y-2">
-                            <FormLabel>Select Members</FormLabel>
+                            <FormLabel className="flex justify-between items-center">
+                                <span>Select Members</span>
+                                {isLoadingMembers && <Loader2 className="h-3 w-3 animate-spin" />}
+                            </FormLabel>
                             <ScrollArea className="h-[200px] w-full border rounded-md p-4">
-                                <div className="space-y-2">
-                                    {availableMembers.map(member => (
-                                        <FormField
-                                            key={member.id}
-                                            control={form.control}
-                                            name="members"
-                                            render={({ field }) => {
-                                                return (
-                                                    <FormItem
-                                                        key={member.id}
-                                                        className="flex flex-row items-start space-x-3 space-y-0"
-                                                    >
-                                                        <FormControl>
-                                                            <Checkbox
-                                                                checked={field.value?.includes(member.id)}
-                                                                onCheckedChange={(checked) => {
-                                                                    return checked
-                                                                        ? field.onChange([...(field.value || []), member.id])
-                                                                        : field.onChange(
-                                                                            (field.value || []).filter(
-                                                                                (value: string) => value !== member.id
+                                {dynamicMembers.length === 0 ? (
+                                    <p className="text-sm text-muted-foreground text-center py-4">No members found in this jurisdiction.</p>
+                                ) : (
+                                    <div className="space-y-2">
+                                        {dynamicMembers.map(member => (
+                                            <FormField
+                                                key={member.id}
+                                                control={form.control}
+                                                name="members"
+                                                render={({ field }) => {
+                                                    return (
+                                                        <FormItem
+                                                            key={member.id}
+                                                            className="flex flex-row items-start space-x-3 space-y-0"
+                                                        >
+                                                            <FormControl>
+                                                                <Checkbox
+                                                                    checked={field.value?.includes(member.id)}
+                                                                    onCheckedChange={(checked) => {
+                                                                        return checked
+                                                                            ? field.onChange([...(field.value || []), member.id])
+                                                                            : field.onChange(
+                                                                                (field.value || []).filter(
+                                                                                    (value: string) => value !== member.id
+                                                                                )
                                                                             )
-                                                                        )
-                                                                }}
-                                                            />
-                                                        </FormControl>
-                                                        <FormLabel className="font-normal cursor-pointer">
-                                                            {member.name}
-                                                        </FormLabel>
-                                                    </FormItem>
-                                                )
-                                            }}
-                                        />
-                                    ))}
-                                </div>
+                                                                    }}
+                                                                />
+                                                            </FormControl>
+                                                            <FormLabel className="font-normal cursor-pointer">
+                                                                {member.name}
+                                                            </FormLabel>
+                                                        </FormItem>
+                                                    )
+                                                }}
+                                            />
+                                        ))}
+                                    </div>
+                                )}
                             </ScrollArea>
                         </div>
 
@@ -181,3 +217,4 @@ export function CreateMeetingGroupDialog({ availableMembers, currentOrgId, isSup
         </Dialog>
     )
 }
+

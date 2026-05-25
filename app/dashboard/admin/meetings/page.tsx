@@ -101,7 +101,6 @@ export default async function AdminMeetingsPage({
     const session = await getServerSession()
     if (!session?.user?.id) redirect("/login")
 
-    const members = await getAvailableMembers()
     const orgs = await getAvailableOrganizations()
     
     const isSuperAdmin = session.user.isSuperAdmin
@@ -109,6 +108,8 @@ export default async function AdminMeetingsPage({
     
     // Default org ID for UI if none selected yet
     const currentOrgId = selectedOrgId || orgs[0]?.id || ""
+
+    const members = await getAvailableMembers(currentOrgId)
 
     return (
         <DashboardLayout>

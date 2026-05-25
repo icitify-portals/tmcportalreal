@@ -518,16 +518,22 @@ export async function uploadMinutes(meetingId: string, url: string) {
     return { success: true }
 }
 
-export async function getAvailableMembers() {
+export async function getAvailableMembers(orgId?: string) {
     const session = await getServerSession()
     if (!session?.user?.id) return []
 
-    const userOfficials = await db.select().from(officials).where(eq(officials.userId, session.user.id))
-    let orgIds = userOfficials.map(o => o.organizationId)
+    let orgIds: string[] = []
 
-    if (orgIds.length === 0) {
-        const activeOrgs = await db.select({ id: organizations.id }).from(organizations).where(eq(organizations.isActive, true))
-        orgIds = activeOrgs.map(o => o.id)
+    if (orgId) {
+        orgIds = [orgId]
+    } else {
+        const userOfficials = await db.select().from(officials).where(eq(officials.userId, session.user.id))
+        orgIds = userOfficials.map(o => o.organizationId)
+
+        if (orgIds.length === 0 && session.user.isSuperAdmin) {
+            const activeOrgs = await db.select({ id: organizations.id }).from(organizations).where(eq(organizations.isActive, true))
+            orgIds = activeOrgs.map(o => o.id)
+        }
     }
 
     if (orgIds.length === 0) return []
