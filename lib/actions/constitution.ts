@@ -93,7 +93,7 @@ export async function advanceConstitutionStage(id: string, newStatus: string) {
         const draftTitle = draft ? draft.title : "Constitution Draft"
 
         try {
-            let targetLevel: string | null = null;
+            let targetLevel: "NATIONAL" | "STATE" | "LOCAL_GOVERNMENT" | "BRANCH" | null = null;
             if (newStatus === 'REVIEW_BRANCH') targetLevel = 'BRANCH';
             else if (newStatus === 'REVIEW_LGA') targetLevel = 'LOCAL_GOVERNMENT';
             else if (newStatus === 'REVIEW_STATE') targetLevel = 'STATE';
