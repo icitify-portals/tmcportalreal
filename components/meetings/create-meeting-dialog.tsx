@@ -56,6 +56,8 @@ import {
     Select,
     SelectContent,
     SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from "@/components/ui/select"
 import { getMeetingGroups } from "@/lib/actions/meetings"
 import { getOrganizations } from "@/lib/actions/organization"
