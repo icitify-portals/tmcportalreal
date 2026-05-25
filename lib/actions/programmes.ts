@@ -519,11 +519,12 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
         // Notification & Email Dispatch
         try {
             let notifyUserIds: string[] = []
-            if (validData.targetAudience === 'ALL_MEMBERS' || validData.targetAudience === 'PUBLIC') {
+            if (validData.targetAudience === 'MEMBERS' || validData.targetAudience === 'PUBLIC') {
                 const orgMembers = await db.select({ userId: members.userId }).from(members).where(eq(members.organizationId, organizationId))
                 const orgOfficials = await db.select({ userId: officials.userId }).from(officials).where(eq(officials.organizationId, organizationId))
                 notifyUserIds = Array.from(new Set([...orgMembers.map(m => m.userId), ...orgOfficials.map(o => o.userId)]))
-            } else if (validData.targetAudience === 'OFFICIALS_ONLY') {
+            } else {
+                // If BROTHERS, SISTERS, YOUTH, etc. just notify officials for now or all members if required.
                 const orgOfficials = await db.select({ userId: officials.userId }).from(officials).where(eq(officials.organizationId, organizationId))
                 notifyUserIds = orgOfficials.map(o => o.userId)
             }
