@@ -516,6 +516,48 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
             }
         }
 
+        // Notification & Email Dispatch
+        try {
+            let notifyUserIds: string[] = []
+            if (validData.targetAudience === 'ALL_MEMBERS' || validData.targetAudience === 'PUBLIC') {
+                const orgMembers = await db.select({ userId: members.userId }).from(members).where(eq(members.organizationId, organizationId))
+                const orgOfficials = await db.select({ userId: officials.userId }).from(officials).where(eq(officials.organizationId, organizationId))
+                notifyUserIds = Array.from(new Set([...orgMembers.map(m => m.userId), ...orgOfficials.map(o => o.userId)]))
+            } else if (validData.targetAudience === 'OFFICIALS_ONLY') {
+                const orgOfficials = await db.select({ userId: officials.userId }).from(officials).where(eq(officials.organizationId, organizationId))
+                notifyUserIds = orgOfficials.map(o => o.userId)
+            }
+
+            if (notifyUserIds.length > 0) {
+                await db.insert(notifications).values(
+                    notifyUserIds.map(userId => ({
+                        userId: userId,
+                        title: "New Programme Created",
+                        message: `A new programme "${validData.title}" has been scheduled for ${new Date(validData.startDate).toLocaleDateString()}`,
+                        type: 'INFO' as const,
+                        actionUrl: `/dashboard/member/programmes`,
+                        createdAt: new Date(),
+                        updatedAt: new Date()
+                    }))
+                )
+                
+                // Send Emails
+                const inviteesInfo = await db.select({ name: users.name, email: users.email }).from(users).where(inArray(users.id, notifyUserIds))
+                Promise.all(inviteesInfo.map(user => {
+                    if (!user.email) return Promise.resolve();
+                    return sendEmail({
+                        to: user.email,
+                        subject: `New Programme: ${validData.title}`,
+                        html: `Hello ${user.name || 'Member'},<br/><br/>A new programme <b>${validData.title}</b> has been scheduled for ${new Date(validData.startDate).toLocaleDateString()}.<br/>Venue: ${validData.venue || "TBD"}<br/><br/>Please log in to your dashboard to view more details.`,
+                        text: `A new programme ${validData.title} has been scheduled for ${new Date(validData.startDate).toLocaleDateString()}`,
+                        template: "general_notification"
+                    })
+                })).catch(err => console.error("Error sending programme emails:", err))
+            }
+        } catch (notifyErr) {
+            console.error("Failed to send programme notifications:", notifyErr)
+        }
+
         revalidatePath("/dashboard/admin/programmes")
         return { success: true, programmeId }
     } catch (error: any) {

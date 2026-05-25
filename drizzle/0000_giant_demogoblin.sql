@@ -83,7 +83,7 @@ CREATE TABLE `backups` (
 	`databaseUrl` varchar(500),
 	`filesUrl` varchar(500),
 	`size` bigint,
-	`status` enum('PENDING','COMPLETED','FAILED') DEFAULT 'PENDING',
+	`backupStatus` enum('PENDING','COMPLETED','FAILED') DEFAULT 'PENDING',
 	`error` text,
 	`createdAt` timestamp(3) DEFAULT CURRENT_TIMESTAMP(3),
 	`createdBy` varchar(255),
@@ -140,6 +140,7 @@ CREATE TABLE `burial_requests` (
 	`contactEmail` varchar(255) NOT NULL,
 	`status` enum('PENDING','APPROVED_UNPAID','PAID','BURIAL_DONE','REJECTED') DEFAULT 'PENDING',
 	`rejectionReason` text,
+	`amount` decimal(10,2) DEFAULT '10000.00',
 	`paymentId` varchar(255),
 	`createdAt` timestamp(3) DEFAULT CURRENT_TIMESTAMP(3),
 	`updatedAt` timestamp(3) DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP,
@@ -190,6 +191,37 @@ CREATE TABLE `competitions` (
 	`createdAt` timestamp(3) DEFAULT CURRENT_TIMESTAMP(3),
 	`updatedAt` timestamp(3) DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP,
 	CONSTRAINT `competitions_id` PRIMARY KEY(`id`)
+);
+--> statement-breakpoint
+CREATE TABLE `constitution_feedback` (
+	`id` varchar(255) NOT NULL,
+	`constitutionId` varchar(255) NOT NULL,
+	`userId` varchar(255) NOT NULL,
+	`comment` text NOT NULL,
+	`section` varchar(255),
+	`createdAt` timestamp(3) DEFAULT CURRENT_TIMESTAMP(3),
+	CONSTRAINT `constitution_feedback_id` PRIMARY KEY(`id`)
+);
+--> statement-breakpoint
+CREATE TABLE `constitution_reviewers` (
+	`id` varchar(255) NOT NULL,
+	`constitutionId` varchar(255) NOT NULL,
+	`userId` varchar(255) NOT NULL,
+	`assignedAt` timestamp(3) DEFAULT CURRENT_TIMESTAMP(3),
+	`assignedBy` varchar(255) NOT NULL,
+	CONSTRAINT `constitution_reviewers_id` PRIMARY KEY(`id`)
+);
+--> statement-breakpoint
+CREATE TABLE `constitutions` (
+	`id` varchar(255) NOT NULL,
+	`title` varchar(255) NOT NULL,
+	`content` text NOT NULL,
+	`status` varchar(50) NOT NULL DEFAULT 'DRAFT',
+	`documentUrl` text,
+	`createdBy` varchar(255) NOT NULL,
+	`createdAt` timestamp(3) DEFAULT CURRENT_TIMESTAMP(3),
+	`updatedAt` timestamp(3) DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP,
+	CONSTRAINT `constitutions_id` PRIMARY KEY(`id`)
 );
 --> statement-breakpoint
 CREATE TABLE `documents` (
@@ -260,7 +292,7 @@ CREATE TABLE `fees` (
 	`title` varchar(255) NOT NULL,
 	`description` text,
 	`amount` decimal(10,2) NOT NULL,
-	`feeTarget` enum('ALL_MEMBERS','OFFICIALS') NOT NULL,
+	`targetType` enum('ALL_MEMBERS','OFFICIALS') NOT NULL,
 	`dueDate` timestamp(3),
 	`isActive` boolean DEFAULT true,
 	`createdAt` timestamp(3) DEFAULT CURRENT_TIMESTAMP(3),
@@ -289,6 +321,7 @@ CREATE TABLE `finance_budgets` (
 	`approvedBy` varchar(255),
 	`approvedAt` timestamp(3),
 	`comments` text,
+	`programmeId` varchar(255),
 	`createdAt` timestamp(3) DEFAULT CURRENT_TIMESTAMP(3),
 	`updatedAt` timestamp(3) DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP,
 	CONSTRAINT `finance_budgets_id` PRIMARY KEY(`id`)
@@ -535,7 +568,8 @@ CREATE TABLE `occasion_requests` (
 	`address` text NOT NULL,
 	`role` enum('COORDINATING','WITNESS') NOT NULL,
 	`certificateNeeded` boolean DEFAULT false,
-	`status` enum('PENDING','SUCCESS','FAILED','CANCELLED','REFUNDED') DEFAULT 'PENDING',
+	`status` enum('PENDING','APPROVED','COMPLETED','REJECTED') DEFAULT 'PENDING',
+	`paymentStatus` enum('PENDING','SUCCESS','FAILED','CANCELLED','REFUNDED') DEFAULT 'PENDING',
 	`amount` decimal(10,2) DEFAULT '0.00',
 	`details` json,
 	`certificateNo` varchar(255),
@@ -656,7 +690,7 @@ CREATE TABLE `payments` (
 	`memberId` varchar(255),
 	`amount` decimal(10,2) NOT NULL,
 	`currency` varchar(255) DEFAULT 'NGN',
-	`status` enum('PENDING','SUCCESS','FAILED','CANCELLED','REFUNDED') DEFAULT 'PENDING',
+	`paymentStatus` enum('PENDING','SUCCESS','FAILED','CANCELLED','REFUNDED') DEFAULT 'PENDING',
 	`paymentType` enum('MEMBERSHIP_FEE','RENEWAL','DONATION','EVENT_FEE','BURIAL_FEE','LEVY','OTHER') NOT NULL,
 	`paystackRef` varchar(255),
 	`paystackResponse` json,
@@ -701,6 +735,36 @@ CREATE TABLE `posts` (
 	CONSTRAINT `posts_slug_unique` UNIQUE(`slug`)
 );
 --> statement-breakpoint
+CREATE TABLE `programme_feedback_submissions` (
+	`id` varchar(255) NOT NULL,
+	`programmeId` varchar(255) NOT NULL,
+	`userId` varchar(255),
+	`data` json NOT NULL,
+	`submittedAt` timestamp(3) DEFAULT CURRENT_TIMESTAMP(3),
+	CONSTRAINT `programme_feedback_submissions_id` PRIMARY KEY(`id`)
+);
+--> statement-breakpoint
+CREATE TABLE `programme_materials` (
+	`id` varchar(255) NOT NULL,
+	`programmeId` varchar(255) NOT NULL,
+	`title` varchar(255) NOT NULL,
+	`url` varchar(500) NOT NULL,
+	`fileType` varchar(100),
+	`uploadedBy` varchar(255),
+	`createdAt` timestamp(3) DEFAULT CURRENT_TIMESTAMP(3),
+	CONSTRAINT `programme_materials_id` PRIMARY KEY(`id`)
+);
+--> statement-breakpoint
+CREATE TABLE `programme_messages` (
+	`id` varchar(255) NOT NULL,
+	`programmeId` varchar(255) NOT NULL,
+	`userId` varchar(255) NOT NULL,
+	`content` text NOT NULL,
+	`isAnnouncement` boolean DEFAULT false,
+	`createdAt` timestamp(3) DEFAULT CURRENT_TIMESTAMP(3),
+	CONSTRAINT `programme_messages_id` PRIMARY KEY(`id`)
+);
+--> statement-breakpoint
 CREATE TABLE `programme_registrations` (
 	`id` varchar(255) NOT NULL,
 	`programmeId` varchar(255) NOT NULL,
@@ -709,10 +773,22 @@ CREATE TABLE `programme_registrations` (
 	`name` varchar(255) NOT NULL,
 	`email` varchar(255) NOT NULL,
 	`phone` varchar(255),
-	`status` enum('REGISTERED','PAID','ATTENDED','CANCELLED') DEFAULT 'REGISTERED',
+	`status` enum('REGISTERED','PENDING_PAYMENT','PARTIALLY_PAID','PAID','ATTENDED','CANCELLED') DEFAULT 'REGISTERED',
+	`gender` varchar(50),
+	`address` text,
+	`amountPaid` decimal(10,2) DEFAULT '0.00',
 	`paymentReference` varchar(255),
 	`certificateUrl` varchar(500),
 	`certificateIssuedAt` timestamp(3),
+	`country` varchar(255) DEFAULT 'Nigeria',
+	`state` varchar(255),
+	`lga` varchar(255),
+	`branch` varchar(255),
+	`checkInTime` timestamp(3),
+	`checkOutTime` timestamp(3),
+	`checkInBy` varchar(255),
+	`checkOutBy` varchar(255),
+	`checkInWaiver` boolean DEFAULT false,
 	`registeredAt` timestamp(3) DEFAULT CURRENT_TIMESTAMP(3),
 	CONSTRAINT `programme_registrations_id` PRIMARY KEY(`id`)
 );
@@ -726,6 +802,10 @@ CREATE TABLE `programme_reports` (
 	`attendeesMale` int DEFAULT 0,
 	`attendeesFemale` int DEFAULT 0,
 	`amountSpent` decimal(15,2) DEFAULT '0.00',
+	`startTime` varchar(255),
+	`endTime` varchar(255),
+	`lecturers` text,
+	`topic` text,
 	`images` json,
 	`submittedBy` varchar(255) NOT NULL,
 	`submittedAt` timestamp(3) DEFAULT CURRENT_TIMESTAMP(3),
@@ -744,13 +824,16 @@ CREATE TABLE `programmes` (
 	`time` varchar(255),
 	`level` enum('NATIONAL','STATE','LOCAL_GOVERNMENT','BRANCH') NOT NULL,
 	`targetAudience` enum('PUBLIC','MEMBERS','BROTHERS','SISTERS','CHILDREN','YOUTH','ELDERS') DEFAULT 'PUBLIC',
-	`status` enum('DRAFT','PENDING_STATE','PENDING_NATIONAL','APPROVED','REJECTED','CANCELLED','COMPLETED') DEFAULT 'DRAFT',
+	`status` enum('DRAFT','PENDING_STATE','PENDING_NATIONAL','APPROVED','REJECTED','CANCELLED','COMPLETED','POSTPONED') DEFAULT 'DRAFT',
 	`approvedStateBy` varchar(255),
 	`approvedStateAt` timestamp(3),
 	`approvedNationalBy` varchar(255),
 	`approvedNationalAt` timestamp(3),
 	`organizingOfficeId` varchar(255),
+	`organizingOfficialId` varchar(255),
+	`seriesId` varchar(255),
 	`format` enum('PHYSICAL','VIRTUAL','HYBRID') DEFAULT 'PHYSICAL',
+	`meetingUrl` varchar(500),
 	`frequency` enum('WEEKLY','MONTHLY','QUARTERLY','BI-ANNUALLY','ANNUALLY','ONCE') DEFAULT 'ONCE',
 	`objectives` text,
 	`budget` decimal(15,2) DEFAULT '0.00',
@@ -758,9 +841,22 @@ CREATE TABLE `programmes` (
 	`additionalInfo` text,
 	`isLateSubmission` boolean DEFAULT false,
 	`paymentRequired` boolean DEFAULT false,
+	`allowInstallments` boolean DEFAULT false,
+	`minInstallmentAmount` decimal(10,2) DEFAULT '0.00',
 	`amount` decimal(10,2) DEFAULT '0.00',
 	`hasCertificate` boolean DEFAULT false,
+	`certTemplateType` enum('TMC_ONLY','PARTNER_ONLY','BOTH') DEFAULT 'TMC_ONLY',
+	`certTmcSignature` varchar(500),
+	`certTmcSignatory` varchar(255),
+	`certPartnerName` varchar(255),
+	`certPartnerLogo` varchar(500),
+	`certPartnerSignature` varchar(500),
+	`certPartnerSignatory` varchar(255),
 	`rejectionReason` text,
+	`staticAttendanceToken` varchar(255),
+	`attendanceWindow` int DEFAULT 3,
+	`waiverCode` varchar(255),
+	`feedbackFields` json,
 	`createdBy` varchar(255) NOT NULL,
 	`createdAt` timestamp(3) DEFAULT CURRENT_TIMESTAMP(3),
 	`updatedAt` timestamp(3) DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP,
@@ -768,8 +864,8 @@ CREATE TABLE `programmes` (
 );
 --> statement-breakpoint
 CREATE TABLE `promotion_plans` (
-	`id` varchar(255) NOT NULL,
-	`name` varchar(255) NOT NULL,
+	`id` varchar(191) NOT NULL,
+	`name` varchar(191) NOT NULL,
 	`durationDays` int NOT NULL,
 	`amount` decimal(15,2) NOT NULL,
 	`description` text,
@@ -972,6 +1068,26 @@ CREATE TABLE `verification_tokens` (
 	CONSTRAINT `verification_tokens_identifier_token_pk` PRIMARY KEY(`identifier`,`token`)
 );
 --> statement-breakpoint
+CREATE TABLE `wallet_transactions` (
+	`id` varchar(255) NOT NULL,
+	`walletId` varchar(255) NOT NULL,
+	`type` varchar(50) NOT NULL,
+	`amount` decimal(15,2) NOT NULL,
+	`description` varchar(255),
+	`reference` varchar(255),
+	`createdAt` timestamp(3) DEFAULT CURRENT_TIMESTAMP(3),
+	CONSTRAINT `wallet_transactions_id` PRIMARY KEY(`id`)
+);
+--> statement-breakpoint
+CREATE TABLE `wallets` (
+	`id` varchar(255) NOT NULL,
+	`userId` varchar(255) NOT NULL,
+	`balance` decimal(15,2) NOT NULL DEFAULT '0.00',
+	`createdAt` timestamp(3) DEFAULT CURRENT_TIMESTAMP(3),
+	`updatedAt` timestamp(3) DEFAULT CURRENT_TIMESTAMP(3),
+	CONSTRAINT `wallets_id` PRIMARY KEY(`id`)
+);
+--> statement-breakpoint
 ALTER TABLE `accounts` ADD CONSTRAINT `accounts_userId_users_id_fk` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `asset_maintenance_logs` ADD CONSTRAINT `asset_maintenance_logs_assetId_assets_id_fk` FOREIGN KEY (`assetId`) REFERENCES `assets`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `assets` ADD CONSTRAINT `assets_organizationId_organizations_id_fk` FOREIGN KEY (`organizationId`) REFERENCES `organizations`(`id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -989,6 +1105,12 @@ ALTER TABLE `chat_participants` ADD CONSTRAINT `chat_participants_userId_users_i
 ALTER TABLE `competition_submissions` ADD CONSTRAINT `competition_submissions_competitionId_competitions_id_fk` FOREIGN KEY (`competitionId`) REFERENCES `competitions`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `competition_submissions` ADD CONSTRAINT `competition_submissions_userId_users_id_fk` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `competitions` ADD CONSTRAINT `competitions_organizationId_organizations_id_fk` FOREIGN KEY (`organizationId`) REFERENCES `organizations`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE `constitution_feedback` ADD CONSTRAINT `constitution_feedback_constitutionId_constitutions_id_fk` FOREIGN KEY (`constitutionId`) REFERENCES `constitutions`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE `constitution_feedback` ADD CONSTRAINT `constitution_feedback_userId_users_id_fk` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE `constitution_reviewers` ADD CONSTRAINT `constitution_reviewers_constitutionId_constitutions_id_fk` FOREIGN KEY (`constitutionId`) REFERENCES `constitutions`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE `constitution_reviewers` ADD CONSTRAINT `constitution_reviewers_userId_users_id_fk` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE `constitution_reviewers` ADD CONSTRAINT `constitution_reviewers_assignedBy_users_id_fk` FOREIGN KEY (`assignedBy`) REFERENCES `users`(`id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE `constitutions` ADD CONSTRAINT `constitutions_createdBy_users_id_fk` FOREIGN KEY (`createdBy`) REFERENCES `users`(`id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `documents` ADD CONSTRAINT `documents_userId_users_id_fk` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `documents` ADD CONSTRAINT `documents_organizationId_organizations_id_fk` FOREIGN KEY (`organizationId`) REFERENCES `organizations`(`id`) ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `documents` ADD CONSTRAINT `documents_memberId_members_id_fk` FOREIGN KEY (`memberId`) REFERENCES `members`(`id`) ON DELETE set null ON UPDATE no action;--> statement-breakpoint
@@ -1041,15 +1163,24 @@ ALTER TABLE `payments` ADD CONSTRAINT `payments_memberId_members_id_fk` FOREIGN 
 ALTER TABLE `payments` ADD CONSTRAINT `payments_campaignId_fundraising_campaigns_id_fk` FOREIGN KEY (`campaignId`) REFERENCES `fundraising_campaigns`(`id`) ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `posts` ADD CONSTRAINT `posts_organizationId_organizations_id_fk` FOREIGN KEY (`organizationId`) REFERENCES `organizations`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `posts` ADD CONSTRAINT `posts_authorId_users_id_fk` FOREIGN KEY (`authorId`) REFERENCES `users`(`id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE `programme_feedback_submissions` ADD CONSTRAINT `programme_feedback_submissions_programmeId_programmes_id_fk` FOREIGN KEY (`programmeId`) REFERENCES `programmes`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE `programme_feedback_submissions` ADD CONSTRAINT `programme_feedback_submissions_userId_users_id_fk` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE `programme_materials` ADD CONSTRAINT `programme_materials_programmeId_programmes_id_fk` FOREIGN KEY (`programmeId`) REFERENCES `programmes`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE `programme_materials` ADD CONSTRAINT `programme_materials_uploadedBy_users_id_fk` FOREIGN KEY (`uploadedBy`) REFERENCES `users`(`id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE `programme_messages` ADD CONSTRAINT `programme_messages_programmeId_programmes_id_fk` FOREIGN KEY (`programmeId`) REFERENCES `programmes`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE `programme_messages` ADD CONSTRAINT `programme_messages_userId_users_id_fk` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `programme_registrations` ADD CONSTRAINT `programme_registrations_programmeId_programmes_id_fk` FOREIGN KEY (`programmeId`) REFERENCES `programmes`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `programme_registrations` ADD CONSTRAINT `programme_registrations_userId_users_id_fk` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `programme_registrations` ADD CONSTRAINT `programme_registrations_memberId_members_id_fk` FOREIGN KEY (`memberId`) REFERENCES `members`(`id`) ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE `programme_registrations` ADD CONSTRAINT `programme_registrations_checkInBy_users_id_fk` FOREIGN KEY (`checkInBy`) REFERENCES `users`(`id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE `programme_registrations` ADD CONSTRAINT `programme_registrations_checkOutBy_users_id_fk` FOREIGN KEY (`checkOutBy`) REFERENCES `users`(`id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `programme_reports` ADD CONSTRAINT `programme_reports_programmeId_programmes_id_fk` FOREIGN KEY (`programmeId`) REFERENCES `programmes`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `programme_reports` ADD CONSTRAINT `programme_reports_submittedBy_users_id_fk` FOREIGN KEY (`submittedBy`) REFERENCES `users`(`id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `programmes` ADD CONSTRAINT `programmes_organizationId_organizations_id_fk` FOREIGN KEY (`organizationId`) REFERENCES `organizations`(`id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `programmes` ADD CONSTRAINT `programmes_approvedStateBy_users_id_fk` FOREIGN KEY (`approvedStateBy`) REFERENCES `users`(`id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `programmes` ADD CONSTRAINT `programmes_approvedNationalBy_users_id_fk` FOREIGN KEY (`approvedNationalBy`) REFERENCES `users`(`id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `programmes` ADD CONSTRAINT `programmes_organizingOfficeId_offices_id_fk` FOREIGN KEY (`organizingOfficeId`) REFERENCES `offices`(`id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE `programmes` ADD CONSTRAINT `programmes_organizingOfficialId_officials_id_fk` FOREIGN KEY (`organizingOfficialId`) REFERENCES `officials`(`id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `programmes` ADD CONSTRAINT `programmes_createdBy_users_id_fk` FOREIGN KEY (`createdBy`) REFERENCES `users`(`id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `promotions` ADD CONSTRAINT `promotions_userId_users_id_fk` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `promotions` ADD CONSTRAINT `promotions_planId_promotion_plans_id_fk` FOREIGN KEY (`planId`) REFERENCES `promotion_plans`(`id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -1067,4 +1198,6 @@ ALTER TABLE `special_programmes` ADD CONSTRAINT `special_programmes_organization
 ALTER TABLE `special_programmes` ADD CONSTRAINT `special_programmes_createdBy_users_id_fk` FOREIGN KEY (`createdBy`) REFERENCES `users`(`id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `user_roles` ADD CONSTRAINT `user_roles_userId_users_id_fk` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `user_roles` ADD CONSTRAINT `user_roles_roleId_roles_id_fk` FOREIGN KEY (`roleId`) REFERENCES `roles`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE `user_roles` ADD CONSTRAINT `user_roles_organizationId_organizations_id_fk` FOREIGN KEY (`organizationId`) REFERENCES `organizations`(`id`) ON DELETE cascade ON UPDATE no action;
+ALTER TABLE `user_roles` ADD CONSTRAINT `user_roles_organizationId_organizations_id_fk` FOREIGN KEY (`organizationId`) REFERENCES `organizations`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE `wallet_transactions` ADD CONSTRAINT `wallet_transactions_walletId_wallets_id_fk` FOREIGN KEY (`walletId`) REFERENCES `wallets`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE `wallets` ADD CONSTRAINT `wallets_userId_users_id_fk` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE cascade ON UPDATE no action;

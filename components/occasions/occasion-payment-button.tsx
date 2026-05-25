@@ -8,6 +8,8 @@ import { verifyOccasionPayment } from "@/lib/actions/occasions"
 import Script from "next/script"
 import { useRouter } from "next/navigation"
 
+import { getPaystackPublicKey } from "@/lib/actions/paystack"
+
 interface OccasionPaymentButtonProps {
     amount: number
     email: string
@@ -25,7 +27,7 @@ export function OccasionPaymentButton({ amount, email, requestId, occasionType }
         setMounted(true)
     }, [])
 
-    const handlePay = () => {
+    const handlePay = async () => {
         if (!scriptLoaded) {
             toast.error("Payment system loading, please try again in a moment.")
             return;
@@ -37,8 +39,10 @@ export function OccasionPaymentButton({ amount, email, requestId, occasionType }
             return;
         }
 
+        const publicKey = await getPaystackPublicKey();
+
         const config = {
-            key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || 'pk_test_xxxxxxxxxxxxxxxxxxxx',
+            key: publicKey || 'pk_test_xxxxxxxxxxxxxxxxxxxx',
             email: email,
             amount: Math.round(amount * 100), 
             currency: 'NGN',

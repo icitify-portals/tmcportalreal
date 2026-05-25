@@ -79,6 +79,7 @@ export async function requestOccasion(data: z.infer<typeof RequestSchema>) {
         }).$returningId()
 
         revalidatePath("/dashboard/member/occasions")
+        revalidatePath("/dashboard/admin/occasions")
         return { success: true, requestId: inserted.id }
     } catch (error: any) {
         return { success: false, error: `Failed to submit request: ${error.message || 'Unknown error'}` }
@@ -141,6 +142,7 @@ export async function updateRequestStatus(requestId: string, status: 'APPROVED' 
     }).where(eq(occasionRequests.id, requestId))
 
     revalidatePath("/dashboard/admin/occasions")
+    revalidatePath("/dashboard/member/occasions")
     return { success: true }
 }
 
@@ -163,6 +165,7 @@ export async function verifyOccasionPayment(requestId: string, reference: string
             .where(eq(occasionRequests.id, requestId))
 
         revalidatePath("/dashboard/member/occasions")
+        revalidatePath("/dashboard/admin/occasions")
         return { success: true }
     } catch (error: any) {
         return { success: false, error: error.message || "Failed to verify payment" }

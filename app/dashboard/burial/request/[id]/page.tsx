@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { format } from "date-fns"
 import { FileText, CreditCard, CheckCircle } from "lucide-react"
 import { BurialPaymentButton } from "@/components/burial/burial-payment-button"
+import { DashboardLayout } from "@/components/layout/dashboard-layout"
 
 
 export default async function RequestDetailsPage({ params }: { params: Promise<{ id: string }> }) {
@@ -24,8 +25,9 @@ export default async function RequestDetailsPage({ params }: { params: Promise<{
     }
 
     return (
-        <div className="container mx-auto py-8 space-y-8 max-w-4xl">
-            <div className="flex justify-between items-start">
+        <DashboardLayout>
+            <div className="container mx-auto py-8 space-y-8 max-w-4xl">
+                <div className="flex justify-between items-start">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Request Details</h1>
                     <p className="text-muted-foreground">View the status and details of your burial request.</p>
@@ -84,7 +86,6 @@ export default async function RequestDetailsPage({ params }: { params: Promise<{
                             <BurialPaymentButton 
                                 requestId={id}
                                 amount={parseFloat(request.amount?.toString() || "10000")}
-
                                 email={request.contactEmail || session.user.email || ""}
                                 deceasedName={request.deceasedName}
                             />
@@ -123,5 +124,6 @@ export default async function RequestDetailsPage({ params }: { params: Promise<{
                 </Card>
             </div>
         </div>
+        </DashboardLayout>
     )
 }

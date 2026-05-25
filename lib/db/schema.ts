@@ -74,7 +74,7 @@ export const meetingDocTypeEnum = mysqlEnum('meetingDocType', ['AGENDA', 'MINUTE
 export const meetingDocSubmissionStatusEnum = mysqlEnum('meetingDocSubmissionStatus', ['ON_TIME', 'LATE']);
 export const broadcastTargetLevelEnum = mysqlEnum('broadcastTargetLevel', ['NATIONAL', 'STATE', 'LOCAL_GOVERNMENT', 'BRANCH']);
 export const certTemplateTypeEnum = mysqlEnum('certTemplateType', ['TMC_ONLY', 'PARTNER_ONLY', 'BOTH']);
-
+export const meetingTargetAudienceEnum = mysqlEnum('meetingTargetAudience', ['OFFICIALS_ONLY', 'ALL_MEMBERS_JURISDICTION', 'ALL_MEMBERS_GLOBAL']);
 
 // Users
 export const users = mysqlTable("users", {
@@ -923,6 +923,7 @@ export const meetings = mysqlTable("meetings", {
     virtualRoomId: varchar("virtualRoomId", { length: 500 }),
     recordingUrl: varchar("recordingUrl", { length: 500 }),
     groupId: varchar("groupId", { length: 255 }), // Link to a specific meeting group
+    targetAudience: meetingTargetAudienceEnum.default('ALL_MEMBERS_JURISDICTION'),
 
     status: mysqlEnum('status', ['SCHEDULED', 'ONGOING', 'ENDED', 'CANCELLED']).default('SCHEDULED'),
     createdBy: varchar("createdBy", { length: 255 }).notNull().references(() => users.id),

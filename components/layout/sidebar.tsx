@@ -124,6 +124,7 @@ const officialNavItems = [
   { href: "/dashboard/admin/reports", label: "Activity Reports", icon: FileText },
   { href: "/dashboard/member/documents", label: "Documents", icon: FileText },
   { href: "/dashboard/official/documents", label: "Official Documents", icon: FileText },
+  { href: "/dashboard/official/constitution", label: "Constitution Review", icon: FileText },
   { href: "/dashboard/user/promotions", label: "My Promotions", icon: Megaphone },
   { href: "/dashboard/burial", label: "Burial Requests", icon: HeartHandshake },
 ]

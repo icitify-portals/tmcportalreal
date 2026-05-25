@@ -24,6 +24,7 @@ const CreateMeetingSchema = z.object({
     meetingLink: z.string().optional(),
     attendees: z.array(z.string()), // Additional manual invites
     previousMinutesUrl: z.string().optional(),
+    targetAudience: z.enum(['OFFICIALS_ONLY', 'ALL_MEMBERS_JURISDICTION', 'ALL_MEMBERS_GLOBAL']).default('ALL_MEMBERS_JURISDICTION'),
 })
 
 export async function createMeeting(data: z.infer<typeof CreateMeetingSchema>) {
@@ -51,6 +52,7 @@ export async function createMeeting(data: z.infer<typeof CreateMeetingSchema>) {
             isOnline: data.isOnline,
             meetingLink: data.meetingLink,
             virtualRoomId: virtualRoomId, // Assign randomly generated room ID for LiveKit
+            targetAudience: data.targetAudience,
             status: 'SCHEDULED',
             createdBy: session.user.id,
             createdAt: new Date(),
@@ -71,12 +73,37 @@ export async function createMeeting(data: z.infer<typeof CreateMeetingSchema>) {
             })
         }
 
-        // 1. Auto-invite all Officials in this Jurisdiction
-        const jurisdictionOfficials = await db.select({ userId: officials.userId })
-            .from(officials)
-            .where(eq(officials.organizationId, data.organizationId))
+        // 1. Auto-invite based on targetAudience
+        let autoUserIds: string[] = []
 
-        const officialUserIds = jurisdictionOfficials.map(o => o.userId)
+        if (data.targetAudience === 'ALL_MEMBERS_GLOBAL') {
+            const allMembers = await db.select({ userId: members.userId }).from(members).where(eq(members.isActive, true))
+            const allOfficials = await db.select({ userId: officials.userId }).from(officials).where(eq(officials.isActive, true))
+            autoUserIds = [...allMembers.map(m => m.userId), ...allOfficials.map(o => o.userId)]
+        } else if (data.targetAudience === 'OFFICIALS_ONLY') {
+            const jurisdictionOfficials = await db.select({ userId: officials.userId })
+                .from(officials)
+                .where(and(
+                    eq(officials.organizationId, data.organizationId),
+                    eq(officials.isActive, true)
+                ))
+            autoUserIds = jurisdictionOfficials.map(o => o.userId)
+        } else {
+            // ALL_MEMBERS_JURISDICTION
+            const jurisdictionMembers = await db.select({ userId: members.userId })
+                .from(members)
+                .where(and(
+                    eq(members.organizationId, data.organizationId),
+                    eq(members.isActive, true)
+                ))
+            const jurisdictionOfficials = await db.select({ userId: officials.userId })
+                .from(officials)
+                .where(and(
+                    eq(officials.organizationId, data.organizationId),
+                    eq(officials.isActive, true)
+                ))
+            autoUserIds = [...jurisdictionMembers.map(m => m.userId), ...jurisdictionOfficials.map(o => o.userId)]
+        }
 
         // 2. Add Group Members if group selected
         let groupUserIds: string[] = []
@@ -89,7 +116,7 @@ export async function createMeeting(data: z.infer<typeof CreateMeetingSchema>) {
 
         // Combine all unique invitees
         const allInvitees = Array.from(new Set([
-            ...officialUserIds,
+            ...autoUserIds,
             ...groupUserIds,
             ...data.attendees
         ]))
@@ -182,17 +209,44 @@ export async function updateMeeting(id: string, data: z.infer<typeof CreateMeeti
             isOnline: data.isOnline,
             meetingLink: data.meetingLink,
             virtualRoomId: virtualRoomId,
+            targetAudience: data.targetAudience,
             updatedAt: new Date()
         }).where(eq(meetings.id, id))
 
         const existingAttendances = await db.select().from(meetingAttendances).where(eq(meetingAttendances.meetingId, id))
         const existingUserIds = existingAttendances.map(a => a.userId)
 
-        // Re-calculate who should be invited (Manual + Group + Officials)
-        const jurisdictionOfficials = await db.select({ userId: officials.userId })
-            .from(officials)
-            .where(eq(officials.organizationId, data.organizationId))
-        const officialUserIds = jurisdictionOfficials.map(o => o.userId)
+        // Re-calculate who should be invited
+        let autoUserIds: string[] = []
+
+        if (data.targetAudience === 'ALL_MEMBERS_GLOBAL') {
+            const allMembers = await db.select({ userId: members.userId }).from(members).where(eq(members.isActive, true))
+            const allOfficials = await db.select({ userId: officials.userId }).from(officials).where(eq(officials.isActive, true))
+            autoUserIds = [...allMembers.map(m => m.userId), ...allOfficials.map(o => o.userId)]
+        } else if (data.targetAudience === 'OFFICIALS_ONLY') {
+            const jurisdictionOfficials = await db.select({ userId: officials.userId })
+                .from(officials)
+                .where(and(
+                    eq(officials.organizationId, data.organizationId),
+                    eq(officials.isActive, true)
+                ))
+            autoUserIds = jurisdictionOfficials.map(o => o.userId)
+        } else {
+            // ALL_MEMBERS_JURISDICTION
+            const jurisdictionMembers = await db.select({ userId: members.userId })
+                .from(members)
+                .where(and(
+                    eq(members.organizationId, data.organizationId),
+                    eq(members.isActive, true)
+                ))
+            const jurisdictionOfficials = await db.select({ userId: officials.userId })
+                .from(officials)
+                .where(and(
+                    eq(officials.organizationId, data.organizationId),
+                    eq(officials.isActive, true)
+                ))
+            autoUserIds = [...jurisdictionMembers.map(m => m.userId), ...jurisdictionOfficials.map(o => o.userId)]
+        }
 
         let groupUserIds: string[] = []
         if (data.groupId) {
@@ -203,7 +257,7 @@ export async function updateMeeting(id: string, data: z.infer<typeof CreateMeeti
         }
 
         const allNewRequiredInvitees = Array.from(new Set([
-            ...officialUserIds,
+            ...autoUserIds,
             ...groupUserIds,
             ...data.attendees
         ]))

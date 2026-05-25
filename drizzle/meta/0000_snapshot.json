@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "4e10aafe-0f5f-46ce-b4bc-f41e00f5c989",
+  "id": "b3fc2cde-e0a7-43c4-93c3-0e99d11f4fd9",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "accounts": {
@@ -625,8 +625,8 @@
           "notNull": false,
           "autoincrement": false
         },
-        "status": {
-          "name": "status",
+        "backupStatus": {
+          "name": "backupStatus",
           "type": "enum('PENDING','COMPLETED','FAILED')",
           "primaryKey": false,
           "notNull": false,
@@ -1063,6 +1063,14 @@
           "notNull": false,
           "autoincrement": false
         },
+        "amount": {
+          "name": "amount",
+          "type": "decimal(10,2)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'10000.00'"
+        },
         "paymentId": {
           "name": "paymentId",
           "type": "varchar(255)",
@@ -1483,6 +1491,277 @@
       "compositePrimaryKeys": {
         "competitions_id": {
           "name": "competitions_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "constitution_feedback": {
+      "name": "constitution_feedback",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "constitutionId": {
+          "name": "constitutionId",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "userId": {
+          "name": "userId",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "comment": {
+          "name": "comment",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "section": {
+          "name": "section",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP(3)"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "constitution_feedback_constitutionId_constitutions_id_fk": {
+          "name": "constitution_feedback_constitutionId_constitutions_id_fk",
+          "tableFrom": "constitution_feedback",
+          "tableTo": "constitutions",
+          "columnsFrom": [
+            "constitutionId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "constitution_feedback_userId_users_id_fk": {
+          "name": "constitution_feedback_userId_users_id_fk",
+          "tableFrom": "constitution_feedback",
+          "tableTo": "users",
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "constitution_feedback_id": {
+          "name": "constitution_feedback_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "constitution_reviewers": {
+      "name": "constitution_reviewers",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "constitutionId": {
+          "name": "constitutionId",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "userId": {
+          "name": "userId",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "assignedAt": {
+          "name": "assignedAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP(3)"
+        },
+        "assignedBy": {
+          "name": "assignedBy",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "constitution_reviewers_constitutionId_constitutions_id_fk": {
+          "name": "constitution_reviewers_constitutionId_constitutions_id_fk",
+          "tableFrom": "constitution_reviewers",
+          "tableTo": "constitutions",
+          "columnsFrom": [
+            "constitutionId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "constitution_reviewers_userId_users_id_fk": {
+          "name": "constitution_reviewers_userId_users_id_fk",
+          "tableFrom": "constitution_reviewers",
+          "tableTo": "users",
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "constitution_reviewers_assignedBy_users_id_fk": {
+          "name": "constitution_reviewers_assignedBy_users_id_fk",
+          "tableFrom": "constitution_reviewers",
+          "tableTo": "users",
+          "columnsFrom": [
+            "assignedBy"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "constitution_reviewers_id": {
+          "name": "constitution_reviewers_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "constitutions": {
+      "name": "constitutions",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "title": {
+          "name": "title",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "content": {
+          "name": "content",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'DRAFT'"
+        },
+        "documentUrl": {
+          "name": "documentUrl",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "createdBy": {
+          "name": "createdBy",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP(3)"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "onUpdate": true,
+          "default": "CURRENT_TIMESTAMP(3)"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "constitutions_createdBy_users_id_fk": {
+          "name": "constitutions_createdBy_users_id_fk",
+          "tableFrom": "constitutions",
+          "tableTo": "users",
+          "columnsFrom": [
+            "createdBy"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "constitutions_id": {
+          "name": "constitutions_id",
           "columns": [
             "id"
           ]
@@ -2012,8 +2291,8 @@
           "notNull": true,
           "autoincrement": false
         },
-        "feeTarget": {
-          "name": "feeTarget",
+        "targetType": {
+          "name": "targetType",
           "type": "enum('ALL_MEMBERS','OFFICIALS')",
           "primaryKey": false,
           "notNull": true,
@@ -2224,6 +2503,13 @@
         "comments": {
           "name": "comments",
           "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "programmeId": {
+          "name": "programmeId",
+          "type": "varchar(255)",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
@@ -4255,6 +4541,14 @@
         },
         "status": {
           "name": "status",
+          "type": "enum('PENDING','APPROVED','COMPLETED','REJECTED')",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'PENDING'"
+        },
+        "paymentStatus": {
+          "name": "paymentStatus",
           "type": "enum('PENDING','SUCCESS','FAILED','CANCELLED','REFUNDED')",
           "primaryKey": false,
           "notNull": false,
@@ -5155,8 +5449,8 @@
           "autoincrement": false,
           "default": "'NGN'"
         },
-        "status": {
-          "name": "status",
+        "paymentStatus": {
+          "name": "paymentStatus",
           "type": "enum('PENDING','SUCCESS','FAILED','CANCELLED','REFUNDED')",
           "primaryKey": false,
           "notNull": false,
@@ -5534,6 +5828,268 @@
       },
       "checkConstraint": {}
     },
+    "programme_feedback_submissions": {
+      "name": "programme_feedback_submissions",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "programmeId": {
+          "name": "programmeId",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "userId": {
+          "name": "userId",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "data": {
+          "name": "data",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "submittedAt": {
+          "name": "submittedAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP(3)"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "programme_feedback_submissions_programmeId_programmes_id_fk": {
+          "name": "programme_feedback_submissions_programmeId_programmes_id_fk",
+          "tableFrom": "programme_feedback_submissions",
+          "tableTo": "programmes",
+          "columnsFrom": [
+            "programmeId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "programme_feedback_submissions_userId_users_id_fk": {
+          "name": "programme_feedback_submissions_userId_users_id_fk",
+          "tableFrom": "programme_feedback_submissions",
+          "tableTo": "users",
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "programme_feedback_submissions_id": {
+          "name": "programme_feedback_submissions_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "programme_materials": {
+      "name": "programme_materials",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "programmeId": {
+          "name": "programmeId",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "title": {
+          "name": "title",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "url": {
+          "name": "url",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "fileType": {
+          "name": "fileType",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "uploadedBy": {
+          "name": "uploadedBy",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP(3)"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "programme_materials_programmeId_programmes_id_fk": {
+          "name": "programme_materials_programmeId_programmes_id_fk",
+          "tableFrom": "programme_materials",
+          "tableTo": "programmes",
+          "columnsFrom": [
+            "programmeId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "programme_materials_uploadedBy_users_id_fk": {
+          "name": "programme_materials_uploadedBy_users_id_fk",
+          "tableFrom": "programme_materials",
+          "tableTo": "users",
+          "columnsFrom": [
+            "uploadedBy"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "programme_materials_id": {
+          "name": "programme_materials_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "programme_messages": {
+      "name": "programme_messages",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "programmeId": {
+          "name": "programmeId",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "userId": {
+          "name": "userId",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "content": {
+          "name": "content",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "isAnnouncement": {
+          "name": "isAnnouncement",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP(3)"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "programme_messages_programmeId_programmes_id_fk": {
+          "name": "programme_messages_programmeId_programmes_id_fk",
+          "tableFrom": "programme_messages",
+          "tableTo": "programmes",
+          "columnsFrom": [
+            "programmeId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "programme_messages_userId_users_id_fk": {
+          "name": "programme_messages_userId_users_id_fk",
+          "tableFrom": "programme_messages",
+          "tableTo": "users",
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "programme_messages_id": {
+          "name": "programme_messages_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
     "programme_registrations": {
       "name": "programme_registrations",
       "columns": {
@@ -5588,11 +6144,33 @@
         },
         "status": {
           "name": "status",
-          "type": "enum('REGISTERED','PAID','ATTENDED','CANCELLED')",
+          "type": "enum('REGISTERED','PENDING_PAYMENT','PARTIALLY_PAID','PAID','ATTENDED','CANCELLED')",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false,
           "default": "'REGISTERED'"
+        },
+        "gender": {
+          "name": "gender",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "address": {
+          "name": "address",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "amountPaid": {
+          "name": "amountPaid",
+          "type": "decimal(10,2)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'0.00'"
         },
         "paymentReference": {
           "name": "paymentReference",
@@ -5614,6 +6192,71 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
+        },
+        "country": {
+          "name": "country",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'Nigeria'"
+        },
+        "state": {
+          "name": "state",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "lga": {
+          "name": "lga",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "branch": {
+          "name": "branch",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "checkInTime": {
+          "name": "checkInTime",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "checkOutTime": {
+          "name": "checkOutTime",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "checkInBy": {
+          "name": "checkInBy",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "checkOutBy": {
+          "name": "checkOutBy",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "checkInWaiver": {
+          "name": "checkInWaiver",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": false
         },
         "registeredAt": {
           "name": "registeredAt",
@@ -5663,6 +6306,32 @@
             "id"
           ],
           "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "programme_registrations_checkInBy_users_id_fk": {
+          "name": "programme_registrations_checkInBy_users_id_fk",
+          "tableFrom": "programme_registrations",
+          "tableTo": "users",
+          "columnsFrom": [
+            "checkInBy"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "programme_registrations_checkOutBy_users_id_fk": {
+          "name": "programme_registrations_checkOutBy_users_id_fk",
+          "tableFrom": "programme_registrations",
+          "tableTo": "users",
+          "columnsFrom": [
+            "checkOutBy"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
           "onUpdate": "no action"
         }
       },
@@ -5738,6 +6407,34 @@
           "notNull": false,
           "autoincrement": false,
           "default": "'0.00'"
+        },
+        "startTime": {
+          "name": "startTime",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "endTime": {
+          "name": "endTime",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "lecturers": {
+          "name": "lecturers",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "topic": {
+          "name": "topic",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         },
         "images": {
           "name": "images",
@@ -5885,7 +6582,7 @@
         },
         "status": {
           "name": "status",
-          "type": "enum('DRAFT','PENDING_STATE','PENDING_NATIONAL','APPROVED','REJECTED','CANCELLED','COMPLETED')",
+          "type": "enum('DRAFT','PENDING_STATE','PENDING_NATIONAL','APPROVED','REJECTED','CANCELLED','COMPLETED','POSTPONED')",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false,
@@ -5926,6 +6623,20 @@
           "notNull": false,
           "autoincrement": false
         },
+        "organizingOfficialId": {
+          "name": "organizingOfficialId",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "seriesId": {
+          "name": "seriesId",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "format": {
           "name": "format",
           "type": "enum('PHYSICAL','VIRTUAL','HYBRID')",
@@ -5933,6 +6644,13 @@
           "notNull": false,
           "autoincrement": false,
           "default": "'PHYSICAL'"
+        },
+        "meetingUrl": {
+          "name": "meetingUrl",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         },
         "frequency": {
           "name": "frequency",
@@ -5987,6 +6705,22 @@
           "autoincrement": false,
           "default": false
         },
+        "allowInstallments": {
+          "name": "allowInstallments",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": false
+        },
+        "minInstallmentAmount": {
+          "name": "minInstallmentAmount",
+          "type": "decimal(10,2)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'0.00'"
+        },
         "amount": {
           "name": "amount",
           "type": "decimal(10,2)",
@@ -6003,9 +6737,88 @@
           "autoincrement": false,
           "default": false
         },
+        "certTemplateType": {
+          "name": "certTemplateType",
+          "type": "enum('TMC_ONLY','PARTNER_ONLY','BOTH')",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'TMC_ONLY'"
+        },
+        "certTmcSignature": {
+          "name": "certTmcSignature",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "certTmcSignatory": {
+          "name": "certTmcSignatory",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "certPartnerName": {
+          "name": "certPartnerName",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "certPartnerLogo": {
+          "name": "certPartnerLogo",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "certPartnerSignature": {
+          "name": "certPartnerSignature",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "certPartnerSignatory": {
+          "name": "certPartnerSignatory",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "rejectionReason": {
           "name": "rejectionReason",
           "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "staticAttendanceToken": {
+          "name": "staticAttendanceToken",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "attendanceWindow": {
+          "name": "attendanceWindow",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": 3
+        },
+        "waiverCode": {
+          "name": "waiverCode",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "feedbackFields": {
+          "name": "feedbackFields",
+          "type": "json",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
@@ -6089,6 +6902,19 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
+        "programmes_organizingOfficialId_officials_id_fk": {
+          "name": "programmes_organizingOfficialId_officials_id_fk",
+          "tableFrom": "programmes",
+          "tableTo": "officials",
+          "columnsFrom": [
+            "organizingOfficialId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
         "programmes_createdBy_users_id_fk": {
           "name": "programmes_createdBy_users_id_fk",
           "tableFrom": "programmes",
@@ -6119,14 +6945,14 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "varchar(255)",
+          "type": "varchar(191)",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
         "name": {
           "name": "name",
-          "type": "varchar(255)",
+          "type": "varchar(191)",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
@@ -7652,6 +8478,156 @@
           "columns": [
             "identifier",
             "token"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "wallet_transactions": {
+      "name": "wallet_transactions",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "walletId": {
+          "name": "walletId",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "type": {
+          "name": "type",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "amount": {
+          "name": "amount",
+          "type": "decimal(15,2)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "description": {
+          "name": "description",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "reference": {
+          "name": "reference",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP(3)"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "wallet_transactions_walletId_wallets_id_fk": {
+          "name": "wallet_transactions_walletId_wallets_id_fk",
+          "tableFrom": "wallet_transactions",
+          "tableTo": "wallets",
+          "columnsFrom": [
+            "walletId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "wallet_transactions_id": {
+          "name": "wallet_transactions_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "wallets": {
+      "name": "wallets",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "userId": {
+          "name": "userId",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "balance": {
+          "name": "balance",
+          "type": "decimal(15,2)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'0.00'"
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP(3)"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP(3)"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "wallets_userId_users_id_fk": {
+          "name": "wallets_userId_users_id_fk",
+          "tableFrom": "wallets",
+          "tableTo": "users",
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "wallets_id": {
+          "name": "wallets_id",
+          "columns": [
+            "id"
           ]
         }
       },

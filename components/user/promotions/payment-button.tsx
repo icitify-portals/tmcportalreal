@@ -7,6 +7,7 @@ import { Loader2, CreditCard } from "lucide-react"
 import { verifyPromotionPayment } from "@/lib/actions/promotions"
 import Script from "next/script"
 import { useRouter } from "next/navigation"
+import { getPaystackPublicKey } from "@/lib/actions/paystack"
 
 interface PaymentButtonProps {
     amount: number
@@ -25,7 +26,7 @@ export function PromotionPaymentButton({ amount, email, promotionId, title }: Pa
         setMounted(true)
     }, [])
 
-    const handlePay = () => {
+    const handlePay = async () => {
         if (!scriptLoaded) {
             toast.error("Payment system loading, please try again in a moment.")
             return;
@@ -37,8 +38,10 @@ export function PromotionPaymentButton({ amount, email, promotionId, title }: Pa
             return;
         }
 
+        const publicKey = await getPaystackPublicKey();
+
         const config = {
-            key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || 'pk_test_xxxxxxxxxxxxxxxxxxxx', // Fallback for dev
+            key: publicKey || 'pk_test_xxxxxxxxxxxxxxxxxxxx', // Fallback for dev
             email: email,
             amount: amount * 100, // Kobo
             currency: 'NGN',

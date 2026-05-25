@@ -1,10 +1,11 @@
 "use server"
 
 import { db } from "@/lib/db"
-import { constitutions, constitutionReviewers, constitutionFeedback, users, notifications } from "@/lib/db/schema"
-import { eq, desc, and, like, or } from "drizzle-orm"
+import { constitutions, constitutionReviewers, constitutionFeedback, users, notifications, officials } from "@/lib/db/schema"
+import { eq, desc, and, like, or, inArray } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { getServerSession } from "@/lib/session"
+import { sendEmail } from "@/lib/email"
 
 export async function createConstitutionDraft(title: string, content: string, documentUrl?: string) {
     try {
@@ -74,6 +75,103 @@ export async function approveConstitutionDraft(id: string) {
     } catch (error: any) {
         console.error("Approve Constitution Draft Error:", error)
         return { success: false, error: error.message || "Failed to approve constitution draft" }
+    }
+}
+
+export async function advanceConstitutionStage(id: string, newStatus: string) {
+    try {
+        const session = await getServerSession()
+        if (!session?.user?.id) return { success: false, error: "Unauthorized" }
+
+        await db.update(constitutions).set({
+            status: newStatus,
+            updatedAt: new Date(),
+        }).where(eq(constitutions.id, id))
+
+        // Get the draft to extract the title
+        const [draft] = await db.select({ title: constitutions.title }).from(constitutions).where(eq(constitutions.id, id)).limit(1)
+        const draftTitle = draft ? draft.title : "Constitution Draft"
+
+        try {
+            let targetLevel: string | null = null;
+            if (newStatus === 'REVIEW_BRANCH') targetLevel = 'BRANCH';
+            else if (newStatus === 'REVIEW_LGA') targetLevel = 'LOCAL_GOVERNMENT';
+            else if (newStatus === 'REVIEW_STATE') targetLevel = 'STATE';
+            else if (newStatus === 'REVIEW_NATIONAL') targetLevel = 'NATIONAL';
+
+            if (targetLevel) {
+                // Notify officials at this level
+                const targetOfficials = await db.select({ userId: officials.userId }).from(officials).where(eq(officials.positionLevel, targetLevel))
+                const notifyUserIds = targetOfficials.map(o => o.userId)
+
+                if (notifyUserIds.length > 0) {
+                    await db.insert(notifications).values(
+                        notifyUserIds.map(userId => ({
+                            userId: userId,
+                            title: "Constitution Review Stage Opened",
+                            message: `The constitution draft "${draftTitle}" is now open for ${targetLevel.replace("_", " ")} review. Please submit your observations.`,
+                            type: 'INFO' as const,
+                            actionUrl: `/dashboard/official/constitution`,
+                            createdAt: new Date(),
+                            updatedAt: new Date()
+                        }))
+                    )
+
+                    const inviteesInfo = await db.select({ name: users.name, email: users.email }).from(users).where(inArray(users.id, notifyUserIds))
+                    Promise.all(inviteesInfo.map(user => {
+                        if (!user.email) return Promise.resolve();
+                        return sendEmail({
+                            to: user.email,
+                            subject: `Constitution Review: ${targetLevel.replace("_", " ")} Phase`,
+                            html: `Hello ${user.name || 'Official'},<br/><br/>The constitution draft <b>${draftTitle}</b> is now open for ${targetLevel.replace("_", " ")} review.<br/><br/>Please log in to your official dashboard to read the draft and submit your observations.`,
+                            text: `The constitution draft ${draftTitle} is now open for ${targetLevel.replace("_", " ")} review.`,
+                            template: "general_notification"
+                        })
+                    })).catch(err => console.error("Error sending constitution emails:", err))
+                }
+            } else if (newStatus === 'APPROVED') {
+                // Notify ALL users
+                const allUsersList = await db.select({ userId: users.id, name: users.name, email: users.email }).from(users)
+                if (allUsersList.length > 0) {
+                    // Chunk inserts because it might be too large
+                    const chunkSize = 500;
+                    for (let i = 0; i < allUsersList.length; i += chunkSize) {
+                        const chunk = allUsersList.slice(i, i + chunkSize);
+                        await db.insert(notifications).values(
+                            chunk.map(user => ({
+                                userId: user.userId,
+                                title: "Constitution Approved",
+                                message: `A new constitution "${draftTitle}" has been officially approved and published!`,
+                                type: 'SUCCESS' as const,
+                                actionUrl: `/constitution`,
+                                createdAt: new Date(),
+                                updatedAt: new Date()
+                            }))
+                        )
+                        
+                        Promise.all(chunk.map(user => {
+                            if (!user.email) return Promise.resolve();
+                            return sendEmail({
+                                to: user.email,
+                                subject: `New Constitution Published: ${draftTitle}`,
+                                html: `Hello ${user.name || 'Member'},<br/><br/>The constitution draft <b>${draftTitle}</b> has been officially approved and published!<br/><br/>You can now view the full, active constitution in the portal.`,
+                                text: `The constitution draft ${draftTitle} has been officially approved and published!`,
+                                template: "general_notification"
+                            })
+                        })).catch(err => console.error("Error sending constitution approval emails:", err))
+                    }
+                }
+            }
+        } catch (notifyErr) {
+            console.error("Constitution notification error:", notifyErr)
+        }
+
+        revalidatePath("/dashboard/admin/constitution")
+        revalidatePath("/dashboard/official/constitution")
+        return { success: true }
+    } catch (error: any) {
+        console.error("Advance Constitution Stage Error:", error)
+        return { success: false, error: error.message || "Failed to advance constitution stage" }
     }
 }
 
@@ -224,8 +322,32 @@ export async function submitConstitutionFeedback(constitutionId: string, comment
             .where(eq(constitutions.id, constitutionId))
             .limit(1)
 
-        if (!reviewer && draft?.createdBy !== session.user.id) {
-            return { success: false, error: "You are not authorized to provide feedback on this draft." }
+        let isAuthorized = false
+        if (reviewer || draft?.createdBy === session.user.id) {
+            isAuthorized = true
+        } else if (draft) {
+            // Check if user is an official at the matching org level
+            let requiredLevel: "BRANCH" | "LOCAL_GOVERNMENT" | "STATE" | "NATIONAL" | null = null;
+            if (draft.status === "REVIEW_BRANCH") requiredLevel = "BRANCH";
+            if (draft.status === "REVIEW_LGA") requiredLevel = "LOCAL_GOVERNMENT";
+            if (draft.status === "REVIEW_STATE") requiredLevel = "STATE";
+            if (draft.status === "REVIEW_NATIONAL") requiredLevel = "NATIONAL";
+
+            if (requiredLevel) {
+                const [official] = await db.select().from(officials)
+                    .where(and(
+                        eq(officials.userId, session.user.id),
+                        eq(officials.positionLevel, requiredLevel),
+                        eq(officials.isActive, true)
+                    ))
+                    .limit(1)
+                
+                if (official) isAuthorized = true;
+            }
+        }
+
+        if (!isAuthorized) {
+            return { success: false, error: "You are not authorized to provide feedback on this draft at its current stage." }
         }
 
         await db.insert(constitutionFeedback).values({
@@ -304,7 +426,43 @@ export async function getMyReviewAssignments() {
         .innerJoin(constitutions, eq(constitutionReviewers.constitutionId, constitutions.id))
         .where(eq(constitutionReviewers.userId, session.user.id))
 
-        return assignments
+        // 2. Get active org-level drafts
+        const activeOfficials = await db.select().from(officials)
+            .where(and(
+                eq(officials.userId, session.user.id),
+                eq(officials.isActive, true)
+            ))
+        
+        let matchingStatuses: string[] = []
+        for (const off of activeOfficials) {
+            if (off.positionLevel === "BRANCH") matchingStatuses.push("REVIEW_BRANCH")
+            if (off.positionLevel === "LOCAL_GOVERNMENT") matchingStatuses.push("REVIEW_LGA")
+            if (off.positionLevel === "STATE") matchingStatuses.push("REVIEW_STATE")
+            if (off.positionLevel === "NATIONAL") matchingStatuses.push("REVIEW_NATIONAL")
+        }
+
+        let stageDrafts: any[] = []
+        if (matchingStatuses.length > 0) {
+             const drafts = await db.select().from(constitutions)
+                .where(inArray(constitutions.status, matchingStatuses))
+             
+             // Format them to match the explicit assignment shape
+             stageDrafts = drafts.map(d => ({
+                 reviewerId: 'org-level-access',
+                 constitutionId: d.id,
+                 assignedAt: d.createdAt,
+                 title: d.title,
+                 status: d.status,
+                 documentUrl: d.documentUrl,
+                 content: d.content
+             }))
+        }
+
+        // Merge and deduplicate by constitutionId
+        const allDrafts = [...assignments, ...stageDrafts]
+        const uniqueDrafts = Array.from(new Map(allDrafts.map(item => [item.constitutionId, item])).values())
+
+        return uniqueDrafts
     } catch (err) {
         console.error("Get My Review Assignments Error:", err)
         return []

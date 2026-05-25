@@ -8,21 +8,60 @@ import { Badge } from "@/components/ui/badge"
 import { formatCurrency, formatDate } from "@/lib/utils"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ArrowUpRight, ArrowDownLeft } from "lucide-react"
+import { getAvailableJurisdictions } from "@/lib/actions/analytics"
+import { JurisdictionFilter } from "../analytics/jurisdiction-filter"
+import { db } from "@/lib/db"
+import { organizations } from "@/lib/db/schema"
+import { eq } from "drizzle-orm"
 
 
-export default async function TransactionsPage() {
+export default async function TransactionsPage({
+    searchParams
+}: {
+    searchParams: Promise<{ orgId?: string }>
+}) {
     const session = await getServerSession()
     if (!session?.user?.id) return notFound()
 
-    const organizationId = "default-org-id" // TODO: Real context
+    const { orgId } = await searchParams || {}
+    let organizationId = orgId || ""
+
+    if (!organizationId) {
+        // Try to default to TMC Headquarters first
+        const [hqOrg] = await db.select().from(organizations)
+            .where(eq(organizations.name, 'The Muslim Congress (National)'))
+            .limit(1)
+        
+        if (hqOrg) {
+            organizationId = hqOrg.id
+        } else {
+            const [firstOrg] = await db.select().from(organizations).limit(1)
+            if (firstOrg) organizationId = firstOrg.id
+        }
+    }
 
     const transactions = await getTransactions(organizationId) || []
     const summary = await getFinancialSummary(organizationId)
+    const jurisdictions = await getAvailableJurisdictions()
 
     return (
             <div className="space-y-6">
-                <div className="flex justify-between items-center">
-                    <h3 className="text-lg font-medium">Financial Ledger</h3>
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h3 className="text-lg font-medium">Financial Ledger</h3>
+                        <p className="text-sm text-muted-foreground">Monitor and record all financial transactions.</p>
+                    </div>
+                    {jurisdictions.length > 0 && (
+                        <div className="w-full md:w-64">
+                            <JurisdictionFilter
+                                jurisdictions={jurisdictions}
+                                currentId={organizationId}
+                            />
+                        </div>
+                    )}
+                </div>
+
+                <div className="flex justify-end">
                     <RecordInflowDialog organizationId={organizationId} />
                 </div>
 

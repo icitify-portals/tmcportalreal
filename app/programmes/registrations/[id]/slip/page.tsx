@@ -11,6 +11,7 @@ import { format } from "date-fns"
 import { PrintButton } from "@/components/programmes/print-button"
 import { ResumePaymentButton, RefreshButton } from "@/components/programmes/resume-payment-button"
 import { VerifyPaymentStatusButton } from "@/components/programmes/verify-payment-button"
+import { ShareButton } from "@/components/programmes/share-button"
 
 export default async function AccessSlipPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
@@ -343,7 +344,16 @@ export default async function AccessSlipPage({ params }: { params: Promise<{ id:
                             : "Please present this slip at the venue for entry."}
                     </p>
                     <div className="flex items-center gap-3">
-                        {!isUnpaid && <PrintButton />}
+                        {!isUnpaid && (
+                            <>
+                                <ShareButton 
+                                    title="TMC Programme Access Slip" 
+                                    text={`Check out my access slip for ${registration.programme.title}!`} 
+                                    url={`${appUrl}/programmes/verify/${registration.id}?hash=${registration.securityHash}`} 
+                                />
+                                <PrintButton />
+                            </>
+                        )}
                     </div>
                 </div>
             </div>

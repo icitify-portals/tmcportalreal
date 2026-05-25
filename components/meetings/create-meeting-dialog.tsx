@@ -43,6 +43,7 @@ const formSchema = z.object({
     meetingLink: z.string().optional(),
     attendees: z.array(z.string()).default([]), // User IDs
     previousMinutesUrl: z.string().optional(),
+    targetAudience: z.enum(['OFFICIALS_ONLY', 'ALL_MEMBERS_JURISDICTION', 'ALL_MEMBERS_GLOBAL']).default('ALL_MEMBERS_JURISDICTION'),
 })
 
 interface CreateMeetingDialogProps {
@@ -55,13 +56,12 @@ import {
     Select,
     SelectContent,
     SelectItem,
-    SelectTrigger,
-    SelectValue,
 } from "@/components/ui/select"
 import { getMeetingGroups } from "@/lib/actions/meetings"
 import { getOrganizations } from "@/lib/actions/organization"
 import { useEffect } from "react"
 import { Upload } from "lucide-react"
+import { FormJurisdictionSelector } from "./form-jurisdiction-selector"
 
 export function CreateMeetingDialog({ members, currentOrgId, isSuperAdmin }: CreateMeetingDialogProps) {
     const [open, setOpen] = useState(false)
@@ -93,7 +93,8 @@ export function CreateMeetingDialog({ members, currentOrgId, isSuperAdmin }: Cre
             meetingLink: "",
             isOnline: false,
             attendees: [],
-            previousMinutesUrl: ""
+            previousMinutesUrl: "",
+            targetAudience: "ALL_MEMBERS_JURISDICTION" as any
         },
     })
 
@@ -138,6 +139,7 @@ export function CreateMeetingDialog({ members, currentOrgId, isSuperAdmin }: Cre
                 scheduledAt: date.toISOString(),
                 organizationId: values.organizationId,
                 previousMinutesUrl: minuteUrl || undefined,
+                targetAudience: values.targetAudience as any,
             })
 
             if (res.success) {
@@ -180,24 +182,44 @@ export function CreateMeetingDialog({ members, currentOrgId, isSuperAdmin }: Cre
                                 name="organizationId"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Jurisdiction / Organization</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <FormControl>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Select organization" />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent>
-                                                {organizationsList.map(org => (
-                                                    <SelectItem key={org.id} value={org.id}>{org.name} ({org.level})</SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
+                                        <FormLabel>Meeting Jurisdiction</FormLabel>
+                                        <FormControl>
+                                            <FormJurisdictionSelector
+                                                organizations={organizationsList}
+                                                value={field.value}
+                                                onChange={field.onChange}
+                                            />
+                                        </FormControl>
                                         <FormMessage />
                                     </FormItem>
                                 )}
                             />
                         )}
+
+                        <FormField control={form.control} name="targetAudience" render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Target Audience</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select who gets invited" />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        <SelectItem value="OFFICIALS_ONLY">Officials Only</SelectItem>
+                                        <SelectItem value="ALL_MEMBERS_JURISDICTION">All Members in Jurisdiction</SelectItem>
+                                        <SelectItem value="ALL_MEMBERS_GLOBAL">All Members Globally (Across Board)</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <FormDescription>
+                                    {field.value === 'ALL_MEMBERS_GLOBAL' 
+                                        ? "Every active member across the portal will be invited and notified." 
+                                        : field.value === 'OFFICIALS_ONLY' 
+                                        ? "Only executives within the selected jurisdiction will be invited." 
+                                        : "All members and officials in the selected jurisdiction will be invited."}
+                                </FormDescription>
+                            </FormItem>
+                        )} />
 
                         <div className="grid grid-cols-2 gap-4">
                             <FormField control={form.control} name="groupId" render={({ field }) => (

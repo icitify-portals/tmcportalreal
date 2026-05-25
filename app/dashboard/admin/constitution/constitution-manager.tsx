@@ -19,7 +19,7 @@ import { toast } from "sonner"
 import {
     createConstitutionDraft, updateConstitutionDraft, approveConstitutionDraft,
     deleteConstitutionDraft, assignConstitutionReviewer, removeConstitutionReviewer,
-    getConstitutionReviewers, submitConstitutionFeedback, getConstitutionFeedback,
+    getConstitutionReviewers, submitConstitutionFeedback, getConstitutionFeedback, advanceConstitutionStage
 } from "@/lib/actions/constitution"
 import { searchUsers } from "@/lib/actions/users"
 import { FileUpload } from "@/components/ui/file-upload"
@@ -32,6 +32,7 @@ export function ConstitutionManager({ drafts }: ConstitutionManagerProps) {
     const [documentUrl, setDocumentUrl] = useState("")
     const [createOpen, setCreateOpen] = useState(false)
     const [isSaving, setIsSaving] = useState(false)
+    const [isAdvancing, setIsAdvancing] = useState(false)
     const [selectedDraft, setSelectedDraft] = useState<any>(null)
     const [editMode, setEditMode] = useState(false)
     const [editTitle, setEditTitle] = useState("")
@@ -97,9 +98,21 @@ export function ConstitutionManager({ drafts }: ConstitutionManagerProps) {
     async function handleApproveDraft(id: string) {
         try {
             const res = await approveConstitutionDraft(id)
-            if (res.success) { toast.success("Constitution approved."); setSelectedDraft(null) }
+            if (res.success) { toast.success("Constitution approved."); setSelectedDraft({ ...selectedDraft, status: "APPROVED" }) }
             else toast.error(res.error || "Failed.")
         } catch (err: any) { toast.error(err.message) }
+    }
+
+    async function handleAdvanceStage(id: string, newStatus: string) {
+        setIsAdvancing(true)
+        try {
+            const res = await advanceConstitutionStage(id, newStatus)
+            if (res.success) { 
+                toast.success(`Advanced to ${newStatus.replace("REVIEW_", "")} Review`)
+                setSelectedDraft({ ...selectedDraft, status: newStatus })
+            }
+            else toast.error(res.error || "Failed.")
+        } catch (err: any) { toast.error(err.message) } finally { setIsAdvancing(false) }
     }
 
     async function handleDeleteDraft() {
@@ -231,9 +244,23 @@ export function ConstitutionManager({ drafts }: ConstitutionManagerProps) {
                                 ) : (
                                     <>
                                         <Button variant="outline" size="sm" onClick={() => setEditMode(true)} className="border-gray-200 text-gray-700"><Edit className="h-4 w-4 mr-1 text-gray-600" /> Edit</Button>
-                                        {selectedDraft.status !== "APPROVED" && (
-                                            <Button size="sm" onClick={() => handleApproveDraft(selectedDraft.id)} className="bg-green-600 hover:bg-green-700 text-white font-bold"><CheckCircle2 className="h-4 w-4 mr-1" /> Approve</Button>
+                                        
+                                        {selectedDraft.status === "DRAFT" && (
+                                            <Button size="sm" onClick={() => handleAdvanceStage(selectedDraft.id, "REVIEW_BRANCH")} disabled={isAdvancing} className="bg-blue-600 hover:bg-blue-700 text-white font-bold">Start Branch Review</Button>
                                         )}
+                                        {selectedDraft.status === "REVIEW_BRANCH" && (
+                                            <Button size="sm" onClick={() => handleAdvanceStage(selectedDraft.id, "REVIEW_LGA")} disabled={isAdvancing} className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold">Advance to LGA</Button>
+                                        )}
+                                        {selectedDraft.status === "REVIEW_LGA" && (
+                                            <Button size="sm" onClick={() => handleAdvanceStage(selectedDraft.id, "REVIEW_STATE")} disabled={isAdvancing} className="bg-purple-600 hover:bg-purple-700 text-white font-bold">Advance to State</Button>
+                                        )}
+                                        {selectedDraft.status === "REVIEW_STATE" && (
+                                            <Button size="sm" onClick={() => handleAdvanceStage(selectedDraft.id, "REVIEW_NATIONAL")} disabled={isAdvancing} className="bg-orange-600 hover:bg-orange-700 text-white font-bold">Advance to National</Button>
+                                        )}
+                                        {selectedDraft.status === "REVIEW_NATIONAL" && (
+                                            <Button size="sm" onClick={() => handleApproveDraft(selectedDraft.id)} className="bg-green-600 hover:bg-green-700 text-white font-bold"><CheckCircle2 className="h-4 w-4 mr-1" /> Final Approve</Button>
+                                        )}
+
                                         <Button variant="destructive" size="sm" onClick={() => setDeleteId(selectedDraft.id)} className="bg-red-600 hover:bg-red-700"><Trash className="h-4 w-4" /></Button>
                                     </>
                                 )}
