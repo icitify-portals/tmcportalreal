@@ -71,14 +71,17 @@ export function FormJurisdictionSelector({
     const nationalOrg = organizations.find(o => o.level === 'NATIONAL')
 
     // Initial setup if empty and National exists
+    const [hasInitialized, setHasInitialized] = useState(false)
     useEffect(() => {
-        if (!value && nationalOrg) {
+        if (!hasInitialized && !value && nationalOrg) {
             setLevel('NATIONAL')
             onChange(nationalOrg.id)
+            setHasInitialized(true)
         }
-    }, [value, nationalOrg, onChange])
+    }, [value, nationalOrg, onChange, hasInitialized])
 
     const handleLevelChange = (val: string) => {
+        setHasInitialized(true)
         setLevel(val)
         setStateId("")
         setLgaId("")
