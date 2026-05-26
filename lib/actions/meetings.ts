@@ -605,7 +605,8 @@ export async function getMeetingGroups(organizationId?: string) {
     return groups.map(g => ({
         ...g,
         memberCount: membersList.filter(m => m.groupId === g.id).length,
-        members: membersList.filter(m => m.groupId === g.id)
+        members: membersList.filter(m => m.groupId === g.id),
+        dynamicRules: g.dynamicRules as any
     }))
 }
 
