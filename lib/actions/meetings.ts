@@ -227,7 +227,7 @@ export async function updateMeeting(id: string, data: z.infer<typeof CreateMeeti
             isOnline: data.isOnline,
             meetingLink: data.meetingLink,
             virtualRoomId: virtualRoomId,
-            targetAudience: data.targetAudience,
+            targetAudience: 'ALL_MEMBERS_JURISDICTION', // Fallback
             updatedAt: new Date()
         }).where(eq(meetings.id, id))
 
@@ -236,34 +236,48 @@ export async function updateMeeting(id: string, data: z.infer<typeof CreateMeeti
 
         // Re-calculate who should be invited
         let autoUserIds: string[] = []
+        
+        const [group] = await db.select().from(meetingGroups).where(eq(meetingGroups.id, data.groupId))
+        if (group) {
+            const rules = group.dynamicRules as any
+            if (rules) {
+                if (rules.includeAllMembers) {
+                    const jurisdictionMembers = await db.select({ userId: members.userId })
+                        .from(members)
+                        .where(and(
+                            eq(members.organizationId, group.organizationId),
+                            eq(members.isActive, true)
+                        ))
+                    autoUserIds.push(...jurisdictionMembers.map(m => m.userId).filter(Boolean) as string[])
+                }
 
-        if (data.targetAudience === 'ALL_MEMBERS_GLOBAL') {
-            const allMembers = await db.select({ userId: members.userId }).from(members).where(eq(members.isActive, true))
-            const allOfficials = await db.select({ userId: officials.userId }).from(officials).where(eq(officials.isActive, true))
-            autoUserIds = [...allMembers.map(m => m.userId), ...allOfficials.map(o => o.userId)]
-        } else if (data.targetAudience === 'OFFICIALS_ONLY') {
-            const jurisdictionOfficials = await db.select({ userId: officials.userId })
-                .from(officials)
-                .where(and(
-                    eq(officials.organizationId, data.organizationId),
-                    eq(officials.isActive, true)
-                ))
-            autoUserIds = jurisdictionOfficials.map(o => o.userId)
-        } else {
-            // ALL_MEMBERS_JURISDICTION
-            const jurisdictionMembers = await db.select({ userId: members.userId })
-                .from(members)
-                .where(and(
-                    eq(members.organizationId, data.organizationId),
-                    eq(members.isActive, true)
-                ))
-            const jurisdictionOfficials = await db.select({ userId: officials.userId })
-                .from(officials)
-                .where(and(
-                    eq(officials.organizationId, data.organizationId),
-                    eq(officials.isActive, true)
-                ))
-            autoUserIds = [...jurisdictionMembers.map(m => m.userId), ...jurisdictionOfficials.map(o => o.userId)]
+                if (rules.includeOfficials) {
+                    const jurisdictionOfficials = await db.select({ userId: officials.userId })
+                        .from(officials)
+                        .where(and(
+                            eq(officials.organizationId, group.organizationId),
+                            eq(officials.isActive, true)
+                        ))
+                    autoUserIds.push(...jurisdictionOfficials.map(o => o.userId).filter(Boolean) as string[])
+                }
+
+                if (rules.includeChildAdmins) {
+                    const childOrgs = await db.select({ id: organizations.id })
+                        .from(organizations)
+                        .where(eq(organizations.parentId, group.organizationId))
+                    
+                    if (childOrgs.length > 0) {
+                        const childOrgIds = childOrgs.map(o => o.id)
+                        const childAdmins = await db.select({ userId: officials.userId })
+                            .from(officials)
+                            .where(and(
+                                inArray(officials.organizationId, childOrgIds),
+                                eq(officials.isActive, true)
+                            ))
+                        autoUserIds.push(...childAdmins.map(o => o.userId).filter(Boolean) as string[])
+                    }
+                }
+            }
         }
 
         let groupUserIds: string[] = []
@@ -271,7 +285,7 @@ export async function updateMeeting(id: string, data: z.infer<typeof CreateMeeti
             const groupMembers = await db.select({ userId: meetingGroupMembers.userId })
                 .from(meetingGroupMembers)
                 .where(eq(meetingGroupMembers.groupId, data.groupId))
-            groupUserIds = groupMembers.map(m => m.userId)
+            groupUserIds = groupMembers.map(m => m.userId).filter(Boolean) as string[]
         }
 
         const allNewRequiredInvitees = Array.from(new Set([

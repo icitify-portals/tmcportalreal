@@ -39,12 +39,11 @@ const formSchema = z.object({
     scheduledAt: z.string().min(1, "Date is required"),
     time: z.string().min(1, "Time is required"),
     venue: z.string().optional(),
-    groupId: z.string().optional(),
+    groupId: z.string().min(1, "Group is required"),
     isOnline: z.boolean().default(false),
     meetingLink: z.string().optional(),
     attendees: z.array(z.string()).default([]), // User IDs
     previousMinutesUrl: z.string().optional(),
-    targetAudience: z.enum(['OFFICIALS_ONLY', 'ALL_MEMBERS_JURISDICTION', 'ALL_MEMBERS_GLOBAL']).default('ALL_MEMBERS_JURISDICTION'),
 })
 
 interface EditMeetingDialogProps {
@@ -86,15 +85,14 @@ export function EditMeetingDialog({ meeting, members }: EditMeetingDialogProps) 
         defaultValues: {
             title: meeting.title || "",
             description: meeting.description || "",
-            scheduledAt: "",
-            time: "",
+            scheduledAt: meeting.scheduledAt ? format(new Date(meeting.scheduledAt), 'yyyy-MM-dd') : "",
+            time: meeting.scheduledAt ? format(new Date(meeting.scheduledAt), 'HH:mm') : "",
             venue: meeting.venue || "",
             groupId: meeting.groupId || "",
             meetingLink: meeting.meetingLink || "",
             isOnline: meeting.isOnline || false,
             attendees: meeting.attendees?.map((a: any) => a.user?.id).filter(Boolean) || [],
             previousMinutesUrl: "",
-            targetAudience: meeting.targetAudience || "ALL_MEMBERS_JURISDICTION"
         },
     })
 
@@ -139,11 +137,9 @@ export function EditMeetingDialog({ meeting, members }: EditMeetingDialogProps) 
 
             const res = await updateMeeting(meeting.id, {
                 ...values,
-                groupId: values.groupId === "none" ? undefined : values.groupId,
+                groupId: values.groupId,
                 scheduledAt: date.toISOString(),
-                organizationId: meeting.organizationId,
                 previousMinutesUrl: minuteUrl || undefined,
-                targetAudience: values.targetAudience as any,
             })
 
             if (res.success) {
@@ -182,28 +178,12 @@ export function EditMeetingDialog({ meeting, members }: EditMeetingDialogProps) 
                             </FormItem>
                         )} />
 
-                        <FormField control={form.control} name="targetAudience" render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Target Audience</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select who gets invited" />
-                                        </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        <SelectItem value="OFFICIALS_ONLY">Officials Only</SelectItem>
-                                        <SelectItem value="ALL_MEMBERS_JURISDICTION">All Members in Jurisdiction</SelectItem>
-                                        <SelectItem value="ALL_MEMBERS_GLOBAL">All Members Globally (Across Board)</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </FormItem>
-                        )} />
-
-                        <div className="grid grid-cols-2 gap-4">
-                            <FormField control={form.control} name="groupId" render={({ field }) => (
+                        <FormField
+                            control={form.control}
+                            name="groupId"
+                            render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Meeting Group (Optional)</FormLabel>
+                                    <FormLabel>Meeting Group</FormLabel>
                                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                                         <FormControl>
                                             <SelectTrigger>
@@ -211,17 +191,19 @@ export function EditMeetingDialog({ meeting, members }: EditMeetingDialogProps) 
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                            <SelectItem value="none">None (Officials only)</SelectItem>
                                             {groups.map(group => (
                                                 <SelectItem key={group.id} value={group.id}>{group.name}</SelectItem>
                                             ))}
                                         </SelectContent>
                                     </Select>
+                                    <FormMessage />
                                 </FormItem>
-                            )} />
+                            )}
+                        />
 
+                        <div className="grid grid-cols-1 gap-4">
                             <FormItem>
-                                <FormLabel>Previous Minutes (Optional)</FormLabel>
+                                <FormLabel>Upload New Minutes (Optional)</FormLabel>
                                 <div className="flex items-center gap-2">
                                     <Input
                                         type="file"
