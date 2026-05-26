@@ -1336,6 +1336,22 @@ export async function updateProgramme(programmeId: string, data: Partial<z.infer
             rejectionReason = null // Clear reason on re-submission
         }
 
+        let finalOfficeId: string | null = null
+        if (validData.organizingOfficeId && validData.organizingOfficeId !== "none") {
+            const officeExists = await db.select({ id: offices.id }).from(offices).where(eq(offices.id, validData.organizingOfficeId)).limit(1)
+            if (officeExists.length > 0) {
+                finalOfficeId = validData.organizingOfficeId
+            }
+        }
+
+        let finalOfficialId: string | null = null
+        if (validData.organizingOfficialId && validData.organizingOfficialId !== "none") {
+            const officialExists = await db.select({ id: officials.id }).from(officials).where(eq(officials.id, validData.organizingOfficialId)).limit(1)
+            if (officialExists.length > 0) {
+                finalOfficialId = validData.organizingOfficialId
+            }
+        }
+
         const updatePayload = {
             title: validData.title,
             description: validData.description,
@@ -1348,8 +1364,8 @@ export async function updateProgramme(programmeId: string, data: Partial<z.infer
             allowInstallments: validData.allowInstallments,
             minInstallmentAmount: validData.minInstallmentAmount !== undefined ? validData.minInstallmentAmount.toString() : undefined,
             amount: validData.amount !== undefined ? validData.amount.toString() : undefined,
-            organizingOfficeId: validData.organizingOfficeId,
-            organizingOfficialId: validData.organizingOfficialId,
+            organizingOfficeId: finalOfficeId,
+            organizingOfficialId: finalOfficialId,
             format: validData.format,
             meetingUrl: validData.meetingUrl,
             frequency: validData.frequency,
