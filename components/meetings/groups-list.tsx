@@ -11,6 +11,11 @@ interface Group {
     name: string
     memberCount: number
     members: { userId: string }[]
+    dynamicRules?: {
+        includeAllMembers?: boolean;
+        includeOfficials?: boolean;
+        includeChildAdmins?: boolean;
+    } | null
 }
 
 interface GroupsListProps {
@@ -47,8 +52,17 @@ export function GroupsList({ groups, availableMembers }: GroupsListProps) {
                                 <div className="flex items-center gap-2">
                                     <Badge variant="secondary">
                                         <Users className="mr-1 h-3 w-3" />
-                                        {group.memberCount} members
+                                        {group.memberCount} specific members
                                     </Badge>
+                                    {group.dynamicRules?.includeAllMembers && (
+                                        <Badge variant="outline" className="bg-blue-50 text-blue-700 hover:bg-blue-50">All Members</Badge>
+                                    )}
+                                    {group.dynamicRules?.includeOfficials && (
+                                        <Badge variant="outline" className="bg-green-50 text-green-700 hover:bg-green-50">All Officials</Badge>
+                                    )}
+                                    {group.dynamicRules?.includeChildAdmins && (
+                                        <Badge variant="outline" className="bg-purple-50 text-purple-700 hover:bg-purple-50">Sub-Jurisdiction Admins</Badge>
+                                    )}
                                 </div>
                             </TableCell>
                             <TableCell className="text-right">

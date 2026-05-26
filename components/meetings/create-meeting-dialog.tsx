@@ -76,7 +76,7 @@ export function CreateMeetingDialog({
   useEffect(() => {
     if (open) {
       setMinutesFile(null);
-      getMeetingGroups(currentOrgId).then(setGroups);
+      getMeetingGroups().then(setGroups);
     }
   }, [open, currentOrgId]);
 

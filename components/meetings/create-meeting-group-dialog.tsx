@@ -25,7 +25,7 @@ import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { createMeetingGroup, getAvailableMembers } from "@/lib/actions/meetings"
 import { toast } from "sonner"
-import { Loader2, Users } from "lucide-react"
+import { Loader2, Users, Search } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { FormJurisdictionSelector } from "./form-jurisdiction-selector"
 
@@ -52,6 +52,26 @@ export function CreateMeetingGroupDialog({ availableMembers: initialMembers, cur
     const [dynamicMembers, setDynamicMembers] = useState(initialMembers)
     const [isLoadingMembers, setIsLoadingMembers] = useState(false)
     const [organizationsList, setOrganizationsList] = useState<any[]>([])
+    const [searchQuery, setSearchQuery] = useState("")
+    const [searching, setSearching] = useState(false)
+
+    const searchUsers = async () => {
+        if (!searchQuery.trim()) return
+        setSearching(true)
+        try {
+            const res = await fetch(`/api/users/search?q=${encodeURIComponent(searchQuery)}`)
+            if (res.ok) {
+                const data = await res.json()
+                const existingIds = new Set(dynamicMembers.map(m => m.id))
+                const newMembers = data.filter((u: any) => !existingIds.has(u.id))
+                setDynamicMembers(prev => [...newMembers, ...prev])
+            }
+        } catch (error) {
+            toast.error("Failed to search users")
+        } finally {
+            setSearching(false)
+        }
+    }
 
     const form = useForm({
         resolver: zodResolver(formSchema),
@@ -208,10 +228,25 @@ export function CreateMeetingGroupDialog({ availableMembers: initialMembers, cur
                         </div>
 
                         <div className="space-y-2">
-                            <FormLabel className="flex justify-between items-center">
+                            <FormLabel className="flex justify-between items-center mb-2">
                                 <span>Specific Additional Members (Optional)</span>
                                 {isLoadingMembers && <Loader2 className="h-3 w-3 animate-spin" />}
                             </FormLabel>
+                            <div className="flex gap-2 mb-2">
+                                <div className="relative flex-1">
+                                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                    <Input
+                                        placeholder="Search by name or email to add..."
+                                        className="pl-9"
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), searchUsers())}
+                                    />
+                                </div>
+                                <Button type="button" variant="secondary" onClick={searchUsers} disabled={searching}>
+                                    {searching ? <Loader2 className="h-4 w-4 animate-spin" /> : "Search"}
+                                </Button>
+                            </div>
                             <ScrollArea className="h-[200px] w-full border rounded-md p-4">
                                 {dynamicMembers.length === 0 ? (
                                     <p className="text-sm text-muted-foreground text-center py-4">No members found in this jurisdiction.</p>
