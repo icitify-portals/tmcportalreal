@@ -158,6 +158,18 @@ export function Sidebar({ userRole, isRealAdmin, adminLevel, className, onNaviga
     })
   }
 
+  if (userRole === "admin") {
+    navItems = navItems.filter(item => {
+      if (item.href === "/dashboard/admin/teskiyah") {
+        return isRealAdmin || adminLevel === "NATIONAL" || adminLevel === "LOCAL_GOVERNMENT" || adminLevel === "BRANCH"
+      }
+      if (item.href === "/dashboard/admin/adhkar") {
+        return isRealAdmin || adminLevel === "NATIONAL" || adminLevel === "STATE" || adminLevel === "LOCAL_GOVERNMENT"
+      }
+      return true
+    })
+  }
+
   const [mockDialogOpen, setMockDialogOpen] = useState(false)
   const [pendingMode, setPendingMode] = useState<{ role: "admin" | "member" | "official" | "council", level?: string } | null>(null)
 
