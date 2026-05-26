@@ -923,6 +923,8 @@ export const meetings = mysqlTable("meetings", {
     virtualRoomId: varchar("virtualRoomId", { length: 500 }),
     recordingUrl: varchar("recordingUrl", { length: 500 }),
     groupId: varchar("groupId", { length: 255 }), // Link to a specific meeting group
+    staticAttendanceToken: varchar("staticAttendanceToken", { length: 255 }),
+    attendanceWindow: int("attendanceWindow").default(30), // minutes until considered late
     targetAudience: meetingTargetAudienceEnum.default('ALL_MEMBERS_JURISDICTION'),
 
     status: mysqlEnum('status', ['SCHEDULED', 'ONGOING', 'ENDED', 'CANCELLED']).default('SCHEDULED'),
@@ -937,6 +939,7 @@ export const meetingGroups = mysqlTable("meeting_groups", {
     organizationId: varchar("organizationId", { length: 255 }).notNull().references(() => organizations.id, { onDelete: "cascade" }),
     name: varchar("name", { length: 255 }).notNull(),
     description: text("description"),
+    dynamicRules: json("dynamicRules"), // e.g. { includeAllStateOfficials: true, includeAllLGAAdmins: true }
     isActive: boolean("isActive").default(true),
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
     updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),

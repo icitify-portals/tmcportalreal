@@ -33,6 +33,11 @@ const formSchema = z.object({
     name: z.string().min(1, "Group name is required"),
     organizationId: z.string().min(1, "Organization is required"),
     members: z.array(z.string()),
+    dynamicRules: z.object({
+        includeAllMembers: z.boolean(),
+        includeOfficials: z.boolean(),
+        includeChildAdmins: z.boolean(),
+    }),
 })
 
 interface CreateMeetingGroupDialogProps {
@@ -54,6 +59,11 @@ export function CreateMeetingGroupDialog({ availableMembers: initialMembers, cur
             name: "",
             organizationId: currentOrgId || "",
             members: [],
+            dynamicRules: {
+                includeAllMembers: false,
+                includeOfficials: false,
+                includeChildAdmins: false,
+            }
         },
     })
 
@@ -93,7 +103,7 @@ export function CreateMeetingGroupDialog({ availableMembers: initialMembers, cur
     async function onSubmit(values: z.infer<typeof formSchema>) {
         setIsPending(true)
         try {
-            const res = await createMeetingGroup(values.name, values.organizationId, values.members)
+            const res = await createMeetingGroup(values.name, values.organizationId, values.members, values.dynamicRules)
             if (res.success) {
                 toast.success("Meeting group created")
                 setOpen(false)
@@ -157,9 +167,47 @@ export function CreateMeetingGroupDialog({ availableMembers: initialMembers, cur
                             />
                         )}
 
+                        <div className="space-y-4 rounded-md border p-4 bg-muted/20">
+                            <h4 className="text-sm font-semibold">Dynamic Group Rules</h4>
+                            <p className="text-xs text-muted-foreground">Select automatic inclusion rules. Members matching these rules will be included in the group dynamically.</p>
+                            
+                            <FormField control={form.control} name="dynamicRules.includeAllMembers" render={({ field }) => (
+                                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                                    <FormControl>
+                                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                                    </FormControl>
+                                    <FormLabel className="font-normal cursor-pointer">
+                                        Include all general members in this jurisdiction
+                                    </FormLabel>
+                                </FormItem>
+                            )} />
+
+                            <FormField control={form.control} name="dynamicRules.includeOfficials" render={({ field }) => (
+                                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                                    <FormControl>
+                                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                                    </FormControl>
+                                    <FormLabel className="font-normal cursor-pointer">
+                                        Include all officials/executives in this jurisdiction
+                                    </FormLabel>
+                                </FormItem>
+                            )} />
+
+                            <FormField control={form.control} name="dynamicRules.includeChildAdmins" render={({ field }) => (
+                                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                                    <FormControl>
+                                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                                    </FormControl>
+                                    <FormLabel className="font-normal cursor-pointer">
+                                        Include all administrators from sub-jurisdictions (e.g. LGA admins)
+                                    </FormLabel>
+                                </FormItem>
+                            )} />
+                        </div>
+
                         <div className="space-y-2">
                             <FormLabel className="flex justify-between items-center">
-                                <span>Select Members</span>
+                                <span>Specific Additional Members (Optional)</span>
                                 {isLoadingMembers && <Loader2 className="h-3 w-3 animate-spin" />}
                             </FormLabel>
                             <ScrollArea className="h-[200px] w-full border rounded-md p-4">

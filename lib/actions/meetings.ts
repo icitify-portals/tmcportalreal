@@ -10,13 +10,13 @@ import { redirect } from "next/navigation"
 import { sendEmail, emailTemplates } from "@/lib/email"
 import { v4 as uuidv4 } from "uuid"
 import { subDays, isAfter } from "date-fns"
+import { generateAttendanceToken } from "@/lib/attendance-token"
 
 // Schemas
 const CreateMeetingSchema = z.object({
     title: z.string().min(1),
     description: z.string().optional(),
-    organizationId: z.string(),
-    groupId: z.string().optional(), // Link to a predefined group
+    groupId: z.string().min(1), // Link to a predefined group
     scheduledAt: z.string(), // ISO String
     endAt: z.string().optional(),
     venue: z.string().optional(),
@@ -24,7 +24,6 @@ const CreateMeetingSchema = z.object({
     meetingLink: z.string().optional(),
     attendees: z.array(z.string()), // Additional manual invites
     previousMinutesUrl: z.string().optional(),
-    targetAudience: z.enum(['OFFICIALS_ONLY', 'ALL_MEMBERS_JURISDICTION', 'ALL_MEMBERS_GLOBAL']).default('ALL_MEMBERS_JURISDICTION'),
 })
 
 export async function createMeeting(data: z.infer<typeof CreateMeetingSchema>) {
@@ -39,12 +38,19 @@ export async function createMeeting(data: z.infer<typeof CreateMeetingSchema>) {
     }
 
     try {
+        // Fetch group details
+        const groupRes = await db.select().from(meetingGroups).where(eq(meetingGroups.id, data.groupId)).limit(1)
+        if (groupRes.length === 0) return { success: false, error: "Meeting group not found" }
+        const group = groupRes[0]
+
         const id = uuidv4();
+        const staticAttendanceToken = Math.random().toString(36).substring(2, 10).toUpperCase()
+        
         await db.insert(meetings).values({
             id,
             title: data.title,
             description: data.description,
-            organizationId: data.organizationId,
+            organizationId: group.organizationId,
             groupId: data.groupId,
             scheduledAt: new Date(data.scheduledAt),
             endAt: data.endAt ? new Date(data.endAt) : null,
@@ -52,7 +58,9 @@ export async function createMeeting(data: z.infer<typeof CreateMeetingSchema>) {
             isOnline: data.isOnline,
             meetingLink: data.meetingLink,
             virtualRoomId: virtualRoomId, // Assign randomly generated room ID for LiveKit
-            targetAudience: data.targetAudience,
+            staticAttendanceToken,
+            attendanceWindow: 30, // 30 minutes default
+            targetAudience: 'ALL_MEMBERS_JURISDICTION', // Fallback for DB constraints if any
             status: 'SCHEDULED',
             createdBy: session.user.id,
             createdAt: new Date(),
@@ -73,46 +81,56 @@ export async function createMeeting(data: z.infer<typeof CreateMeetingSchema>) {
             })
         }
 
-        // 1. Auto-invite based on targetAudience
+        // 1. Resolve Dynamic Rules from Group
         let autoUserIds: string[] = []
+        const rules = group.dynamicRules as any
 
-        if (data.targetAudience === 'ALL_MEMBERS_GLOBAL') {
-            const allMembers = await db.select({ userId: members.userId }).from(members).where(eq(members.isActive, true))
-            const allOfficials = await db.select({ userId: officials.userId }).from(officials).where(eq(officials.isActive, true))
-            autoUserIds = [...allMembers.map(m => m.userId), ...allOfficials.map(o => o.userId)]
-        } else if (data.targetAudience === 'OFFICIALS_ONLY') {
-            const jurisdictionOfficials = await db.select({ userId: officials.userId })
-                .from(officials)
-                .where(and(
-                    eq(officials.organizationId, data.organizationId),
-                    eq(officials.isActive, true)
-                ))
-            autoUserIds = jurisdictionOfficials.map(o => o.userId)
-        } else {
-            // ALL_MEMBERS_JURISDICTION
-            const jurisdictionMembers = await db.select({ userId: members.userId })
-                .from(members)
-                .where(and(
-                    eq(members.organizationId, data.organizationId),
-                    eq(members.isActive, true)
-                ))
-            const jurisdictionOfficials = await db.select({ userId: officials.userId })
-                .from(officials)
-                .where(and(
-                    eq(officials.organizationId, data.organizationId),
-                    eq(officials.isActive, true)
-                ))
-            autoUserIds = [...jurisdictionMembers.map(m => m.userId), ...jurisdictionOfficials.map(o => o.userId)]
+        if (rules) {
+            if (rules.includeAllMembers) {
+                const jurisdictionMembers = await db.select({ userId: members.userId })
+                    .from(members)
+                    .where(and(
+                        eq(members.organizationId, group.organizationId),
+                        eq(members.isActive, true)
+                    ))
+                autoUserIds.push(...jurisdictionMembers.map(m => m.userId).filter(Boolean) as string[])
+            }
+
+            if (rules.includeOfficials) {
+                const jurisdictionOfficials = await db.select({ userId: officials.userId })
+                    .from(officials)
+                    .where(and(
+                        eq(officials.organizationId, group.organizationId),
+                        eq(officials.isActive, true)
+                    ))
+                autoUserIds.push(...jurisdictionOfficials.map(o => o.userId).filter(Boolean) as string[])
+            }
+
+            if (rules.includeChildAdmins) {
+                // Fetch child organizations
+                const childOrgs = await db.select({ id: organizations.id })
+                    .from(organizations)
+                    .where(eq(organizations.parentId, group.organizationId))
+                
+                if (childOrgs.length > 0) {
+                    const childOrgIds = childOrgs.map(o => o.id)
+                    const childAdmins = await db.select({ userId: officials.userId })
+                        .from(officials)
+                        .where(and(
+                            inArray(officials.organizationId, childOrgIds),
+                            eq(officials.isActive, true)
+                        ))
+                    autoUserIds.push(...childAdmins.map(o => o.userId).filter(Boolean) as string[])
+                }
+            }
         }
 
-        // 2. Add Group Members if group selected
+        // 2. Add Manual Group Members
         let groupUserIds: string[] = []
-        if (data.groupId) {
-            const groupMembers = await db.select({ userId: meetingGroupMembers.userId })
-                .from(meetingGroupMembers)
-                .where(eq(meetingGroupMembers.groupId, data.groupId))
-            groupUserIds = groupMembers.map(m => m.userId)
-        }
+        const groupMembers = await db.select({ userId: meetingGroupMembers.userId })
+            .from(meetingGroupMembers)
+            .where(eq(meetingGroupMembers.groupId, data.groupId))
+        groupUserIds = groupMembers.map(m => m.userId).filter(Boolean) as string[]
 
         // Combine all unique invitees
         const allInvitees = Array.from(new Set([
@@ -577,18 +595,24 @@ export async function getMeetingGroups(organizationId?: string) {
     }))
 }
 
-export async function createMeetingGroup(name: string, organizationId: string, userIds: string[]) {
+export async function createMeetingGroup(
+    name: string, 
+    organizationId: string, 
+    userIds: string[], 
+    dynamicRules?: { includeAllMembers: boolean; includeOfficials: boolean; includeChildAdmins: boolean }
+) {
     try {
         const id = uuidv4()
         await db.insert(meetingGroups).values({
             id,
             name,
             organizationId,
+            dynamicRules: dynamicRules || null,
             createdAt: new Date(),
             updatedAt: new Date()
         })
 
-        if (userIds.length > 0) {
+        if (userIds && userIds.length > 0) {
             await db.insert(meetingGroupMembers).values(
                 userIds.map(userId => ({
                     id: uuidv4(),
@@ -645,4 +669,50 @@ export async function getMeetingGroupWithMembers(id: string) {
     return { ...group, members }
 }
 
-import { format } from "date-fns"
+export async function getMeetingAttendanceTokenAction(meetingId: string) {
+    const session = await getServerSession()
+    if (!session?.user?.id) return { success: false, error: "Unauthorized" }
+    
+    const token = generateAttendanceToken(meetingId)
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://tmcng.net"
+    const url = `${appUrl}/meetings/attendance/${meetingId}?token=${token}`
+    
+    return { success: true, token, url }
+}
+
+import { verifyAttendanceToken } from "@/lib/attendance-token"
+
+export async function selfRecordMeetingAttendance(meetingId: string, token: string) {
+    const session = await getServerSession()
+    if (!session?.user?.id) return { success: false, error: "Unauthorized" }
+
+    // 1. Verify token
+    const isValid = verifyAttendanceToken(meetingId, token)
+    if (!isValid) return { success: false, error: "QR Code expired. Please ask the admin to refresh it and try again." }
+
+    // 2. Mark attendance
+    // Check if the user is invited
+    const existing = await db.select().from(meetingAttendances)
+        .where(and(
+            eq(meetingAttendances.meetingId, meetingId),
+            eq(meetingAttendances.userId, session.user.id)
+        )).limit(1)
+
+    if (existing.length === 0) {
+        return { success: false, error: "You are not invited to this meeting." }
+    }
+
+    if (existing[0].status === 'PRESENT') {
+        return { success: false, error: "You are already marked as PRESENT." }
+    }
+
+    await db.update(meetingAttendances)
+        .set({
+            status: 'PRESENT',
+            joinedAt: new Date(),
+            updatedAt: new Date()
+        })
+        .where(eq(meetingAttendances.id, existing[0].id))
+
+    return { success: true }
+}

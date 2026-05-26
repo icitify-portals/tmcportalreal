@@ -38,14 +38,11 @@ const formSchema = z.object({
   scheduledAt: z.string().min(1, "Date is required"),
   time: z.string().min(1, "Time is required"),
   venue: z.string().optional(),
-  groupId: z.string().optional(),
+  groupId: z.string().min(1, "Group is required"),
   isOnline: z.boolean().default(false),
   meetingLink: z.string().optional(),
   attendees: z.array(z.string()).default([]), // User IDs
   previousMinutesUrl: z.string().optional(),
-  targetAudience: z
-    .enum(["OFFICIALS_ONLY", "ALL_MEMBERS_JURISDICTION", "ALL_MEMBERS_GLOBAL"])
-    .default("ALL_MEMBERS_JURISDICTION"),
 });
 
 interface CreateMeetingDialogProps {
@@ -81,41 +78,25 @@ export function CreateMeetingDialog({
   useEffect(() => {
     if (open) {
       setMinutesFile(null);
-      if (isSuperAdmin) {
-        getOrganizations().then(setOrganizationsList);
-      }
+      getMeetingGroups(currentOrgId).then(setGroups);
     }
-  }, [open, isSuperAdmin]);
+  }, [open, currentOrgId]);
 
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: "",
       description: "",
-      organizationId: currentOrgId || "",
-      scheduledAt: "",
-      time: "",
       venue: "",
       groupId: "",
       meetingLink: "",
       isOnline: false,
       attendees: [],
       previousMinutesUrl: "",
-      targetAudience: "ALL_MEMBERS_JURISDICTION" as any,
     },
   });
 
-  const selectedOrgId = form.watch("organizationId");
-
-  useEffect(() => {
-    if (open) {
-      if (selectedOrgId) {
-        getMeetingGroups(selectedOrgId).then(setGroups);
-      } else {
-        setGroups([]);
-      }
-    }
-  }, [open, selectedOrgId]);
+  // Groups fetched on open
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsPending(true);
@@ -146,11 +127,9 @@ export function CreateMeetingDialog({
 
       const res = await createMeeting({
         ...values,
-        groupId: values.groupId === "none" ? undefined : values.groupId,
         scheduledAt: date.toISOString(),
-        organizationId: values.organizationId,
+        groupId: values.groupId,
         previousMinutesUrl: minuteUrl || undefined,
-        targetAudience: values.targetAudience as any,
       });
 
       if (res.success) {
@@ -200,95 +179,35 @@ export function CreateMeetingDialog({
                 )}
               />
 
-              {isSuperAdmin && (
-                <FormField
-                  control={form.control}
-                  name="organizationId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Meeting Jurisdiction</FormLabel>
-                      <FormControl>
-                        <FormJurisdictionSelector
-                          organizations={organizationsList}
-                          value={field.value}
-                          onChange={field.onChange}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
-
               <FormField
                 control={form.control}
-                name="targetAudience"
+                name="groupId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Target Audience</FormLabel>
+                    <FormLabel>Meeting Group</FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select who gets invited" />
+                          <SelectValue placeholder="Select a group" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="OFFICIALS_ONLY">
-                          Officials Only
-                        </SelectItem>
-                        <SelectItem value="ALL_MEMBERS_JURISDICTION">
-                          All Members in Jurisdiction
-                        </SelectItem>
-                        <SelectItem value="ALL_MEMBERS_GLOBAL">
-                          All Members Globally (Across Board)
-                        </SelectItem>
+                        {groups.map((group) => (
+                          <SelectItem key={group.id} value={group.id}>
+                            {group.name}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
-                    <FormDescription>
-                      {field.value === "ALL_MEMBERS_GLOBAL"
-                        ? "Every active member across the portal will be invited and notified."
-                        : field.value === "OFFICIALS_ONLY"
-                          ? "Only executives within the selected jurisdiction will be invited."
-                          : "All members and officials in the selected jurisdiction will be invited."}
-                    </FormDescription>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
 
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="groupId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Meeting Group (Optional)</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a group" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="none">
-                            None (Officials only)
-                          </SelectItem>
-                          {groups.map((group) => (
-                            <SelectItem key={group.id} value={group.id}>
-                              {group.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </FormItem>
-                  )}
-                />
-
+              <div className="grid grid-cols-1 gap-4">
                 <FormItem>
                   <FormLabel>Previous Minutes (Optional)</FormLabel>
                   <div className="flex items-center gap-2">
