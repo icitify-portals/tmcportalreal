@@ -22,7 +22,7 @@ const CreateMeetingSchema = z.object({
     venue: z.string().optional(),
     isOnline: z.boolean().default(false),
     meetingLink: z.string().optional(),
-    attendees: z.array(z.string()), // Additional manual invites
+    attendees: z.array(z.string()).optional().default([]), // Additional manual invites
     previousMinutesUrl: z.string().optional(),
 })
 

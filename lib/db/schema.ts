@@ -1796,6 +1796,14 @@ export const constitutions = mysqlTable("constitutions", {
     title: varchar("title", { length: 255 }).notNull(),
     content: text("content").notNull(),
     status: varchar("status", { length: 50 }).notNull().default("DRAFT"),
+    branchReviewStartDate: timestamp("branchReviewStartDate", { mode: "date", fsp: 3 }),
+    branchReviewEndDate: timestamp("branchReviewEndDate", { mode: "date", fsp: 3 }),
+    lgaReviewStartDate: timestamp("lgaReviewStartDate", { mode: "date", fsp: 3 }),
+    lgaReviewEndDate: timestamp("lgaReviewEndDate", { mode: "date", fsp: 3 }),
+    stateReviewStartDate: timestamp("stateReviewStartDate", { mode: "date", fsp: 3 }),
+    stateReviewEndDate: timestamp("stateReviewEndDate", { mode: "date", fsp: 3 }),
+    nationalReviewStartDate: timestamp("nationalReviewStartDate", { mode: "date", fsp: 3 }),
+    nationalReviewEndDate: timestamp("nationalReviewEndDate", { mode: "date", fsp: 3 }),
     documentUrl: text("documentUrl"),
     createdBy: varchar("createdBy", { length: 255 }).notNull().references(() => users.id),
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
@@ -1810,10 +1818,17 @@ export const constitutionReviewers = mysqlTable("constitution_reviewers", {
     assignedBy: varchar("assignedBy", { length: 255 }).notNull().references(() => users.id),
 });
 
+export const constitutionFeedbackLevelEnum = mysqlEnum('constitutionFeedbackLevel', ['MEMBER', 'LGA_COLLATION', 'STATE_COLLATION', 'NATIONAL_COLLATION']);
+
 export const constitutionFeedback = mysqlTable("constitution_feedback", {
     id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
     constitutionId: varchar("constitutionId", { length: 255 }).notNull().references(() => constitutions.id, { onDelete: "cascade" }),
     userId: varchar("userId", { length: 255 }).notNull().references(() => users.id),
+    level: constitutionFeedbackLevelEnum.default('MEMBER'),
+    memberId: varchar("memberId", { length: 255 }), // e.g. TMC/2026/001
+    jurisdictionBranchId: varchar("jurisdictionBranchId", { length: 255 }),
+    jurisdictionLgaId: varchar("jurisdictionLgaId", { length: 255 }),
+    jurisdictionStateId: varchar("jurisdictionStateId", { length: 255 }),
     comment: text("comment").notNull(),
     section: varchar("section", { length: 255 }),
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),

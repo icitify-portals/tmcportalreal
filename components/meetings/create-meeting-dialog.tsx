@@ -34,14 +34,12 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
-  organizationId: z.string().min(1, "Organization is required"),
   scheduledAt: z.string().min(1, "Date is required"),
   time: z.string().min(1, "Time is required"),
   venue: z.string().optional(),
   groupId: z.string().min(1, "Group is required"),
   isOnline: z.boolean().default(false),
   meetingLink: z.string().optional(),
-  attendees: z.array(z.string()).default([]), // User IDs
   previousMinutesUrl: z.string().optional(),
 });
 
@@ -87,11 +85,12 @@ export function CreateMeetingDialog({
     defaultValues: {
       title: "",
       description: "",
+      scheduledAt: "",
+      time: "",
       venue: "",
       groupId: "",
       meetingLink: "",
       isOnline: false,
-      attendees: [],
       previousMinutesUrl: "",
     },
   });
@@ -130,6 +129,7 @@ export function CreateMeetingDialog({
         scheduledAt: date.toISOString(),
         groupId: values.groupId,
         previousMinutesUrl: minuteUrl || undefined,
+        attendees: [],
       });
 
       if (res.success) {
@@ -311,50 +311,7 @@ export function CreateMeetingDialog({
                 />
               )}
 
-              <div className="space-y-2">
-                <FormLabel>Invite Members</FormLabel>
-                <ScrollArea className="h-[150px] w-full border rounded-md p-4">
-                  <div className="space-y-2">
-                    {members.map((member) => (
-                      <FormField
-                        key={member.id}
-                        control={form.control}
-                        name="attendees"
-                        render={({ field }) => {
-                          return (
-                            <FormItem
-                              key={member.id}
-                              className="flex flex-row items-start space-x-3 space-y-0"
-                            >
-                              <FormControl>
-                                <Checkbox
-                                  checked={field.value?.includes(member.id)}
-                                  onCheckedChange={(checked) => {
-                                    return checked
-                                      ? field.onChange([
-                                          ...(field.value || []),
-                                          member.id,
-                                        ])
-                                      : field.onChange(
-                                          (field.value || []).filter(
-                                            (value: string) =>
-                                              value !== member.id,
-                                          ),
-                                        );
-                                  }}
-                                />
-                              </FormControl>
-                              <FormLabel className="font-normal">
-                                {member.name}
-                              </FormLabel>
-                            </FormItem>
-                          );
-                        }}
-                      />
-                    ))}
-                  </div>
-                </ScrollArea>
-              </div>
+
 
               <DialogFooter>
                 <Button type="submit" disabled={isPending} className="w-full">

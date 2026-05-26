@@ -249,15 +249,27 @@ export function ConstitutionManager({ drafts }: ConstitutionManagerProps) {
                                             <Button size="sm" onClick={() => handleAdvanceStage(selectedDraft.id, "REVIEW_BRANCH")} disabled={isAdvancing} className="bg-blue-600 hover:bg-blue-700 text-white font-bold">Start Branch Review</Button>
                                         )}
                                         {selectedDraft.status === "REVIEW_BRANCH" && (
+                                            <Button size="sm" onClick={() => handleAdvanceStage(selectedDraft.id, "BRANCH_WORKSHOP")} disabled={isAdvancing} className="bg-orange-500 hover:bg-orange-600 text-white font-bold">Start Branch Workshop</Button>
+                                        )}
+                                        {selectedDraft.status === "BRANCH_WORKSHOP" && (
                                             <Button size="sm" onClick={() => handleAdvanceStage(selectedDraft.id, "REVIEW_LGA")} disabled={isAdvancing} className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold">Advance to LGA</Button>
                                         )}
                                         {selectedDraft.status === "REVIEW_LGA" && (
+                                            <Button size="sm" onClick={() => handleAdvanceStage(selectedDraft.id, "LGA_WORKSHOP")} disabled={isAdvancing} className="bg-orange-500 hover:bg-orange-600 text-white font-bold">Start LGA Workshop</Button>
+                                        )}
+                                        {selectedDraft.status === "LGA_WORKSHOP" && (
                                             <Button size="sm" onClick={() => handleAdvanceStage(selectedDraft.id, "REVIEW_STATE")} disabled={isAdvancing} className="bg-purple-600 hover:bg-purple-700 text-white font-bold">Advance to State</Button>
                                         )}
                                         {selectedDraft.status === "REVIEW_STATE" && (
-                                            <Button size="sm" onClick={() => handleAdvanceStage(selectedDraft.id, "REVIEW_NATIONAL")} disabled={isAdvancing} className="bg-orange-600 hover:bg-orange-700 text-white font-bold">Advance to National</Button>
+                                            <Button size="sm" onClick={() => handleAdvanceStage(selectedDraft.id, "STATE_WORKSHOP")} disabled={isAdvancing} className="bg-orange-500 hover:bg-orange-600 text-white font-bold">Start State Workshop</Button>
+                                        )}
+                                        {selectedDraft.status === "STATE_WORKSHOP" && (
+                                            <Button size="sm" onClick={() => handleAdvanceStage(selectedDraft.id, "REVIEW_NATIONAL")} disabled={isAdvancing} className="bg-pink-600 hover:bg-pink-700 text-white font-bold">Advance to National</Button>
                                         )}
                                         {selectedDraft.status === "REVIEW_NATIONAL" && (
+                                            <Button size="sm" onClick={() => handleAdvanceStage(selectedDraft.id, "NATIONAL_WORKSHOP")} disabled={isAdvancing} className="bg-orange-500 hover:bg-orange-600 text-white font-bold">Start National Workshop</Button>
+                                        )}
+                                        {selectedDraft.status === "NATIONAL_WORKSHOP" && (
                                             <Button size="sm" onClick={() => handleApproveDraft(selectedDraft.id)} className="bg-green-600 hover:bg-green-700 text-white font-bold"><CheckCircle2 className="h-4 w-4 mr-1" /> Final Approve</Button>
                                         )}
 

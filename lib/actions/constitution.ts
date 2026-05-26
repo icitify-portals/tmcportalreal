@@ -1,13 +1,13 @@
 "use server"
 
 import { db } from "@/lib/db"
-import { constitutions, constitutionReviewers, constitutionFeedback, users, notifications, officials } from "@/lib/db/schema"
+import { constitutions, constitutionReviewers, constitutionFeedback, users, notifications, officials, members, organizations, meetings } from "@/lib/db/schema"
 import { eq, desc, and, like, or, inArray } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { getServerSession } from "@/lib/session"
 import { sendEmail } from "@/lib/email"
 
-export async function createConstitutionDraft(title: string, content: string, documentUrl?: string) {
+export async function createConstitutionDraft(title: string, content: string, documentUrl?: string, timelines?: any) {
     try {
         const session = await getServerSession()
         if (!session?.user?.id) return { success: false, error: "Unauthorized" }
@@ -17,6 +17,14 @@ export async function createConstitutionDraft(title: string, content: string, do
             content,
             status: "DRAFT",
             documentUrl: documentUrl || null,
+            branchReviewStartDate: timelines?.branchReviewStartDate || null,
+            branchReviewEndDate: timelines?.branchReviewEndDate || null,
+            lgaReviewStartDate: timelines?.lgaReviewStartDate || null,
+            lgaReviewEndDate: timelines?.lgaReviewEndDate || null,
+            stateReviewStartDate: timelines?.stateReviewStartDate || null,
+            stateReviewEndDate: timelines?.stateReviewEndDate || null,
+            nationalReviewStartDate: timelines?.nationalReviewStartDate || null,
+            nationalReviewEndDate: timelines?.nationalReviewEndDate || null,
             createdBy: session.user.id,
             createdAt: new Date(),
             updatedAt: new Date(),
@@ -30,7 +38,7 @@ export async function createConstitutionDraft(title: string, content: string, do
     }
 }
 
-export async function updateConstitutionDraft(id: string, title: string, content: string, documentUrl?: string) {
+export async function updateConstitutionDraft(id: string, title: string, content: string, documentUrl?: string, timelines?: any) {
     try {
         const session = await getServerSession()
         if (!session?.user?.id) return { success: false, error: "Unauthorized" }
@@ -39,6 +47,14 @@ export async function updateConstitutionDraft(id: string, title: string, content
             title,
             content,
             documentUrl: documentUrl || null,
+            branchReviewStartDate: timelines?.branchReviewStartDate !== undefined ? timelines.branchReviewStartDate : undefined,
+            branchReviewEndDate: timelines?.branchReviewEndDate !== undefined ? timelines.branchReviewEndDate : undefined,
+            lgaReviewStartDate: timelines?.lgaReviewStartDate !== undefined ? timelines.lgaReviewStartDate : undefined,
+            lgaReviewEndDate: timelines?.lgaReviewEndDate !== undefined ? timelines.lgaReviewEndDate : undefined,
+            stateReviewStartDate: timelines?.stateReviewStartDate !== undefined ? timelines.stateReviewStartDate : undefined,
+            stateReviewEndDate: timelines?.stateReviewEndDate !== undefined ? timelines.stateReviewEndDate : undefined,
+            nationalReviewStartDate: timelines?.nationalReviewStartDate !== undefined ? timelines.nationalReviewStartDate : undefined,
+            nationalReviewEndDate: timelines?.nationalReviewEndDate !== undefined ? timelines.nationalReviewEndDate : undefined,
             updatedAt: new Date(),
         }).where(eq(constitutions.id, id))
 
@@ -128,6 +144,43 @@ export async function advanceConstitutionStage(id: string, newStatus: string) {
                             template: "general_notification"
                         })
                     })).catch(err => console.error("Error sending constitution emails:", err))
+                }
+            } else if (newStatus.endsWith('_WORKSHOP')) {
+                const workshopLevel = newStatus.replace('_WORKSHOP', '');
+                
+                // Find a default organization (National level) to attach the meeting to
+                const [nationalOrg] = await db.select().from(organizations).where(eq(organizations.level, 'NATIONAL')).limit(1)
+
+                if (nationalOrg) {
+                    await db.insert(meetings).values({
+                        title: `${draftTitle} - ${workshopLevel} Harmonisation Workshop`,
+                        description: `Automated virtual workshop for harmonising constitution feedback at the ${workshopLevel} level.`,
+                        organizationId: nationalOrg.id,
+                        scheduledAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Default 7 days from now
+                        isOnline: true,
+                        createdBy: session.user.id,
+                        status: 'SCHEDULED',
+                    })
+                }
+
+                // Notify ALL users
+                const allUsersList = await db.select({ userId: users.id, name: users.name, email: users.email }).from(users)
+                if (allUsersList.length > 0) {
+                    const chunkSize = 500;
+                    for (let i = 0; i < allUsersList.length; i += chunkSize) {
+                        const chunk = allUsersList.slice(i, i + chunkSize);
+                        await db.insert(notifications).values(
+                            chunk.map(user => ({
+                                userId: user.userId,
+                                title: "Constitution Workshop Scheduled",
+                                message: `A virtual harmonisation workshop has been scheduled for the constitution "${draftTitle}" at the ${workshopLevel} level.`,
+                                type: 'INFO' as const,
+                                actionUrl: `/dashboard/member/meetings`,
+                                createdAt: new Date(),
+                                updatedAt: new Date()
+                            }))
+                        )
+                    }
                 }
             } else if (newStatus === 'APPROVED') {
                 // Notify ALL users
@@ -304,7 +357,7 @@ export async function getConstitutionReviewers(constitutionId: string) {
 
 // ========== FEEDBACK ==========
 
-export async function submitConstitutionFeedback(constitutionId: string, comment: string, section?: string) {
+export async function submitConstitutionFeedback(constitutionId: string, comment: string, section?: string, level: "MEMBER" | "LGA_COLLATION" | "STATE_COLLATION" | "NATIONAL_COLLATION" = "MEMBER") {
     try {
         const session = await getServerSession()
         if (!session?.user?.id) return { success: false, error: "Unauthorized" }
@@ -350,11 +403,35 @@ export async function submitConstitutionFeedback(constitutionId: string, comment
             return { success: false, error: "You are not authorized to provide feedback on this draft at its current stage." }
         }
 
+        const [member] = await db.select().from(members).where(eq(members.userId, session.user.id)).limit(1)
+        const memberIdStr = member ? member.memberId : null
+
+        let jurisdictionBranchId: string | null = null;
+        let jurisdictionLgaId: string | null = null;
+        let jurisdictionStateId: string | null = null;
+
+        if (member?.organizationId) {
+            jurisdictionBranchId = member.organizationId;
+            const [branch] = await db.select().from(organizations).where(eq(organizations.id, member.organizationId)).limit(1);
+            if (branch?.parentId) {
+                jurisdictionLgaId = branch.parentId;
+                const [lga] = await db.select().from(organizations).where(eq(organizations.id, branch.parentId)).limit(1);
+                if (lga?.parentId) {
+                    jurisdictionStateId = lga.parentId;
+                }
+            }
+        }
+
         await db.insert(constitutionFeedback).values({
             constitutionId,
             userId: session.user.id,
             comment,
             section: section || null,
+            level,
+            memberId: memberIdStr,
+            jurisdictionBranchId,
+            jurisdictionLgaId,
+            jurisdictionStateId,
             createdAt: new Date(),
         })
 
@@ -374,6 +451,11 @@ export async function getConstitutionFeedback(constitutionId: string) {
             userId: constitutionFeedback.userId,
             comment: constitutionFeedback.comment,
             section: constitutionFeedback.section,
+            level: constitutionFeedback.level,
+            memberId: constitutionFeedback.memberId,
+            jurisdictionBranchId: constitutionFeedback.jurisdictionBranchId,
+            jurisdictionLgaId: constitutionFeedback.jurisdictionLgaId,
+            jurisdictionStateId: constitutionFeedback.jurisdictionStateId,
             createdAt: constitutionFeedback.createdAt,
             userName: users.name,
             userEmail: users.email,
@@ -465,6 +547,46 @@ export async function getMyReviewAssignments() {
         return uniqueDrafts
     } catch (err) {
         console.error("Get My Review Assignments Error:", err)
+        return []
+    }
+}
+
+export async function getAggregatedFeedback(constitutionId: string, levelFilter?: string, jurisdictionId?: string) {
+    try {
+        let query = db.select({
+            id: constitutionFeedback.id,
+            constitutionId: constitutionFeedback.constitutionId,
+            userId: constitutionFeedback.userId,
+            comment: constitutionFeedback.comment,
+            section: constitutionFeedback.section,
+            level: constitutionFeedback.level,
+            memberId: constitutionFeedback.memberId,
+            jurisdictionBranchId: constitutionFeedback.jurisdictionBranchId,
+            jurisdictionLgaId: constitutionFeedback.jurisdictionLgaId,
+            jurisdictionStateId: constitutionFeedback.jurisdictionStateId,
+            createdAt: constitutionFeedback.createdAt,
+            userName: users.name,
+            userEmail: users.email,
+        })
+        .from(constitutionFeedback)
+        .innerJoin(users, eq(constitutionFeedback.userId, users.id))
+        
+        let conditions: any[] = [eq(constitutionFeedback.constitutionId, constitutionId)]
+        if (levelFilter) {
+            conditions.push(eq(constitutionFeedback.level, levelFilter as any))
+        }
+        if (jurisdictionId) {
+            conditions.push(or(
+                eq(constitutionFeedback.jurisdictionBranchId, jurisdictionId),
+                eq(constitutionFeedback.jurisdictionLgaId, jurisdictionId),
+                eq(constitutionFeedback.jurisdictionStateId, jurisdictionId)
+            ))
+        }
+
+        const results = await query.where(and(...conditions)).orderBy(desc(constitutionFeedback.createdAt))
+        return results;
+    } catch (err) {
+        console.error("Get Aggregated Feedback Error:", err)
         return []
     }
 }

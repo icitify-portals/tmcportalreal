@@ -135,7 +135,9 @@ export function CreateMeetingGroupDialog({ availableMembers: initialMembers, cur
                 </DialogHeader>
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                        <FormField
+                        <ScrollArea className="max-h-[60vh] pr-4">
+                            <div className="space-y-4">
+                                <FormField
                             control={form.control}
                             name="name"
                             render={({ field }) => (
@@ -252,6 +254,8 @@ export function CreateMeetingGroupDialog({ availableMembers: initialMembers, cur
                                 )}
                             </ScrollArea>
                         </div>
+                        </div>
+                        </ScrollArea>
 
                         <DialogFooter>
                             <Button type="submit" disabled={isPending} className="w-full">
