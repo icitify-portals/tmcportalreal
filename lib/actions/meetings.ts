@@ -9,7 +9,7 @@ import { getServerSession } from "@/lib/session"
 import { redirect } from "next/navigation"
 import { sendEmail, emailTemplates } from "@/lib/email"
 import { v4 as uuidv4 } from "uuid"
-import { subDays, isAfter } from "date-fns"
+import { subDays, isAfter, format } from "date-fns"
 import { generateAttendanceToken } from "@/lib/attendance-token"
 
 // Schemas
