@@ -3,8 +3,43 @@ import { organizations, meetingGroups, meetings, members, officials, meetingGrou
 import { eq, isNull } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 
+import { sql } from "drizzle-orm";
+
 export async function migrateMeetingGroups() {
     console.log("Starting Meeting Groups Migration...");
+
+    try {
+        await db.execute(sql`ALTER TABLE meetings ADD COLUMN attendanceWindow int DEFAULT 30;`);
+    } catch(e) { console.log("attendanceWindow column might exist"); }
+
+    try {
+        await db.execute(sql`ALTER TABLE meetings ADD COLUMN staticAttendanceToken varchar(255);`);
+    } catch(e) { console.log("staticAttendanceToken column might exist"); }
+
+    try {
+        await db.execute(sql`ALTER TABLE meeting_groups ADD COLUMN dynamicRules json;`);
+    } catch(e) { console.log("dynamicRules column might exist"); }
+
+    try {
+        await db.execute(sql`ALTER TABLE meeting_attendances ADD COLUMN joinedAt timestamp;`);
+    } catch(e) { console.log("joinedAt column might exist"); }
+
+    try {
+        await db.execute(sql`ALTER TABLE meeting_attendances ADD COLUMN leftAt timestamp;`);
+    } catch(e) { console.log("leftAt column might exist"); }
+
+    try {
+        await db.execute(sql`CREATE TABLE IF NOT EXISTS \`programme_messages\` (
+          \`id\` varchar(255) NOT NULL,
+          \`programmeId\` varchar(255) NOT NULL,
+          \`subject\` varchar(255) NOT NULL,
+          \`content\` text NOT NULL,
+          \`targetAudience\` enum('ALL','PRESENT','ABSENT','ATTENDED','NOT_ATTENDED','PAYMENT_COMPLETED','PAYMENT_PENDING') NOT NULL,
+          \`sentBy\` varchar(255) NOT NULL,
+          \`sentAt\` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          PRIMARY KEY (\`id\`)
+        );`);
+    } catch(e) { console.log("programme_messages table error:", e); }
 
     // 1. Fetch all active organizations
     const allOrgs = await db.select().from(organizations);
