@@ -40,6 +40,10 @@ export function ConstitutionManager({ drafts }: ConstitutionManagerProps) {
     const [editDocumentUrl, setEditDocumentUrl] = useState("")
     const [deleteId, setDeleteId] = useState<string | null>(null)
 
+    const [workshopDialogOpen, setWorkshopDialogOpen] = useState(false)
+    const [pendingWorkshopStatus, setPendingWorkshopStatus] = useState("")
+    const [workshopDate, setWorkshopDate] = useState("")
+
     // Reviewers & Feedback
     const [activeTab, setActiveTab] = useState<"content" | "reviewers" | "feedback">("content")
     const [reviewers, setReviewers] = useState<any[]>([])
@@ -103,13 +107,14 @@ export function ConstitutionManager({ drafts }: ConstitutionManagerProps) {
         } catch (err: any) { toast.error(err.message) }
     }
 
-    async function handleAdvanceStage(id: string, newStatus: string) {
+    async function handleAdvanceStage(id: string, newStatus: string, date?: string) {
         setIsAdvancing(true)
         try {
-            const res = await advanceConstitutionStage(id, newStatus)
+            const res = await advanceConstitutionStage(id, newStatus, date)
             if (res.success) { 
                 toast.success(`Advanced to ${newStatus.replace("REVIEW_", "")} Review`)
                 setSelectedDraft({ ...selectedDraft, status: newStatus })
+                setWorkshopDialogOpen(false)
             }
             else toast.error(res.error || "Failed.")
         } catch (err: any) { toast.error(err.message) } finally { setIsAdvancing(false) }
@@ -249,25 +254,25 @@ export function ConstitutionManager({ drafts }: ConstitutionManagerProps) {
                                             <Button size="sm" onClick={() => handleAdvanceStage(selectedDraft.id, "REVIEW_BRANCH")} disabled={isAdvancing} className="bg-blue-600 hover:bg-blue-700 text-white font-bold">Start Branch Review</Button>
                                         )}
                                         {selectedDraft.status === "REVIEW_BRANCH" && (
-                                            <Button size="sm" onClick={() => handleAdvanceStage(selectedDraft.id, "BRANCH_WORKSHOP")} disabled={isAdvancing} className="bg-orange-500 hover:bg-orange-600 text-white font-bold">Start Branch Workshop</Button>
+                                            <Button size="sm" onClick={() => { setPendingWorkshopStatus("BRANCH_WORKSHOP"); setWorkshopDialogOpen(true); }} disabled={isAdvancing} className="bg-orange-500 hover:bg-orange-600 text-white font-bold">Start Branch Workshop</Button>
                                         )}
                                         {selectedDraft.status === "BRANCH_WORKSHOP" && (
                                             <Button size="sm" onClick={() => handleAdvanceStage(selectedDraft.id, "REVIEW_LGA")} disabled={isAdvancing} className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold">Advance to LGA</Button>
                                         )}
                                         {selectedDraft.status === "REVIEW_LGA" && (
-                                            <Button size="sm" onClick={() => handleAdvanceStage(selectedDraft.id, "LGA_WORKSHOP")} disabled={isAdvancing} className="bg-orange-500 hover:bg-orange-600 text-white font-bold">Start LGA Workshop</Button>
+                                            <Button size="sm" onClick={() => { setPendingWorkshopStatus("LGA_WORKSHOP"); setWorkshopDialogOpen(true); }} disabled={isAdvancing} className="bg-orange-500 hover:bg-orange-600 text-white font-bold">Start LGA Workshop</Button>
                                         )}
                                         {selectedDraft.status === "LGA_WORKSHOP" && (
                                             <Button size="sm" onClick={() => handleAdvanceStage(selectedDraft.id, "REVIEW_STATE")} disabled={isAdvancing} className="bg-purple-600 hover:bg-purple-700 text-white font-bold">Advance to State</Button>
                                         )}
                                         {selectedDraft.status === "REVIEW_STATE" && (
-                                            <Button size="sm" onClick={() => handleAdvanceStage(selectedDraft.id, "STATE_WORKSHOP")} disabled={isAdvancing} className="bg-orange-500 hover:bg-orange-600 text-white font-bold">Start State Workshop</Button>
+                                            <Button size="sm" onClick={() => { setPendingWorkshopStatus("STATE_WORKSHOP"); setWorkshopDialogOpen(true); }} disabled={isAdvancing} className="bg-orange-500 hover:bg-orange-600 text-white font-bold">Start State Workshop</Button>
                                         )}
                                         {selectedDraft.status === "STATE_WORKSHOP" && (
                                             <Button size="sm" onClick={() => handleAdvanceStage(selectedDraft.id, "REVIEW_NATIONAL")} disabled={isAdvancing} className="bg-pink-600 hover:bg-pink-700 text-white font-bold">Advance to National</Button>
                                         )}
                                         {selectedDraft.status === "REVIEW_NATIONAL" && (
-                                            <Button size="sm" onClick={() => handleAdvanceStage(selectedDraft.id, "NATIONAL_WORKSHOP")} disabled={isAdvancing} className="bg-orange-500 hover:bg-orange-600 text-white font-bold">Start National Workshop</Button>
+                                            <Button size="sm" onClick={() => { setPendingWorkshopStatus("NATIONAL_WORKSHOP"); setWorkshopDialogOpen(true); }} disabled={isAdvancing} className="bg-orange-500 hover:bg-orange-600 text-white font-bold">Start National Workshop</Button>
                                         )}
                                         {selectedDraft.status === "NATIONAL_WORKSHOP" && (
                                             <Button size="sm" onClick={() => handleApproveDraft(selectedDraft.id)} className="bg-green-600 hover:bg-green-700 text-white font-bold"><CheckCircle2 className="h-4 w-4 mr-1" /> Final Approve</Button>
@@ -405,6 +410,22 @@ export function ConstitutionManager({ drafts }: ConstitutionManagerProps) {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            <Dialog open={workshopDialogOpen} onOpenChange={setWorkshopDialogOpen}>
+                <DialogContent className="bg-white">
+                    <DialogHeader>
+                        <DialogTitle>Schedule Workshop</DialogTitle>
+                        <DialogDescription>Please select a date and time for the virtual harmonisation workshop.</DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <Input type="datetime-local" value={workshopDate} onChange={(e) => setWorkshopDate(e.target.value)} />
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setWorkshopDialogOpen(false)}>Cancel</Button>
+                        <Button onClick={() => selectedDraft?.id && handleAdvanceStage(selectedDraft.id, pendingWorkshopStatus, workshopDate)} disabled={!workshopDate || isAdvancing} className="bg-green-600 text-white hover:bg-green-700">Schedule</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }

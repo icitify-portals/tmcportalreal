@@ -94,7 +94,7 @@ export async function approveConstitutionDraft(id: string) {
     }
 }
 
-export async function advanceConstitutionStage(id: string, newStatus: string) {
+export async function advanceConstitutionStage(id: string, newStatus: string, workshopDate?: string | Date) {
     try {
         const session = await getServerSession()
         if (!session?.user?.id) return { success: false, error: "Unauthorized" }
@@ -151,12 +151,17 @@ export async function advanceConstitutionStage(id: string, newStatus: string) {
                 // Find a default organization (National level) to attach the meeting to
                 const [nationalOrg] = await db.select().from(organizations).where(eq(organizations.level, 'NATIONAL')).limit(1)
 
+                let scheduledMeetingTime = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // Default 7 days from now
+                if (workshopDate) {
+                    scheduledMeetingTime = new Date(workshopDate);
+                }
+
                 if (nationalOrg) {
                     await db.insert(meetings).values({
                         title: `${draftTitle} - ${workshopLevel} Harmonisation Workshop`,
                         description: `Automated virtual workshop for harmonising constitution feedback at the ${workshopLevel} level.`,
                         organizationId: nationalOrg.id,
-                        scheduledAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Default 7 days from now
+                        scheduledAt: scheduledMeetingTime,
                         isOnline: true,
                         createdBy: session.user.id,
                         status: 'SCHEDULED',
