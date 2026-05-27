@@ -4,13 +4,13 @@ import { meetings } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
 import { getServerSession } from "@/lib/session"
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     const session = await getServerSession()
     if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     // TODO: Verify Admin rights
 
     try {
-        const meetingId = params.id
+        const { id: meetingId } = await params
         const [meeting] = await db.select().from(meetings).where(eq(meetings.id, meetingId))
         
         if (!meeting) return NextResponse.json({ error: "Meeting not found" }, { status: 404 })

@@ -5,9 +5,10 @@ import { notFound } from "next/navigation"
 import { GuestJoinForm } from "@/components/meetings/guest-join-form"
 import { getServerSession } from "@/lib/session"
 
-export default async function LiveMeetingPublicPage({ params }: { params: { shareCode: string } }) {
+export default async function LiveMeetingPublicPage({ params }: { params: Promise<{ shareCode: string }> }) {
+    const { shareCode } = await params
     const meeting = await db.query.meetings.findFirst({
-        where: eq(meetings.shareCode, params.shareCode)
+        where: eq(meetings.shareCode, shareCode)
     })
 
     if (!meeting || !meeting.isOnline || !meeting.virtualRoomId) {

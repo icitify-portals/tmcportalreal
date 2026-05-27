@@ -9,9 +9,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Video } from "lucide-react"
 import { ClientDate } from "@/components/ui/client-date"
 
-export default async function SecureRecordingPage({ params }: { params: { shareCode: string } }) {
+export default async function SecureRecordingPage({ params }: { params: Promise<{ shareCode: string }> }) {
+    const { shareCode } = await params
     const meeting = await db.query.meetings.findFirst({
-        where: eq(meetings.recordingShareCode, params.shareCode)
+        where: eq(meetings.recordingShareCode, shareCode)
     })
 
     if (!meeting) {
