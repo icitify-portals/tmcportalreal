@@ -5,7 +5,7 @@ import { RegisterForProgrammeDialog } from "@/components/programmes/register-dia
 import { PublicNav } from "@/components/layout/public-nav"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { CalendarIcon, MapPinIcon, ClockIcon, UsersIcon, Filter, CheckCircle2, CreditCard, XCircle } from "lucide-react"
+import { CalendarIcon, MapPinIcon, ClockIcon, UsersIcon, Filter, CheckCircle2, CreditCard, XCircle, Video } from "lucide-react"
 import { format } from "date-fns"
 import { Metadata } from "next"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -137,10 +137,20 @@ async function ProgrammeGrid({ level, state }: { level?: string, state?: string 
                                         )
                                     }
                                     return (
-                                        <Button className="w-full" variant="outline" disabled>
-                                            <CheckCircle2 className="mr-2 h-4 w-4" />
-                                            Already Registered
-                                        </Button>
+                                        <div className="flex w-full gap-2 flex-col">
+                                            <Button className="w-full" variant="outline" disabled>
+                                                <CheckCircle2 className="mr-2 h-4 w-4" />
+                                                Already Registered
+                                            </Button>
+                                            {(p as any).meeting?.shareCode && (
+                                                <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white" asChild>
+                                                    <a href={`/live/${(p as any).meeting.shareCode}`} target="_blank">
+                                                        <Video className="mr-2 h-4 w-4" />
+                                                        Join Virtual Room
+                                                    </a>
+                                                </Button>
+                                            )}
+                                        </div>
                                     )
                                 }
                                 return (

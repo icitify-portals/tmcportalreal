@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { CheckCircle2, AlertCircle, XCircle, UserCheck, BarChart3, MessageSquare } from "lucide-react"
+import { CheckCircle2, AlertCircle, XCircle, UserCheck, BarChart3, MessageSquare, Video } from "lucide-react"
 import { format } from "date-fns"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { db } from "@/lib/db"
@@ -125,6 +125,14 @@ async function ProgrammeList({ type, orgId }: { type: 'MY_PROGRAMMES' | 'TO_APPR
                                             Lounge
                                         </a>
                                     </Button>
+                                    {(p as any).meeting && (
+                                        <Button variant="outline" size="sm" asChild className="bg-emerald-900 hover:bg-emerald-800 border border-emerald-700 text-emerald-100 font-bold px-3 py-1.5 text-xs rounded-lg transition-colors shadow-[0_0_10px_rgba(16,185,129,0.2)]">
+                                            <a href={`/dashboard/admin/meetings/${(p as any).meeting.id}`}>
+                                                <Video className="w-4 h-4 mr-2" />
+                                                Virtual Room
+                                            </a>
+                                        </Button>
+                                    )}
                                 </div>
                                 {(p.status === 'COMPLETED' || new Date(p.startDate) < new Date()) && (
                                     <SubmitReportDialog programmeId={p.id} programmeTitle={p.title} />

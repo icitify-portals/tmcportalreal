@@ -5,8 +5,9 @@ import {
     programmes, programmeRegistrations, programmeReports, programmeMaterials,
     programmeStatusEnum, registrationStatusEnum,
     users, organizations, offices, officials, notifications,
-    financeBudgets, financeBudgetItems
+    financeBudgets, financeBudgetItems, meetings
 } from "@/lib/db/schema"
+import { v4 as uuidv4 } from "uuid"
 import { getYearPlannerSettings } from "@/lib/actions/settings"
 import { eq, desc, and, or, aliasedTable, inArray, sql, asc } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
@@ -596,6 +597,43 @@ export async function approveProgrammeState(programmeId: string) {
     }
 }
 
+async function autoCreateVirtualWorkshop(programmeId: string, userId: string) {
+    try {
+        const [prog] = await db.select().from(programmes).where(eq(programmes.id, programmeId)).limit(1)
+        if (!prog) return;
+
+        if (prog.format !== 'VIRTUAL' && prog.format !== 'HYBRID') return;
+
+        // Check if a meeting already exists for this programme
+        const [existing] = await db.select().from(meetings).where(eq(meetings.programmeId, programmeId)).limit(1)
+        if (existing) return; // Already created
+
+        // Generate Random Share Code
+        const shareCode = Math.random().toString(36).substring(2, 8).toUpperCase()
+        const recordingShareCode = Math.random().toString(36).substring(2, 10).toUpperCase()
+
+        await db.insert(meetings).values({
+            title: `${prog.title} - Virtual Workshop`,
+            description: prog.description,
+            organizationId: prog.organizationId,
+            scheduledAt: prog.startDate,
+            endAt: prog.endDate,
+            venue: "Auto-generated Virtual Room",
+            isOnline: true,
+            virtualRoomId: uuidv4(),
+            shareCode,
+            recordingShareCode,
+            programmeId: prog.id,
+            targetAudience: 'ALL_MEMBERS_GLOBAL', // Assuming workshops are open or controlled via registration slip
+            createdBy: userId,
+            status: 'SCHEDULED'
+        })
+
+    } catch (e) {
+        console.error("Failed to auto-create virtual workshop", e)
+    }
+}
+
 export async function approveProgrammeNational(programmeId: string, certData?: any) {
     try {
         const session = await getServerSession()
@@ -624,6 +662,9 @@ export async function approveProgrammeNational(programmeId: string, certData?: a
         }
 
         await db.update(programmes).set(updateData).where(eq(programmes.id, programmeId))
+
+        // Trigger Auto Create Workshop
+        await autoCreateVirtualWorkshop(programmeId, session.user.id);
 
         revalidatePath("/dashboard/admin/programmes")
         return { success: true }
@@ -708,14 +749,16 @@ export async function getProgrammes(filters?: { level?: string, state?: string, 
 
     const results = await db.select({
         programme: programmes,
-        organization: org
+        organization: org,
+        meeting: meetings
     })
         .from(programmes)
         .leftJoin(org, eq(programmes.organizationId, org.id))
+        .leftJoin(meetings, eq(programmes.id, meetings.programmeId))
         .where(and(...conditions))
         .orderBy(desc(programmes.startDate))
 
-    return results.map(r => ({ ...r.programme, organization: r.organization }))
+    return results.map(r => ({ ...r.programme, organization: r.organization, meeting: r.meeting }))
 }
 
 // For Admin Dashboard (My Programmes + Approvals)
@@ -732,13 +775,15 @@ export async function getAdminProgrammes(organizationId: string, type: 'MY_PROGR
             creator: creator,
             office: office,
             official: official,
-            officialUser: officialUser
+            officialUser: officialUser,
+            meeting: meetings
         })
             .from(programmes)
             .leftJoin(creator, eq(programmes.createdBy, creator.id))
             .leftJoin(office, eq(programmes.organizingOfficeId, office.id))
             .leftJoin(official, eq(programmes.organizingOfficialId, official.id))
             .leftJoin(officialUser, eq(official.userId, officialUser.id))
+            .leftJoin(meetings, eq(programmes.id, meetings.programmeId))
             .where(eq(programmes.organizationId, organizationId))
             .orderBy(desc(programmes.createdAt))
 
@@ -746,7 +791,8 @@ export async function getAdminProgrammes(organizationId: string, type: 'MY_PROGR
             ...r.programme, 
             creator: r.creator, 
             office: r.office,
-            official: r.official ? { ...r.official, user: r.officialUser } : null
+            official: r.official ? { ...r.official, user: r.officialUser } : null,
+            meeting: r.meeting
         }))
     }
 

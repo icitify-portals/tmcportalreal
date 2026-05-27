@@ -923,6 +923,7 @@ export const meetings = mysqlTable("meetings", {
     virtualRoomId: varchar("virtualRoomId", { length: 500 }),
     recordingUrl: varchar("recordingUrl", { length: 500 }),
     groupId: varchar("groupId", { length: 255 }), // Link to a specific meeting group
+    programmeId: varchar("programmeId", { length: 255 }), // Link to an auto-generated virtual workshop
     staticAttendanceToken: varchar("staticAttendanceToken", { length: 255 }),
     attendanceWindow: int("attendanceWindow").default(30), // minutes until considered late
     targetAudience: meetingTargetAudienceEnum.default('ALL_MEMBERS_JURISDICTION'),
