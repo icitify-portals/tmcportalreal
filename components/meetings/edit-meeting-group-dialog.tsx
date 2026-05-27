@@ -37,7 +37,7 @@ interface EditMeetingGroupDialogProps {
     group: {
         id: string
         name: string
-        members: { userId: string }[]
+        members: { userId: string, name?: string | null }[]
     }
     availableMembers: { id: string, name: string | null }[]
 }
@@ -45,7 +45,16 @@ interface EditMeetingGroupDialogProps {
 export function EditMeetingGroupDialog({ group, availableMembers }: EditMeetingGroupDialogProps) {
     const [open, setOpen] = useState(false)
     const [isPending, setIsPending] = useState(false)
-    const [dynamicMembers, setDynamicMembers] = useState(availableMembers)
+    const [dynamicMembers, setDynamicMembers] = useState(() => {
+        const map = new Map()
+        availableMembers.forEach(m => map.set(m.id, m))
+        group.members.forEach(m => {
+            if (!map.has(m.userId)) {
+                map.set(m.userId, { id: m.userId, name: m.name || "Unknown Member" })
+            }
+        })
+        return Array.from(map.values())
+    })
     const [searchQuery, setSearchQuery] = useState("")
     const [searching, setSearching] = useState(false)
 

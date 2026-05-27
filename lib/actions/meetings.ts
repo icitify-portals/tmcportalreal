@@ -136,7 +136,7 @@ export async function createMeeting(data: z.infer<typeof CreateMeetingSchema>) {
         const allInvitees = Array.from(new Set([
             ...autoUserIds,
             ...groupUserIds,
-            ...data.attendees
+            ...(data.attendees || [])
         ]))
 
         // Bulk insert invites
@@ -600,8 +600,15 @@ export async function getMeetingGroups(organizationId?: string) {
     if (groups.length === 0) return []
 
     const groupIds = groups.map(g => g.id)
-    const membersList = await db.select().from(meetingGroupMembers).where(inArray(meetingGroupMembers.groupId, groupIds))
-
+    const membersList = await db.select({
+        id: meetingGroupMembers.id,
+        groupId: meetingGroupMembers.groupId,
+        userId: meetingGroupMembers.userId,
+        name: users.name
+    })
+    .from(meetingGroupMembers)
+    .leftJoin(users, eq(meetingGroupMembers.userId, users.id))
+    .where(inArray(meetingGroupMembers.groupId, groupIds))
     return groups.map(g => ({
         ...g,
         memberCount: membersList.filter(m => m.groupId === g.id).length,

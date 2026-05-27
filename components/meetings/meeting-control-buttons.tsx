@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Button as UIButton } from "@/components/ui/button"
 import { Play, Square, Loader2 } from "lucide-react"
 import { startMeeting, endMeeting } from "@/lib/actions/meetings"
+import Link from "next/link"
 import { toast } from "sonner"
 
 export function MeetingControlButtons({ meetingId, status }: { meetingId: string, status: string }) {
@@ -52,10 +53,15 @@ export function MeetingControlButtons({ meetingId, status }: { meetingId: string
                 </UIButton>
             )}
             {status === 'ONGOING' && (
-                <UIButton onClick={handleEnd} disabled={loading} size="sm" variant="destructive">
-                    {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Square className="mr-2 h-4 w-4 fill-current" />}
-                    End Meeting
-                </UIButton>
+                <>
+                    <UIButton asChild size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
+                        <Link href={`/dashboard/member/meetings/${meetingId}/room`}>Join Room</Link>
+                    </UIButton>
+                    <UIButton onClick={handleEnd} disabled={loading} size="sm" variant="destructive">
+                        {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Square className="mr-2 h-4 w-4 fill-current" />}
+                        End Meeting
+                    </UIButton>
+                </>
             )}
         </div>
     )
