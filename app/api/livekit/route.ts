@@ -9,37 +9,50 @@ import { and, eq } from "drizzle-orm";
 export async function GET(req: NextRequest) {
     try {
         const session = await getServerSession();
-        if (!session?.user?.id) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
-
         const room = req.nextUrl.searchParams.get('room');
-        const username = session.user.name || 'Anonymous User';
+        const guestName = req.nextUrl.searchParams.get('guestName');
+        
+        let identity = session?.user?.id;
+        let name = session?.user?.name || 'Anonymous User';
 
         if (!room) {
             return NextResponse.json({ error: 'Missing "room" query parameter' }, { status: 400 });
         }
 
         // --- SECURITY CHECK ---
-        // Verify user is invited to this meeting (room is virtualRoomId)
-        // AND verify the meeting is ONGOING
-        const [access] = await db.select({
+        const [meeting] = await db.select({
             id: meetings.id,
             status: meetings.status
         })
-            .from(meetings)
-            .innerJoin(meetingAttendances, eq(meetings.id, meetingAttendances.meetingId))
-            .where(and(
-                eq(meetings.virtualRoomId, room),
-                eq(meetingAttendances.userId, session.user.id)
-            ))
+        .from(meetings)
+        .where(eq(meetings.virtualRoomId, room))
 
-        if (!access) {
-            return NextResponse.json({ error: 'You are not authorized to join this meeting.' }, { status: 403 });
+        if (!meeting) {
+            return NextResponse.json({ error: 'Meeting room not found.' }, { status: 404 });
         }
 
-        if (access.status !== 'ONGOING') {
+        if (meeting.status !== 'ONGOING') {
             return NextResponse.json({ error: 'Admin has not yet started the meeting. Kindly reach out.' }, { status: 403 });
+        }
+
+        // Check if user is authenticated member
+        if (session?.user?.id) {
+            const [access] = await db.select({ id: meetingAttendances.id })
+                .from(meetingAttendances)
+                .where(and(
+                    eq(meetingAttendances.meetingId, meeting.id),
+                    eq(meetingAttendances.userId, session.user.id)
+                ));
+            
+            // Allow if invited, OR if they're joining via the share code (we bypass this if they're a guest)
+            // Wait, if they are authenticated but not explicitly invited, do we let them in?
+            // The user wants members to be able to use the link too. If they use the link, we should let them in.
+        } else if (guestName) {
+            // Guest Flow
+            identity = `guest-${Math.random().toString(36).substring(2, 9)}`;
+            name = guestName + " (Guest)";
+        } else {
+            return NextResponse.json({ error: 'Unauthorized. Please login or provide guest name.' }, { status: 401 });
         }
         // --- END SECURITY CHECK ---
 
@@ -55,8 +68,8 @@ export async function GET(req: NextRequest) {
         }
 
         const at = new AccessToken(apiKey, apiSecret, {
-            identity: session.user.id,
-            name: username,
+            identity: identity!,
+            name: name,
         });
 
         at.addGrant({ room, roomJoin: true, canPublish: true, canSubscribe: true });

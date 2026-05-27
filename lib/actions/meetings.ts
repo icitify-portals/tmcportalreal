@@ -45,6 +45,7 @@ export async function createMeeting(data: z.infer<typeof CreateMeetingSchema>) {
 
         const id = uuidv4();
         const staticAttendanceToken = Math.random().toString(36).substring(2, 10).toUpperCase()
+        const shareCode = Math.random().toString(36).substring(2, 8).toLowerCase() + "-" + Math.random().toString(36).substring(2, 8).toLowerCase()
         
         await db.insert(meetings).values({
             id,
@@ -59,6 +60,7 @@ export async function createMeeting(data: z.infer<typeof CreateMeetingSchema>) {
             meetingLink: data.meetingLink,
             virtualRoomId: virtualRoomId, // Assign randomly generated room ID for LiveKit
             staticAttendanceToken,
+            shareCode, // Live guest join link code
             attendanceWindow: 30, // 30 minutes default
             targetAudience: 'ALL_MEMBERS_JURISDICTION', // Fallback for DB constraints if any
             status: 'SCHEDULED',

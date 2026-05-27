@@ -287,6 +287,74 @@ export async function updateLiveKitSettings(data: LiveKitSettings) {
     return { success: true }
 }
 
+export interface StorageSettings {
+    s3Endpoint: string
+    s3AccessKey: string
+    s3SecretKey: string
+    s3Bucket: string
+    s3Region: string
+}
+
+const DEFAULT_STORAGE_SETTINGS: StorageSettings = {
+    s3Endpoint: "",
+    s3AccessKey: "",
+    s3SecretKey: "",
+    s3Bucket: "",
+    s3Region: "us-east-1"
+}
+
+export async function getStorageSettings(): Promise<StorageSettings> {
+    const session = await getServerSession()
+    if (!session?.user) return DEFAULT_STORAGE_SETTINGS
+
+    try {
+        const settings = await db.select().from(systemSettings).where(eq(systemSettings.category, "INTEGRATION"))
+        const config: StorageSettings = { ...DEFAULT_STORAGE_SETTINGS }
+
+        settings.forEach(s => {
+            if (s.settingKey === "s3_endpoint") config.s3Endpoint = s.settingValue || ""
+            if (s.settingKey === "s3_access_key") config.s3AccessKey = s.settingValue || ""
+            if (s.settingKey === "s3_secret_key") config.s3SecretKey = s.settingValue || ""
+            if (s.settingKey === "s3_bucket") config.s3Bucket = s.settingValue || ""
+            if (s.settingKey === "s3_region") config.s3Region = s.settingValue || "us-east-1"
+        })
+        return config
+    } catch (error) {
+        return DEFAULT_STORAGE_SETTINGS
+    }
+}
+
+export async function updateStorageSettings(data: StorageSettings) {
+    const session = await getServerSession()
+    if (!session?.user?.id) throw new Error("Unauthorized")
+    requireAdmin(session)
+
+    const upsertSetting = async (key: string, value: string) => {
+        const existing = await db.select().from(systemSettings).where(eq(systemSettings.settingKey, key))
+        if (existing.length > 0) {
+            await db.update(systemSettings)
+                .set({ settingValue: value, updatedBy: session.user.id })
+                .where(eq(systemSettings.settingKey, key))
+        } else {
+            await db.insert(systemSettings).values({
+                settingKey: key,
+                settingValue: value,
+                category: "INTEGRATION",
+                updatedBy: session.user.id
+            })
+        }
+    }
+
+    await upsertSetting("s3_endpoint", data.s3Endpoint)
+    await upsertSetting("s3_access_key", data.s3AccessKey)
+    await upsertSetting("s3_secret_key", data.s3SecretKey)
+    await upsertSetting("s3_bucket", data.s3Bucket)
+    await upsertSetting("s3_region", data.s3Region)
+
+    revalidatePath("/dashboard/admin/settings")
+    return { success: true }
+}
+
 export interface FinancialSettings {
     burialVerificationFee: number
 }

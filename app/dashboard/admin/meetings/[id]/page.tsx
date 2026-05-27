@@ -13,6 +13,7 @@ import { MeetingControlButtons } from "@/components/meetings/meeting-control-but
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { EditMeetingDialog } from "@/components/meetings/edit-meeting-dialog"
 import { DeleteMeetingButton } from "@/components/meetings/delete-meeting-button"
+import { MeetingRecordingCard } from "@/components/meetings/meeting-recording-card"
 
 
 interface AdminMeetingPageProps {
@@ -37,7 +38,7 @@ export default async function AdminMeetingDetailPage({ params }: AdminMeetingPag
                     </div>
                     <div className="flex items-center gap-2">
                         {meeting.isOnline && (
-                            <MeetingControlButtons meetingId={meeting.id} status={meeting.status as string} />
+                            <MeetingControlButtons meeting={meeting} />
                         )}
                         <EditMeetingDialog meeting={meeting} members={members} />
                         <DeleteMeetingButton meetingId={meeting.id} meetingTitle={meeting.title} redirect={true} />
@@ -144,6 +145,12 @@ export default async function AdminMeetingDetailPage({ params }: AdminMeetingPag
                             </div>
                         </CardContent>
                     </Card>
+
+                    {meeting.isOnline && (
+                        <div className="md:col-span-2">
+                            <MeetingRecordingCard meeting={meeting} />
+                        </div>
+                    )}
                 </div>
             </div>
         </DashboardLayout>

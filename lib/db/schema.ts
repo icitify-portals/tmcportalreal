@@ -926,6 +926,10 @@ export const meetings = mysqlTable("meetings", {
     staticAttendanceToken: varchar("staticAttendanceToken", { length: 255 }),
     attendanceWindow: int("attendanceWindow").default(30), // minutes until considered late
     targetAudience: meetingTargetAudienceEnum.default('ALL_MEMBERS_JURISDICTION'),
+    
+    shareCode: varchar("shareCode", { length: 100 }).unique(), // For live guest join
+    recordingShareCode: varchar("recordingShareCode", { length: 100 }).unique(), // For secure recording playback
+    egressId: varchar("egressId", { length: 255 }), // LiveKit Egress Job ID
 
     status: mysqlEnum('status', ['SCHEDULED', 'ONGOING', 'ENDED', 'CANCELLED']).default('SCHEDULED'),
     createdBy: varchar("createdBy", { length: 255 }).notNull().references(() => users.id),
