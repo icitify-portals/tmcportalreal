@@ -140,6 +140,8 @@ export function EditMeetingDialog({ meeting, members }: EditMeetingDialogProps) 
                 groupId: values.groupId,
                 scheduledAt: date.toISOString(),
                 previousMinutesUrl: minuteUrl || undefined,
+                frequency: meeting.frequency || "ONCE",
+                occurrences: 1,
             })
 
             if (res.success) {
