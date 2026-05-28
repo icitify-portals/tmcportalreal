@@ -25,7 +25,14 @@ export async function POST(req: NextRequest) {
         if (!liveKitSettings.url || !liveKitSettings.apiKey || !liveKitSettings.apiSecret) {
             return NextResponse.json({ error: "LiveKit not configured" }, { status: 500 })
         }
-        if (!storageSettings.s3Bucket || !storageSettings.s3AccessKey) {
+
+        const bucket = liveKitSettings.s3Bucket || storageSettings.s3Bucket;
+        const accessKey = liveKitSettings.s3AccessKey || storageSettings.s3AccessKey;
+        const secretKey = liveKitSettings.s3SecretKey || storageSettings.s3SecretKey;
+        const region = liveKitSettings.s3Region || storageSettings.s3Region || "us-east-1";
+        const endpoint = liveKitSettings.s3Endpoint || storageSettings.s3Endpoint;
+
+        if (!bucket || !accessKey) {
             return NextResponse.json({ error: "Storage settings not configured for recording" }, { status: 500 })
         }
 
@@ -42,11 +49,11 @@ export async function POST(req: NextRequest) {
             output: {
                 case: 's3',
                 value: {
-                    accessKey: storageSettings.s3AccessKey,
-                    secret: storageSettings.s3SecretKey,
-                    bucket: storageSettings.s3Bucket,
-                    region: storageSettings.s3Region,
-                    endpoint: storageSettings.s3Endpoint || undefined,
+                    accessKey: accessKey,
+                    secret: secretKey,
+                    bucket: bucket,
+                    region: region,
+                    endpoint: endpoint || undefined,
                 }
             }
         })

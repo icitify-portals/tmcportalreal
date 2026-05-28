@@ -2,7 +2,7 @@ import { db } from "@/lib/db"
 import { meetings } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
 import { notFound } from "next/navigation"
-import { getStorageSettings } from "@/lib/actions/settings"
+import { getStorageSettings, getLiveKitSettings } from "@/lib/actions/settings"
 import { S3Client, ListObjectsV2Command, GetObjectCommand } from "@aws-sdk/client-s3"
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -20,7 +20,15 @@ export default async function SecureRecordingPage({ params }: { params: Promise<
     }
 
     const storage = await getStorageSettings()
-    if (!storage.s3Bucket || !storage.s3AccessKey) {
+    const livekit = await getLiveKitSettings()
+
+    const bucket = livekit.s3Bucket || storage.s3Bucket;
+    const accessKey = livekit.s3AccessKey || storage.s3AccessKey;
+    const secretKey = livekit.s3SecretKey || storage.s3SecretKey;
+    const region = livekit.s3Region || storage.s3Region || "us-east-1";
+    const endpoint = livekit.s3Endpoint || storage.s3Endpoint;
+
+    if (!bucket || !accessKey) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
                 <Card className="max-w-lg w-full">
@@ -40,11 +48,11 @@ export default async function SecureRecordingPage({ params }: { params: Promise<
 
     try {
         const client = new S3Client({
-            region: storage.s3Region,
-            endpoint: storage.s3Endpoint ? `https://${storage.s3Endpoint}` : undefined,
+            region: region,
+            endpoint: endpoint ? `https://${endpoint}` : undefined,
             credentials: {
-                accessKeyId: storage.s3AccessKey,
-                secretAccessKey: storage.s3SecretKey,
+                accessKeyId: accessKey,
+                secretAccessKey: secretKey,
             },
             // Wasabi usually requires path style if endpoint is specified
             forcePathStyle: true, 
@@ -52,7 +60,7 @@ export default async function SecureRecordingPage({ params }: { params: Promise<
 
         // Find the MP4 file
         const listCmd = new ListObjectsV2Command({
-            Bucket: storage.s3Bucket,
+            Bucket: bucket,
             Prefix: `recordings/${meeting.id}/`
         })
 
@@ -63,7 +71,7 @@ export default async function SecureRecordingPage({ params }: { params: Promise<
             errorMsg = "The recording file is still processing or could not be found."
         } else {
             const getCmd = new GetObjectCommand({
-                Bucket: storage.s3Bucket,
+                Bucket: bucket,
                 Key: mp4Obj.Key
             })
             // Generate a 1-hour presigned URL

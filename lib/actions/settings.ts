@@ -235,12 +235,22 @@ export interface LiveKitSettings {
     url: string
     apiKey: string
     apiSecret: string
+    s3Endpoint: string
+    s3AccessKey: string
+    s3SecretKey: string
+    s3Bucket: string
+    s3Region: string
 }
 
 const DEFAULT_LIVEKIT_SETTINGS: LiveKitSettings = {
     url: "",
     apiKey: "",
-    apiSecret: ""
+    apiSecret: "",
+    s3Endpoint: "",
+    s3AccessKey: "",
+    s3SecretKey: "",
+    s3Bucket: "",
+    s3Region: "us-east-1"
 }
 
 export async function getLiveKitSettings(): Promise<LiveKitSettings> {
@@ -256,6 +266,11 @@ export async function getLiveKitSettings(): Promise<LiveKitSettings> {
             if (s.settingKey === "livekit_url") config.url = s.settingValue || ""
             if (s.settingKey === "livekit_api_key") config.apiKey = s.settingValue || ""
             if (s.settingKey === "livekit_api_secret") config.apiSecret = s.settingValue || ""
+            if (s.settingKey === "livekit_s3_endpoint") config.s3Endpoint = s.settingValue || ""
+            if (s.settingKey === "livekit_s3_access_key") config.s3AccessKey = s.settingValue || ""
+            if (s.settingKey === "livekit_s3_secret_key") config.s3SecretKey = s.settingValue || ""
+            if (s.settingKey === "livekit_s3_bucket") config.s3Bucket = s.settingValue || ""
+            if (s.settingKey === "livekit_s3_region") config.s3Region = s.settingValue || "us-east-1"
         })
 
         return config
@@ -291,6 +306,11 @@ export async function updateLiveKitSettings(data: LiveKitSettings) {
         await upsertSetting("livekit_url", data.url)
         await upsertSetting("livekit_api_key", data.apiKey)
         await upsertSetting("livekit_api_secret", data.apiSecret)
+        await upsertSetting("livekit_s3_endpoint", data.s3Endpoint)
+        await upsertSetting("livekit_s3_access_key", data.s3AccessKey)
+        await upsertSetting("livekit_s3_secret_key", data.s3SecretKey)
+        await upsertSetting("livekit_s3_bucket", data.s3Bucket)
+        await upsertSetting("livekit_s3_region", data.s3Region)
 
         revalidatePath("/dashboard/admin/settings")
         return { success: true }

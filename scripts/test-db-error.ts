@@ -6,8 +6,8 @@ async function run() {
     console.log("SUCCESS");
     await db.execute(sql`delete from \`system_settings\` where \`id\` = 'test-id-123'`);
   } catch (e: any) {
-    console.log("SQL_ERROR_MESSAGE:", e.sqlMessage);
-    console.log("SQL_ERROR_CODE:", e.code);
+    console.log("FULL ERROR:");
+    console.dir(e, { depth: null });
   }
   process.exit(0);
 }
