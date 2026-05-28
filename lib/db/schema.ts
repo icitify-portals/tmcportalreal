@@ -928,9 +928,12 @@ export const meetings = mysqlTable("meetings", {
     attendanceWindow: int("attendanceWindow").default(30), // minutes until considered late
     targetAudience: meetingTargetAudienceEnum.default('ALL_MEMBERS_JURISDICTION'),
     
-    shareCode: varchar("shareCode", { length: 100 }).unique(), // For live guest join
-    recordingShareCode: varchar("recordingShareCode", { length: 100 }).unique(), // For secure recording playback
+    shareCode: varchar("shareCode", { length: 100 }), // For live guest join (not unique to allow series reuse)
+    recordingShareCode: varchar("recordingShareCode", { length: 100 }), // For secure recording playback
     egressId: varchar("egressId", { length: 255 }), // LiveKit Egress Job ID
+
+    seriesId: varchar("seriesId", { length: 255 }), // Groups recurring meetings
+    frequency: mysqlEnum('frequency', ['ONCE', 'WEEKLY', 'BI_WEEKLY', 'MONTHLY']).default('ONCE'),
 
     status: mysqlEnum('status', ['SCHEDULED', 'ONGOING', 'ENDED', 'CANCELLED']).default('SCHEDULED'),
     createdBy: varchar("createdBy", { length: 255 }).notNull().references(() => users.id),

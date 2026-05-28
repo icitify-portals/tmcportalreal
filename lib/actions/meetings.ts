@@ -24,6 +24,8 @@ const CreateMeetingSchema = z.object({
     meetingLink: z.string().optional(),
     attendees: z.array(z.string()).optional().default([]), // Additional manual invites
     previousMinutesUrl: z.string().optional(),
+    frequency: z.enum(['ONCE', 'WEEKLY', 'BI_WEEKLY', 'MONTHLY']).optional().default('ONCE'),
+    occurrences: z.number().min(1).max(52).optional().default(5)
 })
 
 export async function createMeeting(data: z.infer<typeof CreateMeetingSchema>) {
@@ -48,33 +50,59 @@ export async function createMeeting(data: z.infer<typeof CreateMeetingSchema>) {
         if (groupRes.length === 0) return { success: false, error: "Meeting group not found" }
         const group = groupRes[0]
 
-        const id = uuidv4();
-        const staticAttendanceToken = Math.random().toString(36).substring(2, 10).toUpperCase()
-        const shareCode = Math.random().toString(36).substring(2, 8).toLowerCase() + "-" + Math.random().toString(36).substring(2, 8).toLowerCase()
-        
-        await db.insert(meetings).values({
-            id,
-            title: data.title,
-            description: data.description,
-            organizationId: group.organizationId,
-            groupId: data.groupId,
-            scheduledAt: new Date(data.scheduledAt),
-            endAt: data.endAt ? new Date(data.endAt) : null,
-            venue: data.venue,
-            isOnline: data.isOnline,
-            meetingLink: data.meetingLink,
-            virtualRoomId: virtualRoomId, // Assign randomly generated room ID for LiveKit
-            staticAttendanceToken,
-            shareCode, // Live guest join link code
-            attendanceWindow: 30, // 30 minutes default
-            targetAudience: 'ALL_MEMBERS_JURISDICTION', // Fallback for DB constraints if any
-            status: 'SCHEDULED',
-            createdBy: session.user.id,
-            createdAt: new Date(),
-            updatedAt: new Date()
-        })
+        const seriesId = data.frequency !== 'ONCE' ? uuidv4() : null;
+        const occurrencesCount = data.frequency === 'ONCE' ? 1 : (data.occurrences || 5);
+        const meetingIds: string[] = [];
 
-        const meeting = { id };
+        const staticAttendanceToken = Math.random().toString(36).substring(2, 10).toUpperCase();
+        const shareCode = Math.random().toString(36).substring(2, 8).toLowerCase() + "-" + Math.random().toString(36).substring(2, 8).toLowerCase();
+
+        for (let i = 0; i < occurrencesCount; i++) {
+            const id = uuidv4();
+            meetingIds.push(id);
+
+            let currentScheduledAt = new Date(data.scheduledAt);
+            let currentEndAt = data.endAt ? new Date(data.endAt) : null;
+
+            if (i > 0) {
+                if (data.frequency === 'WEEKLY') {
+                    currentScheduledAt = addDays(currentScheduledAt, 7 * i);
+                    if (currentEndAt) currentEndAt = addDays(currentEndAt, 7 * i);
+                } else if (data.frequency === 'BI_WEEKLY') {
+                    currentScheduledAt = addDays(currentScheduledAt, 14 * i);
+                    if (currentEndAt) currentEndAt = addDays(currentEndAt, 14 * i);
+                } else if (data.frequency === 'MONTHLY') {
+                    currentScheduledAt.setMonth(currentScheduledAt.getMonth() + i);
+                    if (currentEndAt) currentEndAt.setMonth(currentEndAt.getMonth() + i);
+                }
+            }
+
+            await db.insert(meetings).values({
+                id,
+                title: data.title,
+                description: data.description,
+                organizationId: group.organizationId,
+                groupId: data.groupId,
+                seriesId,
+                frequency: data.frequency,
+                scheduledAt: currentScheduledAt,
+                endAt: currentEndAt,
+                venue: data.venue,
+                isOnline: data.isOnline,
+                meetingLink: data.meetingLink,
+                virtualRoomId: virtualRoomId, // Assign randomly generated room ID for LiveKit (shared)
+                staticAttendanceToken,
+                shareCode, // Live guest join link code (shared)
+                attendanceWindow: 30, // 30 minutes default
+                targetAudience: 'ALL_MEMBERS_JURISDICTION', // Fallback for DB constraints if any
+                status: 'SCHEDULED',
+                createdBy: session.user.id,
+                createdAt: new Date(),
+                updatedAt: new Date()
+            });
+        }
+
+        const meeting = { id: meetingIds[0] };
 
         // 0. Handle Previous Minutes if provided
         if (data.previousMinutesUrl) {
@@ -146,20 +174,31 @@ export async function createMeeting(data: z.infer<typeof CreateMeetingSchema>) {
             ...(data.attendees || [])
         ]))
 
-        // Bulk insert invites
+        // Bulk insert invites for all meeting occurrences
         if (allInvitees.length > 0) {
-            await db.insert(meetingAttendances).values(
-                allInvitees.map(userId => ({
-                    id: uuidv4(),
-                    meetingId: meeting.id,
-                    userId: userId,
-                    status: 'INVITED' as const,
-                    createdAt: new Date(),
-                    updatedAt: new Date()
-                }))
-            )
-
-            // Send In-App Notifications
+            const attendanceValues: any[] = [];
+            for (const meetingId of meetingIds) {
+                for (const userId of allInvitees) {
+                    attendanceValues.push({
+                        id: uuidv4(),
+                        meetingId: meetingId,
+                        userId: userId,
+                        status: 'INVITED' as const,
+                        createdAt: new Date(),
+                        updatedAt: new Date()
+                    });
+                }
+            }
+            
+            if (attendanceValues.length > 0) {
+                const chunkSize = 1000;
+                for (let i = 0; i < attendanceValues.length; i += chunkSize) {
+                    await db.insert(meetingAttendances).values(attendanceValues.slice(i, i + chunkSize));
+                }
+            }
+        }
+        
+        // Send In-App Notifications
             await db.insert(notifications).values(
                 allInvitees.map(userId => ({
                     userId: userId,

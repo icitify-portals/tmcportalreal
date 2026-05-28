@@ -41,6 +41,8 @@ const formSchema = z.object({
   isOnline: z.boolean().default(false),
   meetingLink: z.string().optional(),
   previousMinutesUrl: z.string().optional(),
+  frequency: z.enum(['ONCE', 'WEEKLY', 'BI_WEEKLY', 'MONTHLY']).default('ONCE'),
+  occurrences: z.number().min(1).max(52).default(5),
 });
 
 interface CreateMeetingDialogProps {
@@ -92,6 +94,8 @@ export function CreateMeetingDialog({
       meetingLink: "",
       isOnline: false,
       previousMinutesUrl: "",
+      frequency: "ONCE" as "ONCE" | "WEEKLY" | "BI_WEEKLY" | "MONTHLY",
+      occurrences: 5,
     },
   });
 
@@ -274,6 +278,56 @@ export function CreateMeetingDialog({
                     </FormItem>
                   )}
                 />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="frequency"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Recurrence</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select frequency" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="ONCE">Once</SelectItem>
+                          <SelectItem value="WEEKLY">Weekly</SelectItem>
+                          <SelectItem value="BI_WEEKLY">Bi-Weekly</SelectItem>
+                          <SelectItem value="MONTHLY">Monthly</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </FormItem>
+                  )}
+                />
+
+                {form.watch("frequency") !== "ONCE" && (
+                  <FormField
+                    control={form.control}
+                    name="occurrences"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Number of Occurrences</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            min={1} 
+                            max={52} 
+                            {...field} 
+                            onChange={e => field.onChange(parseInt(e.target.value) || 5)} 
+                          />
+                        </FormControl>
+                        <FormDescription>How many meetings to generate</FormDescription>
+                      </FormItem>
+                    )}
+                  />
+                )}
               </div>
 
               {form.watch("isOnline") ? (

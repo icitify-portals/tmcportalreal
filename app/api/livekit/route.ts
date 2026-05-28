@@ -20,20 +20,24 @@ export async function GET(req: NextRequest) {
         }
 
         // --- SECURITY CHECK ---
-        const [meeting] = await db.select({
+        const matchingMeetings = await db.select({
             id: meetings.id,
             status: meetings.status
         })
         .from(meetings)
         .where(eq(meetings.virtualRoomId, room))
 
-        if (!meeting) {
+        if (!matchingMeetings || matchingMeetings.length === 0) {
             return NextResponse.json({ error: 'Meeting room not found.' }, { status: 404 });
         }
 
-        if (meeting.status !== 'ONGOING') {
+        const ongoingMeeting = matchingMeetings.find(m => m.status === 'ONGOING');
+
+        if (!ongoingMeeting) {
             return NextResponse.json({ error: 'Admin has not yet started the meeting. Kindly reach out.' }, { status: 403 });
         }
+
+        const meeting = ongoingMeeting;
 
         // Check if user is authenticated member
         if (session?.user?.id) {

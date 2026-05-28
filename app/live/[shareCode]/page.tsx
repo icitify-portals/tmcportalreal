@@ -7,11 +7,27 @@ import { getServerSession } from "@/lib/session"
 
 export default async function LiveMeetingPublicPage({ params }: { params: Promise<{ shareCode: string }> }) {
     const { shareCode } = await params
-    const meeting = await db.query.meetings.findFirst({
+    const matchingMeetings = await db.query.meetings.findMany({
         where: eq(meetings.shareCode, shareCode)
     })
 
-    if (!meeting || !meeting.isOnline || !meeting.virtualRoomId) {
+    if (!matchingMeetings || matchingMeetings.length === 0) {
+        return notFound()
+    }
+
+    let meeting = matchingMeetings.find(m => m.status === 'ONGOING')
+    if (!meeting) {
+        // Find the closest scheduled meeting
+        const scheduled = matchingMeetings.filter(m => m.status === 'SCHEDULED')
+        if (scheduled.length > 0) {
+            scheduled.sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime())
+            meeting = scheduled[0]
+        } else {
+            meeting = matchingMeetings[0] // Fallback
+        }
+    }
+
+    if (!meeting.isOnline || !meeting.virtualRoomId) {
         return notFound()
     }
 
