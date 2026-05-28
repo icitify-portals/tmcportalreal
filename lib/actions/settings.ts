@@ -83,7 +83,9 @@ export async function updateAISettings(data: AISettings) {
                 settingKey: key,
                 settingValue: value,
                 category: "AI",
-                updatedBy: session.user.id
+                updatedBy: session.user.id,
+                updatedAt: new Date(),
+                createdAt: new Date()
             })
         }
     }
@@ -137,7 +139,9 @@ export async function updateMembershipSettings(data: MembershipSettings) {
                 settingKey: key,
                 settingValue: value,
                 category: "GENERAL",
-                updatedBy: session.user.id
+                updatedBy: session.user.id,
+                updatedAt: new Date(),
+                createdAt: new Date()
             })
         }
     }
@@ -186,7 +190,9 @@ export async function updateYearPlannerSettings(data: YearPlannerSettings) {
                 settingKey: key,
                 settingValue: value,
                 category: "GENERAL",
-                updatedBy: session.user.id
+                updatedBy: session.user.id,
+                updatedAt: new Date(),
+                createdAt: new Date()
             })
         }
     }
@@ -275,7 +281,9 @@ export async function updateLiveKitSettings(data: LiveKitSettings) {
                     settingKey: key,
                     settingValue: value,
                     category: "INTEGRATION",
-                    updatedBy: session.user.id
+                    updatedBy: session.user.id,
+                    updatedAt: new Date(),
+                    createdAt: new Date()
                 })
             }
         }
@@ -345,7 +353,9 @@ export async function updateStorageSettings(data: StorageSettings) {
                 settingKey: key,
                 settingValue: value,
                 category: "INTEGRATION",
-                updatedBy: session.user.id
+                updatedBy: session.user.id,
+                updatedAt: new Date(),
+                createdAt: new Date()
             })
         }
     }
@@ -402,7 +412,9 @@ export async function updateFinancialSettings(data: FinancialSettings) {
                 settingKey: key,
                 settingValue: value,
                 category: "GENERAL",
-                updatedBy: session.user.id
+                updatedBy: session.user.id,
+                updatedAt: new Date(),
+                createdAt: new Date()
             })
         }
     }
