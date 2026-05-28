@@ -9,7 +9,7 @@ import { getServerSession } from "@/lib/session"
 import { redirect } from "next/navigation"
 import { sendEmail, emailTemplates } from "@/lib/email"
 import { v4 as uuidv4 } from "uuid"
-import { subDays, isAfter, format } from "date-fns"
+import { addDays, isAfter, format } from "date-fns"
 import { generateAttendanceToken } from "@/lib/attendance-token"
 
 // Schemas
@@ -38,6 +38,11 @@ export async function createMeeting(data: z.infer<typeof CreateMeetingSchema>) {
     }
 
     try {
+        const meetingDate = new Date(data.scheduledAt);
+        if (meetingDate < new Date()) {
+            return { success: false, error: "Meeting cannot be scheduled in the past" }
+        }
+
         // Fetch group details
         const groupRes = await db.select().from(meetingGroups).where(eq(meetingGroups.id, data.groupId)).limit(1)
         if (groupRes.length === 0) return { success: false, error: "Meeting group not found" }
@@ -219,6 +224,11 @@ export async function updateMeeting(id: string, data: z.infer<typeof CreateMeeti
     }
 
     try {
+        const meetingDate = new Date(data.scheduledAt);
+        if (meetingDate < new Date()) {
+            return { success: false, error: "Meeting cannot be scheduled in the past" }
+        }
+
         await db.update(meetings).set({
             title: data.title,
             description: data.description,
@@ -518,8 +528,16 @@ export async function submitReport(meetingId: string, title: string, content: st
     const [meeting] = await db.select().from(meetings).where(eq(meetings.id, meetingId))
     if (!meeting) return { success: false, error: "Meeting not found" }
 
-    const deadline = subDays(new Date(meeting.scheduledAt), 2)
-    const isLate = isAfter(new Date(), deadline)
+    const now = new Date()
+    const scheduledTime = new Date(meeting.scheduledAt)
+
+    if (now < scheduledTime) {
+        return { success: false, error: "Report can only be submitted after the meeting." }
+    }
+
+    const deadlineDays = parseInt(process.env.REPORT_DEADLINE_DAYS || "2", 10)
+    const deadline = addDays(scheduledTime, deadlineDays)
+    const isLate = isAfter(now, deadline)
 
     await db.insert(meetingDocs).values({
         id: uuidv4(),

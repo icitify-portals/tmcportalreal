@@ -351,6 +351,14 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
         const now = new Date()
         const progDate = new Date(validData.startDate)
 
+        // Prevent scheduling in the past
+        if (progDate < new Date(now.setHours(0, 0, 0, 0))) {
+            return {
+                success: false,
+                error: "Programme cannot be scheduled in the past"
+            }
+        }
+
         // 1. Validate Programme is within current Programme Year
         if (progDate < yearSettings.programYearStart || progDate > yearSettings.programYearEnd) {
             // Optional: Return error or just warn. User asked for "manageable date range". 
