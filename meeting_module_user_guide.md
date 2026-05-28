@@ -14,6 +14,7 @@ As an Administrator, you can schedule meetings for your jurisdiction.
    - **No Past Dates:** The system strictly prevents scheduling a meeting with a date/time in the past. Ensure you are setting future dates.
    - **Target Audience:** You can choose who is required to attend (e.g., all members, specific officials, or customized groups).
    - **Format:** Choose between **Physical**, **Virtual**, or **Hybrid**. Virtual/Hybrid meetings will automatically generate secure virtual rooms.
+   - **Recurring Meetings:** You can configure a meeting to repeat regularly by selecting a **Frequency** (Weekly, Bi-Weekly, Monthly) and specifying the total number of **Occurrences** (default is 5, maximum 52). All occurrences in the series will securely share the same exact virtual meeting link for convenience!
 
 ## 2. The Virtual Meeting Flow
 
@@ -23,6 +24,8 @@ If your meeting format is Virtual or Hybrid, it utilizes the native LiveKit inte
 - **Joining the Room:** Once the status is `ONGOING`, a blue **Join Room** button will appear for all authorized members and admins. Clicking this will open the virtual meeting room.
 - **Recording:** Inside the room, Admins will see options to record the meeting directly to the organization's secure cloud storage.
 - **Concluding:** When the meeting is finished, the Admin must click **End Meeting** to finalize attendance and close the room. The status will update to `ENDED`.
+
+*Note on Recurring Meetings:* For recurring meetings, the public link and recording link always stay exactly the same. When participants navigate to the recurring meeting link, the system automatically routes them to the currently `ONGOING` instance, or the next upcoming instance in the series.
 
 ## 3. Attendance & Punctuality Tracking
 
