@@ -47,9 +47,14 @@ export default async function SecureRecordingPage({ params }: { params: Promise<
     let errorMsg = null
 
     try {
+        let finalEndpoint = undefined;
+        if (endpoint) {
+            finalEndpoint = endpoint.startsWith("http") ? endpoint : `https://${endpoint}`;
+        }
+
         const client = new S3Client({
             region: region,
-            endpoint: endpoint ? `https://${endpoint}` : undefined,
+            endpoint: finalEndpoint,
             credentials: {
                 accessKeyId: accessKey,
                 secretAccessKey: secretKey,

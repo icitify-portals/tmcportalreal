@@ -30,7 +30,11 @@ export async function POST(req: NextRequest) {
         const accessKey = liveKitSettings.s3AccessKey || storageSettings.s3AccessKey;
         const secretKey = liveKitSettings.s3SecretKey || storageSettings.s3SecretKey;
         const region = liveKitSettings.s3Region || storageSettings.s3Region || "us-east-1";
-        const endpoint = liveKitSettings.s3Endpoint || storageSettings.s3Endpoint;
+        let endpoint = liveKitSettings.s3Endpoint || storageSettings.s3Endpoint;
+        
+        if (endpoint && !endpoint.startsWith("http")) {
+            endpoint = `https://${endpoint}`;
+        }
 
         if (!bucket || !accessKey) {
             return NextResponse.json({ error: "Storage settings not configured for recording" }, { status: 500 })
