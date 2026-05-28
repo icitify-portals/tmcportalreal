@@ -1,8 +1,12 @@
 import { db, sql } from '../lib/db';
 import * as fs from 'fs';
 
-const migration = fs.readFileSync('./drizzle/0002_shiny_the_spike.sql', 'utf8');
-const statements = migration.split('--> statement-breakpoint');
+const statements = [
+    "ALTER TABLE `meetings` DROP INDEX `meetings_shareCode_unique`;",
+    "ALTER TABLE `meetings` DROP INDEX `meetings_recordingShareCode_unique`;",
+    "ALTER TABLE `meetings` ADD `seriesId` varchar(255);",
+    "ALTER TABLE `meetings` ADD `frequency` enum('ONCE','WEEKLY','BI_WEEKLY','MONTHLY') DEFAULT 'ONCE';"
+];
 
 async function run() {
     for (const stmt of statements) {
