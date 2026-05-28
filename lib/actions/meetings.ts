@@ -196,7 +196,6 @@ export async function createMeeting(data: z.infer<typeof CreateMeetingSchema>) {
                     await db.insert(meetingAttendances).values(attendanceValues.slice(i, i + chunkSize));
                 }
             }
-        }
         
         // Send In-App Notifications
             await db.insert(notifications).values(
