@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
+import { toast } from "sonner"
 import { Bell, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -21,14 +22,38 @@ export function NotificationBell() {
     const [unreadCount, setUnreadCount] = useState(0)
     const [isOpen, setIsOpen] = useState(false)
     const [mounted, setMounted] = useState(false)
+    const toastedIds = useRef<Set<string>>(new Set())
+    const isInitialFetch = useRef(true)
 
     const fetchNotifications = async () => {
         try {
             const res = await fetch("/api/notifications")
             if (res.ok) {
                 const data = await res.json()
-                setNotifications(data.notifications || [])
+                const fetchedList = data.notifications || []
+                setNotifications(fetchedList)
                 setUnreadCount(data.unreadCount || 0)
+
+                // Trigger toast for new unread notifications
+                const unread = fetchedList.filter((n: any) => !n.read && !n.isRead)
+                if (isInitialFetch.current) {
+                    unread.forEach((n: any) => toastedIds.current.add(n.id))
+                    isInitialFetch.current = false
+                } else {
+                    unread.forEach((n: any) => {
+                        if (!toastedIds.current.has(n.id)) {
+                            toastedIds.current.add(n.id)
+                            toast(n.title, {
+                                description: n.message,
+                                action: n.link && n.link !== "#" ? {
+                                    label: "View",
+                                    onClick: () => window.location.href = n.link
+                                } : undefined,
+                                duration: 5000,
+                            })
+                        }
+                    })
+                }
             }
         } catch (error) {
             console.error("Failed to fetch notifications", error)
@@ -38,7 +63,7 @@ export function NotificationBell() {
     useEffect(() => {
         setMounted(true)
         fetchNotifications()
-        const interval = setInterval(fetchNotifications, 60000)
+        const interval = setInterval(fetchNotifications, 15000) // Poll every 15s for better responsiveness
         return () => clearInterval(interval)
     }, [])
 

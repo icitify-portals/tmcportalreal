@@ -9,7 +9,6 @@ import { AiChatWidget } from "@/components/ai/ai-chat-widget"
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
 import { Menu } from "lucide-react"
-import { NotificationListener } from "@/components/dashboard/notification-listener"
 import { ImpersonationBanner } from "./impersonation-banner"
 import { ViewAsBanner } from "./view-as-banner"
 
@@ -151,7 +150,6 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             {mounted && children}
           </div>
           {mounted && <Toaster />}
-          {mounted && <NotificationListener />}
         </main>
       </div>
       </div>
