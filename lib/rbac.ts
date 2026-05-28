@@ -168,7 +168,13 @@ export function requireAuth(session: Session | null): Session {
 
 export function requireAdmin(session: Session | null): Session {
   const authSession = requireAuth(session)
-  if (!authSession.user.isSuperAdmin && !authSession.user.officialLevel) {
+  const isSuperAdmin = authSession.user.isSuperAdmin;
+  const hasAdminRole = authSession.user.roles?.some((r: any) => 
+      ["SUPER_ADMIN", "NATIONAL_ADMIN"].includes(r.code) || 
+      ["SYSTEM", "NATIONAL"].includes(r.jurisdictionLevel)
+  );
+
+  if (!isSuperAdmin && !authSession.user.officialLevel && !hasAdminRole) {
     throw new Error("Forbidden: Admin access required")
   }
   return authSession

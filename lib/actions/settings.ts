@@ -259,32 +259,37 @@ export async function getLiveKitSettings(): Promise<LiveKitSettings> {
 }
 
 export async function updateLiveKitSettings(data: LiveKitSettings) {
-    const session = await getServerSession()
-    if (!session?.user?.id) throw new Error("Unauthorized")
-    requireAdmin(session)
+    try {
+        const session = await getServerSession()
+        if (!session?.user?.id) throw new Error("Unauthorized")
+        requireAdmin(session)
 
-    const upsertSetting = async (key: string, value: string) => {
-        const existing = await db.select().from(systemSettings).where(eq(systemSettings.settingKey, key))
-        if (existing.length > 0) {
-            await db.update(systemSettings)
-                .set({ settingValue: value, updatedBy: session.user.id })
-                .where(eq(systemSettings.settingKey, key))
-        } else {
-            await db.insert(systemSettings).values({
-                settingKey: key,
-                settingValue: value,
-                category: "INTEGRATION",
-                updatedBy: session.user.id
-            })
+        const upsertSetting = async (key: string, value: string) => {
+            const existing = await db.select().from(systemSettings).where(eq(systemSettings.settingKey, key))
+            if (existing.length > 0) {
+                await db.update(systemSettings)
+                    .set({ settingValue: value, updatedBy: session.user.id })
+                    .where(eq(systemSettings.settingKey, key))
+            } else {
+                await db.insert(systemSettings).values({
+                    settingKey: key,
+                    settingValue: value,
+                    category: "INTEGRATION",
+                    updatedBy: session.user.id
+                })
+            }
         }
+
+        await upsertSetting("livekit_url", data.url)
+        await upsertSetting("livekit_api_key", data.apiKey)
+        await upsertSetting("livekit_api_secret", data.apiSecret)
+
+        revalidatePath("/dashboard/admin/settings")
+        return { success: true }
+    } catch (e: any) {
+        console.error("LiveKit settings update error:", e)
+        return { success: false, error: e.message }
     }
-
-    await upsertSetting("livekit_url", data.url)
-    await upsertSetting("livekit_api_key", data.apiKey)
-    await upsertSetting("livekit_api_secret", data.apiSecret)
-
-    revalidatePath("/dashboard/admin/settings")
-    return { success: true }
 }
 
 export interface StorageSettings {
