@@ -73,12 +73,15 @@ export async function uploadFile(file: File, category: string): Promise<string> 
         ACL: 'public-read' // Only if bucket allows. Or rely on bucket policy.
       }));
 
-      // If endpoint is custom (e.g. R2), construct URL differently
+      // If endpoint is custom (e.g. R2/Wasabi), construct URL differently
       if (S3_ENDPOINT) {
-        // R2/Custom URL logic usually: https://bucket.endpoint/key or https://endpoint/bucket/key
-        // Simplest: https://{bucket}.{endpoint-domain}/{key} 
-        // For now, return standard S3 URL
-        return `https://${S3_BUCKET}.s3.${S3_REGION}.amazonaws.com/${key}`;
+        let cleanEndpoint = S3_ENDPOINT;
+        if (!cleanEndpoint.startsWith("http")) {
+            cleanEndpoint = "https://" + cleanEndpoint;
+        }
+        // Trim trailing slash just in case
+        cleanEndpoint = cleanEndpoint.replace(/\/$/, "");
+        return `${cleanEndpoint}/${S3_BUCKET}/${key}`;
       }
 
       // Standard S3 URL
