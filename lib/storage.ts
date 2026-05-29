@@ -4,11 +4,11 @@ import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import sharp from "sharp";
 
 // robust checking for ENV variables
-const S3_REGION = process.env.AWS_REGION || "us-east-1";
-const S3_BUCKET = process.env.AWS_BUCKET_NAME;
-const S3_ACCESS_KEY = process.env.AWS_ACCESS_KEY_ID;
-const S3_SECRET_KEY = process.env.AWS_SECRET_ACCESS_KEY;
-const S3_ENDPOINT = process.env.AWS_ENDPOINT; // Optional for R2/MinIO
+const S3_REGION = process.env.WASABI_REGION || process.env.AWS_REGION || "us-east-1";
+const S3_BUCKET = process.env.WASABI_BUCKET_NAME || process.env.AWS_BUCKET_NAME;
+const S3_ACCESS_KEY = process.env.WASABI_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID;
+const S3_SECRET_KEY = process.env.WASABI_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY;
+const S3_ENDPOINT = process.env.WASABI_ENDPOINT || process.env.AWS_ENDPOINT; // Optional for R2/MinIO
 
 const s3Client = (S3_ACCESS_KEY && S3_SECRET_KEY)
   ? new S3Client({
