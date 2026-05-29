@@ -25,6 +25,12 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/uploads/**',
       },
+      {
+        protocol: 'https',
+        hostname: 's3.eu-west-1.wasabisys.com',
+        port: '',
+        pathname: '/tmcbackup/**',
+      },
     ],
     unoptimized: true,
   },
