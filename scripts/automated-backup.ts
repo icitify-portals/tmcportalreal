@@ -50,11 +50,11 @@ async function cleanupOldBackups() {
         console.warn("Local cleanup skipped or failed (likely no archive yet).");
     }
 
-    // 2. Wasabi Retention (7 Days)
+    // 2. Wasabi Retention (5 Days)
     if (s3Client && S3_BUCKET) {
         try {
             const now = new Date();
-            const cloudRetentionMs = 7 * 24 * 60 * 60 * 1000;
+            const cloudRetentionMs = 5 * 24 * 60 * 60 * 1000;
             
             const listResponse = await s3Client.send(new ListObjectsV2Command({
                 Bucket: S3_BUCKET,
