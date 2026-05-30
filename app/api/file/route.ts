@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
-import { getAuthSession } from "@/lib/auth";
 
 const S3_REGION = process.env.WASABI_REGION || process.env.AWS_REGION || "us-east-1";
 const S3_BUCKET = process.env.WASABI_BUCKET_NAME || process.env.AWS_BUCKET_NAME;
