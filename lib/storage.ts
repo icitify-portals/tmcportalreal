@@ -73,19 +73,9 @@ export async function uploadFile(file: File, category: string): Promise<string> 
         ACL: 'public-read' // Only if bucket allows. Or rely on bucket policy.
       }));
 
-      // If endpoint is custom (e.g. R2/Wasabi), construct URL differently
-      if (S3_ENDPOINT) {
-        let cleanEndpoint = S3_ENDPOINT;
-        if (!cleanEndpoint.startsWith("http")) {
-            cleanEndpoint = "https://" + cleanEndpoint;
-        }
-        // Trim trailing slash just in case
-        cleanEndpoint = cleanEndpoint.replace(/\/$/, "");
-        return `${cleanEndpoint}/${S3_BUCKET}/${key}`;
-      }
-
-      // Standard S3 URL
-      return `https://${S3_BUCKET}.s3.amazonaws.com/${key}`;
+      // Because Wasabi often blocks public access, we return a local proxy URL 
+      // that streams the file securely from the private bucket.
+      return `/api/file?key=${key}`;
     } catch (error) {
       console.error("S3 Upload Error:", error);
       throw new Error("Failed to upload to cloud storage");
