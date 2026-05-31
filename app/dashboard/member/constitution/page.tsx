@@ -55,7 +55,7 @@ export default async function MemberConstitutionReviewPage() {
                                 <CardDescription className="text-green-600">Your comments will be sent to the LGA collation team.</CardDescription>
                             </CardHeader>
                             <CardContent className="pt-6">
-                                <MemberReviewPanel draftId={activeDraft.id} />
+                                <MemberReviewPanel draftId={activeDraft.id} user={session.user} />
                             </CardContent>
                         </Card>
                     </div>
