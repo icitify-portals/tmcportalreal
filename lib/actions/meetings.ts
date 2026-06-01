@@ -53,7 +53,7 @@ export async function createMeeting(data: z.infer<typeof CreateMeetingSchema>) {
         const group = groupRes[0]
 
         const seriesId = data.frequency !== 'ONCE' ? uuidv4() : null;
-        const occurrencesCount = data.frequency === 'ONCE' ? 1 : (data.occurrences || 5);
+        let occurrencesCount = data.frequency === 'ONCE' ? 1 : (data.occurrences || 5);
         const meetingIds: string[] = [];
 
         const staticAttendanceToken = Math.random().toString(36).substring(2, 10).toUpperCase();
