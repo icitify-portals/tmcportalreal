@@ -169,6 +169,16 @@ export default async function ProgrammesPage() {
     const isAdmin = isSuperAdmin || roleCodes.some(code => code.endsWith('_ADMIN'))
     const canApprove = isAdmin
     const mock = await getMockJurisdiction()
+    // Fetch current user's official and office details if they are an official
+    const userOfficial = await db.select({ 
+        id: officials.id, 
+        organizationId: officials.organizationId,
+        positionLevel: officials.positionLevel
+    })
+    .from(officials)
+    .where(eq(officials.userId, session!.user.id))
+    .limit(1)
+
     let organizationId = ""
 
     if (isSuperAdmin && mock) {
@@ -182,7 +192,7 @@ export default async function ProgrammesPage() {
         })
         organizationId = mockOrg?.id || ""
     } else {
-        organizationId = session!.user.officialOrganizationId || userRolesList[0]?.organizationId || session!.user.organizationId || ""
+        organizationId = userOfficial[0]?.organizationId || session!.user.officialOrganizationId || userRolesList[0]?.organizationId || session!.user.organizationId || ""
     }
 
     if (!organizationId) {
@@ -194,17 +204,6 @@ export default async function ProgrammesPage() {
 
         organizationId = nationalOrg[0]?.id
     }
-
-    // Special case for SuperAdmin: if still no org found (shouldn't happen with National fallback), 
-    // but at least don't show the "Not Found" error if they are SYSTEM level.
-    // Fetch current user's official and office details if they are an official
-    const userOfficial = await db.select({ 
-        id: officials.id, 
-        organizationId: officials.organizationId
-    })
-    .from(officials)
-    .where(eq(officials.userId, session!.user.id))
-    .limit(1)
 
     const userOfficialId = userOfficial[0]?.id
     
@@ -228,7 +227,7 @@ export default async function ProgrammesPage() {
                             isSuperAdmin={isSuperAdmin}
                             userOfficialId={userOfficialId}
                             userOfficeId={userOfficeId}
-                            userLevel={session.user.officialLevel}
+                            userLevel={userOfficial[0]?.positionLevel || session.user.officialLevel}
                         />
                     </div>
                 </div>

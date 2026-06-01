@@ -318,7 +318,17 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
 
         // Hierarchical Permission Check
         if (!session.user.isSuperAdmin) {
-            const userLevel = session.user.officialLevel as string
+            let userLevel = session.user.officialLevel as string
+            
+            // Fallback to fetching directly if missing in session
+            if (!userLevel) {
+                const officialProfile = await db.select({ positionLevel: officials.positionLevel })
+                    .from(officials).where(eq(officials.userId, session.user.id)).limit(1)
+                if (officialProfile.length > 0 && officialProfile[0].positionLevel) {
+                    userLevel = officialProfile[0].positionLevel
+                }
+            }
+
             const targetLevel = org.level
 
             if (userLevel === 'NATIONAL' && targetLevel !== 'NATIONAL') {
