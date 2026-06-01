@@ -47,7 +47,7 @@ export const programmeStatusEnum = mysqlEnum('status', ['DRAFT', 'PENDING_STATE'
 export const targetAudienceEnum = mysqlEnum('targetAudience', ['PUBLIC', 'MEMBERS', 'BROTHERS', 'SISTERS', 'CHILDREN', 'YOUTH', 'ELDERS']);
 export const registrationStatusEnum = mysqlEnum('status', ['REGISTERED', 'PENDING_PAYMENT', 'PARTIALLY_PAID', 'PAID', 'ATTENDED', 'CANCELLED']);
 export const programmeFormatEnum = mysqlEnum('format', ['PHYSICAL', 'VIRTUAL', 'HYBRID']);
-export const programmeFrequencyEnum = mysqlEnum('frequency', ['WEEKLY', 'MONTHLY', 'QUARTERLY', 'BI-ANNUALLY', 'ANNUALLY', 'ONCE']);
+export const programmeFrequencyEnum = mysqlEnum('frequency', ['WEEKLY', 'MONTHLY', 'QUARTERLY', 'BI-ANNUALLY', 'ANNUALLY', 'ONCE', 'CUSTOM']);
 
 // Asset Enums
 export const assetCategoryEnum = mysqlEnum('category', ['FURNITURE', 'ELECTRONICS', 'VEHICLE', 'PROPERTY', 'EQUIPMENT', 'OTHER']);
@@ -933,7 +933,7 @@ export const meetings = mysqlTable("meetings", {
     egressId: varchar("egressId", { length: 255 }), // LiveKit Egress Job ID
 
     seriesId: varchar("seriesId", { length: 255 }), // Groups recurring meetings
-    frequency: mysqlEnum('frequency', ['ONCE', 'WEEKLY', 'BI_WEEKLY', 'MONTHLY']).default('ONCE'),
+    frequency: mysqlEnum('frequency', ['ONCE', 'WEEKLY', 'BI_WEEKLY', 'MONTHLY', 'CUSTOM']).default('ONCE'),
 
     status: mysqlEnum('status', ['SCHEDULED', 'ONGOING', 'ENDED', 'CANCELLED']).default('SCHEDULED'),
     createdBy: varchar("createdBy", { length: 255 }).notNull().references(() => users.id),
