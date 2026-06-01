@@ -104,9 +104,30 @@ export default async function AdminMeetingsPage({
     const orgs = await getAvailableOrganizations()
     
     const isSuperAdmin = session.user.isSuperAdmin
-    const selectedOrgId = orgId || (isSuperAdmin ? "" : session.user.organizationId || orgs[0]?.id || "")
-    
-    // Default org ID for UI if none selected yet
+
+    let resolvedOrgId = session.user.organizationId || session.user.officialOrganizationId || ""
+    if (!resolvedOrgId && !isSuperAdmin) {
+        const { db } = await import("@/lib/db")
+        const { officials, userRoles } = await import("@/lib/db/schema")
+        const { eq } = await import("drizzle-orm")
+        
+        const userOfficial = await db.select({ organizationId: officials.organizationId })
+            .from(officials)
+            .where(eq(officials.userId, session.user.id))
+            .limit(1)
+        
+        if (userOfficial[0]?.organizationId) {
+            resolvedOrgId = userOfficial[0].organizationId
+        } else {
+            const userRolesList = await db.select({ organizationId: userRoles.organizationId })
+                .from(userRoles)
+                .where(eq(userRoles.userId, session.user.id))
+                .limit(1)
+            resolvedOrgId = userRolesList[0]?.organizationId || ""
+        }
+    }
+
+    const selectedOrgId = orgId || (isSuperAdmin ? "" : resolvedOrgId || orgs[0]?.id || "")
     const currentOrgId = selectedOrgId || orgs[0]?.id || ""
 
     const members = await getAvailableMembers(currentOrgId)
