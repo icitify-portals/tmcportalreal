@@ -788,9 +788,11 @@ export async function getAdminProgrammes(organizationId: string, type: 'MY_PROGR
             office: office,
             official: official,
             officialUser: officialUser,
-            meeting: meetings
+            meeting: meetings,
+            org: org
         })
             .from(programmes)
+            .leftJoin(org, eq(programmes.organizationId, org.id))
             .leftJoin(creator, eq(programmes.createdBy, creator.id))
             .leftJoin(office, eq(programmes.organizingOfficeId, office.id))
             .leftJoin(official, eq(programmes.organizingOfficialId, official.id))
@@ -802,6 +804,7 @@ export async function getAdminProgrammes(organizationId: string, type: 'MY_PROGR
         return results.map(r => ({ 
             ...r.programme, 
             creator: r.creator, 
+            organization: r.org,
             office: r.office,
             official: r.official ? { ...r.official, user: r.officialUser } : null,
             meeting: r.meeting
@@ -1298,16 +1301,18 @@ export async function getUserRegistrations() {
 
     const results = await db.select({
         registration: programmeRegistrations,
-        programme: programmes
+        programme: programmes,
+        org: organizations
     })
         .from(programmeRegistrations)
         .leftJoin(programmes, eq(programmeRegistrations.programmeId, programmes.id))
+        .leftJoin(organizations, eq(programmes.organizationId, organizations.id))
         .where(eq(programmeRegistrations.userId, session.user.id))
         .orderBy(desc(programmes.startDate))
 
     return results.map(r => ({
         ...r.registration,
-        programme: r.programme
+        programme: r.programme ? { ...r.programme, organization: r.org } : null
     }))
 }
 

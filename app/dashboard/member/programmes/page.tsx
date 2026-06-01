@@ -67,6 +67,11 @@ async function MyProgrammesList() {
                                     <MapPin className="mr-2 h-4 w-4" />
                                     {programme.venue}
                                 </div>
+                                {(programme as any).organization && (
+                                    <div className="flex items-center text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-1 rounded w-fit mt-2 uppercase tracking-wide">
+                                        {(programme as any).organization.name}
+                                    </div>
+                                )}
                             </>
                         )}
                     </CardContent>

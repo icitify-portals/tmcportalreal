@@ -57,6 +57,11 @@ async function ProgrammeList({ type, orgId }: { type: 'MY_PROGRAMMES' | 'TO_APPR
                                 <div className="text-green-300 font-medium text-sm mt-1">
                                     <ClientDate date={p.startDate} formatString="PPP" /> @ {p.venue}
                                 </div>
+                                {p.organization && (
+                                    <div className="text-emerald-400/80 font-semibold text-xs uppercase tracking-wider mt-0.5">
+                                        {p.organization.name}
+                                    </div>
+                                )}
                                 {p.office && (
                                     <Badge variant="outline" className="mt-1 border-emerald-800 text-emerald-300 bg-emerald-950/60">
                                         {p.office.name}
