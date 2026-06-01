@@ -41,8 +41,9 @@ const formSchema = z.object({
   isOnline: z.boolean().default(false),
   meetingLink: z.string().optional(),
   previousMinutesUrl: z.string().optional(),
-  frequency: z.enum(['ONCE', 'WEEKLY', 'BI_WEEKLY', 'MONTHLY']).default('ONCE'),
-  occurrences: z.number().min(1).max(52).default(5),
+  frequency: z.enum(['ONCE', 'WEEKLY', 'BI_WEEKLY', 'MONTHLY', 'CUSTOM']).optional().default('ONCE'),
+  rruleString: z.string().optional(),
+  occurrences: z.coerce.number().min(1).max(52).optional().default(5)
 });
 
 interface CreateMeetingDialogProps {
@@ -94,7 +95,8 @@ export function CreateMeetingDialog({
       meetingLink: "",
       isOnline: false,
       previousMinutesUrl: "",
-      frequency: "ONCE" as "ONCE" | "WEEKLY" | "BI_WEEKLY" | "MONTHLY",
+      frequency: "ONCE" as "ONCE" | "WEEKLY" | "BI_WEEKLY" | "MONTHLY" | "CUSTOM",
+      rruleString: "",
       occurrences: 5,
     },
   });
@@ -297,17 +299,38 @@ export function CreateMeetingDialog({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="ONCE">Once</SelectItem>
+                          <SelectItem value="ONCE">Does not repeat</SelectItem>
                           <SelectItem value="WEEKLY">Weekly</SelectItem>
                           <SelectItem value="BI_WEEKLY">Bi-Weekly</SelectItem>
                           <SelectItem value="MONTHLY">Monthly</SelectItem>
+                          <SelectItem value="CUSTOM">Custom (Google Calendar Rule)</SelectItem>
                         </SelectContent>
                       </Select>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                {form.watch("frequency") !== "ONCE" && (
+                {form.watch("frequency") === "CUSTOM" && (
+                  <FormField
+                    control={form.control}
+                    name="rruleString"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Recurrence Rule (RRULE)</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g. FREQ=MONTHLY;BYDAY=2SA" {...field} />
+                        </FormControl>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Use iCalendar standards. For example, 'Second Saturday of every month' is <b>FREQ=MONTHLY;BYDAY=2SA</b>.
+                        </p>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+
+                {form.watch("frequency") !== "ONCE" && form.watch("frequency") !== "CUSTOM" && (
                   <FormField
                     control={form.control}
                     name="occurrences"
@@ -320,6 +343,7 @@ export function CreateMeetingDialog({
                             min={1} 
                             max={52} 
                             {...field} 
+                            value={field.value as number | string}
                             onChange={e => field.onChange(parseInt(e.target.value) || 5)} 
                           />
                         </FormControl>

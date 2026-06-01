@@ -266,7 +266,8 @@ const ProgrammeSchema = z.object({
     // New Planner Fields
     format: z.enum(['PHYSICAL', 'VIRTUAL', 'HYBRID']).default('PHYSICAL'),
     meetingUrl: z.string().optional().nullable(),
-    frequency: z.enum(['ONCE', 'WEEKLY', 'MONTHLY', 'QUARTERLY', 'BI-ANNUALLY', 'ANNUALLY']).default('ONCE'),
+    frequency: z.enum(['ONCE', 'WEEKLY', 'MONTHLY', 'QUARTERLY', 'BI-ANNUALLY', 'ANNUALLY', 'CUSTOM']).default('ONCE'),
+    rruleString: z.string().optional(),
     budget: z.coerce.number().nonnegative().default(0),
     objectives: z.string().optional(),
     committee: z.string().optional(),
@@ -460,7 +461,8 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
                 seriesId: seriesId,
                 format: validData.format,
                 meetingUrl: validData.meetingUrl || null,
-                frequency: validData.frequency,
+                frequency: validData.frequency as any,
+                rruleString: validData.rruleString || null,
                 budget: validData.budget !== undefined && validData.budget !== null ? Number(validData.budget).toFixed(2) : "0.00",
                 objectives: validData.objectives || null,
                 committee: validData.committee || null,
@@ -495,17 +497,59 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
 
             if (validData.frequency === 'ONCE') break;
 
-            const nextDate = new Date(currentDate);
-            switch (validData.frequency) {
-                case 'WEEKLY': nextDate.setDate(nextDate.getDate() + 7); break;
-                case 'MONTHLY': nextDate.setMonth(nextDate.getMonth() + 1); break;
-                case 'QUARTERLY': nextDate.setMonth(nextDate.getMonth() + 3); break;
-                case 'BI-ANNUALLY': nextDate.setMonth(nextDate.getMonth() + 6); break;
-                case 'ANNUALLY': nextDate.setFullYear(nextDate.getFullYear() + 1); break;
-                default: break;
+            if (validData.frequency === 'CUSTOM' && validData.rruleString) {
+                // If it's custom, we generate all instances upfront using RRule
+                try {
+                    const rule = RRule.fromString(validData.rruleString);
+                    // Generate dates from the start date (inclusive) to the end of the year
+                    // Note: between() is exclusive for start by default unless inc=true, 
+                    // but we want to start from the *next* occurrence since we already added the first one manually.
+                    const occurrences = rule.between(new Date(currentDate.getTime() + 1000), yearSettings.programYearEnd, true);
+                    
+                    for (const occDate of occurrences) {
+                        const newProgId = crypto.randomUUID();
+                        let occEndDate = null;
+                        if (endDateOriginal) {
+                            occEndDate = new Date(occDate.getTime() + durationMs);
+                        }
+
+                        programmeInstances.push({
+                            ...programmeInstances[0],
+                            id: newProgId,
+                            startDate: occDate,
+                            endDate: occEndDate,
+                            createdAt: new Date(),
+                            updatedAt: new Date(),
+                        });
+
+                        if (validData.budget && parseFloat(validData.budget.toString()) > 0) {
+                            budgetInstances.push({
+                                ...budgetInstances[0],
+                                programmeId: newProgId,
+                                year: occDate.getFullYear(),
+                                createdAt: new Date(),
+                                updatedAt: new Date(),
+                            });
+                        }
+                    }
+                } catch (err) {
+                    console.error("Invalid RRule:", validData.rruleString);
+                }
+                break; // Break the main while loop since RRule generated all of them
+            } else {
+                // Standard static frequency fallbacks
+                const nextDate = new Date(currentDate);
+                switch (validData.frequency) {
+                    case 'WEEKLY': nextDate.setDate(nextDate.getDate() + 7); break;
+                    case 'MONTHLY': nextDate.setMonth(nextDate.getMonth() + 1); break;
+                    case 'QUARTERLY': nextDate.setMonth(nextDate.getMonth() + 3); break;
+                    case 'BI-ANNUALLY': nextDate.setMonth(nextDate.getMonth() + 6); break;
+                    case 'ANNUALLY': nextDate.setFullYear(nextDate.getFullYear() + 1); break;
+                    default: break;
+                }
+                if (nextDate.getTime() === currentDate.getTime()) break; // Prevent infinite loops
+                currentDate = nextDate;
             }
-            if (nextDate.getTime() === currentDate.getTime()) break; // Prevent infinite loops
-            currentDate = nextDate;
         }
 
         try {

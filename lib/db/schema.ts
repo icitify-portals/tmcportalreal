@@ -1038,6 +1038,7 @@ export const programmes = mysqlTable("programmes", {
     budget: decimal("budget", { precision: 15, scale: 2 }).default("0.00"),
     committee: varchar("committee", { length: 255 }),
     additionalInfo: text("additionalInfo"),
+    rruleString: varchar("rruleString", { length: 500 }),
 
     isLateSubmission: boolean("isLateSubmission").default(false),
 

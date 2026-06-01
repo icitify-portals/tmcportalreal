@@ -16,6 +16,12 @@ export function startScheduler() {
         console.log('Running Weekly Programme Scheduler...');
         await processWeeklyNotifications();
     });
+
+    // Schedule: Every Day at 9:00 AM for Continuous Reminders (3 days out)
+    cron.schedule('0 9 * * *', async () => {
+        console.log('Running Daily Event Reminders...');
+        await processDailyContinuousReminders();
+    });
 }
 
 async function processWeeklyNotifications() {
@@ -148,5 +154,82 @@ async function processWeeklyNotifications() {
 
     } catch (error) {
         console.error('Error in Weekly Scheduler:', error);
+    }
+}
+
+async function processDailyContinuousReminders() {
+    try {
+        const now = new Date();
+        now.setHours(0, 0, 0, 0); // Start of today
+
+        // Calculate thresholds: 1, 2, and 3 days from now
+        const daysToCheck = [1, 2, 3];
+
+        for (const daysAway of daysToCheck) {
+            const targetDateStart = new Date(now);
+            targetDateStart.setDate(now.getDate() + daysAway);
+            const targetDateEnd = new Date(targetDateStart);
+            targetDateEnd.setHours(23, 59, 59, 999);
+
+            // Fetch Programmes
+            const upcomingProgrammes = await db.select()
+                .from(programmes)
+                .where(
+                    and(
+                        eq(programmes.status, 'APPROVED'),
+                        gte(programmes.startDate, targetDateStart),
+                        lte(programmes.startDate, targetDateEnd)
+                    )
+                );
+
+            for (const prog of upcomingProgrammes) {
+                // Get all registered users
+                const { programmeRegistrations } = await import('@/lib/db/schema');
+                const registrations = await db.select({
+                    userId: programmeRegistrations.userId,
+                }).from(programmeRegistrations).where(eq(programmeRegistrations.programmeId, prog.id));
+
+                for (const reg of registrations) {
+                    if (!reg.userId) continue;
+                    
+                    const user = await db.query.users.findFirst({
+                        where: eq(users.id, reg.userId),
+                        columns: { email: true, name: true }
+                    });
+
+                    if (user && user.email) {
+                        // Queue Email
+                        await emailQueue.add('event-reminder', {
+                            to: user.email,
+                            subject: `Reminder: ${prog.title} is ${daysAway} day${daysAway > 1 ? 's' : ''} away!`,
+                            html: `
+                                <h2>Event Reminder</h2>
+                                <p>Dear ${user.name || 'Member'},</p>
+                                <p>This is a continuous reminder that <strong>${prog.title}</strong> is happening in ${daysAway} day${daysAway > 1 ? 's' : ''} on ${prog.startDate.toDateString()}.</p>
+                                <p><strong>Venue:</strong> ${prog.venue || 'Online'}</p>
+                                <p>Looking forward to seeing you there!</p>
+                            `,
+                            text: `Reminder: ${prog.title} is happening in ${daysAway} day(s) on ${prog.startDate.toDateString()}. Venue: ${prog.venue || 'Online'}`
+                        });
+
+                        // Add In-App Notification
+                        await db.insert(notifications).values({
+                            userId: reg.userId,
+                            title: "Event Approaching!",
+                            message: `${prog.title} is happening in ${daysAway} day(s)!`,
+                            type: "INFO",
+                            actionUrl: `/programmes`,
+                            createdAt: new Date(),
+                            updatedAt: new Date()
+                        });
+                    }
+                }
+            }
+
+            // Could do the same for meetings if required
+        }
+        console.log('Daily Continuous Reminders processed successfully.');
+    } catch (err) {
+        console.error('Error processing daily continuous reminders:', err);
     }
 }

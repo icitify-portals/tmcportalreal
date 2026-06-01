@@ -11,6 +11,7 @@ import { sendEmail, emailTemplates } from "@/lib/email"
 import { v4 as uuidv4 } from "uuid"
 import { addDays, isAfter, format } from "date-fns"
 import { generateAttendanceToken } from "@/lib/attendance-token"
+import { RRule } from "rrule"
 
 // Schemas
 const CreateMeetingSchema = z.object({
@@ -24,7 +25,8 @@ const CreateMeetingSchema = z.object({
     meetingLink: z.string().optional(),
     attendees: z.array(z.string()).optional().default([]), // Additional manual invites
     previousMinutesUrl: z.string().optional(),
-    frequency: z.enum(['ONCE', 'WEEKLY', 'BI_WEEKLY', 'MONTHLY']).optional().default('ONCE'),
+    frequency: z.enum(['ONCE', 'WEEKLY', 'BI_WEEKLY', 'MONTHLY', 'CUSTOM']).optional().default('ONCE'),
+    rruleString: z.string().optional(),
     occurrences: z.number().min(1).max(52).optional().default(5)
 })
 
@@ -57,49 +59,100 @@ export async function createMeeting(data: z.infer<typeof CreateMeetingSchema>) {
         const staticAttendanceToken = Math.random().toString(36).substring(2, 10).toUpperCase();
         const shareCode = Math.random().toString(36).substring(2, 8).toLowerCase() + "-" + Math.random().toString(36).substring(2, 8).toLowerCase();
 
-        for (let i = 0; i < occurrencesCount; i++) {
-            const id = uuidv4();
-            meetingIds.push(id);
+        if (data.frequency === 'CUSTOM' && data.rruleString) {
+            try {
+                const rule = RRule.fromString(data.rruleString);
+                // Calculate end of year or max 52 occurrences
+                const endOfYear = new Date(meetingDate.getFullYear(), 11, 31, 23, 59, 59);
+                const occurrences = rule.between(meetingDate, endOfYear, true).slice(0, 52);
+                
+                occurrencesCount = occurrences.length;
+                
+                const durationMs = data.endAt ? new Date(data.endAt).getTime() - meetingDate.getTime() : 0;
 
-            let currentScheduledAt = new Date(data.scheduledAt);
-            let currentEndAt = data.endAt ? new Date(data.endAt) : null;
+                for (let i = 0; i < occurrencesCount; i++) {
+                    const id = uuidv4();
+                    meetingIds.push(id);
+                    
+                    const currentScheduledAt = occurrences[i];
+                    let currentEndAt = null;
+                    if (data.endAt) {
+                        currentEndAt = new Date(currentScheduledAt.getTime() + durationMs);
+                    }
 
-            if (i > 0) {
-                if (data.frequency === 'WEEKLY') {
-                    currentScheduledAt = addDays(currentScheduledAt, 7 * i);
-                    if (currentEndAt) currentEndAt = addDays(currentEndAt, 7 * i);
-                } else if (data.frequency === 'BI_WEEKLY') {
-                    currentScheduledAt = addDays(currentScheduledAt, 14 * i);
-                    if (currentEndAt) currentEndAt = addDays(currentEndAt, 14 * i);
-                } else if (data.frequency === 'MONTHLY') {
-                    currentScheduledAt.setMonth(currentScheduledAt.getMonth() + i);
-                    if (currentEndAt) currentEndAt.setMonth(currentEndAt.getMonth() + i);
+                    await db.insert(meetings).values({
+                        id,
+                        title: data.title,
+                        description: data.description,
+                        organizationId: group.organizationId,
+                        groupId: data.groupId,
+                        seriesId,
+                        frequency: data.frequency,
+                        rruleString: data.rruleString,
+                        scheduledAt: currentScheduledAt,
+                        endAt: currentEndAt,
+                        venue: data.venue,
+                        isOnline: data.isOnline,
+                        meetingLink: data.meetingLink,
+                        virtualRoomId: virtualRoomId, // Assign randomly generated room ID for LiveKit (shared)
+                        staticAttendanceToken,
+                        shareCode, // Live guest join link code (shared)
+                        attendanceWindow: 30, // 30 minutes default
+                        targetAudience: 'ALL_MEMBERS_JURISDICTION', // Fallback for DB constraints if any
+                        status: 'SCHEDULED',
+                        createdBy: session.user.id,
+                        createdAt: new Date(),
+                        updatedAt: new Date()
+                    });
                 }
+            } catch (err) {
+                console.error("Invalid RRule for Meeting:", data.rruleString);
             }
+        } else {
+            for (let i = 0; i < occurrencesCount; i++) {
+                const id = uuidv4();
+                meetingIds.push(id);
 
-            await db.insert(meetings).values({
-                id,
-                title: data.title,
-                description: data.description,
-                organizationId: group.organizationId,
-                groupId: data.groupId,
-                seriesId,
-                frequency: data.frequency,
-                scheduledAt: currentScheduledAt,
-                endAt: currentEndAt,
-                venue: data.venue,
-                isOnline: data.isOnline,
-                meetingLink: data.meetingLink,
-                virtualRoomId: virtualRoomId, // Assign randomly generated room ID for LiveKit (shared)
-                staticAttendanceToken,
-                shareCode, // Live guest join link code (shared)
-                attendanceWindow: 30, // 30 minutes default
-                targetAudience: 'ALL_MEMBERS_JURISDICTION', // Fallback for DB constraints if any
-                status: 'SCHEDULED',
-                createdBy: session.user.id,
-                createdAt: new Date(),
-                updatedAt: new Date()
-            });
+                let currentScheduledAt = new Date(data.scheduledAt);
+                let currentEndAt = data.endAt ? new Date(data.endAt) : null;
+
+                if (i > 0) {
+                    if (data.frequency === 'WEEKLY') {
+                        currentScheduledAt = addDays(currentScheduledAt, 7 * i);
+                        if (currentEndAt) currentEndAt = addDays(currentEndAt, 7 * i);
+                    } else if (data.frequency === 'BI_WEEKLY') {
+                        currentScheduledAt = addDays(currentScheduledAt, 14 * i);
+                        if (currentEndAt) currentEndAt = addDays(currentEndAt, 14 * i);
+                    } else if (data.frequency === 'MONTHLY') {
+                        currentScheduledAt.setMonth(currentScheduledAt.getMonth() + i);
+                        if (currentEndAt) currentEndAt.setMonth(currentEndAt.getMonth() + i);
+                    }
+                }
+
+                await db.insert(meetings).values({
+                    id,
+                    title: data.title,
+                    description: data.description,
+                    organizationId: group.organizationId,
+                    groupId: data.groupId,
+                    seriesId,
+                    frequency: data.frequency as any,
+                    scheduledAt: currentScheduledAt,
+                    endAt: currentEndAt,
+                    venue: data.venue,
+                    isOnline: data.isOnline,
+                    meetingLink: data.meetingLink,
+                    virtualRoomId: virtualRoomId, // Assign randomly generated room ID for LiveKit (shared)
+                    staticAttendanceToken,
+                    shareCode, // Live guest join link code (shared)
+                    attendanceWindow: 30, // 30 minutes default
+                    targetAudience: 'ALL_MEMBERS_JURISDICTION', // Fallback for DB constraints if any
+                    status: 'SCHEDULED',
+                    createdBy: session.user.id,
+                    createdAt: new Date(),
+                    updatedAt: new Date()
+                });
+            }
         }
 
         const meeting = { id: meetingIds[0] };
