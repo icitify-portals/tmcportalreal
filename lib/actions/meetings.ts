@@ -41,8 +41,8 @@ export async function createMeeting(data: z.infer<typeof CreateMeetingSchema>) {
 
     try {
         const meetingDate = new Date(data.scheduledAt);
-        if (meetingDate < new Date()) {
-            return { success: false, error: "Meeting cannot be scheduled in the past" }
+        if (meetingDate.getFullYear() < new Date().getFullYear()) {
+            return { success: false, error: "Meetings can only be scheduled within the current calendar year" }
         }
 
         // Fetch group details
@@ -263,8 +263,8 @@ export async function updateMeeting(id: string, data: z.infer<typeof CreateMeeti
 
     try {
         const meetingDate = new Date(data.scheduledAt);
-        if (meetingDate < new Date()) {
-            return { success: false, error: "Meeting cannot be scheduled in the past" }
+        if (meetingDate.getFullYear() < new Date().getFullYear()) {
+            return { success: false, error: "Meetings can only be scheduled within the current calendar year" }
         }
 
         await db.update(meetings).set({
