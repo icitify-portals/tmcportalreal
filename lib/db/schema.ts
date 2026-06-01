@@ -934,6 +934,7 @@ export const meetings = mysqlTable("meetings", {
 
     seriesId: varchar("seriesId", { length: 255 }), // Groups recurring meetings
     frequency: mysqlEnum('frequency', ['ONCE', 'WEEKLY', 'BI_WEEKLY', 'MONTHLY', 'CUSTOM']).default('ONCE'),
+    rruleString: varchar("rruleString", { length: 500 }),
 
     status: mysqlEnum('status', ['SCHEDULED', 'ONGOING', 'ENDED', 'CANCELLED']).default('SCHEDULED'),
     createdBy: varchar("createdBy", { length: 255 }).notNull().references(() => users.id),

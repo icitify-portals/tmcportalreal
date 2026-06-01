@@ -17,6 +17,7 @@ import { members } from "@/lib/db/schema"
 import { initializePayment, verifyPayment } from "@/lib/payments"
 import { sendEmail, emailTemplates } from "@/lib/email"
 import crypto from "crypto"
+import { RRule } from "rrule"
 
 export async function generateSecurityHash(registrationId: string, email: string) {
     const secret = process.env.SLIP_SECRET || "tmc-secure-slip-2026"
