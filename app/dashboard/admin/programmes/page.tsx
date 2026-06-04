@@ -35,7 +35,21 @@ const getStatusColor = (status: string) => {
     }
 }
 
-async function ProgrammeList({ type, orgId }: { type: 'MY_PROGRAMMES' | 'TO_APPROVE', orgId: string }) {
+async function ProgrammeList({ 
+    type, 
+    orgId,
+    currentUserId,
+    isSuperAdmin,
+    userLevel,
+    userOfficialId
+}: { 
+    type: 'MY_PROGRAMMES' | 'TO_APPROVE', 
+    orgId: string,
+    currentUserId: string,
+    isSuperAdmin: boolean,
+    userLevel: string,
+    userOfficialId: string
+}) {
     const programmes = await getAdminProgrammes(orgId, type) || []
 
     if (programmes.length === 0) {
@@ -75,7 +89,10 @@ async function ProgrammeList({ type, orgId }: { type: 'MY_PROGRAMMES' | 'TO_APPR
                                 <Badge className={`${getStatusColor(p.status || "")} text-white shadow-sm font-bold`}>
                                     {p.status?.replace('_', ' ')}
                                 </Badge>
-                                <ProgrammeActions programme={p} />
+                                <ProgrammeActions 
+                                    programme={p} 
+                                    canEdit={isSuperAdmin || userLevel === 'NATIONAL' || userLevel === 'STATE' || p.organizingOfficialId === userOfficialId} 
+                                />
                             </div>
                         </div>
                         <div className="p-5 space-y-4 bg-[#031408]">
@@ -169,12 +186,6 @@ export default async function ProgrammesPage() {
             )
         )
 
-    const roleCodes = userRolesList.map(r => r.roleCode)
-    const isSuperAdmin = session!.user.isSuperAdmin
-    const isAdmin = isSuperAdmin || roleCodes.some(code => code.endsWith('_ADMIN'))
-    const canApprove = isAdmin
-    const mock = await getMockJurisdiction()
-    // Fetch current user's official and office details if they are an official
     const userOfficial = await db.select({ 
         id: officials.id, 
         organizationId: officials.organizationId,
@@ -183,6 +194,13 @@ export default async function ProgrammesPage() {
     .from(officials)
     .where(eq(officials.userId, session!.user.id))
     .limit(1)
+
+    const userLevel = userOfficial[0]?.positionLevel || session!.user.officialLevel || ""
+    const roleCodes = userRolesList.map(r => r.roleCode)
+    const isSuperAdmin = session!.user.isSuperAdmin
+    const isAdmin = isSuperAdmin || roleCodes.some(code => code.endsWith('_ADMIN'))
+    const canApprove = isSuperAdmin || userLevel === 'NATIONAL' || userLevel === 'STATE'
+    const mock = await getMockJurisdiction()
 
     let organizationId = ""
 
@@ -245,13 +263,27 @@ export default async function ProgrammesPage() {
 
                     <TabsContent value="my-programmes" className="space-y-4">
                         <Suspense fallback={<div>Loading...</div>}>
-                            <ProgrammeList type="MY_PROGRAMMES" orgId={organizationId || ""} />
+                            <ProgrammeList 
+                                type="MY_PROGRAMMES" 
+                                orgId={organizationId || ""} 
+                                currentUserId={session!.user.id}
+                                isSuperAdmin={isSuperAdmin}
+                                userLevel={userLevel}
+                                userOfficialId={userOfficialId || ""}
+                            />
                         </Suspense>
                     </TabsContent>
  
                     <TabsContent value="approvals" className="space-y-4">
                         <Suspense fallback={<div>Loading...</div>}>
-                            <ProgrammeList type="TO_APPROVE" orgId={organizationId || ""} />
+                            <ProgrammeList 
+                                type="TO_APPROVE" 
+                                orgId={organizationId || ""} 
+                                currentUserId={session!.user.id}
+                                isSuperAdmin={isSuperAdmin}
+                                userLevel={userLevel}
+                                userOfficialId={userOfficialId || ""}
+                            />
                         </Suspense>
                     </TabsContent>
                 </Tabs>

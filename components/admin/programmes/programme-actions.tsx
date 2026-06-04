@@ -38,9 +38,10 @@ import { Checkbox } from "@/components/ui/checkbox"
 
 interface ProgrammeActionsProps {
     programme: any
+    canEdit?: boolean
 }
 
-export function ProgrammeActions({ programme }: ProgrammeActionsProps) {
+export function ProgrammeActions({ programme, canEdit = true }: ProgrammeActionsProps) {
     const [editOpen, setEditOpen] = useState(false)
     const [deleteOpen, setDeleteOpen] = useState(false)
     const [isDeleting, setIsDeleting] = useState(false)
@@ -100,15 +101,20 @@ export function ProgrammeActions({ programme }: ProgrammeActionsProps) {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                    <DropdownMenuItem onClick={() => setEditOpen(true)}>
-                        <Edit className="mr-2 h-4 w-4" /> Edit
-                    </DropdownMenuItem>
+                    
+                    {canEdit && (
+                        <DropdownMenuItem onClick={() => setEditOpen(true)}>
+                            <Edit className="mr-2 h-4 w-4" /> Edit
+                        </DropdownMenuItem>
+                    )}
+                    
                     <DropdownMenuItem asChild>
                         <Link href={`/dashboard/admin/programmes/${programme.id}/registrations`}>
                             <Users className="mr-2 h-4 w-4" /> Registrations
                         </Link>
                     </DropdownMenuItem>
-                    {programme.status === 'APPROVED' && (
+                    
+                    {canEdit && programme.status === 'APPROVED' && (
                         <>
                             <DropdownMenuItem onClick={() => setPostponeOpen(true)}>
                                 <Calendar className="mr-2 h-4 w-4 text-orange-600" /> Postpone
@@ -122,10 +128,15 @@ export function ProgrammeActions({ programme }: ProgrammeActionsProps) {
                             </DropdownMenuItem>
                         </>
                     )}
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => setDeleteOpen(true)} className="text-red-600 focus:text-red-600">
-                        <Trash className="mr-2 h-4 w-4" /> Delete
-                    </DropdownMenuItem>
+                    
+                    {canEdit && (
+                        <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => setDeleteOpen(true)} className="text-red-600 focus:text-red-600">
+                                <Trash className="mr-2 h-4 w-4" /> Delete
+                            </DropdownMenuItem>
+                        </>
+                    )}
                 </DropdownMenuContent>
             </DropdownMenu>
 
