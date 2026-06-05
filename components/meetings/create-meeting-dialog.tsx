@@ -440,6 +440,7 @@ export function CreateMeetingDialog({
             </form>
           </Form>
         </ScrollArea>
+        )}
       </DialogContent>
     </Dialog>
   );
