@@ -27,7 +27,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { submitReport } from "@/lib/actions/reports"
 import { toast } from "sonner"
-import { Loader2, Plus, FileText } from "lucide-react"
+import { Loader2, Plus, FileText, Upload } from "lucide-react"
+import { useEffect } from "react"
 
 const ReportSchema = z.object({
     title: z.string().min(1, "Title is required"),
@@ -48,6 +49,7 @@ export function ReportSubmissionDialog({
 }) {
     const [open, setOpen] = useState(false)
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const [attachmentFile, setAttachmentFile] = useState<File | null>(null)
 
     const form = useForm({
         resolver: zodResolver(ReportSchema),
@@ -63,24 +65,46 @@ export function ReportSubmissionDialog({
     })
 
     // Set stable initial period on mount to avoid hydration mismatch
-    useState(() => {
-        const date = new Date()
-        form.setValue("period", date.toISOString().slice(0, 7))
-    })
+    useEffect(() => {
+        if (open) {
+            setAttachmentFile(null)
+            const date = new Date()
+            form.setValue("period", date.toISOString().slice(0, 7))
+        }
+    }, [open, form])
 
     async function onSubmit(data: z.infer<typeof ReportSchema>) {
         setIsSubmitting(true)
         try {
-            const payload = {
+            let fileUrl = ""
+            if (attachmentFile) {
+                const formData = new FormData()
+                formData.append("file", attachmentFile)
+                formData.append("category", "reports")
+                const uploadRes = await fetch("/api/upload", { method: "POST", body: formData })
+                const uploadData = await uploadRes.json()
+                if (uploadData.success) {
+                    fileUrl = uploadData.url
+                } else {
+                    toast.error("Failed to upload attachment")
+                    setIsSubmitting(false)
+                    return
+                }
+            }
+
+            const payload: any = {
                 title: data.title,
                 type: data.type,
-                officeId: data.officeId || undefined,
                 period: data.period,
                 content: {
                     summary: data.summary,
                     achievements: data.achievements,
-                    challenges: data.challenges
+                    challenges: data.challenges,
+                    ...(fileUrl && { fileUrl })
                 }
+            }
+            if (data.officeId) {
+                payload.officeId = data.officeId
             }
 
             const result = await submitReport(payload, organizationId)
@@ -89,6 +113,7 @@ export function ReportSubmissionDialog({
                 toast.success("Report submitted for approval")
                 setOpen(false)
                 form.reset()
+                setAttachmentFile(null)
             } else {
                 toast.error(result.error || "Failed to submit report")
             }
@@ -238,6 +263,21 @@ export function ReportSubmissionDialog({
                                 </FormItem>
                             )}
                         />
+
+                        <div className="grid grid-cols-1 gap-4">
+                            <FormItem>
+                                <FormLabel>Attachment (Optional)</FormLabel>
+                                <div className="flex items-center gap-2">
+                                    <Input
+                                        type="file"
+                                        accept=".pdf,.doc,.docx,.jpg,.png"
+                                        onChange={(e) => setAttachmentFile(e.target.files?.[0] || null)}
+                                        className="cursor-pointer"
+                                    />
+                                    {attachmentFile && <Upload className="h-4 w-4 text-green-600" />}
+                                </div>
+                            </FormItem>
+                        </div>
 
                         <DialogFooter>
                             <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={isSubmitting}>

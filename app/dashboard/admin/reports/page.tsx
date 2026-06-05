@@ -61,6 +61,14 @@ async function ReportList({ orgId, type }: { orgId: string, type: 'MY_REPORTS' |
                             <span>Submitted by: {r.user?.name || "Unknown"}</span>
                             <span>{r.office?.name || "General"}</span>
                         </div>
+                        
+                        {(r.content as any)?.fileUrl && (
+                            <div className="mt-2">
+                                <a href={(r.content as any).fileUrl} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline flex items-center text-sm font-medium">
+                                    <FileText className="h-4 w-4 mr-1" /> View Attachment
+                                </a>
+                            </div>
+                        )}
 
                         {type === 'APPROVALS' && (
                             <div className="flex gap-2 mt-4 pt-4 border-t">

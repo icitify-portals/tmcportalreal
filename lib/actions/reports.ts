@@ -51,7 +51,7 @@ export async function submitReport(data: z.infer<typeof ReportSchema>, organizat
         const [newReport] = await db.insert(reports).values({
             organizationId,
             userId: session.user.id,
-            officeId: validData.officeId,
+            officeId: validData.officeId || null,
             type: validData.type,
             title: validData.title,
             period: validData.period,
