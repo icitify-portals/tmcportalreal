@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 import { getConstitutionDrafts, getAggregatedFeedback } from "@/lib/actions/constitution"
 import { getServerSession } from "@/lib/session"
 import { db } from "@/lib/db"
