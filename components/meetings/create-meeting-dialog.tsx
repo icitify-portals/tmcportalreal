@@ -62,7 +62,7 @@ import {
 import { getMeetingGroups } from "@/lib/actions/meetings";
 import { getOrganizations } from "@/lib/actions/organization";
 import { useEffect } from "react";
-import { Upload } from "lucide-react";
+import { Upload, Copy, Check } from "lucide-react";
 import { FormJurisdictionSelector } from "./form-jurisdiction-selector";
 
 export function CreateMeetingDialog({
@@ -75,10 +75,14 @@ export function CreateMeetingDialog({
   const [groups, setGroups] = useState<{ id: string; name: string }[]>([]);
   const [organizationsList, setOrganizationsList] = useState<any[]>([]);
   const [minutesFile, setMinutesFile] = useState<File | null>(null);
+  const [createdMeeting, setCreatedMeeting] = useState<{ id: string, shareCode?: string, title: string } | null>(null);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (open) {
       setMinutesFile(null);
+      setCreatedMeeting(null);
+      setCopied(false);
       getMeetingGroups(currentOrgId).then(setGroups);
     }
   }, [open, currentOrgId]);
@@ -140,7 +144,7 @@ export function CreateMeetingDialog({
 
       if (res.success) {
         toast.success("Meeting scheduled and Notifications sent");
-        setOpen(false);
+        setCreatedMeeting({ id: res.meetingId, shareCode: res.shareCode, title: values.title });
         form.reset();
         setMinutesFile(null);
       } else {
@@ -160,12 +164,46 @@ export function CreateMeetingDialog({
       </DialogTrigger>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Schedule New Meeting</DialogTitle>
+          <DialogTitle>{createdMeeting ? "Meeting Created Successfully" : "Schedule New Meeting"}</DialogTitle>
           <DialogDescription>
-            Create a meeting. Officials in this jurisdiction will be invited
-            automatically.
+            {createdMeeting ? "Your meeting is ready. Share the link below with your invitees." : "Create a meeting. Officials in this jurisdiction will be invited automatically."}
           </DialogDescription>
         </DialogHeader>
+
+        {createdMeeting ? (
+          <div className="flex flex-col items-center justify-center p-6 space-y-6">
+            <div className="bg-green-50 text-green-700 p-4 rounded-full">
+              <Check className="h-10 w-10" />
+            </div>
+            <h3 className="text-lg font-semibold">{createdMeeting.title}</h3>
+            
+            <div className="w-full space-y-2">
+              <p className="text-sm font-medium">Shareable Guest Link</p>
+              <div className="flex gap-2">
+                <Input readOnly value={`${window.location.origin}/live/${createdMeeting.shareCode}`} className="bg-muted" />
+                <Button variant="outline" onClick={() => {
+                  navigator.clipboard.writeText(`${window.location.origin}/live/${createdMeeting.shareCode}`);
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 2000);
+                  toast.success("Link copied!");
+                }}>
+                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                </Button>
+              </div>
+            </div>
+
+            <div className="w-full flex flex-col gap-3 pt-4 border-t">
+              <Button asChild className="w-full bg-[#25D366] hover:bg-[#128C7E] text-white">
+                <a href={`https://wa.me/?text=${encodeURIComponent(`Join our meeting: ${createdMeeting.title}\n\nLink: ${window.location.origin}/live/${createdMeeting.shareCode}`)}`} target="_blank" rel="noreferrer">
+                  Share via WhatsApp
+                </a>
+              </Button>
+              <Button variant="outline" className="w-full" onClick={() => setOpen(false)}>
+                Close
+              </Button>
+            </div>
+          </div>
+        ) : (
         <ScrollArea className="max-h-[70vh] pr-4">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">

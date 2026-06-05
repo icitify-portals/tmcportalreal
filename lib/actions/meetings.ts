@@ -293,7 +293,7 @@ export async function createMeeting(data: z.infer<typeof CreateMeetingSchema>) {
 
         revalidatePath(`/dashboard/admin/meetings`)
         revalidatePath(`/dashboard/member/meetings`)
-        return { success: true, meetingId: meeting.id }
+        return { success: true, meetingId: meeting.id, shareCode: shareCode }
     } catch (error: any) {
         console.error("Error creating meeting:", error)
         return { success: false, error: error.message || "Failed to create meeting" }
