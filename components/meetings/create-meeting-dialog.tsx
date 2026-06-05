@@ -144,7 +144,7 @@ export function CreateMeetingDialog({
 
       if (res.success) {
         toast.success("Meeting scheduled and Notifications sent");
-        setCreatedMeeting({ id: res.meetingId, shareCode: res.shareCode, title: values.title });
+        setCreatedMeeting({ id: res.meetingId as string, shareCode: res.shareCode, title: values.title });
         form.reset();
         setMinutesFile(null);
       } else {
