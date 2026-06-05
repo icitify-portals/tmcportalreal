@@ -146,8 +146,8 @@ export default async function AdminMeetingsPage({
                         {isSuperAdmin && (
                             <OrganizationSelector currentOrgId={selectedOrgId} organizations={orgs} />
                         )}
-                        <CreateMeetingGroupDialog availableMembers={members} currentOrgId={currentOrgId} isSuperAdmin={isSuperAdmin} />
-                        <CreateMeetingDialog members={members} currentOrgId={currentOrgId} isSuperAdmin={isSuperAdmin} />
+                        <CreateMeetingGroupDialog availableMembers={members} currentOrgId={selectedOrgId} isSuperAdmin={isSuperAdmin} />
+                        <CreateMeetingDialog members={members} currentOrgId={selectedOrgId} isSuperAdmin={isSuperAdmin} />
                     </div>
                 </div>
 
