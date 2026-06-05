@@ -289,6 +289,8 @@ model Official {
   positionLevel OfficialLevel
   dateElected   DateTime?
   dateAppointed DateTime?
+  officeId      String?        @db.VarChar(255)
+  office        Office?        @relation(fields: [officeId], references: [id])
   termStart     DateTime
   termEnd       DateTime?
   image         String?        @db.VarChar(500)
@@ -1445,6 +1447,7 @@ model Office {
 
   reports        Report[]
   programmes     Programme[]
+  officials      Official[]
 
   @@map("offices")
 }
