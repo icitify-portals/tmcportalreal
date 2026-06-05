@@ -280,3 +280,18 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Custom LiveKit Video Conferencing Styles */
+.lk-audio-visualizer > rect,
+.lk-audio-bar {
+  fill: #22c55e !important; /* Tailwind green-500 */
+}
+
+.lk-participant-tile[data-lk-speaking="true"] {
+  border-color: #22c55e !important;
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.4) !important;
+}
+
+.lk-audio-visualizer {
+  opacity: 0.9;
+}
