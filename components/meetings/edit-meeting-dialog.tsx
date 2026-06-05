@@ -166,7 +166,7 @@ export function EditMeetingDialog({ meeting, members }: EditMeetingDialogProps) 
                     Edit Meeting
                 </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>Edit Meeting</DialogTitle>
                     <DialogDescription>Modify meeting details. Officials and invited members will be notified.</DialogDescription>

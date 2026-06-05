@@ -95,7 +95,20 @@ export function MeetingControlButtons({ meeting }: { meeting: any }) {
         toast.success("Guest join link copied to clipboard")
     }
 
-    if (meeting.status === 'ENDED') return null
+    if (meeting.status === 'ENDED') {
+        return (
+            <div className="flex items-center gap-2 flex-wrap">
+                <UIButton onClick={handleStart} disabled={loading} size="sm" className="bg-amber-600 hover:bg-amber-700 text-white">
+                    {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4 fill-current" />}
+                    Restart Meeting
+                </UIButton>
+                <UIButton onClick={handleCopyGuestLink} size="sm" variant="outline">
+                    <Copy className="mr-2 h-4 w-4" />
+                    Copy Live Link
+                </UIButton>
+            </div>
+        )
+    }
 
     return (
         <div className="flex items-center gap-2 flex-wrap">

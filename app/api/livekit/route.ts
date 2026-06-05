@@ -74,6 +74,7 @@ export async function GET(req: NextRequest) {
         const at = new AccessToken(apiKey, apiSecret, {
             identity: identity!,
             name: name,
+            ttl: 4 * 60 * 60, // 4 hours max validity per token
         });
 
         at.addGrant({ room, roomJoin: true, canPublish: true, canSubscribe: true });

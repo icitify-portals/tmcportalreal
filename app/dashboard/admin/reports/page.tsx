@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { CheckCircle2, AlertCircle, FileText, Plus, Settings } from "lucide-react"
 import { db } from "@/lib/db"
-import { organizations, userRoles, roles } from "@/lib/db/schema"
+import { organizations, userRoles, roles, officials } from "@/lib/db/schema"
 import { eq, and } from "drizzle-orm"
 import { format } from "date-fns"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
@@ -142,6 +142,11 @@ export default async function ReportsPage() {
         )
     }
 
+    const [official] = await db.select({ officeId: officials.officeId })
+        .from(officials)
+        .where(eq(officials.userId, session.user.id))
+        .limit(1)
+
     const offices = organizationId ? await getOffices(organizationId) : []
 
     return (
@@ -150,18 +155,18 @@ export default async function ReportsPage() {
                 <div className="flex items-center justify-between space-y-2">
                     <h2 className="text-3xl font-bold tracking-tight">Activity Reports</h2>
                     <div className="flex items-center space-x-2">
-                        {offices.length === 0 && (
-                            <form action={async () => {
-                                "use server"
+                        <form action={async () => {
+                            "use server"
+                            if (organizationId) {
                                 await initializeDefaultOffices(organizationId)
-                            }}>
-                                <Button variant="outline" size="sm">
-                                    <Settings className="mr-2 h-4 w-4" />
-                                    Setup Offices
-                                </Button>
-                            </form>
-                        )}
-                        <ReportSubmissionDialog organizationId={organizationId || ""} offices={offices} />
+                            }
+                        }}>
+                            <Button variant="outline" size="sm">
+                                <Settings className="h-4 w-4 mr-2" />
+                                Initialize Offices
+                            </Button>
+                        </form>
+                        <ReportSubmissionDialog organizationId={organizationId || ""} offices={offices} userOfficeId={official?.officeId} />
                     </div>
                 </div>
 

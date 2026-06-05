@@ -142,6 +142,22 @@ export default async function AdminSettingsPage() {
                                 </Button>
                             </CardContent>
                         </Card>
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <Shield className="h-5 w-5" />
+                                    Offices & Permissions
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="text-sm space-y-4">
+                                <p className="text-muted-foreground">Manage offices and configure archive categories.</p>
+                                <Button variant="outline" className="w-full text-xs" asChild>
+                                    <Link href="/dashboard/admin/settings/offices">
+                                        Manage Offices
+                                    </Link>
+                                </Button>
+                            </CardContent>
+                        </Card>
                     </div>
                 </div>
             </div>

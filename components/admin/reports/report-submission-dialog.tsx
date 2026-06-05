@@ -42,10 +42,12 @@ const ReportSchema = z.object({
 
 export function ReportSubmissionDialog({
     organizationId,
-    offices
+    offices,
+    userOfficeId
 }: {
     organizationId: string,
-    offices: any[]
+    offices: any[],
+    userOfficeId?: string | null
 }) {
     const [open, setOpen] = useState(false)
     const [isSubmitting, setIsSubmitting] = useState(false)
@@ -56,7 +58,7 @@ export function ReportSubmissionDialog({
         defaultValues: {
             title: "",
             type: "MONTHLY_ACTIVITY" as const,
-            officeId: "",
+            officeId: userOfficeId || "",
             period: "", // Set in useEffect
             summary: "",
             achievements: "",
@@ -174,7 +176,7 @@ export function ReportSubmissionDialog({
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Reporting Office</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!!userOfficeId}>
                                             <FormControl>
                                                 <SelectTrigger>
                                                     <SelectValue placeholder="Select office" />

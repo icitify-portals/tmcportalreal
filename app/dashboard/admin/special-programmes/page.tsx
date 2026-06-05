@@ -1,9 +1,10 @@
 import { getServerSession } from "@/lib/session"
 import { db } from "@/lib/db"
 import { specialProgrammes, userRoles, roles, organizations } from "@/lib/db/schema"
-import { eq, and, desc } from "drizzle-orm"
+import { eq, and, desc, inArray, sql } from "drizzle-orm"
 import { redirect } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { getAllowedSpecialCategories } from "@/lib/actions/special-programmes"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { PlusCircle, Library, History, FileStack } from "lucide-react"
@@ -49,8 +50,22 @@ export default async function SpecialProgrammesAdminPage() {
 
     if (!organizationId && !session.user.isSuperAdmin) redirect("/dashboard")
 
+    if (!organizationId && !session.user.isSuperAdmin) redirect("/dashboard")
+
+    const allowedCategories = await getAllowedSpecialCategories()
+    const queryConditions = []
+    if (organizationId) queryConditions.push(eq(specialProgrammes.organizationId, organizationId))
+    
+    if (!allowedCategories.includes('ALL')) {
+        if (allowedCategories.length === 0) {
+            queryConditions.push(sql`1 = 0`) // return empty
+        } else {
+            queryConditions.push(inArray(specialProgrammes.category, allowedCategories as any[]))
+        }
+    }
+
     const items = await db.select().from(specialProgrammes)
-        .where(organizationId ? eq(specialProgrammes.organizationId, organizationId) : undefined)
+        .where(queryConditions.length > 0 ? and(...queryConditions) : undefined)
         .orderBy(desc(specialProgrammes.year), desc(specialProgrammes.createdAt))
 
     return (

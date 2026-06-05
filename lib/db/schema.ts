@@ -271,6 +271,7 @@ export const officials = mysqlTable("officials", {
     id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
     userId: varchar("userId", { length: 255 }).notNull().unique().references(() => users.id, { onDelete: "cascade" }),
     organizationId: varchar("organizationId", { length: 255 }).notNull().references(() => organizations.id),
+    officeId: varchar("officeId", { length: 255 }).references(() => offices.id),
     position: varchar("position", { length: 255 }).notNull(),
     positionLevel: officialLevelEnum.notNull(),
     dateElected: timestamp("dateElected", { mode: "date", fsp: 3 }),
@@ -290,6 +291,7 @@ export const offices = mysqlTable("offices", {
     organizationId: varchar("organizationId", { length: 255 }).notNull().references(() => organizations.id, { onDelete: "cascade" }),
     name: varchar("name", { length: 255 }).notNull(), // e.g. "Dawah", "Education", "Secretary"
     description: text("description"),
+    managedSpecialCategories: json("managedSpecialCategories").$type<string[]>(),
     isActive: boolean("isActive").default(true),
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
     updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),

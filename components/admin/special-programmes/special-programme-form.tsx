@@ -59,9 +59,10 @@ type FormValues = z.infer<typeof formSchema>
 
 interface SpecialProgrammeFormProps {
     initialData?: any
+    allowedCategories?: string[]
 }
 
-export function SpecialProgrammeForm({ initialData }: SpecialProgrammeFormProps) {
+export function SpecialProgrammeForm({ initialData, allowedCategories = ['ALL'] }: SpecialProgrammeFormProps) {
     const router = useRouter()
     const [loading, setLoading] = useState(false)
     const [mounted, setMounted] = useState(false)
@@ -79,7 +80,7 @@ export function SpecialProgrammeForm({ initialData }: SpecialProgrammeFormProps)
             title: initialData?.title || "",
             description: initialData?.description || "",
             summary: initialData?.summary || "",
-            category: initialData?.category || "TESKIYAH_WORKSHOP",
+            category: initialData?.category || (!allowedCategories.includes('ALL') && allowedCategories.length > 0 ? allowedCategories[0] : "TESKIYAH_WORKSHOP"),
             year: initialData?.year || new Date().getFullYear(),
             imageUrl: initialData?.imageUrl || "",
             date: initialData?.date ? new Date(initialData.date) : undefined,
@@ -162,11 +163,21 @@ export function SpecialProgrammeForm({ initialData }: SpecialProgrammeFormProps)
                                         </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                        <SelectItem value="TESKIYAH_WORKSHOP">Teskiyah Workshop</SelectItem>
-                                        <SelectItem value="FRIDAY_KHUTHBAH">Friday Khuthbah</SelectItem>
-                                        <SelectItem value="PRESS_RELEASE">Press Release</SelectItem>
-                                        <SelectItem value="STATE_OF_THE_NATION">State of the Nation</SelectItem>
-                                        <SelectItem value="OTHER">Other Series</SelectItem>
+                                        {(allowedCategories.includes('ALL') || allowedCategories.includes('TESKIYAH_WORKSHOP')) && (
+                                            <SelectItem value="TESKIYAH_WORKSHOP">Teskiyah Workshop</SelectItem>
+                                        )}
+                                        {(allowedCategories.includes('ALL') || allowedCategories.includes('FRIDAY_KHUTHBAH')) && (
+                                            <SelectItem value="FRIDAY_KHUTHBAH">Friday Khuthbah</SelectItem>
+                                        )}
+                                        {(allowedCategories.includes('ALL') || allowedCategories.includes('PRESS_RELEASE')) && (
+                                            <SelectItem value="PRESS_RELEASE">Press Release</SelectItem>
+                                        )}
+                                        {(allowedCategories.includes('ALL') || allowedCategories.includes('STATE_OF_THE_NATION')) && (
+                                            <SelectItem value="STATE_OF_THE_NATION">State of the Nation</SelectItem>
+                                        )}
+                                        {(allowedCategories.includes('ALL') || allowedCategories.includes('OTHER')) && (
+                                            <SelectItem value="OTHER">Other Series</SelectItem>
+                                        )}
                                     </SelectContent>
                                 </Select>
                                 <FormMessage />

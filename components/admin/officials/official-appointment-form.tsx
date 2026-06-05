@@ -17,6 +17,7 @@ import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { RichTextEditor } from "@/components/admin/cms/rich-text-editor"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { getOffices } from "@/lib/actions/programmes"
 
 export function OfficialAppointmentForm({ initialOrgId }: { initialOrgId?: string }) {
     const router = useRouter()
@@ -33,6 +34,7 @@ export function OfficialAppointmentForm({ initialOrgId }: { initialOrgId?: strin
         organizationId: initialOrgId || "",
         position: "",
         positionLevel: "",
+        officeId: "",
         termStart: undefined as Date | undefined,
         termEnd: undefined as Date | undefined,
         image: "",
@@ -74,6 +76,30 @@ export function OfficialAppointmentForm({ initialOrgId }: { initialOrgId?: strin
             // Already set by branch selector
         }
     }, [form.positionLevel, selectedStateId, selectedLgaId, treeData])
+
+    const [offices, setOffices] = useState<any[]>([])
+    const [fetchingOffices, setFetchingOffices] = useState(false)
+
+    useEffect(() => {
+        if (!form.organizationId) {
+            setOffices([])
+            setForm(prev => ({ ...prev, officeId: "" }))
+            return
+        }
+        const fetchOrgOffices = async () => {
+            setFetchingOffices(true)
+            try {
+                const data = await getOffices(form.organizationId)
+                setOffices(data)
+                setForm(prev => ({ ...prev, officeId: "" })) // Reset on org change
+            } catch (error) {
+                console.error("Failed to fetch offices", error)
+            } finally {
+                setFetchingOffices(false)
+            }
+        }
+        fetchOrgOffices()
+    }, [form.organizationId])
 
     const searchUsers = async () => {
         if (!searchQuery.trim()) return
@@ -295,6 +321,25 @@ export function OfficialAppointmentForm({ initialOrgId }: { initialOrgId?: strin
                             </Select>
                         </div>
                     )}
+
+                    <div className="space-y-2">
+                        <Label>Office (Department)</Label>
+                        <Select
+                            value={form.officeId}
+                            onValueChange={(v) => setForm({ ...form, officeId: v })}
+                            disabled={!form.organizationId || fetchingOffices}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder={fetchingOffices ? "Loading..." : "Select Office"} />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {offices.map((office: any) => (
+                                    <SelectItem key={office.id} value={office.id}>{office.name}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground">The department this official belongs to. Required for archive permissions and reporting.</p>
+                    </div>
 
                     <div className="space-y-2">
                         <Label>Position Title</Label>

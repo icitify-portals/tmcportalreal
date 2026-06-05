@@ -7,7 +7,9 @@ import {
     organizations,
     users,
     specialProgrammeCategoryEnum,
-    specialProgrammeFileTypeEnum
+    specialProgrammeFileTypeEnum,
+    officials,
+    offices
 } from "@/lib/db/schema"
 import { eq, desc, and, or, sql, inArray } from "drizzle-orm"
 import { revalidatePath, revalidateTag, unstable_cache } from "next/cache"
@@ -32,6 +34,30 @@ const FileSchema = z.object({
     order: z.number().int().default(0),
 })
 
+export async function getAllowedSpecialCategories() {
+    const session = await getServerSession()
+    if (!session?.user?.id) return []
+
+    // Superadmins can manage all
+    if (session.user.isSuperAdmin || session.user.roles?.some((r: any) => r.jurisdictionLevel === "SYSTEM")) {
+        return ['ALL']
+    }
+
+    try {
+        const [official] = await db.select({
+            categories: offices.managedSpecialCategories
+        })
+        .from(officials)
+        .leftJoin(offices, eq(officials.officeId, offices.id))
+        .where(eq(officials.userId, session.user.id))
+        .limit(1)
+
+        return (official?.categories as string[]) || []
+    } catch (e) {
+        return []
+    }
+}
+
 export async function createSpecialProgramme(
     data: z.infer<typeof SpecialProgrammeSchema>,
     files: z.infer<typeof FileSchema>[]
@@ -44,6 +70,11 @@ export async function createSpecialProgramme(
         if (!nationalOrg) return { success: false, error: "National organization not found" }
 
         const validData = SpecialProgrammeSchema.parse(data)
+
+        const allowedCategories = await getAllowedSpecialCategories()
+        if (!allowedCategories.includes('ALL') && !allowedCategories.includes(validData.category)) {
+            return { success: false, error: "You are not authorized to manage this category of archive." }
+        }
 
         const [newProgramme] = await db.transaction(async (tx) => {
             const [inserted] = await tx.insert(specialProgrammes).values({
@@ -90,6 +121,11 @@ export async function updateSpecialProgramme(
         if (!session?.user?.id) return { success: false, error: "Unauthorized" }
 
         const validData = SpecialProgrammeSchema.parse(data)
+
+        const allowedCategories = await getAllowedSpecialCategories()
+        if (!allowedCategories.includes('ALL') && !allowedCategories.includes(validData.category)) {
+            return { success: false, error: "You are not authorized to manage this category of archive." }
+        }
 
         await db.transaction(async (tx) => {
             await tx.update(specialProgrammes).set({

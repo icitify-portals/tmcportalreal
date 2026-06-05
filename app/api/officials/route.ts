@@ -24,7 +24,7 @@ export async function POST(req: Request) {
 
     try {
         const body = await req.json()
-        const { userId, organizationId, position, positionLevel, termStart, termEnd, bio, image } = body
+        const { userId, organizationId, officeId, position, positionLevel, termStart, termEnd, bio, image } = body
 
         if (!userId || !organizationId || !position || !positionLevel || !termStart) {
             return NextResponse.json({ message: "Missing required fields" }, { status: 400 })
@@ -47,6 +47,7 @@ export async function POST(req: Request) {
         const newOfficial = await db.insert(officials).values({
             userId,
             organizationId,
+            officeId: officeId || null,
             position,
             positionLevel,
             termStart: new Date(termStart),

@@ -3,10 +3,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
+import { getAllowedSpecialCategories } from "@/lib/actions/special-programmes"
 
 export const dynamic = "force-dynamic"
 
-export default function NewSpecialProgrammePage() {
+export default async function NewSpecialProgrammePage() {
+    const allowedCategories = await getAllowedSpecialCategories()
+
     return (
         <div className="flex-1 space-y-4 p-8 pt-6">
             <div className="flex items-center justify-between">
@@ -33,7 +36,7 @@ export default function NewSpecialProgrammePage() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="pt-6">
-                        <SpecialProgrammeForm />
+                        <SpecialProgrammeForm allowedCategories={allowedCategories} />
                     </CardContent>
                 </Card>
             </div>

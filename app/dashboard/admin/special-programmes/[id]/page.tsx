@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
+import { getAllowedSpecialCategories } from "@/lib/actions/special-programmes"
 
 export default async function EditSpecialProgrammePage({
     params
@@ -30,6 +31,7 @@ export default async function EditSpecialProgrammePage({
         orderBy: (files, { asc }) => [asc(files.order)]
     })
     const item = { ...itemData, files };
+    const allowedCategories = await getAllowedSpecialCategories()
 
     return (
         <div className="flex-1 space-y-4 p-8 pt-6">
@@ -60,7 +62,7 @@ export default async function EditSpecialProgrammePage({
                         <p className="text-sm text-yellow-600 mb-4 bg-yellow-50 p-2 rounded border border-yellow-100">
                             Note: Editing an archive updates the global library.
                         </p>
-                        <SpecialProgrammeForm initialData={item} />
+                        <SpecialProgrammeForm initialData={item} allowedCategories={allowedCategories} />
                     </CardContent>
                 </Card>
             </div>
