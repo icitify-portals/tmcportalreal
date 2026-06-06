@@ -94,13 +94,18 @@ export default function VideoRoom({ roomName, meetingId }: VideoRoomProps) {
                 // Bandwidth Optimization settings
                 options={{
                     adaptiveStream: true,
+                    audioCaptureDefaults: {
+                        autoGainControl: true,
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                    },
                     videoCaptureDefaults: {
                         resolution: dataSaver ? { width: 320, height: 180 } : { width: 1280, height: 720 },
                     },
                     publishDefaults: {
                         videoEncoding: dataSaver ? {
-                            maxBitrate: 150_000,
-                            maxFramerate: 15,
+                            maxBitrate: 100_000,
+                            maxFramerate: 10,
                         } : {
                             maxBitrate: 800_000,
                             maxFramerate: 30,

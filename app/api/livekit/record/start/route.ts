@@ -58,6 +58,7 @@ export async function POST(req: NextRequest) {
                     bucket: bucket,
                     region: region,
                     endpoint: endpoint || undefined,
+                    forcePathStyle: true,
                 }
             }
         })
