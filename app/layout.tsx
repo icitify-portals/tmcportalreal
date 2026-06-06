@@ -5,6 +5,7 @@ import Providers from "@/components/providers/session-provider";
 import { getServerSession } from "@/lib/session"
 import { SiteVisitor } from "@/components/analytics/site-visitor"
 import { AiChatWidget } from "@/components/ai/ai-chat-widget"
+import { Toaster } from "@/components/ui/sonner"
 
 // const geistSans = Geist({
 //   variable: "--font-geist-sans",
@@ -51,6 +52,7 @@ export default async function RootLayout({
       >
         <Providers session={session}>
           {children}
+          <Toaster />
           <SiteVisitor />
           <AiChatWidget />
         </Providers>

@@ -7,15 +7,17 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { toast } from "sonner"
 import { countries, getDefaultCountry } from "@/lib/countries"
 import { calculatePasswordStrength, getPasswordStrengthColor, getPasswordStrengthLabel } from "@/lib/password-strength"
-import { Eye, EyeOff, CheckCircle2, XCircle } from "lucide-react"
+import { Eye, EyeOff, CheckCircle2, XCircle, AlertCircle } from "lucide-react"
 import Image from "next/image"
 
 export function SignUpForm() {
     const router = useRouter()
     const [isLoading, setIsLoading] = useState(false)
+    const [error, setError] = useState<string | null>(null)
     const [showPassword, setShowPassword] = useState(false)
     const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
@@ -66,6 +68,7 @@ export function SignUpForm() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setIsLoading(true)
+        setError(null)
 
         // Validation
         if (!passwordStrength.isValid) {
@@ -114,6 +117,7 @@ export function SignUpForm() {
 
             if (!response.ok) {
                 toast.error(data.error || "Signup failed")
+                setError(data.error || "Signup failed")
                 return
             }
 
@@ -125,8 +129,10 @@ export function SignUpForm() {
             console.error("Signup fetch error:", error)
             if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
                 toast.error("Network error. Please check your internet connection.")
+                setError("Network error. Please check your internet connection.")
             } else {
                 toast.error(error.message || "An error occurred. Please try again.")
+                setError(error.message || "An error occurred. Please try again.")
             }
         } finally {
             setIsLoading(false)
@@ -152,6 +158,21 @@ export function SignUpForm() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
+                    {error && (
+                        <Alert variant="destructive" className="mb-6 bg-red-50 text-red-900 border-red-200">
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertTitle>Signup Failed</AlertTitle>
+                            <AlertDescription>
+                                {error}
+                                {error.toLowerCase().includes("exist") && (
+                                    <div className="mt-3 flex gap-4">
+                                        <a href="/auth/signin" className="underline font-bold hover:text-red-700">Login to account</a>
+                                        <a href="/auth/forgot-password" className="underline font-bold hover:text-red-700">Reset password</a>
+                                    </div>
+                                )}
+                            </AlertDescription>
+                        </Alert>
+                    )}
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">

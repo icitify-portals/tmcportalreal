@@ -3,7 +3,6 @@ import React, { useState, useEffect } from "react"
 
 import { useSession } from "next-auth/react"
 import { Sidebar } from "./sidebar"
-import { Toaster } from "@/components/ui/sonner"
 import { NotificationBell } from "@/components/layout/notification-bell"
 import { AiChatWidget } from "@/components/ai/ai-chat-widget"
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet"
@@ -149,7 +148,6 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             </div>
             {mounted && children}
           </div>
-          {mounted && <Toaster />}
         </main>
       </div>
       </div>
