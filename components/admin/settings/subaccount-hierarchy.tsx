@@ -1,12 +1,18 @@
 "use client"
 
-import React, { useMemo } from "react"
-import { Building2, CheckCircle2, AlertCircle, ChevronRight, ChevronDown } from "lucide-react"
+import React, { useMemo, useState } from "react"
+import { Building2, CheckCircle2, AlertCircle, ChevronRight, ChevronDown, Search } from "lucide-react"
+import { SubaccountManager } from "@/components/admin/settings/subaccount-manager"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { SubaccountManager } from "@/components/admin/settings/subaccount-manager"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Button } from "@/components/ui/button"
 
 export function SubaccountHierarchy({ organizations, banks }: { organizations: any[], banks: any[] }) {
+    const [searchQuery, setSearchQuery] = useState("")
+
     // Group and sort
     const hierarchy = useMemo(() => {
         const sortedOrgs = [...organizations].sort((a, b) => (a.name || "").localeCompare(b.name || ""))
@@ -34,8 +40,47 @@ export function SubaccountHierarchy({ organizations, banks }: { organizations: a
 
         const others = sortedOrgs.filter(o => !categorizedIds.has(o.id) && o.level !== 'NATIONAL')
 
-        return { nationals, tree, others }
-    }, [organizations])
+        let filteredNationals = nationals;
+        let filteredOthers = others;
+        let filteredTree = tree;
+
+        if (searchQuery.trim()) {
+            const lowerQuery = searchQuery.toLowerCase();
+            
+            filteredNationals = nationals.filter(n => n.name?.toLowerCase().includes(lowerQuery) || n.paystackSubaccountCode?.toLowerCase().includes(lowerQuery));
+            filteredOthers = others.filter(o => o.name?.toLowerCase().includes(lowerQuery) || o.paystackSubaccountCode?.toLowerCase().includes(lowerQuery));
+            
+            filteredTree = tree.map(state => {
+                const stateMatch = state.name?.toLowerCase().includes(lowerQuery) || state.paystackSubaccountCode?.toLowerCase().includes(lowerQuery);
+                
+                const filteredLgas = state.children.map((lga: any) => {
+                    const lgaMatch = lga.name?.toLowerCase().includes(lowerQuery) || lga.paystackSubaccountCode?.toLowerCase().includes(lowerQuery);
+                    
+                    const filteredBranches = lga.children.filter((branch: any) => 
+                        branch.name?.toLowerCase().includes(lowerQuery) || branch.paystackSubaccountCode?.toLowerCase().includes(lowerQuery)
+                    );
+
+                    if (stateMatch || lgaMatch || filteredBranches.length > 0) {
+                        return {
+                            ...lga,
+                            children: (stateMatch || lgaMatch) ? lga.children : filteredBranches
+                        };
+                    }
+                    return null;
+                }).filter(Boolean);
+
+                if (stateMatch || filteredLgas.length > 0) {
+                    return {
+                        ...state,
+                        children: stateMatch ? state.children : filteredLgas
+                    }
+                }
+                return null;
+            }).filter(Boolean);
+        }
+
+        return { nationals: filteredNationals, tree: filteredTree, others: filteredOthers }
+    }, [organizations, searchQuery])
 
     const OrgRow = ({ org, level = 0, hasChildren = false, isOpen = false, onToggle = () => {} }: any) => (
         <div className={`flex flex-col md:flex-row md:items-center justify-between p-4 border-b hover:bg-slate-50 transition-colors gap-4 ${level === 1 ? 'bg-slate-50/50' : ''} ${level === 2 ? 'bg-slate-100/30' : ''}`}>
@@ -82,15 +127,16 @@ export function SubaccountHierarchy({ organizations, banks }: { organizations: a
         return <OrgRow org={branch} level={2} />
     }
 
-    const LgaNode = ({ lga }: { lga: any }) => {
+    const LgaNode = ({ lga, forceOpen }: { lga: any, forceOpen: boolean }) => {
         const [isOpen, setIsOpen] = React.useState(false)
+        const effectivelyOpen = forceOpen || isOpen;
         const hasChildren = lga.children && lga.children.length > 0
         
         return (
-            <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+            <Collapsible open={effectivelyOpen} onOpenChange={(open) => setIsOpen(open)}>
                 <CollapsibleTrigger asChild>
                     <div className="cursor-pointer">
-                        <OrgRow org={lga} level={1} hasChildren={hasChildren} isOpen={isOpen} onToggle={() => setIsOpen(!isOpen)} />
+                        <OrgRow org={lga} level={1} hasChildren={hasChildren} isOpen={effectivelyOpen} onToggle={() => setIsOpen(!isOpen)} />
                     </div>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
@@ -104,21 +150,22 @@ export function SubaccountHierarchy({ organizations, banks }: { organizations: a
         )
     }
 
-    const StateNode = ({ state }: { state: any }) => {
+    const StateNode = ({ state, forceOpen }: { state: any, forceOpen: boolean }) => {
         const [isOpen, setIsOpen] = React.useState(false)
+        const effectivelyOpen = forceOpen || isOpen;
         const hasChildren = state.children && state.children.length > 0
         
         return (
-            <Collapsible open={isOpen} onOpenChange={setIsOpen} className="border rounded-xl mb-4 overflow-hidden shadow-sm">
+            <Collapsible open={effectivelyOpen} onOpenChange={(open) => setIsOpen(open)} className="border rounded-xl mb-4 overflow-hidden shadow-sm">
                 <CollapsibleTrigger asChild>
                     <div className="cursor-pointer bg-white">
-                        <OrgRow org={state} level={0} hasChildren={hasChildren} isOpen={isOpen} onToggle={() => setIsOpen(!isOpen)} />
+                        <OrgRow org={state} level={0} hasChildren={hasChildren} isOpen={effectivelyOpen} onToggle={() => setIsOpen(!isOpen)} />
                     </div>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                     <div className="bg-slate-50/30 border-t">
                         {state.children?.map((lga: any) => (
-                            <LgaNode key={lga.id} lga={lga} />
+                            <LgaNode key={lga.id} lga={lga} forceOpen={forceOpen} />
                         ))}
                     </div>
                 </CollapsibleContent>
@@ -128,6 +175,16 @@ export function SubaccountHierarchy({ organizations, banks }: { organizations: a
 
     return (
         <div className="space-y-6">
+            <div className="relative w-full md:w-96">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input 
+                    placeholder="Search by state, LGA, branch or subaccount code..." 
+                    className="pl-10 bg-white"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                />
+            </div>
+
             {hierarchy.nationals.length > 0 && (
                 <div className="space-y-4">
                     <h2 className="text-xl font-bold tracking-tight">National Offices</h2>
@@ -142,7 +199,7 @@ export function SubaccountHierarchy({ organizations, banks }: { organizations: a
             <div className="space-y-4">
                 <h2 className="text-xl font-bold tracking-tight">States, LGAs, and Branches</h2>
                 {hierarchy.tree.map((state) => (
-                    <StateNode key={state.id} state={state} />
+                    <StateNode key={state.id} state={state} forceOpen={searchQuery.trim().length > 0} />
                 ))}
             </div>
 
