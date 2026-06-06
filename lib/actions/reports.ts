@@ -57,6 +57,7 @@ export async function submitReport(data: z.infer<typeof ReportSchema>, organizat
             period: validData.period,
             content: validData.content,
             status: 'SUBMITTED',
+            updatedAt: new Date(),
         }).$returningId()
 
         revalidatePath("/dashboard/reports")
@@ -112,6 +113,7 @@ export async function approveReport(reportId: string) {
             status: 'APPROVED',
             approvedBy: session.user.id,
             approvedAt: new Date(),
+            updatedAt: new Date(),
         }).where(eq(reports.id, reportId))
 
         revalidatePath("/dashboard/reports")
