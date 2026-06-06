@@ -51,7 +51,7 @@ export function SubaccountHierarchy({ organizations, banks }: { organizations: a
                     <Building2 className="h-4 w-4" />
                 </div>
                 <div>
-                    <h3 className="font-bold flex items-center gap-2 text-sm">
+                    <h3 className="font-bold flex items-center gap-2 text-sm md:text-base text-slate-900">
                         {org.name}
                         <span className="text-[9px] bg-slate-200 px-1.5 py-0.5 rounded text-slate-600 uppercase tracking-tighter shadow-sm font-normal">
                             {org.level}
