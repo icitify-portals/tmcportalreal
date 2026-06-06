@@ -48,6 +48,7 @@ export async function createAsset(data: z.infer<typeof AssetSchema>, organizatio
             ...validData,
             purchasePrice: validData.purchasePrice?.toString() || "0",
             currentValue: validData.currentValue?.toString() || "0",
+            updatedAt: new Date(),
         }).$returningId()
 
         revalidatePath("/dashboard/admin/assets")
@@ -73,6 +74,7 @@ export async function updateAsset(assetId: string, data: Partial<z.infer<typeof 
             ...data,
             purchasePrice: data.purchasePrice?.toString(),
             currentValue: data.currentValue?.toString(),
+            updatedAt: new Date(),
         }).where(eq(assets.id, assetId))
 
         revalidatePath("/dashboard/admin/assets")
@@ -168,6 +170,7 @@ export async function recordMaintenance(assetId: string, data: z.infer<typeof Ma
         // If type is REPAIR, maybe set to IN_MAINTENANCE?
         // But usually, you log it *after* it's done. 
         // Let's just update the asset's updatedAt for now.
+        await db.update(assets).set({ updatedAt: new Date() }).where(eq(assets.id, assetId));
 
         revalidatePath(`/dashboard/admin/assets`)
         return { success: true }

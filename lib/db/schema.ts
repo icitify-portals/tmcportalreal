@@ -55,7 +55,7 @@ export const assetConditionEnum = mysqlEnum('condition', ['NEW', 'GOOD', 'FAIR',
 export const assetStatusEnum = mysqlEnum('status', ['ACTIVE', 'IN_MAINTENANCE', 'DISPOSED', 'STOLEN', 'ARCHIVED']);
 export const specialProgrammeCategoryEnum = mysqlEnum('category', ['TESKIYAH_WORKSHOP', 'FRIDAY_KHUTHBAH', 'PRESS_RELEASE', 'STATE_OF_THE_NATION', 'OTHER']);
 export const specialProgrammeFileTypeEnum = mysqlEnum('specialProgrammeFileType', ['AUDIO', 'VIDEO', 'DOCUMENT', 'OTHER']);
-export const maintenanceTypeEnum = mysqlEnum('maintenanceType', ['REPAIR', 'SERVICE', 'INSPECTION', 'UPGRADE']);
+export const maintenanceTypeEnum = mysqlEnum('type', ['REPAIR', 'SERVICE', 'INSPECTION', 'UPGRADE']);
 // Unique asset enum names to avoid column name conflicts in Drizzle
 export const assetCategoryColEnum = mysqlEnum('assetCategory', ['FURNITURE', 'ELECTRONICS', 'VEHICLE', 'PROPERTY', 'EQUIPMENT', 'OTHER']);
 export const assetConditionColEnum = mysqlEnum('assetCondition', ['NEW', 'GOOD', 'FAIR', 'POOR', 'DAMAGED', 'LOST']);
@@ -97,7 +97,7 @@ export const users = mysqlTable("users", {
     recoveryKeyHash: varchar("recoveryKeyHash", { length: 255 }),
 
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
-    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).(() => new Date()).(() => new Date()),
 });
 
 // NextAuth Accounts
@@ -180,7 +180,7 @@ export const organizations = mysqlTable("organizations", {
 
     isActive: boolean("isActive").default(true),
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
-    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).(() => new Date()).(() => new Date()),
 });
 
 // Galleries
@@ -191,7 +191,7 @@ export const galleries = mysqlTable("galleries", {
     description: text("description"),
     isActive: boolean("isActive").default(true),
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
-    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).(() => new Date()).(() => new Date()),
 });
 
 // Gallery Images
@@ -218,7 +218,7 @@ export const posts = mysqlTable("posts", {
     isPublished: boolean("isPublished").default(false),
     publishedAt: timestamp("publishedAt", { mode: "date", fsp: 3 }),
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
-    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).(() => new Date()).(() => new Date()),
 
 });
 
@@ -230,13 +230,13 @@ export const jurisdictionCodes = mysqlTable("jurisdiction_codes", {
     code: varchar("code", { length: 255 }).notNull(), // 01, 01
     parentId: varchar("parentId", { length: 255 }), // Link State to Country (optional for Country)
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
-    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).(() => new Date()).(() => new Date()),
 });
 
 export const memberIdSequences = mysqlTable("member_id_sequences", {
     key: varchar("key", { length: 255 }).primaryKey(), // e.g. "01-01" (CountryCode-StateCode)
     lastSerial: int("lastSerial").notNull().default(0),
-    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).(() => new Date()).(() => new Date()),
 });
 
 // Members
@@ -263,7 +263,7 @@ export const members = mysqlTable("members", {
     approvedAt: timestamp("approvedAt", { mode: "date", fsp: 3 }),
     rejectionReason: text("rejectionReason"),
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
-    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).(() => new Date()).(() => new Date()),
 });
 
 // Officials
@@ -282,7 +282,7 @@ export const officials = mysqlTable("officials", {
     bio: text("bio"),
     isActive: boolean("isActive").default(true),
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
-    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).(() => new Date()).(() => new Date()),
 });
 
 // Offices
@@ -294,7 +294,7 @@ export const offices = mysqlTable("offices", {
     managedSpecialCategories: json("managedSpecialCategories").$type<string[]>(),
     isActive: boolean("isActive").default(true),
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
-    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).(() => new Date()).(() => new Date()),
 });
 
 // Roles
@@ -307,7 +307,7 @@ export const roles = mysqlTable("roles", {
     isSystem: boolean("isSystem").default(false),
     isActive: boolean("isActive").default(true),
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
-    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).(() => new Date()).(() => new Date()),
 });
 
 // Permissions
@@ -319,7 +319,7 @@ export const permissions = mysqlTable("permissions", {
     category: varchar("category", { length: 255 }).notNull(),
     isActive: boolean("isActive").default(true),
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
-    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).(() => new Date()).(() => new Date()),
 });
 
 // User Roles Junction
@@ -362,7 +362,7 @@ export const payments = mysqlTable("payments", {
     paidAt: timestamp("paidAt", { mode: "date", fsp: 3 }),
     campaignId: varchar("campaignId", { length: 255 }).references(() => fundraisingCampaigns.id, { onDelete: "set null" }),
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
-    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).(() => new Date()).(() => new Date()),
 });
 
 // Fundraising Campaigns
@@ -381,7 +381,7 @@ export const fundraisingCampaigns = mysqlTable("fundraising_campaigns", {
     allowCustomAmount: boolean("allowCustomAmount").default(true),
     suggestedAmounts: json("suggestedAmounts"),
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
-    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).(() => new Date()).(() => new Date()),
 }, (t) => ({
     orgSlugIdx: uniqueIndex("campaign_org_slug_idx").on(t.organizationId, t.slug),
 }));
@@ -401,7 +401,7 @@ export const documents = mysqlTable("documents", {
     isPublic: boolean("isPublic").default(false),
     metadata: json("metadata"),
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
-    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).(() => new Date()).(() => new Date()),
 });
 
 // Audit Logs
@@ -456,7 +456,7 @@ export const systemSettings = mysqlTable("system_settings", {
     isEncrypted: boolean("isEncrypted").default(false),
     description: varchar("description", { length: 500 }),
     updatedBy: varchar("updatedBy", { length: 255 }),
-    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).(() => new Date()).(() => new Date()),
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
 });
 
@@ -472,7 +472,7 @@ export const emailTemplates = mysqlTable("email_templates", {
     description: varchar("description", { length: 500 }),
     isActive: boolean("isActive").default(true),
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
-    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).(() => new Date()).(() => new Date()),
 });
 
 // Notifications
@@ -486,7 +486,7 @@ export const notifications = mysqlTable("notifications", {
     actionUrl: varchar("actionUrl", { length: 500 }),
     metadata: json("metadata"),
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
-    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).(() => new Date()).(() => new Date()),
 });
 
 // Chat System Tables
@@ -495,7 +495,7 @@ export const chats = mysqlTable("chats", {
     name: varchar("name", { length: 255 }),
     isGroup: boolean("isGroup").default(false),
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
-    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).(() => new Date()).(() => new Date()),
 });
 
 export const chatParticipants = mysqlTable("chat_participants", {
@@ -536,7 +536,7 @@ export const broadcasts = mysqlTable("broadcasts", {
     targetOfficialLevel: orgLevelEnum, // For OFFICIALS_ONLY
     targetId: varchar("targetId", { length: 255 }), // Organization ID
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
-    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).(() => new Date()).(() => new Date()),
 });
 
 export const broadcastRecipients = mysqlTable("broadcast_recipients", {
@@ -839,7 +839,7 @@ export const adhkarCentres = mysqlTable("adhkar_centres", {
     organizationId: varchar("organizationId", { length: 255 }), // Optional link to specific org unit
     isActive: boolean("isActive").default(true),
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
-    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).(() => new Date()).(() => new Date()),
 });
 
 export const teskiyahCentres = mysqlTable("teskiyah_centres", {
@@ -855,7 +855,7 @@ export const teskiyahCentres = mysqlTable("teskiyah_centres", {
     organizationId: varchar("organizationId", { length: 255 }),
     isActive: boolean("isActive").default(true),
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
-    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).(() => new Date()).(() => new Date()),
 });
 
 // Navigation Items
@@ -869,7 +869,7 @@ export const navigationItems = mysqlTable("navigation_items", {
     type: mysqlEnum('type', ['link', 'dropdown', 'button']).default('link'),
     isActive: boolean("isActive").default(true),
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
-    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).(() => new Date()).(() => new Date()),
 });
 
 
@@ -881,7 +881,7 @@ export const occasionTypes = mysqlTable("occasion_types", {
     certificateFee: decimal("certificateFee", { precision: 10, scale: 2 }).default("0.00"),
     isActive: boolean("isActive").default(true),
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
-    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).(() => new Date()).(() => new Date()),
 });
 
 export const occasionRequests = mysqlTable("occasion_requests", {
@@ -906,7 +906,7 @@ export const occasionRequests = mysqlTable("occasion_requests", {
     certificateNo: varchar("certificateNo", { length: 255 }), // Generated upon approval/completion
 
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
-    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).(() => new Date()).(() => new Date()),
 });
 
 
@@ -942,7 +942,7 @@ export const meetings = mysqlTable("meetings", {
     createdBy: varchar("createdBy", { length: 255 }).notNull().references(() => users.id),
 
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
-    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).(() => new Date()).(() => new Date()),
 });
 
 export const meetingGroups = mysqlTable("meeting_groups", {
@@ -953,7 +953,7 @@ export const meetingGroups = mysqlTable("meeting_groups", {
     dynamicRules: json("dynamicRules"), // e.g. { includeAllStateOfficials: true, includeAllLGAAdmins: true }
     isActive: boolean("isActive").default(true),
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
-    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).(() => new Date()).(() => new Date()),
 });
 
 export const meetingGroupMembers = mysqlTable("meeting_group_members", {
@@ -976,7 +976,7 @@ export const meetingAttendances = mysqlTable("meeting_attendances", {
     leftAt: timestamp("leftAt", { mode: "date", fsp: 3 }), // Digital check-out
 
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
-    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).(() => new Date()).(() => new Date()),
 }, (t) => ({
     unq: uniqueIndex("meeting_attendance_unique").on(t.meetingId, t.userId),
 }));
@@ -1004,7 +1004,7 @@ export const pages = mysqlTable("pages", {
     isPublished: boolean("isPublished").default(false),
     metadata: json("metadata"), // SEO Title, Description, OG Image etc.
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
-    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).(() => new Date()).(() => new Date()),
 }, (t) => ({
     orgSlugIdx: uniqueIndex("org_slug_idx").on(t.organizationId, t.slug),
 }));
@@ -1065,7 +1065,7 @@ export const programmes = mysqlTable("programmes", {
     feedbackFields: json("feedbackFields"),
     createdBy: varchar("createdBy", { length: 255 }).notNull().references(() => users.id),
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
-    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).(() => new Date()).(() => new Date()),
 });
 
 // Programme Registrations
@@ -1158,7 +1158,7 @@ export const financeBudgets = mysqlTable("finance_budgets", {
     comments: text("comments"),
     programmeId: varchar("programmeId", { length: 255 }),
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
-    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).(() => new Date()).(() => new Date()),
 });
 
 // Finance Budget Items
@@ -1192,7 +1192,7 @@ export const financeFundRequests = mysqlTable("finance_fund_requests", {
     rejectionReason: text("rejectionReason"),
     evidenceUrl: varchar("evidenceUrl", { length: 500 }), // Receipt/Invoice
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
-    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).(() => new Date()).(() => new Date()),
 });
 
 // Finance Transactions (Ledger)
@@ -1293,7 +1293,7 @@ export const assets = mysqlTable("assets", {
 
     // Metadata
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
-    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).(() => new Date()).(() => new Date()),
 });
 
 export const assetMaintenanceLogs = mysqlTable("asset_maintenance_logs", {
@@ -1349,7 +1349,7 @@ export const burialRequests = mysqlTable("burial_requests", {
 
 
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
-    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).(() => new Date()).(() => new Date()),
 }, (request) => ({
     uniquePayment: uniqueIndex("burial_requests_payment_unique").on(request.paymentId)
 }));
@@ -1365,7 +1365,7 @@ export const burialCertificates = mysqlTable("burial_certificates", {
     pdfUrl: varchar("pdfUrl", { length: 500 }),
 
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
-    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).(() => new Date()).(() => new Date()),
 }, (cert) => ({
     uniqueBurialRequest: uniqueIndex("burial_certificates_request_unique").on(cert.burialRequestId),
     uniqueCertNumber: uniqueIndex("burial_certificates_number_unique").on(cert.certificateNumber)
@@ -1425,7 +1425,7 @@ export const promotionPlans = mysqlTable("promotion_plans", {
     description: text("description"),
     isActive: boolean("isActive").default(true),
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
-    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).(() => new Date()).(() => new Date()),
 });
 
 // Promotions
@@ -1450,7 +1450,7 @@ export const promotions = mysqlTable("promotions", {
     rejectionReason: text("rejectionReason"),
 
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
-    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).(() => new Date()).(() => new Date()),
 });
 
 // Promotion Relations
@@ -1483,7 +1483,7 @@ export const fees = mysqlTable("fees", {
     dueDate: timestamp("dueDate", { mode: "date", fsp: 3 }),
     isActive: boolean("isActive").default(true),
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
-    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).(() => new Date()).(() => new Date()),
 });
 
 export const feeAssignments = mysqlTable("fee_assignments", {
@@ -1534,7 +1534,7 @@ export const specialProgrammes = mysqlTable("special_programmes", {
     isPublished: boolean("isPublished").default(true),
     createdBy: varchar("createdBy", { length: 255 }).notNull().references(() => users.id),
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
-    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).(() => new Date()).(() => new Date()),
 });
 
 export const specialProgrammeFiles = mysqlTable("special_programme_files", {
@@ -1584,7 +1584,7 @@ export const reports = mysqlTable("reports", {
     approvedAt: timestamp("approvedAt", { mode: "date", fsp: 3 }),
 
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
-    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).(() => new Date()).(() => new Date()),
 });
 
 // Relations for Offices and Reports
@@ -1678,7 +1678,7 @@ export const organs = mysqlTable("organs", {
     order: int("order").default(0),
     isActive: boolean("isActive").default(true),
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
-    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).(() => new Date()).(() => new Date()),
 });
 
 // ─── TMC Programmes ───────────────────────────────────────────────────────────
@@ -1692,7 +1692,7 @@ export const tmcProgrammes = mysqlTable("tmc_programmes", {
     order: int("order").default(0),
     isActive: boolean("isActive").default(true),
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
-    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).(() => new Date()).(() => new Date()),
 });
 
 export const meetingGroupsRelations = relations(meetingGroups, ({ one, many }) => ({
@@ -1719,7 +1719,7 @@ export const competitions = mysqlTable("competitions", {
     status: competitionStatusEnum.default('ACTIVE'),
     fields: json("fields").notNull(), // Form schema
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
-    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).(() => new Date()).(() => new Date()),
 });
 
 export const competitionSubmissions = mysqlTable("competition_submissions", {
@@ -1729,7 +1729,7 @@ export const competitionSubmissions = mysqlTable("competition_submissions", {
     data: json("data").notNull(), // Form responses
     status: varchar("status", { length: 50 }).default("SUBMITTED"),
     submittedAt: timestamp("submittedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
-    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).(() => new Date()).(() => new Date()),
 });
 
 export const competitionsRelations = relations(competitions, ({ one, many }) => ({
@@ -1819,7 +1819,7 @@ export const constitutions = mysqlTable("constitutions", {
     documentUrl: text("documentUrl"),
     createdBy: varchar("createdBy", { length: 255 }).notNull().references(() => users.id),
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
-    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).onUpdateNow(),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).(() => new Date()).(() => new Date()),
 });
 
 export const constitutionReviewers = mysqlTable("constitution_reviewers", {
