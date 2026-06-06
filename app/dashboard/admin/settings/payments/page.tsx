@@ -5,7 +5,7 @@ import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { CreditCard, Building2, CheckCircle2, AlertCircle, RefreshCcw } from "lucide-react"
-import { SubaccountManager } from "@/components/admin/settings/subaccount-manager"
+import { SubaccountHierarchy } from "@/components/admin/settings/subaccount-hierarchy"
 import { getBanks } from "@/lib/actions/payment-settings"
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
@@ -18,6 +18,10 @@ export default async function PaymentSettingsPage() {
 
     const orgs = await db.select().from(organizations).orderBy(organizations.level)
     const banks = await getBanks()
+
+    const linkedCount = orgs.filter(o => o.paystackSubaccountCode).length
+    const unlinkedCount = orgs.length - linkedCount
+    const linkedPercentage = orgs.length > 0 ? Math.round((linkedCount / orgs.length) * 100) : 0
 
     return (
         <DashboardLayout>
@@ -40,55 +44,42 @@ export default async function PaymentSettingsPage() {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                     <Card>
-                        <CardHeader>
-                            <CardTitle>Subaccount Integration Status</CardTitle>
-                            <CardDescription>
-                                Each jurisdiction must have a linked subaccount to collect funds directly into their specific bank accounts.
-                            </CardDescription>
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-sm font-medium text-muted-foreground">Total Jurisdictions</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="space-y-4">
-                                {orgs.map((org) => (
-                                    <div key={org.id} className="flex flex-col md:flex-row md:items-center justify-between p-4 border rounded-xl hover:bg-slate-50 transition-colors gap-4">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-green-700">
-                                                <Building2 className="h-5 w-5" />
-                                            </div>
-                                            <div>
-                                                <h3 className="font-bold flex items-center gap-2">
-                                                    {org.name}
-                                                    <span className="text-[10px] bg-slate-200 px-2 py-0.5 rounded text-slate-600 uppercase tracking-tighter shadow-sm font-normal">
-                                                        {org.level}
-                                                    </span>
-                                                </h3>
-                                                <p className="text-xs text-muted-foreground">
-                                                    {org.paystackSubaccountCode ? (
-                                                        <span className="text-green-600 flex items-center gap-1 font-medium">
-                                                            <CheckCircle2 className="h-3 w-3" />
-                                                            Linked: {org.paystackSubaccountCode}
-                                                        </span>
-                                                    ) : (
-                                                        <span className="text-amber-600 flex items-center gap-1 font-medium">
-                                                            <AlertCircle className="h-3 w-3" />
-                                                            Not Integrated
-                                                        </span>
-                                                    )}
-                                                </p>
-                                            </div>
-                                        </div>
-                                        
-                                        <SubaccountManager 
-                                            organization={org} 
-                                            banks={banks} 
-                                        />
-                                    </div>
-                                ))}
-                            </div>
+                            <div className="text-2xl font-bold">{orgs.length}</div>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-sm font-medium text-green-600 flex items-center gap-2">
+                                <CheckCircle2 className="h-4 w-4" />
+                                Linked Subaccounts
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{linkedCount}</div>
+                            <p className="text-xs text-muted-foreground mt-1">{linkedPercentage}% compliance</p>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-sm font-medium text-amber-600 flex items-center gap-2">
+                                <AlertCircle className="h-4 w-4" />
+                                Unlinked Subaccounts
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{unlinkedCount}</div>
+                            <p className="text-xs text-muted-foreground mt-1">Requires attention</p>
                         </CardContent>
                     </Card>
                 </div>
+
+                <SubaccountHierarchy organizations={orgs} banks={banks} />
             </div>
         </DashboardLayout>
     )

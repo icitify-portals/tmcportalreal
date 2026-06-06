@@ -37,7 +37,20 @@ export function NotificationBell() {
                 // Trigger toast for new unread notifications
                 const unread = fetchedList.filter((n: any) => !n.read && !n.isRead)
                 if (isInitialFetch.current) {
-                    unread.forEach((n: any) => toastedIds.current.add(n.id))
+                    const initialUnreadToToast = unread.slice(0, 3)
+                    initialUnreadToToast.forEach((n: any) => {
+                        toastedIds.current.add(n.id)
+                        toast(n.title, {
+                            description: n.message,
+                            action: n.link && n.link !== "#" ? {
+                                label: "View",
+                                onClick: () => window.location.href = n.link
+                            } : undefined,
+                            duration: 5000,
+                        })
+                    })
+                    // Add the rest to toastedIds so they don't spam
+                    unread.slice(3).forEach((n: any) => toastedIds.current.add(n.id))
                     isInitialFetch.current = false
                 } else {
                     unread.forEach((n: any) => {
