@@ -6,9 +6,6 @@ import { SubaccountManager } from "@/components/admin/settings/subaccount-manage
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { SubaccountManager } from "@/components/admin/settings/subaccount-manager"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { Button } from "@/components/ui/button"
 
 export function SubaccountHierarchy({ organizations, banks }: { organizations: any[], banks: any[] }) {
     const [searchQuery, setSearchQuery] = useState("")
