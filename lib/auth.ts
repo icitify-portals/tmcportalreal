@@ -1,10 +1,18 @@
-import { NextAuthConfig } from "next-auth"
+import { NextAuthConfig, CredentialsSignin } from "next-auth"
 import { authConfig as baseConfig } from "./auth.config"
 import { DrizzleAdapter } from "@auth/drizzle-adapter"
 import type { Adapter } from "next-auth/adapters"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { db } from "@/lib/db"
 import bcrypt from "bcryptjs"
+
+class CustomAuthError extends CredentialsSignin {
+  constructor(message?: string) {
+    super(message)
+    this.code = message || "CredentialsSignin"
+  }
+}
+
 import { UserRole } from "@/types/next-auth"
 import {
   users,
@@ -147,21 +155,21 @@ export const authConfig: NextAuthConfig = {
         const user = userResults[0]
 
         if (!user) {
-          throw new Error("User with this email not found. Please sign up if you don't have an account.")
+          throw new CustomAuthError("User with this email not found. Please sign up if you don't have an account.")
         }
 
         if (!user.password) {
-          throw new Error("This account does not have a password set. Try another sign-in method.")
+          throw new CustomAuthError("This account does not have a password set. Try another sign-in method.")
         }
 
         if (!user.emailVerified) {
-          throw new Error("Please verify your email address before signing in. Check your inbox for the verification link.")
+          throw new CustomAuthError("Please verify your email address before signing in. Check your inbox for the verification link.")
         }
 
         const isPasswordValid = await bcrypt.compare(password, user.password)
 
         if (!isPasswordValid) {
-          throw new Error("Incorrect password. Please try again or reset your password.")
+          throw new CustomAuthError("Incorrect password. Please try again or reset your password.")
         }
 
         return {
