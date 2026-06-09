@@ -53,7 +53,6 @@ export async function createBackup() {
         await fs.mkdir(tempDir, { recursive: true })
 
         // 1. Database Dump (MySQL)
-        // Parse DATABASE_URL: mysql://user:pass@host:port/db
         const dbUrl = process.env.DATABASE_URL || ""
         try {
             const parsedUrl = new URL(dbUrl);
@@ -65,26 +64,37 @@ export async function createBackup() {
 
             const passArg = pass ? `-p'${pass}'` : '';
             try {
-                // Try mysqldump
-                await execAsync(`mysqldump -u ${user} ${passArg} -h ${host} -P ${port} ${dbName} > ${dbFile}`)
-            } catch (err) {
-                // Fallback or error
-                console.error("mysqldump failed:", err)
-                await fs.writeFile(dbFile, "-- mysqldump failed, manual backup needed or check server bin path")
+                // Try mysqldump with robust flags
+                await execAsync(`mysqldump --no-tablespaces -u ${user} ${passArg} -h ${host} -P ${port} ${dbName} > ${dbFile}`)
+            } catch (err: any) {
+                console.error("mysqldump failed:", err.message)
+                await fs.writeFile(dbFile, `-- mysqldump failed: ${err.message}\n`)
             }
-        } catch (e) {
+        } catch (e: any) {
             console.error("Invalid DATABASE_URL format or parsing error.", e);
+            await fs.writeFile(dbFile, `-- DB Parse error: ${e.message}\n`)
         }
 
         // 2. Zip Files (public/uploads)
         const uploadsDir = path.join(process.cwd(), 'public', 'uploads')
         try {
-            // Use native zip if on linux/mac, else maybe archiver (but we want to avoid extra heavy deps if possible)
-            // For now, let's use a simple zip command
-            await execAsync(`zip -r ${zipFile} ${uploadsDir}`)
-        } catch (err) {
-            console.error("Zip failed:", err)
-            await fs.writeFile(zipFile, "zip failed")
+            // Check if directory exists and is not empty
+            try {
+                await fs.access(uploadsDir)
+                const files = await fs.readdir(uploadsDir)
+                if (files.length > 0) {
+                    await execAsync(`cd ${path.join(process.cwd(), 'public')} && zip -r ${zipFile} uploads`)
+                } else {
+                    // Empty directory, create a valid empty zip or text file
+                    await fs.writeFile(zipFile, "No uploads found to backup.")
+                }
+            } catch (err) {
+                // Directory doesn't exist
+                await fs.writeFile(zipFile, "Uploads directory not found.")
+            }
+        } catch (err: any) {
+            console.error("Zip failed:", err.message)
+            await fs.writeFile(zipFile, `zip failed: ${err.message}\n`)
         }
 
         // 3. Optional: Upload to S3/Wasabi
