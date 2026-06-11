@@ -6,7 +6,7 @@ import { organizations, galleries, galleryImages } from "@/lib/db/schema"
 import { eq, and } from "drizzle-orm"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { MapPin, Phone, Mail, ArrowLeft } from "lucide-react"
+import { MapPin, Phone, Mail, ArrowLeft, CalendarIcon } from "lucide-react"
 import { HeroSlider } from "@/components/cms/hero-slider"
 import { ExploreCommunity } from "@/components/cms/explore-community"
 import { getOrganizationTree } from "@/lib/org-helper"
@@ -113,6 +113,14 @@ async function JurisdictionContent({ slug }: { slug: string }) {
                             <div className="max-w-[800px] text-muted-foreground md:text-xl">
                                 <div dangerouslySetInnerHTML={{ __html: orgWithRelations.welcomeMessage }} />
                             </div>
+                        </div>
+                        <div className="pt-4">
+                            <Button asChild className="bg-green-700 hover:bg-green-800" size="lg">
+                                <Link href={`/${slug}/programmes`}>
+                                    <CalendarIcon className="mr-2 h-5 w-5" />
+                                    View Upcoming Programmes
+                                </Link>
+                            </Button>
                         </div>
                     </div>
                 </section>

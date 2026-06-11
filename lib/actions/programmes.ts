@@ -787,7 +787,7 @@ export async function rejectProgramme(programmeId: string, reason: string) {
 }
 
 // Public/Listing Filter
-export async function getProgrammes(filters?: { level?: string, state?: string, status?: string }) {
+export async function getProgrammes(filters?: { level?: string, state?: string, status?: string, organizationId?: string, organizationCode?: string }) {
     // Explicit joins for compatibility query
     const org = aliasedTable(organizations, "org")
 
@@ -798,6 +798,12 @@ export async function getProgrammes(filters?: { level?: string, state?: string, 
     }
     if (filters?.state) {
         conditions.push(eq(org.state, filters.state))
+    }
+    if (filters?.organizationId) {
+        conditions.push(eq(programmes.organizationId, filters.organizationId))
+    }
+    if (filters?.organizationCode) {
+        conditions.push(eq(org.code, filters.organizationCode))
     }
     if (filters?.status) {
         // If admin viewing, might not just be approved
@@ -1218,6 +1224,7 @@ export async function initializeProgrammeRegistrationPayment(registrationId: str
             email: registration.email,
             amount: currentPayAmount,
             callbackUrl: `${process.env.NEXT_PUBLIC_APP_URL}/programmes/registrations/${registrationId}/verify`,
+            subaccount: registration.organization?.paystackSubaccountCode || undefined,
             metadata: {
                 registrationId: registrationId,
                 type: "PROGRAMME_REGISTRATION",
