@@ -1,5 +1,25 @@
 import { Suspense } from "react"
+import { PublicNav } from "@/components/layout/public-nav"
+import { Metadata } from "next"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
+import { Filter } from "lucide-react"
+
 export const dynamic = 'force-dynamic'
+
+export const metadata: Metadata = {
+    title: "Upcoming Programmes | TMC Portal",
+    description: "Browse and register for upcoming TMC programmes and events across all jurisdictions.",
+}
+
+const NIGERIAN_STATES = [
+    "Abia", "Adamawa", "Akwa Ibom", "Anambra", "Bauchi", "Bayelsa", "Benue", "Borno", 
+    "Cross River", "Delta", "Ebonyi", "Edo", "Ekiti", "Enugu", "FCT", "Gombe", 
+    "Imo", "Jigawa", "Kaduna", "Kano", "Katsina", "Kebbi", "Kogi", "Kwara", 
+    "Lagos", "Nasarawa", "Niger", "Ogun", "Ondo", "Osun", "Oyo", "Plateau", 
+    "Rivers", "Sokoto", "Taraba", "Yobe", "Zamfara"
+];
 import { ProgrammeGrid } from "@/components/programmes/programme-grid"
 
 export default async function ProgrammesPage({ searchParams }: { searchParams: Promise<{ level?: string, state?: string }> }) {
