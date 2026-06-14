@@ -10,6 +10,27 @@ export default async function AdminCompetitionsPage() {
 
     return (
         <div className="space-y-6">
+            {/* Breadcrumb Navigation */}
+            <nav className="flex text-sm text-gray-500 font-medium mb-4" aria-label="Breadcrumb">
+                <ol className="inline-flex items-center space-x-1 md:space-x-2">
+                    <li className="inline-flex items-center">
+                        <Link href="/" className="hover:text-green-600 transition-colors">Home</Link>
+                    </li>
+                    <li>
+                        <div className="flex items-center">
+                            <span className="mx-2 text-gray-400">/</span>
+                            <Link href="/dashboard/admin" className="hover:text-green-600 transition-colors">Dashboard</Link>
+                        </div>
+                    </li>
+                    <li aria-current="page">
+                        <div className="flex items-center">
+                            <span className="mx-2 text-gray-400">/</span>
+                            <span className="text-gray-900">Competitions</span>
+                        </div>
+                    </li>
+                </ol>
+            </nav>
+
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
