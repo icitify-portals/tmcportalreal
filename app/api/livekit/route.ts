@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from "@/lib/session";
 import { getLiveKitSettings } from "@/lib/actions/settings";
 import { db } from "@/lib/db";
-import { meetings, meetingAttendances } from "@/lib/db/schema";
+import { meetings, meetingAttendances, systemSettings } from "@/lib/db/schema";
 import { and, eq } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
@@ -60,11 +60,21 @@ export async function GET(req: NextRequest) {
         }
         // --- END SECURITY CHECK ---
 
-        const liveKitSettings = await getLiveKitSettings();
+        // Fetch settings directly from DB to allow Guest access and avoid Server Action exposure
+        const settingsFromDb = await db.select().from(systemSettings).where(eq(systemSettings.category, "INTEGRATION"));
+        let dbApiKey = "";
+        let dbApiSecret = "";
+        let dbWsUrl = "";
 
-        const apiKey = liveKitSettings.apiKey || process.env.LIVEKIT_API_KEY;
-        const apiSecret = liveKitSettings.apiSecret || process.env.LIVEKIT_API_SECRET;
-        const wsUrl = liveKitSettings.url || process.env.NEXT_PUBLIC_LIVEKIT_URL;
+        settingsFromDb.forEach(s => {
+            if (s.settingKey === "livekit_url") dbWsUrl = s.settingValue || "";
+            if (s.settingKey === "livekit_api_key") dbApiKey = s.settingValue || "";
+            if (s.settingKey === "livekit_api_secret") dbApiSecret = s.settingValue || "";
+        });
+
+        const apiKey = dbApiKey || process.env.LIVEKIT_API_KEY;
+        const apiSecret = dbApiSecret || process.env.LIVEKIT_API_SECRET;
+        const wsUrl = dbWsUrl || process.env.NEXT_PUBLIC_LIVEKIT_URL;
 
         if (!apiKey || !apiSecret || !wsUrl) {
             console.error("LiveKit misconfigured:", { apiKey: !!apiKey, apiSecret: !!apiSecret, wsUrl: !!wsUrl });
@@ -76,7 +86,7 @@ export async function GET(req: NextRequest) {
             name: name,
         });
 
-        at.addGrant({ room, roomJoin: true, canPublish: true, canSubscribe: true });
+        at.addGrant({ room, roomJoin: true, canPublish: true, canSubscribe: true, canPublishData: true });
 
         const token = await at.toJwt();
 
