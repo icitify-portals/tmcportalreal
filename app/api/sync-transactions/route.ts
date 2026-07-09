@@ -99,7 +99,7 @@ export async function GET(req: Request) {
                         category: 'PROGRAMME_REGISTRATION',
                         description: `Registration payment for programme: ${prog.title} (${reference})`,
                         performedBy: performerId,
-                        date: reg.createdAt || new Date(),
+                        date: reg.registeredAt || new Date(),
                         metadata: reference
                     });
                     stats.registrationsSynced++;
