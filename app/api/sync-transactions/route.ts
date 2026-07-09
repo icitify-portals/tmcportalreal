@@ -70,7 +70,7 @@ export async function GET(req: Request) {
         
         // Filter for PAID or PARTIALLY_PAID
         const validStatuses = ['PAID', 'PARTIALLY_PAID'];
-        const completedRegistrations = paidRegistrations.filter(r => validStatuses.includes(r.reg.status));
+        const completedRegistrations = paidRegistrations.filter(r => r.reg.status && validStatuses.includes(r.reg.status));
         stats.registrationsChecked = completedRegistrations.length;
 
         for (const record of completedRegistrations) {
