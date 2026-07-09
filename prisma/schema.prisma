@@ -774,6 +774,9 @@ model Programme {
   allowInstallments  Boolean  @default(false)
   minInstallmentAmount Decimal? @default(0.00) @db.Decimal(10, 2)
   amount             Decimal? @default(0.00) @db.Decimal(10, 2)
+  pricingTiers       Json?
+  isRecurringAdmin   Boolean  @default(false)
+  flyerUrl           String?  @db.VarChar(500)
   hasCertificate     Boolean  @default(false)
   certTemplateType   String?  @default("TMC_ONLY")
   certTmcSignature   String?  @db.VarChar(500)
@@ -816,6 +819,7 @@ model ProgrammeRegistration {
   address          String?   @db.Text
   amountPaid       Decimal?  @default(0.00) @db.Decimal(10, 2)
   paymentReference String?
+  registrationTier String?
   certificateUrl   String?   @db.VarChar(500)
   certificateIssuedAt DateTime?
   country          String?   @default("Nigeria")

@@ -46,7 +46,9 @@ function RegistrationContent() {
         address: "",
         country: "Nigeria",
         state: "",
-        lga: ""
+        lga: "",
+        registrationTier: "",
+        amountPaid: ""
     })
 
     useEffect(() => {
@@ -84,14 +86,36 @@ function RegistrationContent() {
         e.preventDefault()
         setIsSubmitting(true)
         try {
-            const result = await registerForProgramme(programmeId, session ? undefined : formData, waiverCode || undefined)
+            // Enforce minimum payment logically on frontend too
+            let baseAmount = parseFloat(programme.amount || "0")
+            if (formData.registrationTier && programme.pricingTiers) {
+                 const tiers: any = typeof programme.pricingTiers === 'string' ? JSON.parse(programme.pricingTiers) : programme.pricingTiers;
+                 let tierAmount = 0;
+                 if (tiers?.individuals && tiers.individuals[formData.registrationTier]) tierAmount = Number(tiers.individuals[formData.registrationTier]);
+                 else if (tiers?.corporate && tiers.corporate[formData.registrationTier]) tierAmount = Number(tiers.corporate[formData.registrationTier]);
+                 else if (tiers && tiers[formData.registrationTier]) tierAmount = Number(tiers[formData.registrationTier]);
+                 
+                 if (tierAmount > 0) baseAmount = tierAmount;
+            }
+            
+            const userAmount = formData.amountPaid ? parseFloat(formData.amountPaid) : baseAmount;
+            
+            if (programme.paymentRequired && userAmount < baseAmount) {
+                toast.error(`Minimum payment for this tier is ₦${baseAmount}`);
+                setIsSubmitting(false);
+                return;
+            }
+
+            const submissionData = { ...formData, amountPaid: userAmount };
+
+            const result = await registerForProgramme(programmeId, submissionData, waiverCode || undefined)
 
             if (result.success) {
                 if (result.isWaiver) {
                     toast.success("Registration successful! Offline payment verified.")
                     router.push(`/dashboard/member/programmes`) // Or a success page
                 } else if (result.paymentRequired) {
-                    const payAmount = parseFloat(programme.amount || "0")
+                    const payAmount = userAmount;
                     if (session && paymentMethod === "WALLET") {
                         toast.info("Processing wallet payment...")
                         const payResult = await payWithWalletBalance(result.registrationId!, payAmount)
@@ -326,26 +350,85 @@ function RegistrationContent() {
                                 )}
                             </div>
                         )}
+                        
+                        {(() => {
+                            const pricingTiers = programme?.pricingTiers ? (typeof programme.pricingTiers === 'string' ? JSON.parse(programme.pricingTiers) : programme.pricingTiers) : null;
+                            let minAmount = parseFloat(programme?.amount || "0");
+                            if (pricingTiers && formData.registrationTier) {
+                                if (pricingTiers?.individuals?.[formData.registrationTier]) minAmount = Number(pricingTiers.individuals[formData.registrationTier]);
+                                else if (pricingTiers?.corporate?.[formData.registrationTier]) minAmount = Number(pricingTiers.corporate[formData.registrationTier]);
+                                else if (pricingTiers?.[formData.registrationTier]) minAmount = Number(pricingTiers[formData.registrationTier]);
+                            }
 
-                        {!isWaiverActive && programme.paymentRequired && parseFloat(programme.amount || "0") > 0 && session && (
-                            <div className="p-4 border rounded-lg bg-emerald-50/30 space-y-3">
-                                <Label className="text-xs font-bold uppercase tracking-wider text-emerald-800 block">Payment Method</Label>
-                                <RadioGroup 
-                                    defaultValue="PAYSTACK" 
-                                    onValueChange={(v: "PAYSTACK" | "WALLET") => setPaymentMethod(v)}
-                                    className="flex gap-4"
-                                >
-                                    <div className="flex items-center space-x-2">
-                                        <RadioGroupItem value="PAYSTACK" id="method-paystack" />
-                                        <Label htmlFor="method-paystack" className="text-sm font-medium cursor-pointer">Direct Paystack (₦{programme.amount})</Label>
-                                    </div>
-                                    <div className="flex items-center space-x-2">
-                                        <RadioGroupItem value="WALLET" id="method-wallet" />
-                                        <Label htmlFor="method-wallet" className="text-sm font-medium cursor-pointer">Pay with Wallet</Label>
-                                    </div>
-                                </RadioGroup>
-                            </div>
-                        )}
+                            return (
+                                <>
+                                    {pricingTiers && Object.keys(pricingTiers).length > 0 && (
+                                        <div className="space-y-2 pt-4 border-t">
+                                            <Label className="text-xs font-bold uppercase text-gray-500">Registration Tier / Category</Label>
+                                            <Select 
+                                                value={formData.registrationTier} 
+                                                onValueChange={(v) => {
+                                                    setFormData({...formData, registrationTier: v === "none" ? "" : v})
+                                                }}
+                                            >
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select Registration Tier" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="none">Standard (₦{programme?.amount || "0"})</SelectItem>
+                                                    {pricingTiers.individuals && Object.keys(pricingTiers.individuals).map(k => (
+                                                        <SelectItem key={k} value={k}>{k} - ₦{pricingTiers.individuals[k]}</SelectItem>
+                                                    ))}
+                                                    {pricingTiers.corporate && Object.keys(pricingTiers.corporate).map(k => (
+                                                        <SelectItem key={k} value={k}>{k} - ₦{pricingTiers.corporate[k]}</SelectItem>
+                                                    ))}
+                                                    {Object.keys(pricingTiers).filter(k => k !== 'individuals' && k !== 'corporate').map(k => (
+                                                        <SelectItem key={k} value={k}>{k} - ₦{pricingTiers[k]}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    )}
+
+                                    {!isWaiverActive && programme?.paymentRequired && (
+                                        <div className="space-y-2 mt-4">
+                                            <Label className="text-xs font-bold uppercase text-gray-500">Amount to Pay (₦)</Label>
+                                            <Input 
+                                                type="number"
+                                                min={minAmount}
+                                                step="0.01"
+                                                placeholder={`Minimum: ₦${minAmount}`}
+                                                value={formData.amountPaid}
+                                                onChange={(e) => setFormData({...formData, amountPaid: e.target.value})}
+                                                required
+                                                className="border-green-300 focus-visible:ring-green-500 bg-green-50/20"
+                                            />
+                                            <p className="text-[10px] text-gray-500 font-medium">You must pay at least <strong className="text-black">₦{minAmount}</strong>. You are free to pay more.</p>
+                                        </div>
+                                    )}
+                                    
+                                    {!isWaiverActive && programme.paymentRequired && minAmount > 0 && session && (
+                                        <div className="p-4 border rounded-lg bg-emerald-50/30 space-y-3 mt-4">
+                                            <Label className="text-xs font-bold uppercase tracking-wider text-emerald-800 block">Payment Method</Label>
+                                            <RadioGroup 
+                                                defaultValue="PAYSTACK" 
+                                                onValueChange={(v: "PAYSTACK" | "WALLET") => setPaymentMethod(v)}
+                                                className="flex gap-4"
+                                            >
+                                                <div className="flex items-center space-x-2">
+                                                    <RadioGroupItem value="PAYSTACK" id="method-paystack" />
+                                                    <Label htmlFor="method-paystack" className="text-sm font-medium cursor-pointer">Direct Paystack</Label>
+                                                </div>
+                                                <div className="flex items-center space-x-2">
+                                                    <RadioGroupItem value="WALLET" id="method-wallet" />
+                                                    <Label htmlFor="method-wallet" className="text-sm font-medium cursor-pointer">Pay with Wallet</Label>
+                                                </div>
+                                            </RadioGroup>
+                                        </div>
+                                    )}
+                                </>
+                            );
+                        })()}
                     </CardContent>
                     <CardFooter className="flex flex-col gap-3">
                         <Button 

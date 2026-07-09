@@ -1063,6 +1063,9 @@ export const programmes = mysqlTable("programmes", {
     waiverCode: varchar("waiverCode", { length: 255 }),
 
     feedbackFields: json("feedbackFields"),
+    isRecurringAdmin: boolean("isRecurringAdmin").default(false),
+    flyerUrl: varchar("flyerUrl", { length: 500 }),
+    pricingTiers: json("pricingTiers"),
     createdBy: varchar("createdBy", { length: 255 }).notNull().references(() => users.id),
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
     updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).$defaultFn(() => new Date()).$onUpdateFn(() => new Date()),
@@ -1091,6 +1094,7 @@ export const programmeRegistrations = mysqlTable("programme_registrations", {
     state: varchar("state", { length: 255 }),
     lga: varchar("lga", { length: 255 }),
     branch: varchar("branch", { length: 255 }),
+    registrationTier: varchar("registrationTier", { length: 255 }),
     
     checkInTime: timestamp("checkInTime", { mode: "date", fsp: 3 }),
     checkOutTime: timestamp("checkOutTime", { mode: "date", fsp: 3 }),

@@ -5,7 +5,7 @@ import {
     programmes, programmeRegistrations, programmeReports, programmeMaterials,
     programmeStatusEnum, registrationStatusEnum,
     users, organizations, offices, officials, notifications,
-    financeBudgets, financeBudgetItems, meetings
+    financeBudgets, financeBudgetItems, meetings, financeTransactions
 } from "@/lib/db/schema"
 import { v4 as uuidv4 } from "uuid"
 import { getYearPlannerSettings } from "@/lib/actions/settings"
@@ -280,6 +280,9 @@ const ProgrammeSchema = z.object({
     certPartnerLogo: z.string().optional(),
     certPartnerSignature: z.string().optional(),
     certPartnerSignatory: z.string().optional(),
+    isRecurringAdmin: z.boolean().default(false),
+    flyerUrl: z.string().optional().nullable(),
+    pricingTiers: z.any().optional(),
 })
 
 const ReportSchema = z.object({
@@ -305,6 +308,8 @@ const RegistrationSchema = z.object({
     country: z.string().optional(),
     state: z.string().optional(),
     lga: z.string().optional(),
+    registrationTier: z.string().optional(),
+    amountPaid: z.coerce.number().optional()
 })
 
 // --- Programme Management ---
@@ -385,17 +390,21 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
 
         let initialStatus: 'DRAFT' | 'PENDING_STATE' | 'PENDING_NATIONAL' | 'APPROVED' = 'DRAFT'
 
-        // Workflow Logic:
-        // Branch/LGA -> PENDING_STATE (submitted to State for vetting)
-        // State -> PENDING_NATIONAL (submitted to National for vetting/approval)
-        // National -> APPROVED
+        if (validData.isRecurringAdmin) {
+            initialStatus = 'APPROVED'
+        } else {
+            // Workflow Logic:
+            // Branch/LGA -> PENDING_STATE (submitted to State for vetting)
+            // State -> PENDING_NATIONAL (submitted to National for vetting/approval)
+            // National -> APPROVED
 
-        if (org.level === 'BRANCH' || org.level === 'LOCAL_GOVERNMENT') {
-            initialStatus = 'PENDING_STATE'
-        } else if (org.level === 'STATE') {
-            initialStatus = 'PENDING_NATIONAL'
-        } else if (org.level === 'NATIONAL') {
-            initialStatus = 'PENDING_NATIONAL'
+            if (org.level === 'BRANCH' || org.level === 'LOCAL_GOVERNMENT') {
+                initialStatus = 'PENDING_STATE'
+            } else if (org.level === 'STATE') {
+                initialStatus = 'PENDING_NATIONAL'
+            } else if (org.level === 'NATIONAL') {
+                initialStatus = 'PENDING_NATIONAL'
+            }
         }
 
         const programmeId = crypto.randomUUID()
@@ -476,6 +485,9 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
                 certPartnerLogo: validData.certPartnerLogo || null,
                 certPartnerSignature: validData.certPartnerSignature || null,
                 certPartnerSignatory: validData.certPartnerSignatory || null,
+                isRecurringAdmin: validData.isRecurringAdmin,
+                flyerUrl: validData.flyerUrl || null,
+                pricingTiers: validData.pricingTiers ? JSON.parse(JSON.stringify(validData.pricingTiers)) : null,
                 createdBy: finalCreatedBy,
                 createdAt: new Date(),
                 updatedAt: new Date(),
@@ -1013,7 +1025,24 @@ export async function registerForProgramme(programmeId: string, data?: z.infer<t
         }
 
         // New Registration Logic
-        let initialStatus: any = programme.paymentRequired && parseFloat(programme.amount || "0") > 0 ? 'PENDING_PAYMENT' : 'REGISTERED'
+        let baseAmount = parseFloat(programme.amount?.toString() || "0")
+        
+        if (data?.registrationTier && programme.pricingTiers) {
+             const tiers: any = typeof programme.pricingTiers === 'string' ? JSON.parse(programme.pricingTiers as string) : programme.pricingTiers;
+             let tierAmount = 0;
+             if (tiers?.individuals && tiers.individuals[data.registrationTier]) tierAmount = Number(tiers.individuals[data.registrationTier]);
+             else if (tiers?.corporate && tiers.corporate[data.registrationTier]) tierAmount = Number(tiers.corporate[data.registrationTier]);
+             else if (tiers && tiers[data.registrationTier]) tierAmount = Number(tiers[data.registrationTier]);
+             
+             if (tierAmount > 0) baseAmount = tierAmount;
+        }
+
+        let userAmount = data?.amountPaid ? parseFloat(data.amountPaid.toString()) : baseAmount;
+        if (programme.paymentRequired && userAmount < baseAmount) {
+             return { success: false, error: `Minimum payment for this tier is ${baseAmount}` }
+        }
+
+        let initialStatus: any = programme.paymentRequired && userAmount > 0 ? 'PENDING_PAYMENT' : 'REGISTERED'
         let paymentRef = null
         let checkInTime = null
         
@@ -1031,7 +1060,8 @@ export async function registerForProgramme(programmeId: string, data?: z.infer<t
             status: initialStatus,
             paymentReference: paymentRef,
             checkInTime: checkInTime,
-            amountPaid: (initialStatus === 'PAID' || initialStatus === 'ATTENDED') ? (programme.amount || "0.00") : "0.00"
+            registrationTier: data?.registrationTier || null,
+            amountPaid: (initialStatus === 'PAID' || initialStatus === 'ATTENDED') ? userAmount.toString() : "0.00"
         }
 
         if (session?.user) {
@@ -1109,7 +1139,7 @@ export async function registerForProgramme(programmeId: string, data?: z.infer<t
             success: true, 
             registrationId: newReg.id, 
             paymentRequired: registrationData.status === 'PENDING_PAYMENT',
-            amount: programme.amount,
+            amount: userAmount.toString(),
             isWaiver: !!waiverCode
         }
     } catch (e) {
@@ -1248,6 +1278,7 @@ export async function initializeProgrammeRegistrationPayment(registrationId: str
     }
 }
 
+
 export async function verifyProgrammeRegistrationPayment(registrationId: string, reference: string) {
     try {
         const response = await verifyPayment(reference)
@@ -1270,20 +1301,52 @@ export async function verifyProgrammeRegistrationPayment(registrationId: string,
                 })
                 .where(eq(programmeRegistrations.id, registrationId))
             
+            // Insert finance transaction if fully or partially paid
+            if (justPaidAmount > 0 && regDetails?.programme?.organizationId) {
+                let performerId = regDetails.userId;
+                if (!performerId) {
+                    const [firstUser] = await db.select({ id: users.id }).from(users).orderBy(asc(users.createdAt)).limit(1);
+                    performerId = firstUser?.id || "";
+                }
+
+                if (performerId) {
+                    // Prevent duplicates
+                    const [existingTx] = await db.select().from(financeTransactions)
+                        .where(eq(financeTransactions.metadata, reference)).limit(1);
+
+                    if (!existingTx) {
+                        await db.insert(financeTransactions).values({
+                            organizationId: regDetails.programme.organizationId,
+                            type: 'INFLOW',
+                            amount: justPaidAmount.toString(),
+                            category: 'PROGRAMME_REGISTRATION',
+                            description: `Registration payment for programme: ${regDetails.programme.title} (${reference})`,
+                            performedBy: performerId,
+                            date: new Date(),
+                            metadata: reference
+                        });
+                    }
+                }
+            }
+
             revalidatePath(`/programmes/registrations/${registrationId}/slip`)
 
             // Send confirmation email
-            if (regDetails) {
-                await sendEmail({
-                    to: regDetails.email,
-                    ...emailTemplates.programmeRegistrationReceipt(
-                        regDetails.name,
-                        regDetails.programme.title,
-                        newPaidAmount,
-                        registrationId,
-                        regDetails.member?.memberId || undefined
-                    )
-                })
+            try {
+                if (regDetails) {
+                    await sendEmail({
+                        to: regDetails.email,
+                        ...emailTemplates.programmeRegistrationReceipt(
+                            regDetails.name,
+                            regDetails.programme.title,
+                            newPaidAmount,
+                            registrationId,
+                            regDetails.member?.memberId || undefined
+                        )
+                    })
+                }
+            } catch (err) {
+                console.error("Failed to send programme registration email:", err)
             }
             
             return { success: true }
@@ -1497,6 +1560,9 @@ export async function updateProgramme(programmeId: string, data: Partial<z.infer
             certPartnerLogo: validData.certPartnerLogo,
             certPartnerSignature: validData.certPartnerSignature,
             certPartnerSignatory: validData.certPartnerSignatory,
+            isRecurringAdmin: validData.isRecurringAdmin,
+            flyerUrl: validData.flyerUrl !== undefined ? validData.flyerUrl : current.flyerUrl,
+            pricingTiers: validData.pricingTiers !== undefined ? JSON.parse(JSON.stringify(validData.pricingTiers)) : current.pricingTiers,
             updatedAt: new Date()
         };
 

@@ -67,6 +67,9 @@ const ProgrammeSchema = z.object({
     certPartnerSignature: z.string().optional(),
     certPartnerSignatory: z.string().optional(),
     materials: z.array(z.object({ title: z.string(), url: z.string(), fileType: z.string() })).default([]),
+    isRecurringAdmin: z.boolean().default(false),
+    flyerUrl: z.string().optional(),
+    pricingTiers: z.string().optional(), // Using stringified JSON for form simplicity
 })
 
 export function CreateProgrammeDialog({ 
@@ -122,6 +125,9 @@ export function CreateProgrammeDialog({
             certPartnerSignature: "",
             certPartnerSignatory: "",
             materials: [],
+            isRecurringAdmin: false,
+            flyerUrl: "",
+            pricingTiers: "",
         },
     })
 
@@ -169,6 +175,9 @@ export function CreateProgrammeDialog({
                 budget: parseFloat(data.budget || "0"),
                 attendanceWindow: parseInt(data.attendanceWindow || "3"),
                 hasCertificate: data.hasCertificate,
+                isRecurringAdmin: data.isRecurringAdmin,
+                flyerUrl: data.flyerUrl || undefined,
+                pricingTiers: data.pricingTiers ? JSON.parse(data.pricingTiers) : undefined,
             }
 
             const result = await createProgramme(payload, data.organizationId)
@@ -257,6 +266,50 @@ export function CreateProgrammeDialog({
                             )}
                         />
 
+                        <div className="flex items-center space-x-2 border p-4 rounded-md bg-blue-50/50">
+                             <FormField
+                                 control={form.control}
+                                 name="isRecurringAdmin"
+                                 render={({ field }) => (
+                                     <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                                         <FormControl>
+                                             <Checkbox
+                                                 checked={field.value}
+                                                 onCheckedChange={field.onChange}
+                                             />
+                                         </FormControl>
+                                         <div className="space-y-1 leading-none">
+                                             <FormLabel className="text-blue-900 font-bold">
+                                                 Is this a repetitive/administrative programme? (e.g., Adhkar, Teskiyyah, Meetings)
+                                             </FormLabel>
+                                             <FormDescription className="text-[10px]">If checked, this programme will be auto-approved immediately.</FormDescription>
+                                         </div>
+                                     </FormItem>
+                                 )}
+                             />
+                         </div>
+
+                         <FormField
+                             control={form.control}
+                             name="flyerUrl"
+                             render={({ field }) => (
+                                 <FormItem>
+                                     <FormLabel>Programme Flyer / Handbill (Optional)</FormLabel>
+                                     <FormControl>
+                                         <FileUploadInput
+                                            onUploadComplete={(url) => field.onChange(url)}
+                                            accept="image/*"
+                                            label={field.value ? "Change Flyer" : "Upload Flyer"}
+                                         />
+                                         {field.value && (
+                                             <p className="text-xs text-green-600 font-medium truncate mt-2">Uploaded: {field.value}</p>
+                                         )}
+                                     </FormControl>
+                                     <FormMessage />
+                                 </FormItem>
+                             )}
+                         />
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <FormField
                                 control={form.control}
@@ -296,6 +349,25 @@ export function CreateProgrammeDialog({
                                     )}
                                 />
                             )}
+                            
+                             <FormField
+                                     control={form.control}
+                                     name="pricingTiers"
+                                     render={({ field }) => (
+                                         <FormItem>
+                                             <FormLabel>Pricing Tiers (JSON Configuration)</FormLabel>
+                                             <FormControl>
+                                                 <Textarea 
+                                                    placeholder={'{\n  "individuals": {\n    "National Executive": 5000\n  },\n  "corporate": {\n    "State": 50000,\n    "Branch": 10000\n  }\n}'} 
+                                                    {...field} 
+                                                    value={field.value || ''} 
+                                                 />
+                                             </FormControl>
+                                             <FormDescription className="text-[10px]">Configure varied minimum fees for different roles. Leave empty to use standard Amount.</FormDescription>
+                                             <FormMessage />
+                                         </FormItem>
+                                     )}
+                                 />
 
                             <FormField
                                 control={form.control}

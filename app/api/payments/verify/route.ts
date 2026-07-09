@@ -44,33 +44,38 @@ export async function POST(request: NextRequest) {
 
     // Send confirmation email if successful
     if (result.data && result.data.status === "success" && payment.user) {
-      const [org] = await db.select().from(organizations).where(eq(organizations.id, payment.organizationId || ""));
+      try {
+        const [org] = await db.select().from(organizations).where(eq(organizations.id, payment.organizationId || ""));
 
-      const receiptBuffer = await generateReceiptPDF({
-        receiptNumber: `RCP-${reference.slice(0, 8)}`,
-        paymentMethod: "Paystack",
-        paymentDate: new Date(),
-        organizationName: org?.name || "The Muslim Congress",
-        organizationAddress: org?.address || undefined,
-        organizationEmail: org?.email || undefined,
-        memberName: payment.user.name || "Member",
-        memberId: payment.user.id,
-        items: [{
-          description: payment.description || "Donation/Payment",
-          amount: result.data.amount
-        }],
-        totalAmount: result.data.amount
-      });
+        const receiptBuffer = await generateReceiptPDF({
+          receiptNumber: `RCP-${reference.slice(0, 8)}`,
+          paymentMethod: "Paystack",
+          paymentDate: new Date(),
+          organizationName: org?.name || "The Muslim Congress",
+          organizationAddress: org?.address || undefined,
+          organizationEmail: org?.email || undefined,
+          memberName: payment.user.name || "Member",
+          memberId: payment.user.id,
+          items: [{
+            description: payment.description || "Donation/Payment",
+            amount: result.data.amount
+          }],
+          totalAmount: result.data.amount
+        });
 
-      await sendEmail({
-        to: payment.user.email,
-        subject: `Payment Receipt: ${payment.description || "Donation"}`,
-        html: `<p>Dear ${payment.user.name},</p><p>Thank you for your payment. Please find your receipt attached.</p>`,
-        attachments: [{
-          filename: `receipt-${reference.slice(0, 8)}.pdf`,
-          content: receiptBuffer
-        }]
-      })
+        await sendEmail({
+          to: payment.user.email,
+          subject: `Payment Receipt: ${payment.description || "Donation"}`,
+          html: `<p>Dear ${payment.user.name},</p><p>Thank you for your payment. Please find your receipt attached.</p>`,
+          attachments: [{
+            filename: `receipt-${reference.slice(0, 8)}.pdf`,
+            content: receiptBuffer
+          }]
+        })
+      } catch (receiptError) {
+        console.error("Failed to generate or send receipt:", receiptError);
+        // Do not throw, allow verification to succeed
+      }
     }
 
     await createAuditLog({

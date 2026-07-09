@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge"
 import { ConstitutionContent } from "@/components/constitution/constitution-content"
 import { MemberReviewPanel } from "./member-review-panel"
 
+export const dynamic = "force-dynamic"
+
 export default async function MemberConstitutionReviewPage() {
     const session = await getServerSession()
     if (!session?.user) return <div>Unauthorized</div>

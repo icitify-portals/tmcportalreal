@@ -64,6 +64,7 @@ async function NationalContent() {
     startDate: programmes.startDate,
     time: programmes.time,
     format: programmes.format,
+    flyerUrl: programmes.flyerUrl,
   })
   .from(programmes)
   .where(
@@ -117,6 +118,41 @@ async function NationalContent() {
           );
         })()}
       </div>
+
+      {/* Scrolling Flyers Marquee */}
+      {upcomingProgrammes.some(p => p.flyerUrl) && (
+        <div className="w-full bg-green-50/30 py-8 border-y mt-8 relative overflow-hidden flex flex-col items-center">
+          <h3 className="text-2xl font-bold tracking-tight text-green-800 dark:text-green-400 mb-6 flex items-center gap-2">
+            <Calendar className="h-6 w-6" /> Featured Programmes
+          </h3>
+          <style dangerouslySetInnerHTML={{ __html: `
+            @keyframes scroll {
+              0% { transform: translateX(0); }
+              100% { transform: translateX(calc(-250px * ${upcomingProgrammes.filter(p => p.flyerUrl).length} - 1.5rem * ${upcomingProgrammes.filter(p => p.flyerUrl).length})); }
+            }
+            .animate-scroll {
+              animation: scroll 30s linear infinite;
+            }
+            .animate-scroll:hover {
+              animation-play-state: paused;
+            }
+          `}} />
+          <div className="w-full max-w-[100vw] overflow-hidden flex">
+            {/* Double the array for infinite scroll effect if few items, or just rely on a simple scroll */}
+            <div className="flex gap-6 animate-scroll w-max px-4">
+              {[...upcomingProgrammes.filter(p => p.flyerUrl), ...upcomingProgrammes.filter(p => p.flyerUrl)].map((p, i) => (
+                <Link key={`${p.id}-${i}`} href={`/programmes/registrations/${p.id}/register`} className="shrink-0 group relative overflow-hidden rounded-xl shadow-md border-2 border-transparent hover:border-green-500 transition-all w-[250px] aspect-[4/5] bg-white">
+                  <img src={p.flyerUrl as string} alt={p.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-4 text-center">
+                    <p className="text-white font-bold mb-2 line-clamp-2">{p.title}</p>
+                    <span className="bg-green-600 text-white px-4 py-2 rounded-full text-sm font-semibold hover:bg-green-700 transition-colors">Register Now</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       <main className="flex-grow container mx-auto px-4 py-12 space-y-20">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">

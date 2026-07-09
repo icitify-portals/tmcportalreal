@@ -1,7 +1,7 @@
 import axios from "axios"
 import { db } from "@/lib/db"
-import { payments, paymentStatusEnum, paymentTypeEnum, fundraisingCampaigns } from "@/lib/db/schema"
-import { eq, sql } from "drizzle-orm"
+import { payments, paymentStatusEnum, paymentTypeEnum, fundraisingCampaigns, financeTransactions, organizations, users } from "@/lib/db/schema"
+import { eq, sql, asc } from "drizzle-orm"
 
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY || ""
 const PAYSTACK_PUBLIC_KEY = process.env.PAYSTACK_PUBLIC_KEY || ""
@@ -135,26 +135,54 @@ export async function updatePaymentStatus(
   status: Payment['status'],
   paystackResponse?: any
 ) {
+  const existingPayment = await db.query.payments.findFirst({
+    where: eq(payments.id, paymentId)
+  })
+
+  const isFirstTimeSuccess = existingPayment?.status !== "SUCCESS" && status === "SUCCESS"
+
   const result = await db.update(payments)
     .set({
       status,
       paystackResponse: paystackResponse || undefined,
-      paidAt: status === "SUCCESS" ? new Date() : undefined,
+      paidAt: status === "SUCCESS" && existingPayment?.status !== "SUCCESS" ? new Date() : existingPayment?.paidAt,
     })
     .where(eq(payments.id, paymentId))
 
-  if (status === "SUCCESS") {
+  if (isFirstTimeSuccess && existingPayment) {
     // Check if campaign and update amount
-    const payment = await db.query.payments.findFirst({
-      where: eq(payments.id, paymentId)
-    })
-
-    if (payment && payment.campaignId) {
+    if (existingPayment.campaignId) {
       await db.update(fundraisingCampaigns)
         .set({
-          raisedAmount: sql`${fundraisingCampaigns.raisedAmount} + ${payment.amount}`
+          raisedAmount: sql`${fundraisingCampaigns.raisedAmount} + ${existingPayment.amount}`
         })
-        .where(eq(fundraisingCampaigns.id, payment.campaignId))
+        .where(eq(fundraisingCampaigns.id, existingPayment.campaignId))
+    }
+
+    // Insert into financeTransactions to record the inflow
+    let orgId = existingPayment.organizationId;
+    if (!orgId) {
+       const [nationalOrg] = await db.select().from(organizations).where(eq(organizations.level, 'NATIONAL')).limit(1);
+       orgId = nationalOrg?.id || "";
+    }
+
+    let performerId = existingPayment.userId;
+    if (!performerId) {
+       const [firstUser] = await db.select({ id: users.id }).from(users).orderBy(asc(users.createdAt)).limit(1);
+       performerId = firstUser?.id || "";
+    }
+
+    if (orgId && performerId) {
+        await db.insert(financeTransactions).values({
+            organizationId: orgId,
+            type: 'INFLOW',
+            amount: existingPayment.amount,
+            category: existingPayment.paymentType,
+            description: `Payment for ${existingPayment.description || existingPayment.paymentType} (${existingPayment.paystackRef || existingPayment.id})`,
+            performedBy: performerId,
+            date: new Date(),
+            metadata: { paystackRef: existingPayment.paystackRef, paymentId: existingPayment.id }
+        })
     }
   }
 
