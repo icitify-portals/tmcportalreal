@@ -213,7 +213,9 @@ export async function recordFeePayment(assignmentId: string, amount: number, pay
         // 2. Start transaction
         await db.transaction(async (tx) => {
             // Create payment record
-            const [payment] = await tx.insert(payments).values({
+            const paymentId = crypto.randomUUID()
+            await tx.insert(payments).values({
+                id: paymentId,
                 userId: session.user.id,
                 organizationId: assignment.fee.organizationId,
                 amount: amount.toString(),
@@ -222,14 +224,14 @@ export async function recordFeePayment(assignmentId: string, amount: number, pay
                 paystackRef,
                 description: `Payment for ${assignment.fee.title}`,
                 paidAt: new Date(),
-            }).$returningId()
+            })
 
             // Update assignment
             await tx.update(feeAssignments).set({
                 status: 'PAID',
                 amountPaid: amount.toString(),
                 paidAt: new Date(),
-                paymentId: payment.id,
+                paymentId: paymentId,
             }).where(eq(feeAssignments.id, assignmentId))
         })
 
