@@ -28,7 +28,7 @@ import { toast } from "sonner"
 import { Loader2, Calendar } from "lucide-react"
 
 const YearPlannerSchema = z.object({
-    activeYear: z.coerce.number().int().min(2000).max(2100),
+    activeYear: z.number().int().min(2000).max(2100),
     nextYearOpen: z.boolean(),
     nextYearDeadline: z.string().refine((val) => !isNaN(Date.parse(val)), "Invalid date"),
 })
@@ -104,7 +104,7 @@ export function YearPlannerSettingsCard({ initialSettings }: YearPlannerSettings
                                     <FormItem>
                                         <FormLabel>Active Calendar Year</FormLabel>
                                         <FormControl>
-                                            <Input type="number" {...field} />
+                                            <Input type="number" {...field} onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : 0)} />
                                         </FormControl>
                                         <FormDescription>
                                             The core year for ad-hoc programmes. Programmes submitted for this year are always accepted.
