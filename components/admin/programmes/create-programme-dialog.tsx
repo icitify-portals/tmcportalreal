@@ -301,10 +301,10 @@ export function CreateProgrammeDialog({
                                             accept="image/*"
                                             label={field.value ? "Change Flyer" : "Upload Flyer"}
                                          />
-                                         {field.value && (
-                                             <p className="text-xs text-green-600 font-medium truncate mt-2">Uploaded: {field.value}</p>
-                                         )}
                                      </FormControl>
+                                     {field.value && (
+                                         <p className="text-xs text-green-600 font-medium truncate mt-2">Uploaded: {field.value}</p>
+                                     )}
                                      <FormMessage />
                                  </FormItem>
                              )}
