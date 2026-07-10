@@ -22,21 +22,15 @@ import {
     FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { Switch } from "@/components/ui/switch"
 import { updateYearPlannerSettings, YearPlannerSettings } from "@/lib/actions/settings"
 import { toast } from "sonner"
-import { CalendarIcon, Loader2, Calendar } from "lucide-react"
+import { Loader2, Calendar } from "lucide-react"
 
 const YearPlannerSchema = z.object({
-    programYearStart: z.string().refine((val) => !isNaN(Date.parse(val)), "Invalid date"),
-    programYearEnd: z.string().refine((val) => !isNaN(Date.parse(val)), "Invalid date"),
-    submissionDeadline: z.string().refine((val) => !isNaN(Date.parse(val)), "Invalid date"),
-}).refine((data) => {
-    const start = new Date(data.programYearStart)
-    const end = new Date(data.programYearEnd)
-    return start < end
-}, {
-    message: "Start date must be before end date",
-    path: ["programYearEnd"],
+    activeYear: z.coerce.number().int().min(2000).max(2100),
+    nextYearOpen: z.boolean(),
+    nextYearDeadline: z.string().refine((val) => !isNaN(Date.parse(val)), "Invalid date"),
 })
 
 interface YearPlannerSettingsProps {
@@ -58,9 +52,9 @@ export function YearPlannerSettingsCard({ initialSettings }: YearPlannerSettings
     const form = useForm<z.infer<typeof YearPlannerSchema>>({
         resolver: zodResolver(YearPlannerSchema),
         defaultValues: {
-            programYearStart: formatDate(initialSettings.programYearStart),
-            programYearEnd: formatDate(initialSettings.programYearEnd),
-            submissionDeadline: formatDate(initialSettings.submissionDeadline),
+            activeYear: initialSettings.activeYear,
+            nextYearOpen: initialSettings.nextYearOpen,
+            nextYearDeadline: formatDate(initialSettings.nextYearDeadline),
         },
     })
 
@@ -68,9 +62,9 @@ export function YearPlannerSettingsCard({ initialSettings }: YearPlannerSettings
         setIsSubmitting(true)
         try {
             const payload: YearPlannerSettings = {
-                programYearStart: new Date(data.programYearStart),
-                programYearEnd: new Date(data.programYearEnd),
-                submissionDeadline: new Date(data.submissionDeadline),
+                activeYear: data.activeYear,
+                nextYearOpen: data.nextYearOpen,
+                nextYearDeadline: new Date(data.nextYearDeadline),
             }
 
             const result = await updateYearPlannerSettings(payload)
@@ -96,24 +90,24 @@ export function YearPlannerSettingsCard({ initialSettings }: YearPlannerSettings
                     Year Planner Configuration
                 </CardTitle>
                 <CardDescription>
-                    Configure the active programme year and submission deadlines for all jurisdictions.
+                    Manage the active programme year and configure flexible submission windows for the following year.
                 </CardDescription>
             </CardHeader>
             <CardContent>
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <FormField
                                 control={form.control}
-                                name="programYearStart"
+                                name="activeYear"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Programme Year Start</FormLabel>
+                                        <FormLabel>Active Calendar Year</FormLabel>
                                         <FormControl>
-                                            <Input type="date" {...field} />
+                                            <Input type="number" {...field} />
                                         </FormControl>
                                         <FormDescription>
-                                            Beginning of the fiscal/programme year.
+                                            The core year for ad-hoc programmes. Programmes submitted for this year are always accepted.
                                         </FormDescription>
                                         <FormMessage />
                                     </FormItem>
@@ -122,17 +116,23 @@ export function YearPlannerSettingsCard({ initialSettings }: YearPlannerSettings
 
                             <FormField
                                 control={form.control}
-                                name="programYearEnd"
+                                name="nextYearOpen"
                                 render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Programme Year End</FormLabel>
+                                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
+                                        <div className="space-y-0.5">
+                                            <FormLabel className="text-base">
+                                                Open Next Year Submissions
+                                            </FormLabel>
+                                            <FormDescription>
+                                                Allow jurisdictions to submit programmes for {form.watch('activeYear') + 1}
+                                            </FormDescription>
+                                        </div>
                                         <FormControl>
-                                            <Input type="date" {...field} />
+                                            <Switch
+                                                checked={field.value}
+                                                onCheckedChange={field.onChange}
+                                            />
                                         </FormControl>
-                                        <FormDescription>
-                                            End of the fiscal/programme year.
-                                        </FormDescription>
-                                        <FormMessage />
                                     </FormItem>
                                 )}
                             />
@@ -141,16 +141,16 @@ export function YearPlannerSettingsCard({ initialSettings }: YearPlannerSettings
                         <div className="pt-4 border-t">
                             <FormField
                                 control={form.control}
-                                name="submissionDeadline"
+                                name="nextYearDeadline"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel className="text-red-500 font-bold">Global Submission Deadline</FormLabel>
+                                        <FormLabel className="text-red-500 font-bold">Flexible Submission Deadline (For Next Year)</FormLabel>
                                         <FormControl>
                                             <Input type="date" {...field} />
                                         </FormControl>
                                         <FormDescription>
-                                            All jurisdictions (State, Local, Branch) must submit their programmes by this date.
-                                            Submissions after this date will be flagged as LATE.
+                                            The absolute deadline for all jurisdictions to submit their programmes for {form.watch('activeYear') + 1}. 
+                                            Submissions after this date will be flagged as LATE. You can extend this date at any time.
                                         </FormDescription>
                                         <FormMessage />
                                     </FormItem>

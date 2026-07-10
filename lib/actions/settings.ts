@@ -30,15 +30,15 @@ const DEFAULT_MEMBERSHIP_SETTINGS: MembershipSettings = {
 }
 
 export interface YearPlannerSettings {
-    programYearStart: Date
-    programYearEnd: Date
-    submissionDeadline: Date
+    activeYear: number
+    nextYearOpen: boolean
+    nextYearDeadline: Date
 }
 
 const DEFAULT_YEAR_PLANNER_SETTINGS: YearPlannerSettings = {
-    programYearStart: new Date(new Date().getFullYear(), 0, 1), // Jan 1
-    programYearEnd: new Date(new Date().getFullYear(), 11, 31), // Dec 31
-    submissionDeadline: new Date(new Date().getFullYear(), 11, 12) // Dec 12
+    activeYear: new Date().getFullYear(),
+    nextYearOpen: false,
+    nextYearDeadline: new Date(new Date().getFullYear(), 6, 31) // July 31st
 }
 
 export async function getAISettings(): Promise<AISettings> {
@@ -163,9 +163,9 @@ export async function getYearPlannerSettings(): Promise<YearPlannerSettings> {
         const config: YearPlannerSettings = { ...DEFAULT_YEAR_PLANNER_SETTINGS }
 
         settings.forEach(s => {
-            if (s.settingKey === "year_planner_start") config.programYearStart = new Date(s.settingValue as string)
-            if (s.settingKey === "year_planner_end") config.programYearEnd = new Date(s.settingValue as string)
-            if (s.settingKey === "year_planner_deadline") config.submissionDeadline = new Date(s.settingValue as string)
+            if (s.settingKey === "year_planner_active_year") config.activeYear = parseInt(s.settingValue as string) || new Date().getFullYear()
+            if (s.settingKey === "year_planner_next_year_open") config.nextYearOpen = s.settingValue === "true"
+            if (s.settingKey === "year_planner_next_year_deadline") config.nextYearDeadline = new Date(s.settingValue as string)
         })
 
         return config
@@ -197,9 +197,9 @@ export async function updateYearPlannerSettings(data: YearPlannerSettings) {
         }
     }
 
-    await upsertSetting("year_planner_start", data.programYearStart.toISOString())
-    await upsertSetting("year_planner_end", data.programYearEnd.toISOString())
-    await upsertSetting("year_planner_deadline", data.submissionDeadline.toISOString())
+    await upsertSetting("year_planner_active_year", data.activeYear.toString())
+    await upsertSetting("year_planner_next_year_open", String(data.nextYearOpen))
+    await upsertSetting("year_planner_next_year_deadline", data.nextYearDeadline.toISOString())
 
     revalidatePath("/dashboard/admin/settings")
     return { success: true }

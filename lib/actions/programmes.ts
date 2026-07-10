@@ -260,8 +260,8 @@ const ProgrammeSchema = z.object({
     hasCertificate: z.boolean().default(false),
     paymentRequired: z.boolean().default(false),
     allowInstallments: z.boolean().optional().default(false),
-    minInstallmentAmount: z.coerce.number().optional().default(0),
-    amount: z.coerce.number().nonnegative().default(0),
+    minInstallmentAmount: z.preprocess((val) => val === "" || val === undefined ? 0 : Number(String(val).replace(/,/g, '')), z.number().optional().default(0)),
+    amount: z.preprocess((val) => Number(String(val).replace(/,/g, '')), z.number().nonnegative()).default(0),
     organizingOfficeId: z.string().optional().nullable(),
     organizingOfficialId: z.string().optional().nullable(),
     // New Planner Fields
@@ -269,7 +269,7 @@ const ProgrammeSchema = z.object({
     meetingUrl: z.string().optional().nullable(),
     frequency: z.enum(['ONCE', 'WEEKLY', 'MONTHLY', 'QUARTERLY', 'BI-ANNUALLY', 'ANNUALLY', 'CUSTOM']).default('ONCE'),
     rruleString: z.string().optional(),
-    budget: z.coerce.number().nonnegative().default(0),
+    budget: z.preprocess((val) => Number(String(val).replace(/,/g, '')), z.number().nonnegative()).default(0),
     objectives: z.string().optional(),
     committee: z.string().optional(),
     attendanceWindow: z.number().default(3),
@@ -361,31 +361,34 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
 
         const validData = ProgrammeSchema.parse(data)
 
-        // Flexible Deadline Check: 
-        // Retrieve global year planner settings
+        // Retrieve sliding window settings
         const yearSettings = await getYearPlannerSettings()
-
         const now = new Date()
         const progDate = new Date(validData.startDate)
-
-        // Past dates are now allowed as long as they are within the active Programme Year (validated below)
-
-        // 1. Validate Programme is within current Programme Year
-        if (progDate < yearSettings.programYearStart || progDate > yearSettings.programYearEnd) {
-            // Optional: Return error or just warn. User asked for "manageable date range". 
-            // Let's return error if it's completely outside the active year to enforce discipline.
-            return {
-                success: false,
-                error: `Programme date must be between ${yearSettings.programYearStart.toDateString()} and ${yearSettings.programYearEnd.toDateString()}`
-            }
-        }
+        const progYear = progDate.getFullYear()
 
         let isLateSubmission = false
 
-        // 2. Check Deadline
-        // If current date is past the submission deadline, mark as late
-        if (now > yearSettings.submissionDeadline) {
-            isLateSubmission = true
+        if (progYear === yearSettings.activeYear) {
+            // Programmes in the active year are considered ad-hoc and implicitly late
+            // if submitted after the active year has started (as the annual plan was done last year).
+            // For simplicity, we just allow them but mark them late if submitted during the year.
+            isLateSubmission = true; 
+        } else if (progYear === yearSettings.activeYear + 1) {
+            if (!yearSettings.nextYearOpen) {
+                return {
+                    success: false,
+                    error: `Submissions for ${progYear} are currently closed.`
+                }
+            }
+            if (now > yearSettings.nextYearDeadline) {
+                isLateSubmission = true
+            }
+        } else {
+            return {
+                success: false,
+                error: `You can only submit programmes for ${yearSettings.activeYear} or ${yearSettings.activeYear + 1}`
+            }
         }
 
         let initialStatus: 'DRAFT' | 'PENDING_STATE' | 'PENDING_NATIONAL' | 'APPROVED' = 'DRAFT'
@@ -442,7 +445,10 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
         const endDateOriginal = validData.endDate ? new Date(validData.endDate) : null;
         let durationMs = endDateOriginal ? endDateOriginal.getTime() - currentDate.getTime() : 0;
 
-        while (currentDate <= yearSettings.programYearEnd) {
+        // Determine the end of the year for this specific programme
+        const targetYearEnd = new Date(progYear, 11, 31); // Dec 31st of the programme's year
+
+        while (currentDate <= targetYearEnd) {
             const currentProgrammeId = programmeInstances.length === 0 ? firstProgrammeId : uuidv4();
             
             let currentEndDate = null;
