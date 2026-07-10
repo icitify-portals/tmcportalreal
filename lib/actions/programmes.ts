@@ -523,7 +523,7 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
                     // Generate dates from the start date (inclusive) to the end of the year
                     // Note: between() is exclusive for start by default unless inc=true, 
                     // but we want to start from the *next* occurrence since we already added the first one manually.
-                    const occurrences = rule.between(new Date(currentDate.getTime() + 1000), yearSettings.programYearEnd, true);
+                    const occurrences = rule.between(new Date(currentDate.getTime() + 1000), targetYearEnd, true);
                     
                     for (const occDate of occurrences) {
                         const newProgId = uuidv4();
