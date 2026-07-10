@@ -1044,6 +1044,7 @@ export const programmes = mysqlTable("programmes", {
     rruleString: varchar("rruleString", { length: 500 }),
 
     isLateSubmission: boolean("isLateSubmission").default(false),
+    isPublic: boolean("isPublic").default(true),
 
     paymentRequired: boolean("paymentRequired").default(false),
     allowInstallments: boolean("allowInstallments").default(false),

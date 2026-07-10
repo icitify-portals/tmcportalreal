@@ -45,6 +45,8 @@ export function ReviewActions({ programmeId, status, hasCertificate }: ReviewAct
     const [partnerSignature, setPartnerSignature] = useState("")
     const [partnerSignatory, setPartnerSignatory] = useState("")
 
+    const [isPublic, setIsPublic] = useState(true)
+
     // Asset Library
     const [assets, setAssets] = useState<any>({ signatures: [], signatories: [], partnerLogos: [], partnerSignatures: [], partnerNames: [] })
 
@@ -86,7 +88,7 @@ export function ReviewActions({ programmeId, status, hasCertificate }: ReviewAct
                     certPartnerSignature: partnerSignature,
                     certPartnerSignatory: partnerSignatory
                 } : null
-                res = await approveProgrammeNational(programmeId, certData)
+                res = await approveProgrammeNational(programmeId, certData, isPublic)
             }
             
             if (res?.success) {
@@ -219,6 +221,16 @@ export function ReviewActions({ programmeId, status, hasCertificate }: ReviewAct
                                 )}
                             </div>
                         )}
+                        <div className="py-2 flex items-center gap-2">
+                            <input 
+                                type="checkbox" 
+                                id="make-public" 
+                                checked={isPublic} 
+                                onChange={(e) => setIsPublic(e.target.checked)}
+                                className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-600"
+                            />
+                            <Label htmlFor="make-public" className="cursor-pointer font-medium">Make this programme visible on the Public Portal</Label>
+                        </div>
 
                         <DialogFooter>
                             <Button variant="outline" onClick={() => setOpenApprove(false)} disabled={isApproving}>Cancel</Button>

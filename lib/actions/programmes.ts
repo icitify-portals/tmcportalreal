@@ -703,7 +703,7 @@ async function autoCreateVirtualWorkshop(programmeId: string, userId: string) {
     }
 }
 
-export async function approveProgrammeNational(programmeId: string, certData?: any) {
+export async function approveProgrammeNational(programmeId: string, certData?: any, isPublic: boolean = true) {
     try {
         const session = await getServerSession()
         if (!session?.user?.id) return { success: false, error: "Unauthorized" }
@@ -716,6 +716,7 @@ export async function approveProgrammeNational(programmeId: string, certData?: a
 
         const updateData: any = {
             status: 'APPROVED',
+            isPublic: isPublic,
             approvedNationalBy: session.user.id,
             approvedNationalAt: new Date(),
         }
@@ -800,10 +801,14 @@ export async function rejectProgramme(programmeId: string, reason: string) {
 
 // Public/Listing Filter
 export async function getProgrammes(filters?: { level?: string, state?: string, status?: string, organizationId?: string, organizationCode?: string }) {
-    // Explicit joins for compatibility query
     const org = aliasedTable(organizations, "org")
-
-    let conditions = [inArray(programmes.status, ['APPROVED', 'POSTPONED', 'CANCELLED'])]
+    let conditions: any[] = [eq(programmes.isPublic, true)]
+    
+    if (filters?.status) {
+        conditions.push(eq(programmes.status as any, filters.status))
+    } else {
+        conditions.push(inArray(programmes.status, ['APPROVED', 'POSTPONED', 'CANCELLED']))
+    }
 
     if (filters?.level) {
         conditions.push(eq(programmes.level as any, filters.level))
@@ -816,10 +821,6 @@ export async function getProgrammes(filters?: { level?: string, state?: string, 
     }
     if (filters?.organizationCode) {
         conditions.push(eq(org.code, filters.organizationCode))
-    }
-    if (filters?.status) {
-        // If admin viewing, might not just be approved
-        conditions = [eq(programmes.status as any, filters.status)]
     }
 
     const results = await db.select({

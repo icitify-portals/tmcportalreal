@@ -1,14 +1,13 @@
-import { db } from './lib/db';
-import { sql } from 'drizzle-orm';
+import { db } from "./lib/db";
+import { sql } from "drizzle-orm";
 
-async function run() {
+async function main() {
     try {
-        await db.execute(sql`ALTER TABLE programmes ADD COLUMN seriesId VARCHAR(255);`);
-        console.log('done');
+        await db.execute(sql`ALTER TABLE programmes ADD COLUMN isPublic BOOLEAN DEFAULT TRUE`);
+        console.log("Success!");
     } catch (e) {
         console.error(e);
-    } finally {
-        process.exit(0);
     }
+    process.exit(0);
 }
-run();
+main();
