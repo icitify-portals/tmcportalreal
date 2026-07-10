@@ -407,7 +407,7 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
             }
         }
 
-        const programmeId = crypto.randomUUID()
+        const programmeId = uuidv4()
 
         let finalOfficeId: string | null = null
         if (validData.organizingOfficeId && validData.organizingOfficeId !== "none") {
@@ -436,14 +436,14 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
         const budgetInstances: any[] = [];
         
         const firstProgrammeId = programmeId;
-        const seriesId = crypto.randomUUID();
+        const seriesId = uuidv4();
 
         let currentDate = new Date(validData.startDate);
         const endDateOriginal = validData.endDate ? new Date(validData.endDate) : null;
         let durationMs = endDateOriginal ? endDateOriginal.getTime() - currentDate.getTime() : 0;
 
         while (currentDate <= yearSettings.programYearEnd) {
-            const currentProgrammeId = programmeInstances.length === 0 ? firstProgrammeId : crypto.randomUUID();
+            const currentProgrammeId = programmeInstances.length === 0 ? firstProgrammeId : uuidv4();
             
             let currentEndDate = null;
             if (endDateOriginal) {
@@ -463,8 +463,8 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
                 targetAudience: validData.targetAudience,
                 paymentRequired: validData.paymentRequired,
                 allowInstallments: validData.allowInstallments,
-                minInstallmentAmount: validData.minInstallmentAmount !== undefined && validData.minInstallmentAmount !== null ? Number(validData.minInstallmentAmount).toFixed(2) : "0.00",
-                amount: validData.amount !== undefined && validData.amount !== null ? Number(validData.amount).toFixed(2) : "0.00",
+                minInstallmentAmount: validData.minInstallmentAmount !== undefined && validData.minInstallmentAmount !== null ? Number(String(validData.minInstallmentAmount).replace(/,/g, '')).toFixed(2) : "0.00",
+                amount: validData.amount !== undefined && validData.amount !== null ? Number(String(validData.amount).replace(/,/g, '')).toFixed(2) : "0.00",
                 hasCertificate: validData.hasCertificate,
                 organizingOfficeId: finalOfficeId,
                 organizingOfficialId: finalOfficialId,
@@ -473,7 +473,7 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
                 meetingUrl: validData.meetingUrl || null,
                 frequency: validData.frequency as any,
                 rruleString: validData.rruleString || null,
-                budget: validData.budget !== undefined && validData.budget !== null ? Number(validData.budget).toFixed(2) : "0.00",
+                budget: validData.budget !== undefined && validData.budget !== null ? Number(String(validData.budget).replace(/,/g, '')).toFixed(2) : "0.00",
                 objectives: validData.objectives || null,
                 committee: validData.committee || null,
                 isLateSubmission,
@@ -520,7 +520,7 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
                     const occurrences = rule.between(new Date(currentDate.getTime() + 1000), yearSettings.programYearEnd, true);
                     
                     for (const occDate of occurrences) {
-                        const newProgId = crypto.randomUUID();
+                        const newProgId = uuidv4();
                         let occEndDate = null;
                         if (endDateOriginal) {
                             occEndDate = new Date(occDate.getTime() + durationMs);
@@ -642,7 +642,7 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
         if (error instanceof z.ZodError) {
             return { success: false, error: "Validation Error: " + error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') }
         }
-        return { success: false, error: "Database Error: " + errMsg }
+        return { success: false, error: "Database Error: " + errMsg + " | Full: " + String(error) }
     }
 }
 
@@ -1895,7 +1895,7 @@ export async function addProgrammeMaterial(data: { programmeId: string; title: s
 
     try {
         await db.insert(programmeMaterials).values({
-            id: crypto.randomUUID(),
+            id: uuidv4(),
             programmeId: data.programmeId,
             title: data.title,
             url: data.url,
@@ -2018,7 +2018,7 @@ export async function bulkAdminEnrollAction(programmeId: string, participants: a
 
             // Create new registration
             await db.insert(programmeRegistrations).values({
-                id: crypto.randomUUID(),
+                id: uuidv4(),
                 programmeId,
                 userId,
                 memberId,
