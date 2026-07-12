@@ -4,6 +4,7 @@ import { db } from "@/lib/db"
 import { programmes, organizations, officials } from "@/lib/db/schema"
 import { eq, desc, and, gte } from "drizzle-orm"
 import { MonthlySubmissionClient } from "@/components/admin/programmes/monthly-submission-client"
+import { DashboardLayout } from "@/components/layout/dashboard-layout"
 
 export const dynamic = 'force-dynamic'
 
@@ -53,15 +54,17 @@ export default async function MonthlySubmissionMonitorPage() {
     }))
 
     return (
-        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h2 className="text-3xl font-bold tracking-tight text-green-900">Programme Submissions Monitor</h2>
-                    <p className="text-muted-foreground">Monitor monthly submissions, upcoming programmes, and detect date clashes.</p>
+        <DashboardLayout>
+            <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h2 className="text-3xl font-bold tracking-tight text-green-900">Programme Submissions Monitor</h2>
+                        <p className="text-muted-foreground">Monitor monthly submissions, upcoming programmes, and detect date clashes.</p>
+                    </div>
                 </div>
+                
+                <MonthlySubmissionClient initialProgrammes={serializedProgrammes} />
             </div>
-            
-            <MonthlySubmissionClient initialProgrammes={serializedProgrammes} />
-        </div>
+        </DashboardLayout>
     )
 }
