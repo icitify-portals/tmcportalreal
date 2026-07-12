@@ -91,17 +91,31 @@ function RegistrationContent() {
             if (formData.registrationTier && programme.pricingTiers) {
                  const tiers: any = typeof programme.pricingTiers === 'string' ? JSON.parse(programme.pricingTiers) : programme.pricingTiers;
                  let tierAmount = 0;
-                 if (tiers?.individuals && tiers.individuals[formData.registrationTier]) tierAmount = Number(tiers.individuals[formData.registrationTier]);
-                 else if (tiers?.corporate && tiers.corporate[formData.registrationTier]) tierAmount = Number(tiers.corporate[formData.registrationTier]);
-                 else if (tiers && tiers[formData.registrationTier]) tierAmount = Number(tiers[formData.registrationTier]);
+                 if (tiers?.[formData.registrationTier]) {
+                     tierAmount = Number(tiers[formData.registrationTier]);
+                 } else if (tiers?.individuals && tiers.individuals[formData.registrationTier]) {
+                     tierAmount = Number(tiers.individuals[formData.registrationTier]);
+                 } else if (tiers?.corporate && tiers.corporate[formData.registrationTier]) {
+                     tierAmount = Number(tiers.corporate[formData.registrationTier]);
+                 }
                  
                  if (tierAmount > 0) baseAmount = tierAmount;
+            }
+
+            let requiredMin = baseAmount;
+            if (programme.allowInstallments) {
+                const minInstallment = parseFloat(programme.minInstallmentAmount || "0");
+                // If a tier is selected and minInstallment is higher than tier's baseAmount, allow down to baseAmount.
+                // Usually minInstallment applies globally, but it shouldn't exceed the tier's price.
+                if (minInstallment > 0 && minInstallment < baseAmount) {
+                    requiredMin = minInstallment;
+                }
             }
             
             const userAmount = formData.amountPaid ? parseFloat(formData.amountPaid) : baseAmount;
             
-            if (programme.paymentRequired && userAmount < baseAmount) {
-                toast.error(`Minimum payment for this tier is ₦${baseAmount}`);
+            if (programme.paymentRequired && userAmount < requiredMin) {
+                toast.error(`Minimum payment for this tier/installment is ₦${requiredMin}`);
                 setIsSubmitting(false);
                 return;
             }
@@ -353,11 +367,23 @@ function RegistrationContent() {
                         
                         {(() => {
                             const pricingTiers = programme?.pricingTiers ? (typeof programme.pricingTiers === 'string' ? JSON.parse(programme.pricingTiers) : programme.pricingTiers) : null;
-                            let minAmount = parseFloat(programme?.amount || "0");
+                            let baseAmount = parseFloat(programme?.amount || "0");
                             if (pricingTiers && formData.registrationTier) {
-                                if (pricingTiers?.individuals?.[formData.registrationTier]) minAmount = Number(pricingTiers.individuals[formData.registrationTier]);
-                                else if (pricingTiers?.corporate?.[formData.registrationTier]) minAmount = Number(pricingTiers.corporate[formData.registrationTier]);
-                                else if (pricingTiers?.[formData.registrationTier]) minAmount = Number(pricingTiers[formData.registrationTier]);
+                                if (pricingTiers?.[formData.registrationTier]) {
+                                    baseAmount = Number(pricingTiers[formData.registrationTier]);
+                                } else if (pricingTiers?.individuals?.[formData.registrationTier]) {
+                                    baseAmount = Number(pricingTiers.individuals[formData.registrationTier]);
+                                } else if (pricingTiers?.corporate?.[formData.registrationTier]) {
+                                    baseAmount = Number(pricingTiers.corporate[formData.registrationTier]);
+                                }
+                            }
+
+                            let requiredMin = baseAmount;
+                            if (programme?.allowInstallments) {
+                                const minInst = parseFloat(programme?.minInstallmentAmount || "0");
+                                if (minInst > 0 && minInst < baseAmount) {
+                                    requiredMin = minInst;
+                                }
                             }
 
                             return (
@@ -376,14 +402,14 @@ function RegistrationContent() {
                                                 </SelectTrigger>
                                                 <SelectContent>
                                                     <SelectItem value="none">Standard (₦{programme?.amount || "0"})</SelectItem>
+                                                    {Object.keys(pricingTiers).filter(k => k !== 'individuals' && k !== 'corporate').map(k => (
+                                                        <SelectItem key={k} value={k}>{k} - ₦{pricingTiers[k]}</SelectItem>
+                                                    ))}
                                                     {pricingTiers.individuals && Object.keys(pricingTiers.individuals).map(k => (
                                                         <SelectItem key={k} value={k}>{k} - ₦{pricingTiers.individuals[k]}</SelectItem>
                                                     ))}
                                                     {pricingTiers.corporate && Object.keys(pricingTiers.corporate).map(k => (
                                                         <SelectItem key={k} value={k}>{k} - ₦{pricingTiers.corporate[k]}</SelectItem>
-                                                    ))}
-                                                    {Object.keys(pricingTiers).filter(k => k !== 'individuals' && k !== 'corporate').map(k => (
-                                                        <SelectItem key={k} value={k}>{k} - ₦{pricingTiers[k]}</SelectItem>
                                                     ))}
                                                 </SelectContent>
                                             </Select>
@@ -395,19 +421,19 @@ function RegistrationContent() {
                                             <Label className="text-xs font-bold uppercase text-gray-500">Amount to Pay (₦)</Label>
                                             <Input 
                                                 type="number"
-                                                min={minAmount}
+                                                min={requiredMin}
                                                 step="0.01"
-                                                placeholder={`Minimum: ₦${minAmount}`}
+                                                placeholder={`Minimum: ₦${requiredMin}`}
                                                 value={formData.amountPaid}
                                                 onChange={(e) => setFormData({...formData, amountPaid: e.target.value})}
                                                 required
                                                 className="border-green-300 focus-visible:ring-green-500 bg-green-50/20"
                                             />
-                                            <p className="text-[10px] text-gray-500 font-medium">You must pay at least <strong className="text-black">₦{minAmount}</strong>. You are free to pay more.</p>
+                                            <p className="text-[10px] text-gray-500 font-medium">You must pay at least <strong className="text-black">₦{requiredMin}</strong>. {programme.allowInstallments ? "Installments are allowed." : "You are free to pay more."}</p>
                                         </div>
                                     )}
                                     
-                                    {!isWaiverActive && programme.paymentRequired && minAmount > 0 && session && (
+                                    {!isWaiverActive && programme.paymentRequired && requiredMin > 0 && session && (
                                         <div className="p-4 border rounded-lg bg-emerald-50/30 space-y-3 mt-4">
                                             <Label className="text-xs font-bold uppercase tracking-wider text-emerald-800 block">Payment Method</Label>
                                             <RadioGroup 

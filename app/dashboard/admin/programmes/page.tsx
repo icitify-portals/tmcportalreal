@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { CheckCircle2, AlertCircle, XCircle, UserCheck, BarChart3, MessageSquare, Video } from "lucide-react"
+import { CheckCircle2, AlertCircle, XCircle, UserCheck, BarChart3, MessageSquare, Video, CalendarDays } from "lucide-react"
 import { format } from "date-fns"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { db } from "@/lib/db"
@@ -245,6 +245,14 @@ export default async function ProgrammesPage() {
                 <div className="flex items-center justify-between space-y-2">
                     <h2 className="text-3xl font-bold tracking-tight">Programmes</h2>
                     <div className="flex items-center space-x-2">
+                        {(isSuperAdmin || userLevel === 'NATIONAL') && (
+                            <Button variant="outline" asChild>
+                                <a href="/dashboard/admin/programmes/calendar">
+                                    <CalendarDays className="mr-2 h-4 w-4" />
+                                    Monitor Submissions
+                                </a>
+                            </Button>
+                        )}
                         <CreateProgrammeDialog 
                             organizationId={organizationId || ""} 
                             isSuperAdmin={isSuperAdmin}

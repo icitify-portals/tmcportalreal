@@ -29,10 +29,21 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { updateProgramme, getOffices, getOfficials } from "@/lib/actions/programmes"
 import { toast } from "sonner"
-import { Loader2, Edit, AlertCircle, XCircle, Plus } from "lucide-react"
+import { Loader2, Edit, AlertCircle, XCircle, Plus, Trash2 } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { FileUpload } from "@/components/ui/file-upload"
 import { ProgrammeMaterialsManager } from "./programme-materials-manager"
+
+const TIER_LABELS = [
+    "National Executive", "State Executive", "LGA Executive", 
+    "Professional", "Student", "Non-Member", "Corporate", "Custom..."
+]
+
+interface PricingTierRow {
+    label: string
+    customLabel: string
+    amount: string
+}
 
 const ProgrammeSchema = z.object({
     title: z.string().min(1, "Title is required"),
@@ -64,6 +75,7 @@ const ProgrammeSchema = z.object({
     certPartnerLogo: z.string().optional(),
     certPartnerSignature: z.string().optional(),
     certPartnerSignatory: z.string().optional(),
+    pricingTiers: z.any().optional(),
 })
 
 interface EditProgrammeDialogProps {
@@ -118,8 +130,34 @@ export function EditProgrammeDialog({ programme, open, onOpenChange }: EditProgr
             certPartnerLogo: programme.certPartnerLogo || "",
             certPartnerSignature: programme.certPartnerSignature || "",
             certPartnerSignatory: programme.certPartnerSignatory || "",
+            pricingTiers: programme.pricingTiers ? (typeof programme.pricingTiers === 'string' ? JSON.parse(programme.pricingTiers) : programme.pricingTiers) : undefined,
         },
     })
+
+    // Pricing tiers local state (parallel to form field for UI purposes)
+    const [tierRows, setTierRows] = useState<PricingTierRow[]>([])
+
+    const addTierRow = () => {
+        setTierRows(prev => [...prev, { label: "", customLabel: "", amount: "" }])
+    }
+    const removeTierRow = (idx: number) => {
+        const updated = tierRows.filter((_, i) => i !== idx)
+        setTierRows(updated)
+        form.setValue("pricingTiers", updated.length > 0 ? updated.reduce((acc: any, tier) => {
+            const key = tier.label === 'Custom...' ? tier.customLabel : tier.label;
+            if (key && tier.amount) acc[key] = parseFloat(tier.amount) || 0;
+            return acc;
+        }, {}) : undefined)
+    }
+    const updateTierRow = (idx: number, field: keyof PricingTierRow, value: string) => {
+        const updated = tierRows.map((r, i) => i === idx ? { ...r, [field]: value } : r)
+        setTierRows(updated)
+        form.setValue("pricingTiers", updated.length > 0 ? updated.reduce((acc: any, tier) => {
+            const key = tier.label === 'Custom...' ? tier.customLabel : tier.label;
+            if (key && tier.amount) acc[key] = parseFloat(tier.amount) || 0;
+            return acc;
+        }, {}) : undefined)
+    }
 
     // Reset when programme changes
     useEffect(() => {
@@ -150,8 +188,40 @@ export function EditProgrammeDialog({ programme, open, onOpenChange }: EditProgr
                 certPartnerName: programme.certPartnerName || "",
                 certPartnerLogo: programme.certPartnerLogo || "",
                 certPartnerSignature: programme.certPartnerSignature || "",
-                certPartnerSignatory: programme.certPartnerSignatory || ""
+                certPartnerSignatory: programme.certPartnerSignatory || "",
+                pricingTiers: programme.pricingTiers ? (typeof programme.pricingTiers === 'string' ? JSON.parse(programme.pricingTiers) : programme.pricingTiers) : undefined,
             })
+            
+            // Map pricing tiers to tierRows
+            if (programme.pricingTiers) {
+                const tiers = typeof programme.pricingTiers === 'string' ? JSON.parse(programme.pricingTiers) : programme.pricingTiers;
+                
+                // Handle legacy nested tiers (individuals/corporate) vs flat tiers
+                let rows: PricingTierRow[] = [];
+                
+                const processTiers = (tierObj: any) => {
+                    Object.entries(tierObj).forEach(([key, val]) => {
+                        if (key !== 'individuals' && key !== 'corporate') {
+                            const isPredefined = TIER_LABELS.includes(key);
+                            rows.push({
+                                label: isPredefined ? key : "Custom...",
+                                customLabel: isPredefined ? "" : key,
+                                amount: String(val)
+                            });
+                        }
+                    });
+                };
+
+                if (tiers) {
+                    if (tiers.individuals) processTiers(tiers.individuals);
+                    if (tiers.corporate) processTiers(tiers.corporate);
+                    processTiers(tiers);
+                }
+                
+                setTierRows(rows);
+            } else {
+                setTierRows([]);
+            }
         }
     }, [programme, form])
 
@@ -168,6 +238,7 @@ export function EditProgrammeDialog({ programme, open, onOpenChange }: EditProgr
                 minInstallmentAmount: parseFloat(data.minInstallmentAmount || "0"),
                 budget: parseFloat(data.budget || "0"),
                 attendanceWindow: parseInt(data.attendanceWindow || "3"),
+                pricingTiers: data.pricingTiers
             }
 
             const result = await updateProgramme(programme.id, payload, applyToSeries)
@@ -593,6 +664,88 @@ export function EditProgrammeDialog({ programme, open, onOpenChange }: EditProgr
                                 </div>
                             )}
                         </div>
+
+                        <FormField
+                            control={form.control}
+                            name="pricingTiers"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <div className="space-y-2 mt-4 p-4 border rounded-md bg-white">
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <p className="text-sm font-medium">Pricing Tiers</p>
+                                                <p className="text-[11px] text-muted-foreground">Set different fees per category. Leave empty to use the standard Amount.</p>
+                                            </div>
+                                            <Button type="button" variant="outline" size="sm" onClick={addTierRow} className="flex items-center gap-1 text-xs">
+                                                <Plus className="h-3 w-3" /> Add Tier
+                                            </Button>
+                                        </div>
+
+                                        {tierRows.length > 0 && (
+                                            <div className="rounded-lg border overflow-hidden">
+                                                <div className="grid grid-cols-[1fr_120px_36px] gap-0 bg-muted/50 px-3 py-1.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
+                                                    <span>Category / Role</span>
+                                                    <span>Amount (₦)</span>
+                                                    <span></span>
+                                                </div>
+                                                {tierRows.map((row, idx) => (
+                                                    <div key={idx} className="grid grid-cols-[1fr_120px_36px] gap-0 border-t items-center px-3 py-2">
+                                                        <div className="pr-2 space-y-1">
+                                                            <Select
+                                                                value={row.label}
+                                                                onValueChange={(val) => updateTierRow(idx, 'label', val)}
+                                                            >
+                                                                <SelectTrigger className="h-8 text-xs">
+                                                                    <SelectValue placeholder="Select category..." />
+                                                                </SelectTrigger>
+                                                                <SelectContent>
+                                                                    {TIER_LABELS.map(lbl => (
+                                                                        <SelectItem key={lbl} value={lbl} className="text-xs">{lbl}</SelectItem>
+                                                                    ))}
+                                                                </SelectContent>
+                                                            </Select>
+                                                            {row.label === 'Custom...' && (
+                                                                <Input
+                                                                    placeholder="Enter custom category name"
+                                                                    value={row.customLabel}
+                                                                    onChange={(e) => updateTierRow(idx, 'customLabel', e.target.value)}
+                                                                    className="h-7 text-xs"
+                                                                />
+                                                            )}
+                                                        </div>
+                                                        <div className="pr-2">
+                                                            <Input
+                                                                type="number"
+                                                                placeholder="0"
+                                                                min={0}
+                                                                value={row.amount}
+                                                                onChange={(e) => updateTierRow(idx, 'amount', e.target.value)}
+                                                                className="h-8 text-xs"
+                                                            />
+                                                        </div>
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-8 w-8 text-destructive hover:text-destructive/80"
+                                                            onClick={() => removeTierRow(idx)}
+                                                        >
+                                                            <Trash2 className="h-3.5 w-3.5" />
+                                                        </Button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+
+                                        {tierRows.length === 0 && (
+                                            <div className="rounded-lg border border-dashed px-4 py-4 text-center text-xs text-muted-foreground">
+                                                No pricing tiers added. Click <strong>Add Tier</strong> to set category-based fees.
+                                            </div>
+                                        )}
+                                    </div>
+                                </FormItem>
+                            )}
+                        />
 
                         <FormField
                             control={form.control}
