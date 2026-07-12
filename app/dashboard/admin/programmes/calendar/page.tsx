@@ -1,7 +1,7 @@
 import { getServerSession } from "@/lib/session"
 import { redirect } from "next/navigation"
 import { db } from "@/lib/db"
-import { programmes, organizations } from "@/lib/db/schema"
+import { programmes, organizations, officials } from "@/lib/db/schema"
 import { eq, desc, and, gte } from "drizzle-orm"
 import { MonthlySubmissionClient } from "@/components/admin/programmes/monthly-submission-client"
 
@@ -9,7 +9,20 @@ export const dynamic = 'force-dynamic'
 
 export default async function MonthlySubmissionMonitorPage() {
     const session = await getServerSession()
-    if (!session?.user || (session.user.role !== 'SUPER_ADMIN' && session.user.level !== 'NATIONAL')) {
+    if (!session?.user) {
+        redirect("/login")
+    }
+
+    const userOfficial = await db.select({ positionLevel: organizations.level })
+        .from(organizations)
+        .innerJoin(officials, eq(organizations.id, officials.organizationId))
+        .where(eq(officials.userId, session.user.id))
+        .limit(1)
+
+    const userLevel = userOfficial[0]?.positionLevel || session.user.officialLevel || ""
+    const isSuperAdmin = session.user.isSuperAdmin
+
+    if (!isSuperAdmin && userLevel !== 'NATIONAL') {
         redirect("/dashboard")
     }
 
