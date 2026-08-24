@@ -2,7 +2,7 @@ version: '3.9'
 
 services:
   tmcportal:
-    container_name: tmcportal
+    image: ghcr.io/icitify-portals/tmcportalreal:latest
     build:
       context: .
       dockerfile: Dockerfile
@@ -10,7 +10,7 @@ services:
         - NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY=${NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY}
     restart: always
     ports:
-      - "3003:3000" # Mapped to 3003 to avoid conflict with app-app
+      - "3003:3000"
     env_file:
       - .env.production
     environment:
@@ -24,7 +24,6 @@ services:
       - ./uploads:/app/public/uploads
       - ./backups:/app/backups
       - ./scripts:/app/scripts
-
     networks:
       - app_network
     depends_on:
@@ -36,7 +35,7 @@ services:
       retries: 3
 
   worker:
-    container_name: tmcportal_worker
+    image: ghcr.io/icitify-portals/tmcportalreal-worker:latest
     build:
       context: .
       dockerfile: Dockerfile
@@ -64,9 +63,6 @@ services:
 volumes:
   redis_data:
 
-
 networks:
   app_network:
     external: true
-    # If network doesn't exist, comment out 'external: true' and uncomment driver below:
-    # driver: bridge
