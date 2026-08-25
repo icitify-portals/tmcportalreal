@@ -75,6 +75,8 @@ const ProgrammeSchema = z.object({
     certPartnerLogo: z.string().optional(),
     certPartnerSignature: z.string().optional(),
     certPartnerSignatory: z.string().optional(),
+    earlyBirdAmount: z.string().optional(),
+    earlyBirdDeadline: z.string().optional(),
     pricingTiers: z.any().optional(),
 })
 
@@ -130,6 +132,8 @@ export function EditProgrammeDialog({ programme, open, onOpenChange }: EditProgr
             certPartnerLogo: programme.certPartnerLogo || "",
             certPartnerSignature: programme.certPartnerSignature || "",
             certPartnerSignatory: programme.certPartnerSignatory || "",
+            earlyBirdAmount: programme.earlyBirdAmount?.toString() || "",
+            earlyBirdDeadline: programme.earlyBirdDeadline ? new Date(programme.earlyBirdDeadline).toISOString().split('T')[0] : "",
             pricingTiers: programme.pricingTiers ? (typeof programme.pricingTiers === 'string' ? JSON.parse(programme.pricingTiers) : programme.pricingTiers) : undefined,
         },
     })
@@ -189,6 +193,8 @@ export function EditProgrammeDialog({ programme, open, onOpenChange }: EditProgr
                 certPartnerLogo: programme.certPartnerLogo || "",
                 certPartnerSignature: programme.certPartnerSignature || "",
                 certPartnerSignatory: programme.certPartnerSignatory || "",
+                earlyBirdAmount: programme.earlyBirdAmount?.toString() || "",
+                earlyBirdDeadline: programme.earlyBirdDeadline ? new Date(programme.earlyBirdDeadline).toISOString().split('T')[0] : "",
                 pricingTiers: programme.pricingTiers ? (typeof programme.pricingTiers === 'string' ? JSON.parse(programme.pricingTiers) : programme.pricingTiers) : undefined,
             })
             
@@ -229,11 +235,13 @@ export function EditProgrammeDialog({ programme, open, onOpenChange }: EditProgr
     async function onSubmit(data: z.infer<typeof ProgrammeSchema>) {
         setIsSubmitting(true)
         try {
-            const payload = {
+            const payload: any = {
                 ...data,
                 startDate: new Date(data.startDate),
                 endDate: data.endDate ? new Date(data.endDate) : undefined,
                 amount: parseFloat(data.amount || "0"),
+                earlyBirdAmount: (data as any).earlyBirdAmount ? parseFloat((data as any).earlyBirdAmount) : null,
+                earlyBirdDeadline: (data as any).earlyBirdDeadline ? new Date((data as any).earlyBirdDeadline) : null,
                 allowInstallments: data.allowInstallments,
                 minInstallmentAmount: parseFloat(data.minInstallmentAmount || "0"),
                 budget: parseFloat(data.budget || "0"),
@@ -613,15 +621,44 @@ export function EditProgrammeDialog({ programme, open, onOpenChange }: EditProgr
                             />
 
                             {form.watch("paymentRequired") && (
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-t pt-4 mt-2">
+                                <>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4 mt-2">
                                     <FormField
                                         control={form.control}
                                         name="amount"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Amount (NGN)</FormLabel>
+                                                <FormLabel>Normal Amount (NGN)</FormLabel>
                                                 <FormControl>
                                                     <Input type="number" min="0" step="0.01" {...field} value={field.value || ''} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="earlyBirdAmount"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Early Bird (NGN)</FormLabel>
+                                                <FormControl>
+                                                    <Input type="number" min="0" step="0.01" placeholder="15000" {...field} value={field.value || ''} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <FormField
+                                        control={form.control}
+                                        name="earlyBirdDeadline"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Early Bird Deadline</FormLabel>
+                                                <FormControl>
+                                                    <Input type="date" {...field} value={field.value || ''} />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
@@ -662,6 +699,7 @@ export function EditProgrammeDialog({ programme, open, onOpenChange }: EditProgr
                                         />
                                     )}
                                 </div>
+                                </>
                             )}
                         </div>
 

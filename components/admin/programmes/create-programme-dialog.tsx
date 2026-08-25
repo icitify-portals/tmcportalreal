@@ -85,6 +85,8 @@ const ProgrammeSchema = z.object({
     certPartnerLogo: z.string().optional(),
     certPartnerSignature: z.string().optional(),
     certPartnerSignatory: z.string().optional(),
+    earlyBirdAmount: z.string().optional(),
+    earlyBirdDeadline: z.string().optional(),
     materials: z.array(z.object({ title: z.string(), url: z.string(), fileType: z.string() })).default([]),
     isRecurringAdmin: z.boolean().default(false),
     flyerUrl: z.string().optional(),
@@ -143,6 +145,8 @@ export function CreateProgrammeDialog({
             certPartnerLogo: "",
             certPartnerSignature: "",
             certPartnerSignatory: "",
+            earlyBirdAmount: "",
+            earlyBirdDeadline: "",
             materials: [],
             isRecurringAdmin: false,
             flyerUrl: "",
@@ -201,11 +205,13 @@ export function CreateProgrammeDialog({
         setIsSubmitting(true)
         try {
             const { materials, ...programmeData } = data;
-            const payload = {
+            const payload: any = {
                 ...programmeData,
                 startDate: new Date(data.startDate),
                 endDate: data.endDate ? new Date(data.endDate) : undefined,
                 amount: parseFloat(data.amount || "0"),
+                earlyBirdAmount: data.earlyBirdAmount ? parseFloat(data.earlyBirdAmount) : null,
+                earlyBirdDeadline: data.earlyBirdDeadline ? new Date(data.earlyBirdDeadline) : null,
                 allowInstallments: data.allowInstallments,
                 minInstallmentAmount: parseFloat(data.minInstallmentAmount || "0"),
                 budget: parseFloat(data.budget || "0"),
@@ -785,16 +791,47 @@ export function CreateProgrammeDialog({
                             />
 
                             {form.watch("paymentRequired") && (
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-t pt-4 mt-2">
+                                <>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4 mt-2">
                                     <FormField
                                         control={form.control}
                                         name="amount"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Amount (NGN)</FormLabel>
+                                                <FormLabel>Normal Amount (NGN)</FormLabel>
                                                 <FormControl>
                                                     <Input type="number" min="0" step="0.01" {...field} value={field.value || ''} />
                                                 </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="earlyBirdAmount"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Early Bird Amount (NGN)</FormLabel>
+                                                <FormControl>
+                                                    <Input type="number" min="0" step="0.01" placeholder="15000" {...field} value={field.value || ''} />
+                                                </FormControl>
+                                                <FormDescription className="text-[10px]">Optional reduced price</FormDescription>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <FormField
+                                        control={form.control}
+                                        name="earlyBirdDeadline"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Early Bird Deadline</FormLabel>
+                                                <FormControl>
+                                                    <Input type="date" {...field} value={field.value || ''} />
+                                                </FormControl>
+                                                <FormDescription className="text-[10px]">Till 30 Sep 2026 → normal after</FormDescription>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
@@ -834,6 +871,7 @@ export function CreateProgrammeDialog({
                                         />
                                     )}
                                 </div>
+                                </>
                             )}
                         </div>
 

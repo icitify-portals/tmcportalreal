@@ -3,16 +3,37 @@ import { db } from "@/lib/db";
 import { programmeRegistrations, programmes, organizations, users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { jsPDF } from "jspdf";
+import { promises as fs } from "fs";
+import path from "path";
 
 async function getBase64Image(url: string): Promise<string | null> {
     try {
+        // If local path like /images/logo.png, read from filesystem
+        if (url.startsWith("/") && !url.startsWith("//")) {
+            try {
+                const filePath = path.join(process.cwd(), "public", url.replace(/^\//, ""));
+                const buf = await fs.readFile(filePath);
+                const ext = path.extname(filePath).toLowerCase().replace(".", "") || "png";
+                const mime = ext === "jpg" || ext === "jpeg" ? "image/jpeg" : `image/${ext}`;
+                return `data:${mime};base64,${buf.toString("base64")}`;
+            } catch {}
+        }
         const response = await fetch(url);
+        if (!response.ok) return null;
         const buffer = await response.arrayBuffer();
         const contentType = response.headers.get("content-type") || "image/png";
         return `data:${contentType};base64,${Buffer.from(buffer).toString("base64")}`;
     } catch (e) {
         return null;
     }
+}
+
+async function getTmcLogoBase64(): Promise<string | null> {
+    // Prefer local public/images/logo.png
+    const local = await getBase64Image("/images/logo.png");
+    if (local) return local;
+    // Fallback external
+    return getBase64Image("https://tmcng.net/logo.png");
 }
 
 function getImageFormat(base64: string): "JPEG" | "PNG" | "WEBP" {
@@ -67,11 +88,22 @@ export async function GET(
         doc.setLineWidth(1);
         doc.rect(8, 8, width - 16, height - 16);
 
-        // --- Background Watermark (Optional: Subtle TMC initials or logo) ---
+        // --- Background Watermark — TMC text + faint logo ---
         doc.setTextColor(240, 240, 240);
         doc.setFontSize(100);
         doc.setFont("helvetica", "bold");
         doc.text("TMC", width / 2, height / 2 + 20, { align: "center", angle: 45 });
+        // Faint logo watermark center (best effort, ignore if fails)
+        try {
+            const wm = await getTmcLogoBase64();
+            if (wm) {
+                const fmt = getImageFormat(wm);
+                // @ts-ignore - GState may not exist on some jspdf builds
+                if ((doc as any).setGState) (doc as any).setGState(new (doc as any).GState({ opacity: 0.07 }));
+                doc.addImage(wm, fmt, width/2 - 30, height/2 - 30, 60, 60);
+                if ((doc as any).setGState) (doc as any).setGState(new (doc as any).GState({ opacity: 1 }));
+            }
+        } catch {}
 
         // --- Content ---
         doc.setTextColor(21, 128, 61);
@@ -120,20 +152,26 @@ export async function GET(
         });
         doc.text(`Issued on: ${dateStr}`, width / 2, 150, { align: "center" });
 
-        // --- Logos & Signatures ---
-        const tmcLogo = "https://tmcng.net/logo.png"; // Default logo
+        // --- Logos & Signatures - TMC logo always present ---
+        const tmcLogoBase64 = await getTmcLogoBase64();
         const partnerLogo = result.programme.certPartnerLogo;
         const tmcSig = result.programme.certTmcSignature;
         const partnerSig = result.programme.certPartnerSignature;
 
-        // Draw Logos
-        if (template === "TMC_ONLY" || template === "BOTH") {
-            const logoBase64 = await getBase64Image(tmcLogo);
-            if (logoBase64) {
-                const fmt = getImageFormat(logoBase64);
-                doc.addImage(logoBase64, fmt, 20, 15, 25, 25);
+        // Draw TMC logo — always at top center-left (ensured)
+        if (tmcLogoBase64) {
+            const fmt = getImageFormat(tmcLogoBase64);
+            // Header logo: centered top for all templates, plus side logos for partnerships
+            // Top-center TMC logo (ensured)
+            const headerX = template === "PARTNER_ONLY" ? 20 : width / 2 - 12.5;
+            const headerY = 12;
+            doc.addImage(tmcLogoBase64, fmt, headerX, headerY, 25, 25);
+            // For BOTH, also keep partner logo on right; for TMC_ONLY header already is the logo
+            if (template === "TMC_ONLY") {
+                // already placed centered
             }
         }
+        // Partner logo on right (if applicable)
         if (template === "PARTNER_ONLY" || template === "BOTH") {
             if (partnerLogo) {
                 const logoBase64 = await getBase64Image(partnerLogo);
@@ -141,6 +179,12 @@ export async function GET(
                     const fmt = getImageFormat(logoBase64);
                     doc.addImage(logoBase64, fmt, width - 45, 15, 25, 25);
                 }
+            }
+            // If PARTNER_ONLY and we placed TMC header at left, keep it (TMC always visible)
+            // Ensure TMC logo also on left for PARTNER_ONLY
+            if (template === "PARTNER_ONLY" && tmcLogoBase64) {
+                const fmt = getImageFormat(tmcLogoBase64);
+                doc.addImage(tmcLogoBase64, fmt, 20, 15, 22, 22);
             }
         }
 

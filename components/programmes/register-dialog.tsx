@@ -35,6 +35,8 @@ export function RegisterForProgrammeDialog({
     programmeId,
     programmeTitle,
     amount,
+    earlyBirdAmount,
+    earlyBirdDeadline,
     allowInstallments,
     minInstallmentAmount,
     triggerText,
@@ -43,15 +45,19 @@ export function RegisterForProgrammeDialog({
     programmeId: string,
     programmeTitle: string,
     amount: number,
+    earlyBirdAmount?: number,
+    earlyBirdDeadline?: string | Date,
     allowInstallments?: boolean,
     minInstallmentAmount?: number,
     triggerText?: string,
     variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link"
 }) {
+    const isEarlyBird = earlyBirdAmount != null && earlyBirdDeadline && new Date() <= new Date(earlyBirdDeadline);
+    const displayAmount = isEarlyBird && earlyBirdAmount ? earlyBirdAmount : amount;
     const { data: session } = useSession()
     const [open, setOpen] = useState(false)
     const [isSubmitting, setIsSubmitting] = useState(false)
-    const [customAmount, setCustomAmount] = useState<string>(amount.toString())
+    const [customAmount, setCustomAmount] = useState<string>(displayAmount.toString())
     const [paymentMethod, setPaymentMethod] = useState<"PAYSTACK" | "WALLET">("PAYSTACK")
     
     // Guest form state
@@ -122,7 +128,7 @@ export function RegisterForProgrammeDialog({
             <DialogTrigger asChild>
                 <Button variant={variant || "default"} className={variant !== "outline" ? "w-full bg-green-700 hover:bg-green-800" : "w-full"}>
                     <UserPlus className="mr-2 h-4 w-4" />
-                    {triggerText || `Register ${amount > 0 ? `(₦${amount})` : "Free"}`}
+                    {triggerText || `Register ${displayAmount > 0 ? `(₦${displayAmount}${isEarlyBird ? " Early Bird" : ""})` : "Free"}`}
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[500px]">
@@ -135,24 +141,33 @@ export function RegisterForProgrammeDialog({
                                 : "Please provide your details to register for this event."}
                         </DialogDescription>
                     </DialogHeader>
+                    {isEarlyBird && amount > 0 && (
+                        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-xs">
+                            <span className="font-bold text-emerald-700">Early bird ₦{Number(earlyBirdAmount).toLocaleString()} till {new Date(earlyBirdDeadline!).toLocaleDateString()}</span>
+                            <span className="text-muted-foreground"> — normal ₦{Number(amount).toLocaleString()} after. You lock the early bird price now.</span>
+                        </div>
+                    )}
+                    {!isEarlyBird && earlyBirdDeadline && amount > 0 && (
+                        <div className="rounded-lg border p-3 text-xs">Early bird ended — normal ₦{Number(amount).toLocaleString()}</div>
+                    )}
 
-                    {amount > 0 && allowInstallments && (
+                    {displayAmount > 0 && allowInstallments && (
                         <div className="border p-3 rounded-md bg-green-50/50 my-2 space-y-3">
                             <Label className="text-xs font-bold uppercase tracking-wider text-green-800 block">Payment Options</Label>
                             <RadioGroup 
                                 defaultValue="FULL" 
                                 onValueChange={(v) => {
                                     if (v === "FULL") {
-                                        setCustomAmount(amount.toString())
+                                        setCustomAmount(displayAmount.toString())
                                     } else {
-                                        setCustomAmount(minInstallmentAmount ? minInstallmentAmount.toString() : amount.toString())
+                                        setCustomAmount(minInstallmentAmount ? minInstallmentAmount.toString() : displayAmount.toString())
                                     }
                                 }}
                                 className="flex gap-4"
                             >
                                 <div className="flex items-center space-x-2">
                                     <RadioGroupItem value="FULL" id="full-pay" />
-                                    <Label htmlFor="full-pay" className="text-sm font-medium">Full Amount (₦{amount})</Label>
+                                    <Label htmlFor="full-pay" className="text-sm font-medium">Full Amount (₦{displayAmount})</Label>
                                 </div>
                                 <div className="flex items-center space-x-2">
                                     <RadioGroupItem value="PARTIAL" id="partial-pay" />
@@ -160,14 +175,14 @@ export function RegisterForProgrammeDialog({
                                 </div>
                             </RadioGroup>
 
-                            {customAmount !== amount.toString() && (
+                            {customAmount !== displayAmount.toString() && (
                                 <div className="space-y-1 animate-in fade-in slide-in-from-top-1">
                                     <Label htmlFor="inst-amount" className="text-xs font-bold uppercase text-green-700">Installment Amount (₦)</Label>
                                     <Input 
                                         id="inst-amount"
                                         type="number" 
                                         min={minInstallmentAmount || 0}
-                                        max={amount} 
+                                        max={displayAmount} 
                                         value={customAmount}
                                         onChange={(e) => setCustomAmount(e.target.value)}
                                         className="bg-white"
@@ -361,12 +376,12 @@ export function RegisterForProgrammeDialog({
                         <Button type="submit" disabled={isSubmitting} className="bg-green-700 hover:bg-green-800">
                             {isSubmitting ? (
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            ) : amount > 0 ? (
+                            ) : displayAmount > 0 ? (
                                 <CreditCard className="mr-2 h-4 w-4" />
                             ) : (
                                 <UserPlus className="mr-2 h-4 w-4" />
                             )}
-                            {amount > 0 ? "Proceed to Payment" : "Confirm Registration"}
+                            {displayAmount > 0 ? "Proceed to Payment" : "Confirm Registration"}
                         </Button>
                     </DialogFooter>
                 </form>

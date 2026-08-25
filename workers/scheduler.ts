@@ -1,6 +1,6 @@
 import cron from 'node-cron';
 import { db } from '@/lib/db';
-import { programmes, users, organizations, notifications } from '@/lib/db/schema';
+import { programmes, users, organizations, notifications, reports, offices, officials } from '@/lib/db/schema';
 import { and, eq, gte, lte, sql } from 'drizzle-orm';
 import { emailQueue } from '@/lib/queue';
 import { emailTemplates } from '@/lib/email';
@@ -21,6 +21,18 @@ export function startScheduler() {
     cron.schedule('0 9 * * *', async () => {
         console.log('Running Daily Event Reminders...');
         await processDailyContinuousReminders();
+    });
+
+    // Schedule: Monthly office report reminder — 1st of month 09:00
+    cron.schedule('0 9 1 * *', async () => {
+        console.log('Running Monthly Office Report Reminders...');
+        await processMonthlyOfficeReportReminders();
+    });
+
+    // Also check on 5th: nudge missing reports
+    cron.schedule('0 9 5 * *', async () => {
+        console.log('Running Monthly Office Report Nudge (missing)...');
+        await processMonthlyOfficeReportReminders(true);
     });
 }
 
@@ -231,5 +243,56 @@ async function processDailyContinuousReminders() {
         console.log('Daily Continuous Reminders processed successfully.');
     } catch (err) {
         console.error('Error processing daily continuous reminders:', err);
+    }
+}
+
+async function processMonthlyOfficeReportReminders(nudgeMissing = false) {
+    try {
+        const now = new Date();
+        const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const period = `${prevMonth.getFullYear()}-${String(prevMonth.getMonth()+1).padStart(2,'0')}`;
+        const currentPeriod = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+        const targetPeriod = nudgeMissing ? period : currentPeriod;
+
+        const allOffices = await db.select({ id: offices.id, name: offices.name, organizationId: offices.organizationId }).from(offices);
+        const allOfficials = await db.select({ userId: officials.userId, officeId: officials.officeId }).from(officials).where(sql`${officials.officeId} IS NOT NULL`);
+
+        for (const off of allOffices) {
+            const officeOfficials = allOfficials.filter(o => o.officeId === off.id);
+            if (officeOfficials.length === 0) continue;
+
+            if (nudgeMissing) {
+                const [existing] = await db.select({ id: reports.id }).from(reports).where(and(
+                    eq(reports.officeId, off.id),
+                    eq(reports.period, targetPeriod),
+                    eq(reports.type, 'MONTHLY_ACTIVITY')
+                )).limit(1);
+                if (existing) continue; // already submitted, no nudge
+            }
+
+            for (const oo of officeOfficials) {
+                const user = await db.query.users.findFirst({ where: eq(users.id, oo.userId), columns: { email: true, name: true } });
+                if (!user?.email) continue;
+                const subject = nudgeMissing
+                    ? `Action Required: Monthly report missing for ${off.name} — ${targetPeriod}`
+                    : `Reminder: Submit monthly report for ${off.name} — ${targetPeriod}`;
+                const html = nudgeMissing
+                    ? `<p>Dear ${user.name || 'Officer'},</p><p>Your office <b>${off.name}</b> has not yet submitted its monthly activity report for <b>${targetPeriod}</b> to executives at your jurisdiction. Please submit via portal: <a href="/dashboard/admin/reports?period=${targetPeriod}">Submit Report</a></p>`
+                    : `<p>Dear ${user.name || 'Officer'},</p><p>Please submit your office <b>${off.name}</b> monthly report for <b>${targetPeriod}</b> by the 5th.</p>`;
+                await emailQueue.add('office-monthly-reminder', { to: user.email, subject, html, text: subject });
+                await db.insert(notifications).values({
+                    userId: oo.userId,
+                    title: nudgeMissing ? "Monthly Report Missing" : "Monthly Report Due",
+                    message: subject,
+                    type: nudgeMissing ? "WARNING" : "INFO",
+                    actionUrl: `/dashboard/admin/reports?period=${targetPeriod}`,
+                    createdAt: new Date(),
+                    updatedAt: new Date()
+                });
+            }
+        }
+        console.log(`Monthly office report reminders processed for ${targetPeriod} (nudge=${nudgeMissing})`);
+    } catch (e) {
+        console.error('Monthly office reminder error', e);
     }
 }

@@ -18,6 +18,7 @@ import { initializePayment, verifyPayment } from "@/lib/payments"
 import { sendEmail, emailTemplates } from "@/lib/email"
 import crypto from "crypto"
 import { RRule } from "rrule"
+import { getEffectiveAmount, isEarlyBirdActive } from "@/lib/pricing"
 
 export async function generateSecurityHash(registrationId: string, email: string) {
     const secret = process.env.SLIP_SECRET || "tmc-secure-slip-2026"
@@ -262,6 +263,8 @@ const ProgrammeSchema = z.object({
     allowInstallments: z.boolean().optional().default(false),
     minInstallmentAmount: z.preprocess((val) => val === "" || val === undefined ? 0 : Number(String(val).replace(/,/g, '')), z.number().optional().default(0)),
     amount: z.preprocess((val) => Number(String(val).replace(/,/g, '')), z.number().nonnegative()).default(0),
+    earlyBirdAmount: z.preprocess((val) => val === "" || val === undefined || val === null ? null : Number(String(val).replace(/,/g, '')), z.number().nonnegative().nullable().optional()),
+    earlyBirdDeadline: z.preprocess((val) => !val ? null : new Date(val as string), z.date().nullable().optional()),
     organizingOfficeId: z.string().optional().nullable(),
     organizingOfficialId: z.string().optional().nullable(),
     // New Planner Fields
@@ -471,6 +474,8 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
                 allowInstallments: validData.allowInstallments,
                 minInstallmentAmount: validData.minInstallmentAmount !== undefined && validData.minInstallmentAmount !== null ? Number(String(validData.minInstallmentAmount).replace(/,/g, '')).toFixed(2) : "0.00",
                 amount: validData.amount !== undefined && validData.amount !== null ? Number(String(validData.amount).replace(/,/g, '')).toFixed(2) : "0.00",
+                earlyBirdAmount: (validData as any).earlyBirdAmount != null ? Number(String((validData as any).earlyBirdAmount).replace(/,/g, '')).toFixed(2) : null,
+                earlyBirdDeadline: (validData as any).earlyBirdDeadline ? new Date((validData as any).earlyBirdDeadline) : null,
                 hasCertificate: validData.hasCertificate,
                 organizingOfficeId: finalOfficeId,
                 organizingOfficialId: finalOfficialId,
@@ -1031,8 +1036,9 @@ export async function registerForProgramme(programmeId: string, data?: z.infer<t
             }
         }
 
-        // New Registration Logic
-        let baseAmount = parseFloat(programme.amount?.toString() || "0")
+        // New Registration Logic — early bird aware
+        const effectiveBaseRaw = getEffectiveAmount({ amount: programme.amount, earlyBirdAmount: (programme as any).earlyBirdAmount, earlyBirdDeadline: (programme as any).earlyBirdDeadline });
+        let baseAmount = effectiveBaseRaw;
         
         if (data?.registrationTier && programme.pricingTiers) {
              const tiers: any = typeof programme.pricingTiers === 'string' ? JSON.parse(programme.pricingTiers as string) : programme.pricingTiers;
@@ -1068,7 +1074,8 @@ export async function registerForProgramme(programmeId: string, data?: z.infer<t
             paymentReference: paymentRef,
             checkInTime: checkInTime,
             registrationTier: data?.registrationTier || null,
-            amountPaid: (initialStatus === 'PAID' || initialStatus === 'ATTENDED') ? userAmount.toString() : "0.00"
+            amountPaid: (initialStatus === 'PAID' || initialStatus === 'ATTENDED') ? userAmount.toString() : "0.00",
+            lockedAmount: baseAmount.toString()
         }
 
         if (session?.user) {
@@ -1231,7 +1238,9 @@ export async function initializeProgrammeRegistrationPayment(registrationId: str
         const registration = await getRegistrationDetails(registrationId)
         if (!registration) return { success: false, error: "Registration not found" }
         
-        const totalAmount = parseFloat(registration.programme.amount || "0")
+        const locked = (registration as any).lockedAmount ? parseFloat((registration as any).lockedAmount) : null;
+        const effectiveNow = getEffectiveAmount({ amount: registration.programme.amount, earlyBirdAmount: (registration.programme as any).earlyBirdAmount, earlyBirdDeadline: (registration.programme as any).earlyBirdDeadline });
+        const totalAmount = locked ?? effectiveNow;
         if (totalAmount <= 0) return { success: false, error: "No payment required" }
 
         const paidAlready = parseFloat(registration.amountPaid || "0")
@@ -1293,7 +1302,9 @@ export async function verifyProgrammeRegistrationPayment(registrationId: string,
             const regDetails = await getRegistrationDetails(registrationId)
             if (!regDetails) return { success: false, error: "Registration not found" }
 
-            const totalAmount = parseFloat(regDetails.programme.amount || "0")
+            const locked2 = (regDetails as any).lockedAmount ? parseFloat((regDetails as any).lockedAmount) : null;
+            const effective2 = getEffectiveAmount({ amount: regDetails.programme.amount, earlyBirdAmount: (regDetails.programme as any).earlyBirdAmount, earlyBirdDeadline: (regDetails.programme as any).earlyBirdDeadline });
+            const totalAmount = locked2 ?? effective2;
             const paidAlready = parseFloat(regDetails.amountPaid || "0")
             const justPaidAmount = parseFloat(response.data?.amount?.toString() || "0")
 
@@ -1537,7 +1548,7 @@ export async function updateProgramme(programmeId: string, data: Partial<z.infer
             }
         }
 
-        const updatePayload = {
+        const updatePayload: any = {
             title: validData.title,
             description: validData.description,
             venue: validData.venue,
@@ -1549,6 +1560,8 @@ export async function updateProgramme(programmeId: string, data: Partial<z.infer
             allowInstallments: validData.allowInstallments,
             minInstallmentAmount: validData.minInstallmentAmount !== undefined ? validData.minInstallmentAmount.toString() : undefined,
             amount: validData.amount !== undefined ? validData.amount.toString() : undefined,
+            earlyBirdAmount: (validData as any).earlyBirdAmount !== undefined ? ((validData as any).earlyBirdAmount != null ? Number((validData as any).earlyBirdAmount).toFixed(2) : null) : undefined,
+            earlyBirdDeadline: (validData as any).earlyBirdDeadline !== undefined ? ((validData as any).earlyBirdDeadline ? new Date((validData as any).earlyBirdDeadline) : null) : undefined,
             organizingOfficeId: finalOfficeId,
             organizingOfficialId: finalOfficialId,
             format: validData.format,
@@ -2061,6 +2074,8 @@ export async function getProgrammeDetailsAction(id: string) {
             startDate: programmes.startDate,
             endDate: programmes.endDate,
             amount: programmes.amount,
+            earlyBirdAmount: programmes.earlyBirdAmount,
+            earlyBirdDeadline: programmes.earlyBirdDeadline,
             paymentRequired: programmes.paymentRequired,
             waiverCode: programmes.waiverCode
         }).from(programmes).where(eq(programmes.id, id)).limit(1)

@@ -18,8 +18,8 @@ import { Toaster } from "@/components/ui/sonner"
 // });
 
 export const metadata: Metadata = {
-  title: "Muslim Congress - Membership Portal",
-  description: "Enterprise membership and governance automation system",
+  title: "The TMC Portal - Muslim Congress",
+  description: "The TMC Portal — Enterprise membership and governance automation system",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,

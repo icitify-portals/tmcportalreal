@@ -33,6 +33,7 @@ import {
   BookOpen,
   Award,
   Database,
+  StickyNote,
 } from "lucide-react"
 import { signOut } from "next-auth/react"
 import { Button } from "@/components/ui/button"
@@ -58,6 +59,8 @@ const adminNavItems = [
   { href: "/dashboard/admin/finance/analytics", label: "Finance Analytics", icon: BarChart3 },
   { href: "/dashboard/admin/assets", label: "Assets", icon: Box },
   { href: "/dashboard/admin/programmes", label: "Programmes & Events", icon: Calendar },
+  { href: "/dashboard/admin/programmes/reports", label: "Programme Reports", icon: BarChart3 },
+  { href: "/dashboard/notes", label: "Meeting Notes", icon: StickyNote },
   { href: "/dashboard/admin/tmc-programmes", label: "Our Programmes", icon: BookOpen },
   { href: "/dashboard/admin/reports", label: "Activity Reports", icon: FileText },
   { href: "/dashboard/admin/special-programmes", label: "Special Resource Archive", icon: Library },
@@ -99,6 +102,7 @@ const memberNavItems = [
   { href: "/programmes/special", label: "Media Library", icon: Library },
   { href: "/dashboard/member/occasions", label: "My Occasions", icon: Handshake },
   { href: "/dashboard/member/meetings", label: "Meetings", icon: Users },
+  { href: "/dashboard/notes", label: "Meeting Notes", icon: StickyNote },
   { href: "/dashboard/messages", label: "Messages", icon: MessageSquare },
   { href: "/dashboard/member/payments", label: "Payments", icon: CreditCard },
   { href: "/dashboard/member/finance", label: "Levies & Dues", icon: Banknote },
@@ -117,6 +121,7 @@ const officialNavItems = [
   { href: "/programmes/special", label: "Media Library", icon: Library },
   { href: "/dashboard/member/occasions", label: "My Occasions", icon: Handshake },
   { href: "/dashboard/member/meetings", label: "Meetings", icon: Users },
+  { href: "/dashboard/notes", label: "Meeting Notes", icon: StickyNote },
   { href: "/dashboard/messages", label: "Messages", icon: MessageSquare },
   { href: "/dashboard/official/members", label: "Members", icon: Users, isJurisdictionHeadOnly: true },
   { href: "/dashboard/official/payments", label: "Payments", icon: CreditCard },
@@ -191,7 +196,10 @@ export function Sidebar({ userRole, isRealAdmin, adminLevel, className, onNaviga
   return (
     <div className={cn("flex h-screen w-64 flex-col border-r bg-background", className)}>
       <div className="flex h-16 items-center border-b px-6">
-        <h1 className="text-xl font-bold">Muslim Congress</h1>
+        <div className="leading-tight">
+          <h1 className="text-xl font-extrabold tracking-tight">The TMC PORTAL</h1>
+          <p className="text-[10px] tracking-[0.2em] text-muted-foreground font-semibold -mt-1">MUSLIM CONGRESS</p>
+        </div>
       </div>
       <nav className="flex-1 space-y-1 p-4 overflow-y-auto">
         {navItems.map((item) => {

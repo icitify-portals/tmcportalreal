@@ -71,9 +71,14 @@ export function ReportSubmissionDialog({
         if (open) {
             setAttachmentFile(null)
             const date = new Date()
-            form.setValue("period", date.toISOString().slice(0, 7))
+            const ym = date.toISOString().slice(0, 7)
+            form.setValue("period", ym)
+            if (userOfficeId) form.setValue("officeId", userOfficeId)
+            // Monthly office report defaults to MONTHLY_ACTIVITY at jurisdiction
+            form.setValue("type", "MONTHLY_ACTIVITY")
+            form.setValue("title", `${form.getValues("title") || ""}`.trim() ? form.getValues("title") : `Monthly Activity — ${ym}`)
         }
-    }, [open, form])
+    }, [open, form, userOfficeId])
 
     async function onSubmit(data: z.infer<typeof ReportSchema>) {
         setIsSubmitting(true)
@@ -137,9 +142,9 @@ export function ReportSubmissionDialog({
             </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>Submit Activity Report</DialogTitle>
+                    <DialogTitle>Submit Monthly Office Report</DialogTitle>
                     <DialogDescription>
-                        Fill in your activity details for the selected period.
+                        Each office presents a monthly activity report to executives at its jurisdiction. Fill in {form.watch("type") === "MONTHLY_ACTIVITY" ? "your office's activities for the selected month" : "activity details for the selected period"}.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -214,9 +219,13 @@ export function ReportSubmissionDialog({
                                 name="period"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Period (YYYY-MM or Year)</FormLabel>
+                                        <FormLabel>{form.watch("type") === "MONTHLY_ACTIVITY" ? "Period (Month)" : "Period (YYYY-MM or Year)"}</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="2024-01" {...field} />
+                                            {form.watch("type") === "MONTHLY_ACTIVITY" ? (
+                                                <Input type="month" {...field} />
+                                            ) : (
+                                                <Input placeholder="2024 or 2024-Q1" {...field} />
+                                            )}
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>

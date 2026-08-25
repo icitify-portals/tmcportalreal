@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { CheckCircle2, AlertCircle, XCircle, UserCheck, BarChart3, MessageSquare, Video, CalendarDays } from "lucide-react"
+import { CheckCircle2, AlertCircle, XCircle, UserCheck, BarChart3, MessageSquare, Video, CalendarDays, FileText } from "lucide-react"
 import { format } from "date-fns"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { db } from "@/lib/db"
@@ -147,6 +147,12 @@ async function ProgrammeList({
                                             Lounge
                                         </a>
                                     </Button>
+                                    <Button variant="outline" size="sm" asChild className="bg-green-950/60 hover:bg-green-900/80 border border-green-800/40 text-green-300 font-semibold px-3 py-1.5 text-xs rounded-lg transition-colors">
+                                        <a href={`/dashboard/admin/programmes/${p.id}/notes`}>
+                                            <FileText className="w-4 h-4 mr-2" />
+                                            Notes
+                                        </a>
+                                    </Button>
                                     {(p as any).meeting && (
                                         <Button variant="outline" size="sm" asChild className="bg-emerald-900 hover:bg-emerald-800 border border-emerald-700 text-emerald-100 font-bold px-3 py-1.5 text-xs rounded-lg transition-colors shadow-[0_0_10px_rgba(16,185,129,0.2)]">
                                             <a href={`/dashboard/admin/meetings/${(p as any).meeting.id}`}>
@@ -245,6 +251,12 @@ export default async function ProgrammesPage() {
                 <div className="flex items-center justify-between space-y-2">
                     <h2 className="text-3xl font-bold tracking-tight">Programmes</h2>
                     <div className="flex items-center space-x-2">
+                        <Button variant="outline" asChild>
+                            <a href="/dashboard/admin/programmes/reports">
+                                <BarChart3 className="mr-2 h-4 w-4" />
+                                Cumulative Reports
+                            </a>
+                        </Button>
                         {(isSuperAdmin || userLevel === 'NATIONAL') && (
                             <Button variant="outline" asChild>
                                 <a href="/dashboard/admin/programmes/calendar">

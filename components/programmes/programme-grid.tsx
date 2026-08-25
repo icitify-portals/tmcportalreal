@@ -26,8 +26,10 @@ export async function ProgrammeGrid({ level, state, organizationId, organization
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {programmes.map((p) => {
+            {programmes.map((p: any) => {
                 const isPaid = p.paymentRequired && (parseFloat(p.amount || "0") > 0);
+                const isEarlyBird = p.earlyBirdAmount && p.earlyBirdDeadline && new Date() <= new Date(p.earlyBirdDeadline);
+                const effectiveAmount = isEarlyBird ? parseFloat(p.earlyBirdAmount) : parseFloat(p.amount || "0");
 
                 return (
                     <Card key={p.id} className="flex flex-col h-full hover:shadow-md transition-shadow relative overflow-hidden">
@@ -35,8 +37,11 @@ export async function ProgrammeGrid({ level, state, organizationId, organization
                             <div className="flex justify-between items-start mb-2">
                                 <div className="flex gap-1.5 flex-wrap">
                                     <Badge variant={isPaid ? "default" : "secondary"} className="mb-2">
-                                        {isPaid ? "Paid Event" : "Free Entry"}
+                                        {isPaid ? (isEarlyBird ? `Early Bird ₦${Number(p.earlyBirdAmount).toLocaleString()}` : `₦${Number(p.amount).toLocaleString()}`) : "Free Entry"}
                                     </Badge>
+                                    {isEarlyBird && isPaid && (
+                                        <Badge className="bg-emerald-600 text-white mb-2">Till {new Date(p.earlyBirdDeadline).toLocaleDateString()}</Badge>
+                                    )}
                                     {p.status === 'POSTPONED' && (
                                         <Badge className="bg-orange-600 hover:bg-orange-700 text-white font-bold mb-2">POSTPONED</Badge>
                                     )}
@@ -72,6 +77,12 @@ export async function ProgrammeGrid({ level, state, organizationId, organization
                                     <UsersIcon className="mr-2 h-4 w-4 text-primary" />
                                     <span>Target: {p.targetAudience}</span>
                                 </div>
+                                {isPaid && isEarlyBird && (
+                                    <div className="text-xs text-emerald-700 font-medium">Early bird ₦{Number(p.earlyBirdAmount).toLocaleString()} till {new Date(p.earlyBirdDeadline).toLocaleDateString()} → normal ₦{Number(p.amount).toLocaleString()}</div>
+                                )}
+                                {isPaid && !isEarlyBird && p.earlyBirdDeadline && new Date(p.earlyBirdDeadline) < new Date() && (
+                                    <div className="text-xs text-muted-foreground">Early bird ended — normal ₦{Number(p.amount).toLocaleString()}</div>
+                                )}
                             </div>
                         </CardContent>
                         <CardFooter className="pt-4 border-t bg-gray-50/50 flex gap-2 w-full">
@@ -108,7 +119,9 @@ export async function ProgrammeGrid({ level, state, organizationId, organization
                                                     <RegisterForProgrammeDialog
                                                         programmeId={p.id}
                                                         programmeTitle={p.title}
-                                                        amount={parseFloat(p.amount || "0")}
+                                                        amount={effectiveAmount}
+                                                        earlyBirdAmount={p.earlyBirdAmount ? parseFloat(p.earlyBirdAmount) : undefined}
+                                                        earlyBirdDeadline={p.earlyBirdDeadline}
                                                         allowInstallments={p.allowInstallments || false}
                                                         minInstallmentAmount={parseFloat(p.minInstallmentAmount || "0")}
                                                         triggerText="Restart"
@@ -140,7 +153,9 @@ export async function ProgrammeGrid({ level, state, organizationId, organization
                                         <RegisterForProgrammeDialog
                                             programmeId={p.id}
                                             programmeTitle={p.title}
-                                            amount={parseFloat(p.amount || "0")}
+                                            amount={effectiveAmount}
+                                            earlyBirdAmount={p.earlyBirdAmount ? parseFloat(p.earlyBirdAmount) : undefined}
+                                            earlyBirdDeadline={p.earlyBirdDeadline}
                                             allowInstallments={p.allowInstallments || false}
                                             minInstallmentAmount={parseFloat(p.minInstallmentAmount || "0")}
                                         />

@@ -86,8 +86,8 @@ function RegistrationContent() {
         e.preventDefault()
         setIsSubmitting(true)
         try {
-            // Enforce minimum payment logically on frontend too
-            let baseAmount = parseFloat(programme.amount || "0")
+            // Enforce minimum payment logically on frontend too — early bird aware
+            let baseAmount = effectiveNormal
             if (formData.registrationTier && programme.pricingTiers) {
                  const tiers: any = typeof programme.pricingTiers === 'string' ? JSON.parse(programme.pricingTiers) : programme.pricingTiers;
                  let tierAmount = 0;
@@ -193,6 +193,8 @@ function RegistrationContent() {
     }
 
     const isWaiverActive = waiverCode && programme.waiverCode && waiverCode === programme.waiverCode
+    const isEarlyBird = programme?.earlyBirdAmount && programme?.earlyBirdDeadline && new Date() <= new Date(programme.earlyBirdDeadline)
+    const effectiveNormal = isEarlyBird ? Number(programme.earlyBirdAmount) : Number(programme.amount || 0)
 
     return (
         <div className="max-w-2xl mx-auto py-8 px-4">
@@ -214,6 +216,12 @@ function RegistrationContent() {
                                 <p className="text-sm font-bold text-emerald-800">Priority Registration Active</p>
                                 <p className="text-xs text-emerald-700">Your offline payment has been pre-verified. No further payment is required.</p>
                             </div>
+                        </div>
+                    )}
+                    {programme?.paymentRequired && isEarlyBird && (
+                        <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                            <p className="text-sm font-bold text-amber-800">Early Bird ₦{Number(programme.earlyBirdAmount).toLocaleString()} till {new Date(programme.earlyBirdDeadline).toLocaleDateString()}</p>
+                            <p className="text-xs text-amber-700">Normal ₦{Number(programme.amount).toLocaleString()} from {new Date(new Date(programme.earlyBirdDeadline).getTime()+24*60*60*1000).toLocaleDateString()}.</p>
                         </div>
                     )}
                 </CardHeader>
@@ -367,7 +375,7 @@ function RegistrationContent() {
                         
                         {(() => {
                             const pricingTiers = programme?.pricingTiers ? (typeof programme.pricingTiers === 'string' ? JSON.parse(programme.pricingTiers) : programme.pricingTiers) : null;
-                            let baseAmount = parseFloat(programme?.amount || "0");
+                            let baseAmount = effectiveNormal;
                             if (pricingTiers && formData.registrationTier) {
                                 if (pricingTiers?.[formData.registrationTier]) {
                                     baseAmount = Number(pricingTiers[formData.registrationTier]);
@@ -472,7 +480,7 @@ function RegistrationContent() {
                                 <UserPlus className="mr-2 h-5 w-5" />
                             )}
                             {isWaiverActive ? "Complete Registration (Free)" : 
-                             programme.paymentRequired && parseFloat(programme.amount || "0") > 0 ? `Proceed to Payment (₦${programme.amount})` : 
+                             programme.paymentRequired && effectiveNormal > 0 ? `Proceed to Payment (₦${effectiveNormal}${isEarlyBird ? " Early Bird" : ""})` : 
                              "Confirm Registration"}
                         </Button>
                         <p className="text-[10px] text-center text-gray-400 uppercase tracking-widest font-bold">

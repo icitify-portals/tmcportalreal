@@ -90,8 +90,9 @@ export function NavbarClient({ items }: NavbarClientProps) {
                     <SheetContent side="left" className="w-[300px] sm:w-[350px] overflow-y-auto">
                         <SheetTitle className="sr-only">TMC Portal Navigation</SheetTitle>
                         <div className="flex flex-col gap-6 mt-6">
-                            <Link href="/" className="font-bold text-xl px-2 mb-4" onClick={() => setIsOpen(false)}>
-                                TMC Portal
+                            <Link href="/" className="font-extrabold text-xl px-2 mb-4 leading-tight" onClick={() => setIsOpen(false)}>
+                                The TMC PORTAL
+                                <span className="block text-[10px] tracking-[0.2em] text-muted-foreground font-semibold">MUSLIM CONGRESS</span>
                             </Link>
                             <div className="flex flex-col gap-2">
                                 {items.map((item: any) => {

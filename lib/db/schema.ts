@@ -1050,6 +1050,8 @@ export const programmes = mysqlTable("programmes", {
     allowInstallments: boolean("allowInstallments").default(false),
     minInstallmentAmount: decimal("minInstallmentAmount", { precision: 10, scale: 2 }).default("0.00"),
     amount: decimal("amount", { precision: 10, scale: 2 }).default("0.00"),
+    earlyBirdAmount: decimal("earlyBirdAmount", { precision: 10, scale: 2 }),
+    earlyBirdDeadline: timestamp("earlyBirdDeadline", { mode: "date", fsp: 3 }),
     hasCertificate: boolean("hasCertificate").default(false),
     certTemplateType: certTemplateTypeEnum.default('TMC_ONLY'),
     certTmcSignature: varchar("certTmcSignature", { length: 500 }),
@@ -1102,6 +1104,7 @@ export const programmeRegistrations = mysqlTable("programme_registrations", {
     checkInBy: varchar("checkInBy", { length: 255 }).references(() => users.id),
     checkOutBy: varchar("checkOutBy", { length: 255 }).references(() => users.id),
     checkInWaiver: boolean("checkInWaiver").default(false),
+    lockedAmount: decimal("lockedAmount", { precision: 10, scale: 2 }), // effective amount locked at registration (early bird)
 
     registeredAt: timestamp("registeredAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
 });
@@ -1850,4 +1853,45 @@ export const constitutionFeedback = mysqlTable("constitution_feedback", {
     section: varchar("section", { length: 255 }),
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
 });
+
+// ─── Meeting Notes — OneNote-like ──────────────────────────────────────────
+export const meetingNoteSectionEnum = mysqlEnum('note_section', ['GENERAL','AGENDA','MINUTES','DECISIONS','ACTIONS','FOLLOW_UP']);
+
+export const meetingNotes = mysqlTable("meeting_notes", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
+    meetingId: varchar("meetingId", { length: 255 }).references(() => meetings.id, { onDelete: "cascade" }),
+    programmeId: varchar("programmeId", { length: 255 }).references(() => programmes.id, { onDelete: "cascade" }),
+    title: varchar("title", { length: 255 }).notNull(),
+    section: meetingNoteSectionEnum.default('GENERAL'),
+    content: json("content"), // Tiptap JSON
+    html: text("html"), // rendered HTML for quick view
+    plainText: text("plainText"),
+    createdBy: varchar("createdBy", { length: 255 }).notNull().references(() => users.id),
+    updatedBy: varchar("updatedBy", { length: 255 }).references(() => users.id),
+    isShared: boolean("isShared").default(false),
+    version: int("version").default(1),
+    createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).$defaultFn(() => new Date()).$onUpdateFn(() => new Date()),
+});
+
+export const meetingNoteVersions = mysqlTable("meeting_note_versions", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
+    noteId: varchar("noteId", { length: 255 }).notNull().references(() => meetingNotes.id, { onDelete: "cascade" }),
+    content: json("content"),
+    html: text("html"),
+    version: int("version").notNull(),
+    createdBy: varchar("createdBy", { length: 255 }).references(() => users.id),
+    createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+});
+
+export const meetingNotesRelations = relations(meetingNotes, ({ one, many }) => ({
+    meeting: one(meetings, { fields: [meetingNotes.meetingId], references: [meetings.id] }),
+    programme: one(programmes, { fields: [meetingNotes.programmeId], references: [programmes.id] }),
+    creator: one(users, { fields: [meetingNotes.createdBy], references: [users.id] }),
+    versions: many(meetingNoteVersions),
+}));
+
+export const meetingNoteVersionsRelations = relations(meetingNoteVersions, ({ one }) => ({
+    note: one(meetingNotes, { fields: [meetingNoteVersions.noteId], references: [meetingNotes.id] }),
+}));
 

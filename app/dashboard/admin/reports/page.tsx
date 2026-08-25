@@ -15,6 +15,7 @@ import { eq, and } from "drizzle-orm"
 import { format } from "date-fns"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { ReportSubmissionDialog } from "@/components/admin/reports/report-submission-dialog"
+import { OfficeRollupGenerator } from "@/components/admin/reports/office-rollup-generator"
 
 // Helper for status badge color
 const getStatusColor = (status: string) => {
@@ -27,10 +28,15 @@ const getStatusColor = (status: string) => {
     }
 }
 
-async function ReportList({ orgId, type }: { orgId: string, type: 'MY_REPORTS' | 'APPROVALS' }) {
+async function ReportList({ orgId, type, period, officeId, targetOrgId }: { orgId: string, type: 'MY_REPORTS' | 'APPROVALS', period?: string, officeId?: string, targetOrgId?: string }) {
+    const effectiveOrg = targetOrgId || orgId
     const reports = await getReports({
-        organizationId: type === 'MY_REPORTS' ? orgId : undefined,
-        status: type === 'APPROVALS' ? 'SUBMITTED' : undefined
+        organizationId: effectiveOrg || undefined,
+        status: type === 'APPROVALS' ? 'SUBMITTED' : undefined,
+        type: 'MONTHLY_ACTIVITY',
+        officeId: officeId || undefined,
+        period: period || undefined,
+        includeHierarchy: type === 'APPROVALS' ? true : false
     })
 
     if (reports.length === 0) {
@@ -90,9 +96,47 @@ async function ReportList({ orgId, type }: { orgId: string, type: 'MY_REPORTS' |
     )
 }
 
-export default async function ReportsPage() {
+async function QuarterlyAnnualList({ orgId, type, officeId, targetOrgId }: { orgId: string, type: 'QUARTERLY_STATE' | 'ANNUAL_CONGRESS', officeId?: string, targetOrgId?: string }) {
+    const effectiveOrg = targetOrgId || orgId
+    const reports = await getReports({
+        organizationId: effectiveOrg || undefined,
+        type,
+        officeId: officeId || undefined,
+        includeHierarchy: true
+    })
+    if (reports.length === 0) {
+        return <div className="p-8 text-center text-muted-foreground border rounded-md border-dashed">No {type.replace('_',' ')} reports yet. Use Generator above.</div>
+    }
+    return (
+        <div className="grid gap-4">
+            {reports.map((r) => (
+                <Card key={r.id}>
+                    <CardHeader className="pb-3">
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <CardTitle className="text-lg">{r.title}</CardTitle>
+                                <CardDescription>{r.type.replace('_',' ')} • Period: {r.period} • {(r.content as any)?.stats ? `${(r.content as any).stats.total}/${(r.content as any).stats.expected} coverage ${(r.content as any).stats.coverage}%` : ''}</CardDescription>
+                            </div>
+                            <Badge className={getStatusColor(r.status || "")}>{r.status}</Badge>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="text-sm text-muted-foreground">
+                        <div>{r.organization?.name} • {r.office?.name || 'National (all offices)'} • by {r.user?.name}</div>
+                        {(r.content as any)?.summary && <p className="mt-2 text-gray-700 line-clamp-3">{(r.content as any).summary}</p>}
+                    </CardContent>
+                </Card>
+            ))}
+        </div>
+    )
+}
+
+export default async function ReportsPage({ searchParams }: { searchParams?: Promise<{ period?: string; officeId?: string; targetOrgId?: string; status?: string }> }) {
     const session = await getServerSession()
     if (!session?.user?.id) redirect("/login")
+    const sp = searchParams ? await searchParams : {}
+    const periodFilter = sp.period || ""
+    const officeFilter = sp.officeId || ""
+    const targetOrgId = sp.targetOrgId || ""
 
     // Logic to determine Organization ID
     let organizationId = session.user.officialOrganizationId
@@ -148,12 +192,20 @@ export default async function ReportsPage() {
         .limit(1)
 
     const offices = organizationId ? await getOffices(organizationId) : []
+    // jurisdiction selector for executives (hierarchy)
+    const allOrgs = await db.select({ id: organizations.id, name: organizations.name, level: organizations.level, parentId: organizations.parentId }).from(organizations)
+    const map = new Map<string, string[]>()
+    for (const o of allOrgs) { if (!o.parentId) continue; if (!map.has(o.parentId)) map.set(o.parentId, []); map.get(o.parentId)!.push(o.id) }
+    const collect: string[] = []; const q: string[] = organizationId ? [organizationId] : []
+    const seen = new Set<string>()
+    while (q.length) { const cur = q.shift()!; if (seen.has(cur)) continue; seen.add(cur); collect.push(cur); (map.get(cur) ?? []).forEach(c=>q.push(c)) }
+    const jurisdictions = allOrgs.filter(o=>collect.includes(o.id) && o.id !== organizationId).map(o=>({id:o.id,name:o.name,level:o.level}))
 
     return (
         <DashboardLayout>
             <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
                 <div className="flex items-center justify-between space-y-2">
-                    <h2 className="text-3xl font-bold tracking-tight">Activity Reports</h2>
+                    <h2 className="text-3xl font-bold tracking-tight">Monthly Office Reports</h2>
                     <div className="flex items-center space-x-2">
                         <form action={async () => {
                             "use server"
@@ -170,23 +222,66 @@ export default async function ReportsPage() {
                     </div>
                 </div>
 
+                <div className="rounded-xl border bg-white p-3">
+                    <form method="GET" className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                        <div>
+                            <label className="text-xs font-semibold">Month (Period)</label>
+                            <input type="month" name="period" defaultValue={periodFilter} className="w-full border rounded-md h-9 px-3 text-sm" />
+                        </div>
+                        <div>
+                            <label className="text-xs font-semibold">Office</label>
+                            <select name="officeId" defaultValue={officeFilter} className="w-full border rounded-md h-9 px-3 text-sm">
+                                <option value="">All offices</option>
+                                {offices.map((o:any)=><option key={o.id} value={o.id}>{o.name}</option>)}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="text-xs font-semibold">Jurisdiction</label>
+                            <select name="targetOrgId" defaultValue={targetOrgId} className="w-full border rounded-md h-9 px-3 text-sm">
+                                <option value="">This jurisdiction + children</option>
+                                {jurisdictions.map(j=><option key={j.id} value={j.id}>{j.name} • {j.level}</option>)}
+                            </select>
+                        </div>
+                        <div className="flex items-end gap-2">
+                            <Button type="submit" size="sm">Filter</Button>
+                            <Button type="button" variant="outline" size="sm" onClick={()=>{ if(typeof window!=='undefined') window.location.href='/dashboard/admin/reports' }}>Clear</Button>
+                        </div>
+                        <div className="flex items-end">
+                            <p className="text-[11px] text-muted-foreground">Each office Monthly → Executives at respective jurisdiction. National sees all.</p>
+                        </div>
+                    </form>
+                </div>
+
+                <OfficeRollupGenerator organizationId={organizationId || ""} offices={offices} isNational={session.user.isSuperAdmin || session.user.officialLevel === 'NATIONAL'} />
+
                 <Tabs defaultValue="my-reports" className="space-y-4">
                     <TabsList>
-                        <TabsTrigger value="my-reports">My Reports</TabsTrigger>
-                        {(session.user.isSuperAdmin || session.user.officialLevel === 'NATIONAL' || session.user.officialLevel === 'STATE') && (
-                            <TabsTrigger value="approvals">Pending Approvals</TabsTrigger>
-                        )}
+                        <TabsTrigger value="my-reports">My Office (Monthly)</TabsTrigger>
+                        <TabsTrigger value="approvals">Executives — Pending Approvals</TabsTrigger>
+                        <TabsTrigger value="quarterly">Quarterly (Generated)</TabsTrigger>
+                        <TabsTrigger value="annual">Annual (Generated)</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="my-reports" className="space-y-4">
                         <Suspense fallback={<div>Loading...</div>}>
-                            <ReportList type="MY_REPORTS" orgId={organizationId || ""} />
+                            <ReportList type="MY_REPORTS" orgId={organizationId || ""} period={periodFilter || undefined} officeId={official?.officeId || officeFilter || undefined} targetOrgId={targetOrgId || undefined} />
                         </Suspense>
                     </TabsContent>
 
                     <TabsContent value="approvals" className="space-y-4">
                         <Suspense fallback={<div>Loading...</div>}>
-                            <ReportList type="APPROVALS" orgId={organizationId || ""} />
+                            <ReportList type="APPROVALS" orgId={organizationId || ""} period={periodFilter || undefined} officeId={officeFilter || undefined} targetOrgId={targetOrgId || undefined} />
+                        </Suspense>
+                    </TabsContent>
+
+                    <TabsContent value="quarterly" className="space-y-4">
+                        <Suspense fallback={<div>Loading...</div>}>
+                            <QuarterlyAnnualList orgId={organizationId || ""} type="QUARTERLY_STATE" officeId={officeFilter || undefined} targetOrgId={targetOrgId || undefined} />
+                        </Suspense>
+                    </TabsContent>
+                    <TabsContent value="annual" className="space-y-4">
+                        <Suspense fallback={<div>Loading...</div>}>
+                            <QuarterlyAnnualList orgId={organizationId || ""} type="ANNUAL_CONGRESS" officeId={officeFilter || undefined} targetOrgId={targetOrgId || undefined} />
                         </Suspense>
                     </TabsContent>
                 </Tabs>
