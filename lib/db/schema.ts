@@ -1855,7 +1855,7 @@ export const constitutionFeedback = mysqlTable("constitution_feedback", {
 });
 
 // ─── Meeting Notes — OneNote-like ──────────────────────────────────────────
-export const meetingNoteSectionEnum = mysqlEnum('note_section', ['GENERAL','AGENDA','MINUTES','DECISIONS','ACTIONS','FOLLOW_UP']);
+export const meetingNoteSectionEnum = mysqlEnum('section', ['GENERAL','AGENDA','MINUTES','DECISIONS','ACTIONS','FOLLOW_UP']);
 
 export const meetingNotes = mysqlTable("meeting_notes", {
     id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
