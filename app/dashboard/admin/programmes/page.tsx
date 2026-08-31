@@ -265,7 +265,7 @@ export default async function ProgrammesPage() {
                                 </a>
                             </Button>
                         )}
-                        {(isSuperAdmin || userLevel === 'NATIONAL') && (
+                        {(isAdmin || isSuperAdmin || userLevel === 'NATIONAL') && (
                             <CreateProgrammeDialog 
                                 organizationId={organizationId || ""} 
                                 isSuperAdmin={isSuperAdmin}

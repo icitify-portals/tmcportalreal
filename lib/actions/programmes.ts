@@ -388,20 +388,27 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
             if (now > yearSettings.nextYearDeadline) {
                 isLateSubmission = true
             }
-        } else {
-            // PAST ACTIVITIES / ARCHIVE: admins & national officers can record historical events.
-            const isAdminOrNational = session.user.isSuperAdmin ||
-                session.user.officialLevel === 'NATIONAL' ||
-                (session.user.roles?.some((r: any) => r.jurisdictionLevel === 'SYSTEM' || r.code === 'NATIONAL_ADMIN'));
+        } else if (progYear < yearSettings.activeYear) {
+            // PAST ACTIVITIES / ARCHIVE: any admin/state/national officer can record historical
+            // events. Works out-of-the-box; the window defaults to 30 years back and needs no setup.
+            const isStaff = session.user.isSuperAdmin ||
+                !!session.user.officialId ||
+                session.user.roles?.some((r: any) => (r.jurisdictionLevel ?? r.role?.jurisdictionLevel) !== 'MEMBER' ||
+                    String(r.code ?? '').endsWith('_ADMIN'));
 
-            if (yearSettings.allowPastActivities && isAdminOrNational && progYear >= yearSettings.archiveStartYear) {
+            if (yearSettings.allowPastActivities && isStaff && progYear >= yearSettings.archiveStartYear) {
                 isArchive = true
                 isLateSubmission = true
             } else {
                 return {
                     success: false,
-                    error: `You can only submit programmes for ${yearSettings.activeYear} or ${yearSettings.activeYear + 1}. Archive is restricted to admins/national officers.`
+                    error: `You can only submit programmes for ${yearSettings.activeYear} or ${yearSettings.activeYear + 1}. Earlier archive is restricted to officials/admins.`
                 }
+            }
+        } else {
+            return {
+                success: false,
+                error: `You can only submit programmes for ${yearSettings.activeYear} or ${yearSettings.activeYear + 1}`
             }
         }
 
