@@ -7,7 +7,7 @@ import { organizations, galleries, galleryImages, fundraisingCampaigns, programm
 import { eq, and, desc, inArray, gte, asc } from "drizzle-orm"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Facebook, Twitter, Instagram, Linkedin, Calendar, Newspaper, ArrowRight, Heart } from "lucide-react"
+import { Facebook, Twitter, Instagram, Linkedin, Calendar, Newspaper, ArrowRight, Heart, BookOpen } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
@@ -95,6 +95,20 @@ async function NationalContent() {
     <div className="min-h-screen flex flex-col bg-background font-sans">
       {/* Header */}
       <PublicNav />
+
+      {/* Guide callout */}
+      <div className="w-full container mx-auto px-4 mt-6">
+        <Link href="/dashboard/guide" className="group flex items-center justify-between gap-4 rounded-2xl border border-emerald-200 bg-emerald-50/70 px-6 py-4 text-emerald-900 shadow-sm hover:bg-emerald-100/70 hover:shadow-md transition-all">
+          <div className="flex items-center gap-3">
+            <span className="h-10 w-10 rounded-xl bg-emerald-600 grid place-items-center text-white"><BookOpen className="h-5 w-5" /></span>
+            <div>
+              <p className="font-bold">New here? Explore the User Guide</p>
+              <p className="text-sm text-emerald-700/80">Step-by-step help for every module — members, events, finance, contests and more.</p>
+            </div>
+          </div>
+          <span className="shrink-0 text-emerald-700 font-semibold flex items-center gap-1 text-sm">Open Guide <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" /></span>
+        </Link>
+      </div>
 
       {/* Hero Section */}
       <div className="w-full bg-background mt-6 container mx-auto px-4">
@@ -361,6 +375,7 @@ async function NationalContent() {
             <h4 className="font-semibold text-white mb-4">Resources</h4>
             <ul className="space-y-2 text-sm">
               <li><Link href="/constitution" className="hover:text-white transition-colors font-semibold">TMC Constitution</Link></li>
+              <li><Link href="/dashboard/guide" className="hover:text-white transition-colors font-semibold text-emerald-300">📘 User Guide</Link></li>
               <li><Link href="#" className="hover:text-white transition-colors">Publications</Link></li>
               <li><Link href="#" className="hover:text-white transition-colors">Audio/Video</Link></li>
               <li><Link href="#" className="hover:text-white transition-colors">Photo Gallery</Link></li>
