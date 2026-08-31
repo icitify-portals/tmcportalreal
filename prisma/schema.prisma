@@ -798,6 +798,7 @@ model Programme {
   updatedAt          DateTime @updatedAt
 
   feedbackFields     Json?
+  isArchive          Boolean  @default(false)
 
   registrations      ProgrammeRegistration[]
   report             ProgrammeReport?

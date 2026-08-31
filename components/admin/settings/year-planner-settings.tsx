@@ -31,6 +31,8 @@ const YearPlannerSchema = z.object({
     activeYear: z.number().int().min(2000).max(2100),
     nextYearOpen: z.boolean(),
     nextYearDeadline: z.string().refine((val) => !isNaN(Date.parse(val)), "Invalid date"),
+    allowPastActivities: z.boolean(),
+    archiveStartYear: z.number().int().min(1990).max(2100),
 })
 
 interface YearPlannerSettingsProps {
@@ -55,6 +57,8 @@ export function YearPlannerSettingsCard({ initialSettings }: YearPlannerSettings
             activeYear: initialSettings.activeYear,
             nextYearOpen: initialSettings.nextYearOpen,
             nextYearDeadline: formatDate(initialSettings.nextYearDeadline),
+            allowPastActivities: initialSettings.allowPastActivities,
+            archiveStartYear: initialSettings.archiveStartYear,
         },
     })
 
@@ -65,6 +69,8 @@ export function YearPlannerSettingsCard({ initialSettings }: YearPlannerSettings
                 activeYear: data.activeYear,
                 nextYearOpen: data.nextYearOpen,
                 nextYearDeadline: new Date(data.nextYearDeadline),
+                allowPastActivities: data.allowPastActivities,
+                archiveStartYear: data.archiveStartYear,
             }
 
             const result = await updateYearPlannerSettings(payload)
@@ -152,6 +158,41 @@ export function YearPlannerSettingsCard({ initialSettings }: YearPlannerSettings
                                             The absolute deadline for all jurisdictions to submit their programmes for {form.watch('activeYear') + 1}. 
                                             Submissions after this date will be flagged as LATE. You can extend this date at any time.
                                         </FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+
+                        <div className="pt-4 border-t space-y-6">
+                            <div className="flex items-center justify-between rounded-lg border p-4 shadow-sm">
+                                <div className="space-y-0.5">
+                                    <FormLabel className="text-base">Allow Past Activities (Archive)</FormLabel>
+                                    <FormDescription>
+                                        Let admins & national officers record historical programmes/activities from previous years.
+                                    </FormDescription>
+                                </div>
+                                <FormField
+                                    control={form.control}
+                                    name="allowPastActivities"
+                                    render={({ field }) => (
+                                        <FormControl>
+                                            <Switch checked={field.value} onCheckedChange={field.onChange} />
+                                        </FormControl>
+                                    )}
+                                />
+                            </div>
+
+                            <FormField
+                                control={form.control}
+                                name="archiveStartYear"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Archive Start Year (oldest recordable)</FormLabel>
+                                        <FormControl>
+                                            <Input type="number" {...field} onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : 1990)} />
+                                        </FormControl>
+                                        <FormDescription>Records earlier than this year are not accepted. E.g. 1995 allows backfilling over 30 years.</FormDescription>
                                         <FormMessage />
                                     </FormItem>
                                 )}

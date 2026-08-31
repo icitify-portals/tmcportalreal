@@ -33,12 +33,16 @@ export interface YearPlannerSettings {
     activeYear: number
     nextYearOpen: boolean
     nextYearDeadline: Date
+    allowPastActivities: boolean
+    archiveStartYear: number
 }
 
 const DEFAULT_YEAR_PLANNER_SETTINGS: YearPlannerSettings = {
     activeYear: new Date().getFullYear(),
     nextYearOpen: false,
-    nextYearDeadline: new Date(new Date().getFullYear(), 6, 31) // July 31st
+    nextYearDeadline: new Date(new Date().getFullYear(), 6, 31), // July 31st
+    allowPastActivities: true,
+    archiveStartYear: new Date().getFullYear() - 30
 }
 
 export async function getAISettings(): Promise<AISettings> {
@@ -166,6 +170,8 @@ export async function getYearPlannerSettings(): Promise<YearPlannerSettings> {
             if (s.settingKey === "year_planner_active_year") config.activeYear = parseInt(s.settingValue as string) || new Date().getFullYear()
             if (s.settingKey === "year_planner_next_year_open") config.nextYearOpen = s.settingValue === "true"
             if (s.settingKey === "year_planner_next_year_deadline") config.nextYearDeadline = new Date(s.settingValue as string)
+            if (s.settingKey === "year_planner_allow_past") config.allowPastActivities = s.settingValue === "true"
+            if (s.settingKey === "year_planner_archive_start_year") config.archiveStartYear = parseInt(s.settingValue as string) || new Date().getFullYear() - 30
         })
 
         return config
@@ -200,6 +206,8 @@ export async function updateYearPlannerSettings(data: YearPlannerSettings) {
     await upsertSetting("year_planner_active_year", data.activeYear.toString())
     await upsertSetting("year_planner_next_year_open", String(data.nextYearOpen))
     await upsertSetting("year_planner_next_year_deadline", data.nextYearDeadline.toISOString())
+    await upsertSetting("year_planner_allow_past", String(data.allowPastActivities))
+    await upsertSetting("year_planner_archive_start_year", data.archiveStartYear.toString())
 
     revalidatePath("/dashboard/admin/settings")
     return { success: true }

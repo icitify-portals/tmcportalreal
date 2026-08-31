@@ -265,6 +265,16 @@ export default async function ProgrammesPage() {
                                 </a>
                             </Button>
                         )}
+                        {(isSuperAdmin || userLevel === 'NATIONAL') && (
+                            <CreateProgrammeDialog 
+                                organizationId={organizationId || ""} 
+                                isSuperAdmin={isSuperAdmin}
+                                userOfficialId={userOfficialId}
+                                userOfficeId={userOfficeId}
+                                userLevel={userOfficial[0]?.positionLevel || session.user.officialLevel}
+                                triggerLabel="Record Past Activity"
+                            />
+                        )}
                         <CreateProgrammeDialog 
                             organizationId={organizationId || ""} 
                             isSuperAdmin={isSuperAdmin}

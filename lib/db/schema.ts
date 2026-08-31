@@ -1067,6 +1067,7 @@ export const programmes = mysqlTable("programmes", {
 
     feedbackFields: json("feedbackFields"),
     isRecurringAdmin: boolean("isRecurringAdmin").default(false),
+    isArchive: boolean("isArchive").default(false),
     flyerUrl: varchar("flyerUrl", { length: 500 }),
     pricingTiers: json("pricingTiers"),
     createdBy: varchar("createdBy", { length: 255 }).notNull().references(() => users.id),

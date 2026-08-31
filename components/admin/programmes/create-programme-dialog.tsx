@@ -98,13 +98,15 @@ export function CreateProgrammeDialog({
     isSuperAdmin, 
     userOfficialId, 
     userOfficeId,
-    userLevel 
+    userLevel,
+    triggerLabel = "New Programme"
 }: { 
     organizationId: string; 
     isSuperAdmin?: boolean; 
     userOfficialId?: string;
     userOfficeId?: string;
     userLevel?: string;
+    triggerLabel?: string;
 }) {
     const [open, setOpen] = useState(false)
     const [isSubmitting, setIsSubmitting] = useState(false)
@@ -267,7 +269,7 @@ export function CreateProgrammeDialog({
             <DialogTrigger asChild>
                 <Button disabled={!mounted} suppressHydrationWarning>
                     <Plus className="mr-2 h-4 w-4" />
-                    New Programme
+                     {triggerLabel}
                 </Button>
             </DialogTrigger>
             {mounted && (

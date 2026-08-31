@@ -371,6 +371,7 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
         const progYear = progDate.getFullYear()
 
         let isLateSubmission = false
+        let isArchive = false
 
         if (progYear === yearSettings.activeYear) {
             // Programmes in the active year are considered ad-hoc and implicitly late
@@ -388,15 +389,26 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
                 isLateSubmission = true
             }
         } else {
-            return {
-                success: false,
-                error: `You can only submit programmes for ${yearSettings.activeYear} or ${yearSettings.activeYear + 1}`
+            // PAST ACTIVITIES / ARCHIVE: admins & national officers can record historical events.
+            const isAdminOrNational = session.user.isSuperAdmin ||
+                session.user.officialLevel === 'NATIONAL' ||
+                (session.user.roles?.some((r: any) => r.jurisdictionLevel === 'SYSTEM' || r.code === 'NATIONAL_ADMIN'));
+
+            if (yearSettings.allowPastActivities && isAdminOrNational && progYear >= yearSettings.archiveStartYear) {
+                isArchive = true
+                isLateSubmission = true
+            } else {
+                return {
+                    success: false,
+                    error: `You can only submit programmes for ${yearSettings.activeYear} or ${yearSettings.activeYear + 1}. Archive is restricted to admins/national officers.`
+                }
             }
         }
 
         let initialStatus: 'DRAFT' | 'PENDING_STATE' | 'PENDING_NATIONAL' | 'APPROVED' = 'DRAFT'
 
-        if (validData.isRecurringAdmin) {
+        if (validData.isRecurringAdmin || isArchive) {
+            // Recurring admin programmes and archived past activities are auto-approved.
             initialStatus = 'APPROVED'
         } else {
             // Workflow Logic:
@@ -497,6 +509,7 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
                 certPartnerSignature: validData.certPartnerSignature || null,
                 certPartnerSignatory: validData.certPartnerSignatory || null,
                 isRecurringAdmin: validData.isRecurringAdmin,
+                isArchive,
                 flyerUrl: validData.flyerUrl || null,
                 pricingTiers: validData.pricingTiers ? JSON.parse(JSON.stringify(validData.pricingTiers)) : null,
                 createdBy: finalCreatedBy,
