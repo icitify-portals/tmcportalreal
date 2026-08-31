@@ -77,7 +77,7 @@ const adminNavItems = [
   { href: "/dashboard/admin/occasions", label: "Engagements & Occasions", icon: Handshake },
   { href: "/dashboard/admin/competitions", label: "Competitions (Forms)", icon: Award },
   { href: "/dashboard/contests", label: "Contests Live", icon: Trophy },
-  { href: "/dashboard/contests/guide", label: "Contest Guide", icon: BookOpen },
+  { href: "/dashboard/guide", label: "User Guide", icon: BookOpen },
   { href: "/dashboard/admin/members", label: "Members", icon: Users },
   { href: "/dashboard/admin/officials", label: "Officials", icon: UserCheck },
   { href: "/dashboard/admin/organizations", label: "Organizations", icon: Building2 },
@@ -112,6 +112,7 @@ const memberNavItems = [
   { href: "/dashboard/member/documents", label: "Documents", icon: FileText },
   { href: "/dashboard/user/promotions", label: "My Promotions", icon: Megaphone },
   { href: "/dashboard/burial", label: "Burial Requests", icon: HeartHandshake },
+  { href: "/dashboard/guide", label: "User Guide", icon: BookOpen },
 ]
 
 const officialNavItems = [
@@ -135,6 +136,7 @@ const officialNavItems = [
   { href: "/dashboard/official/constitution", label: "Constitution Review", icon: FileText },
   { href: "/dashboard/user/promotions", label: "My Promotions", icon: Megaphone },
   { href: "/dashboard/burial", label: "Burial Requests", icon: HeartHandshake },
+  { href: "/dashboard/guide", label: "User Guide", icon: BookOpen },
 ]
 
 const councilNavItems = [
@@ -143,6 +145,7 @@ const councilNavItems = [
   { href: "/dashboard/broadcasts", label: "Broadcasts", icon: Radio },
   { href: "/dashboard/council/reports", label: "Event Reports", icon: FileText },
   { href: "/dashboard/messages", label: "Messages", icon: MessageSquare },
+  { href: "/dashboard/guide", label: "User Guide", icon: BookOpen },
 ]
 
 export function Sidebar({ userRole, isRealAdmin, adminLevel, className, onNavigate, onViewModeChange }: SidebarProps & { className?: string; onNavigate?: () => void }) {
