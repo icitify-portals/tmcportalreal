@@ -611,11 +611,13 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
             }
 
             if (notifyUserIds.length > 0) {
+                const levelLabel = org.level ? org.level.replace(/_/g, " ") : "GENERAL";
+                const orgLabel = org.name ? `${org.name} (${levelLabel})` : levelLabel;
                 await db.insert(notifications).values(
                     notifyUserIds.map(userId => ({
                         userId: userId,
-                        title: "New Programme Created",
-                        message: `A new programme "${validData.title}" has been scheduled for ${new Date(validData.startDate).toLocaleDateString()}`,
+                        title: `New Programme [${levelLabel}]`,
+                        message: `A new programme "${validData.title}" organized by ${orgLabel} has been scheduled for ${new Date(validData.startDate).toLocaleDateString()} at ${validData.venue || "TBD"}`,
                         type: 'INFO' as const,
                         actionUrl: `/dashboard/member/programmes`,
                         createdAt: new Date(),
@@ -629,9 +631,9 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
                     if (!user.email) return Promise.resolve();
                     return sendEmail({
                         to: user.email,
-                        subject: `New Programme: ${validData.title}`,
-                        html: `Hello ${user.name || 'Member'},<br/><br/>A new programme <b>${validData.title}</b> has been scheduled for ${new Date(validData.startDate).toLocaleDateString()}.<br/>Venue: ${validData.venue || "TBD"}<br/><br/>Please log in to your dashboard to view more details.`,
-                        text: `A new programme ${validData.title} has been scheduled for ${new Date(validData.startDate).toLocaleDateString()}`,
+                        subject: `[${levelLabel}] New Programme: ${validData.title} — ${org.name}`,
+                        html: `Hello ${user.name || 'Member'},<br/><br/>A new programme <b>${validData.title}</b> organized by <b>${orgLabel}</b> has been scheduled for ${new Date(validData.startDate).toLocaleDateString()}.<br/>Venue: ${validData.venue || "TBD"}<br/><br/>Please log in to your dashboard to view more details.`,
+                        text: `A new programme ${validData.title} organized by ${orgLabel} has been scheduled for ${new Date(validData.startDate).toLocaleDateString()}`,
                         template: "general_notification"
                     })
                 })).catch(err => console.error("Error sending programme emails:", err))

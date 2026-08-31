@@ -467,6 +467,8 @@ enum PaymentType {
   DONATION
   EVENT_FEE
   BURIAL_FEE
+  LEVY
+  CONTEST_FEE
   OTHER
 }
 
@@ -1631,4 +1633,176 @@ model MeetingNoteVersion {
 
   @@index([noteId])
   @@map("meeting_note_versions")
+}
+
+// ─── Real-Time Contests (Isolated) ──────────────────────────────────────────
+model ContestEvent {
+  id                String   @id @default(cuid())
+  organizationId    String?
+  organization      Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  title             String
+  description       String?  @db.Text
+  category          String   // QURAN/DEBATE/WRITTEN/OTHER
+  format            String   @default("PHYSICAL")
+  year              Int
+  level             String
+  status            String   @default("DRAFT")
+  rruleString       String?  @db.VarChar(500)
+  seriesId          String?  @db.VarChar(255)
+  targetAudience    String?  @default("PUBLIC")
+  paymentRequired   Boolean  @default(false)
+  amount            Decimal? @default(0.00) @db.Decimal(10,2)
+  earlyBirdAmount   Decimal? @db.Decimal(10,2)
+  earlyBirdDeadline DateTime? @db.DateTime(3)
+  allowInstallments Boolean  @default(false)
+  minInstallmentAmount Decimal? @default(0.00) @db.Decimal(10,2)
+  hasCertificate    Boolean  @default(false)
+  createdBy         String
+  creator           User     @relation(fields: [createdBy], references: [id])
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  phases            ContestPhase[]
+  @@index([organizationId])
+  @@map("contest_events")
+}
+
+model ContestPhase {
+  id             String   @id @default(cuid())
+  contestId      String
+  contest        ContestEvent @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  phaseNo        Int
+  title          String
+  type           String   // PRELIM/SEMI/FINAL
+  level          String
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  venue          String?
+  startAt        DateTime?
+  endAt          DateTime?
+  status         String   @default("SCHEDULED")
+  meetingId      String?
+  meeting        Meeting? @relation(fields: [meetingId], references: [id])
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  representatives ContestRepresentative[]
+  timetable      ContestTimetable[]
+  calls          ContestCall[]
+  results        ContestResult[]
+  @@index([contestId])
+  @@map("contest_phases")
+}
+
+model ContestRepresentative {
+  id                String   @id @default(cuid())
+  contestId         String
+  contest           ContestEvent @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  phaseId           String?
+  phase             ContestPhase? @relation(fields: [phaseId], references: [id], onDelete: Cascade)
+  organizationId    String
+  organization      Organization @relation(fields: [organizationId], references: [id])
+  participantName   String
+  participantUserId String?
+  participant       User?    @relation(fields: [participantUserId], references: [id])
+  category          String?
+  status            String   @default("REGISTERED")
+  lockedAmount      Decimal? @db.Decimal(10,2)
+  paymentStatus     String   @default("PENDING")
+  paymentRef        String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  @@index([contestId])
+  @@index([phaseId])
+  @@map("contest_representatives")
+}
+
+model ContestTimetable {
+  id            String   @id @default(cuid())
+  phaseId       String
+  phase         ContestPhase @relation(fields: [phaseId], references: [id], onDelete: Cascade)
+  participantId String
+  participant   ContestRepresentative @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  slotOrder     Int
+  scheduledAt   DateTime?
+  durationMin   Int      @default(5)
+  createdAt     DateTime @default(now())
+  @@index([phaseId])
+  @@map("contest_timetable")
+}
+
+model ContestCall {
+  id            String   @id @default(cuid())
+  phaseId       String
+  phase         ContestPhase @relation(fields: [phaseId], references: [id], onDelete: Cascade)
+  participantId String
+  participant   ContestRepresentative @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  queueOrder    Int
+  status        String   @default("QUEUED")
+  liveRoomId    String?
+  calledAt      DateTime?
+  completedAt   DateTime?
+  calledBy      String?
+  caller        User?    @relation(fields: [calledBy], references: [id])
+  createdAt     DateTime @default(now())
+  scores        ContestScore[]
+  @@index([phaseId])
+  @@map("contest_calls")
+}
+
+model ContestScore {
+  id        String   @id @default(cuid())
+  callId    String
+  call      ContestCall @relation(fields: [callId], references: [id], onDelete: Cascade)
+  judgeId   String
+  judge     User     @relation(fields: [judgeId], references: [id], onDelete: Cascade)
+  criteria  Json
+  total     Int
+  comment   String?  @db.Text
+  createdAt DateTime @default(now())
+  @@unique([callId, judgeId])
+  @@map("contest_scores")
+}
+
+model ContestResult {
+  id            String   @id @default(cuid())
+  phaseId       String
+  phase         ContestPhase @relation(fields: [phaseId], references: [id], onDelete: Cascade)
+  participantId String
+  participant   ContestRepresentative @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  totalScore    Int
+  avgScore      Decimal  @db.Decimal(5,2)
+  rank          Int
+  promoted      Boolean  @default(false)
+  decidedAt     DateTime @default(now())
+  @@index([phaseId])
+  @@map("contest_results")
+}
+
+model ContestWritten {
+  id            String   @id @default(cuid())
+  phaseId       String
+  phase         ContestPhase @relation(fields: [phaseId], references: [id], onDelete: Cascade)
+  participantId String
+  participant   ContestRepresentative @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  prompt        String?  @db.Text
+  answer        Json?
+  html          String?  @db.Text
+  plainText     String?  @db.Text
+  submittedAt   DateTime?
+  timeSpentSec  Int      @default(0)
+  status        String   @default("DRAFT")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  @@index([phaseId])
+  @@map("contest_written")
+}
+
+model ContestPayment {
+  id               String   @id @default(cuid())
+  representativeId String
+  representative   ContestRepresentative @relation(fields: [representativeId], references: [id], onDelete: Cascade)
+  paymentId        String
+  payment          Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  amount           Decimal  @db.Decimal(10,2)
+  createdAt        DateTime @default(now())
+  @@map("contest_payments")
 }

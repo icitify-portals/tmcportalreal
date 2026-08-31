@@ -42,13 +42,15 @@ async function processWeeklyNotifications() {
         const nextWeek = new Date();
         nextWeek.setDate(now.getDate() + 7);
 
-        // 1. Fetch Approved Programmes for the upcoming week
+        // 1. Fetch Approved Programmes for the upcoming week (with organizing level)
         const upcomingProgrammes = await db.select({
             id: programmes.id,
             title: programmes.title,
             venue: programmes.venue,
             startDate: programmes.startDate,
             organizationId: programmes.organizationId,
+            orgName: organizations.name,
+            level: programmes.level,
             createdBy: programmes.createdBy,
             status: programmes.status,
             paymentRequired: programmes.paymentRequired,
@@ -56,6 +58,7 @@ async function processWeeklyNotifications() {
             time: programmes.time,
         })
             .from(programmes)
+            .leftJoin(organizations, eq(programmes.organizationId, organizations.id))
             .where(
                 and(
                     eq(programmes.status, 'APPROVED'),
@@ -83,9 +86,12 @@ async function processWeeklyNotifications() {
             });
 
             if (creator && creator.email) {
+                const lvlForEmail = (prog as any).level ? String((prog as any).level).replace(/_/g, " ") : "GENERAL";
+                const orgForEmail = (prog as any).orgName ? `${(prog as any).orgName} (${lvlForEmail})` : lvlForEmail;
+                const titledWithLevel = `${prog.title} — ${orgForEmail}`;
                 const template = emailTemplates.officerReminder(
                     creator.name || 'Officer',
-                    prog.title,
+                    titledWithLevel,
                     prog.startDate.toDateString(),
                     prog.status || 'APPROVED'
                 );
@@ -99,11 +105,13 @@ async function processWeeklyNotifications() {
                     text: template.text
                 });
 
-                // Add to In-App Notifications
+                // Add to In-App Notifications — include organizing level to avoid confusion
+                const levelLabelW = (prog.level ? String(prog.level).replace(/_/g, " ") : "GENERAL");
+                const orgLabelW = prog.orgName ? `${prog.orgName} (${levelLabelW})` : levelLabelW;
                 await db.insert(notifications).values({
                     userId: prog.createdBy,
-                    title: "Programme Reminder",
-                    message: `Reminder: ${prog.title} is coming up on ${prog.startDate.toDateString()}.`,
+                    title: `Programme Reminder [${levelLabelW}]`,
+                    message: `Reminder: "${prog.title}" organized by ${orgLabelW} is coming up on ${prog.startDate.toDateString()} at ${prog.venue || "TBD"}.`,
                     type: "INFO",
                     actionUrl: "/dashboard/programmes",
                     createdAt: new Date(),
@@ -115,12 +123,17 @@ async function processWeeklyNotifications() {
         }
 
         // 3. Weekly Digest for All Users
-        // Prepare digest data
-        const digestEvents = upcomingProgrammes.map(p => ({
-            title: p.title,
-            date: p.startDate.toDateString() + (p.time ? ` at ${p.time}` : ''),
-            venue: p.venue
-        }));
+        // Prepare digest data — include organizing level to avoid confusion
+        const digestEvents = upcomingProgrammes.map(p => {
+            const lvl = (p as any).level ? String((p as any).level).replace(/_/g, " ") : "";
+            const org = (p as any).orgName || "";
+            const suffix = org ? ` — ${org} (${lvl})` : (lvl ? ` [${lvl}]` : "");
+            return {
+                title: `${p.title}${suffix}`,
+                date: p.startDate.toDateString() + (p.time ? ` at ${p.time}` : ''),
+                venue: p.venue
+            };
+        });
 
         // Fetch all active users (batching might be needed for thousands, keeping simple for now)
         const allUsers = await db.select({
@@ -183,9 +196,17 @@ async function processDailyContinuousReminders() {
             const targetDateEnd = new Date(targetDateStart);
             targetDateEnd.setHours(23, 59, 59, 999);
 
-            // Fetch Programmes
-            const upcomingProgrammes = await db.select()
+            // Fetch Programmes with organizing level
+            const upcomingProgrammes = await db.select({
+                id: programmes.id,
+                title: programmes.title,
+                venue: programmes.venue,
+                startDate: programmes.startDate,
+                level: programmes.level,
+                orgName: organizations.name,
+            })
                 .from(programmes)
+                .leftJoin(organizations, eq(programmes.organizationId, organizations.id))
                 .where(
                     and(
                         eq(programmes.status, 'APPROVED'),
@@ -210,25 +231,28 @@ async function processDailyContinuousReminders() {
                     });
 
                     if (user && user.email) {
-                        // Queue Email
+                        const lvl = (prog as any).level ? String((prog as any).level).replace(/_/g, " ") : "GENERAL";
+                        const orgNm = (prog as any).orgName || "";
+                        const orgLbl = orgNm ? `${orgNm} (${lvl})` : lvl;
+                        // Queue Email — include organizing level
                         await emailQueue.add('event-reminder', {
                             to: user.email,
-                            subject: `Reminder: ${prog.title} is ${daysAway} day${daysAway > 1 ? 's' : ''} away!`,
+                            subject: `[${lvl}] Reminder: ${prog.title} is ${daysAway} day${daysAway > 1 ? 's' : ''} away!`,
                             html: `
-                                <h2>Event Reminder</h2>
+                                <h2>Event Reminder [${lvl}]</h2>
                                 <p>Dear ${user.name || 'Member'},</p>
-                                <p>This is a continuous reminder that <strong>${prog.title}</strong> is happening in ${daysAway} day${daysAway > 1 ? 's' : ''} on ${prog.startDate.toDateString()}.</p>
+                                <p>This is a continuous reminder that <strong>${prog.title}</strong> organized by <strong>${orgLbl}</strong> is happening in ${daysAway} day${daysAway > 1 ? 's' : ''} on ${prog.startDate.toDateString()}.</p>
                                 <p><strong>Venue:</strong> ${prog.venue || 'Online'}</p>
                                 <p>Looking forward to seeing you there!</p>
                             `,
-                            text: `Reminder: ${prog.title} is happening in ${daysAway} day(s) on ${prog.startDate.toDateString()}. Venue: ${prog.venue || 'Online'}`
+                            text: `Reminder [${lvl}]: ${prog.title} organized by ${orgLbl} is happening in ${daysAway} day(s) on ${prog.startDate.toDateString()}. Venue: ${prog.venue || 'Online'}`
                         });
 
-                        // Add In-App Notification
+                        // Add In-App Notification — include level
                         await db.insert(notifications).values({
                             userId: reg.userId,
-                            title: "Event Approaching!",
-                            message: `${prog.title} is happening in ${daysAway} day(s)!`,
+                            title: `Event Approaching! [${lvl}]`,
+                            message: `"${prog.title}" organized by ${orgLbl} is happening in ${daysAway} day(s) on ${prog.startDate.toDateString()}!`,
                             type: "INFO",
                             actionUrl: `/programmes`,
                             createdAt: new Date(),

@@ -160,6 +160,17 @@ export function PublicNav() {
                         Applications
                     </Link>
 
+                    {/* Contests Live */}
+                    <Link
+                        href="/contests-live"
+                        className={cn(
+                            "px-3 py-2 rounded-md transition-colors hover:bg-white/10",
+                            pathname.startsWith("/contests-live") ? "bg-white/20 font-semibold" : "text-white/85"
+                        )}
+                    >
+                        Contests Live
+                    </Link>
+
                     {/* Donate */}
                     <Link
                         href="/donate"
@@ -279,6 +290,13 @@ export function PublicNav() {
                                     className={cn("flex items-center gap-3 px-6 py-3 text-sm font-medium transition-colors hover:bg-white/10", pathname.startsWith("/competitions") && "bg-white/15")}
                                 >
                                     <ClipboardList className="h-4 w-4 shrink-0" /> Applications
+                                </Link>
+
+                                {/* Contests Live */}
+                                <Link href="/contests-live" onClick={() => setIsOpen(false)}
+                                    className={cn("flex items-center gap-3 px-6 py-3 text-sm font-medium transition-colors hover:bg-white/10", pathname.startsWith("/contests-live") && "bg-white/15")}
+                                >
+                                    <ClipboardList className="h-4 w-4 shrink-0" /> Contests Live
                                 </Link>
 
                                 {/* Donate */}

@@ -25,7 +25,7 @@ export const genderEnum = mysqlEnum('gender', ['MALE', 'FEMALE']);
 export const officialLevelEnum = mysqlEnum('positionLevel', ['NATIONAL', 'STATE', 'LOCAL_GOVERNMENT', 'BRANCH']);
 export const jurisdictionLevelEnum = mysqlEnum('jurisdictionLevel', ['SYSTEM', 'NATIONAL', 'STATE', 'LOCAL_GOVERNMENT', 'BRANCH']);
 export const paymentStatusEnum = mysqlEnum('paymentStatus', ['PENDING', 'SUCCESS', 'FAILED', 'CANCELLED', 'REFUNDED']);
-export const paymentTypeEnum = mysqlEnum('paymentType', ['MEMBERSHIP_FEE', 'RENEWAL', 'DONATION', 'EVENT_FEE', 'BURIAL_FEE', 'LEVY', 'OTHER']);
+export const paymentTypeEnum = mysqlEnum('paymentType', ['MEMBERSHIP_FEE', 'RENEWAL', 'DONATION', 'EVENT_FEE', 'BURIAL_FEE', 'LEVY', 'CONTEST_FEE', 'OTHER']);
 export const feeTargetEnum = mysqlEnum('targetType', ['ALL_MEMBERS', 'OFFICIALS']);
 
 // Burial Enums
@@ -1893,5 +1893,175 @@ export const meetingNotesRelations = relations(meetingNotes, ({ one, many }) => 
 
 export const meetingNoteVersionsRelations = relations(meetingNoteVersions, ({ one }) => ({
     note: one(meetingNotes, { fields: [meetingNoteVersions.noteId], references: [meetingNotes.id] }),
+}));
+
+// ─── Real-Time Contests (Isolated from competitions) ───────────────────────
+export const contestCategoryEnum = mysqlEnum('contestCategory', ['QURAN','DEBATE','WRITTEN','OTHER']);
+export const contestFormatEnum = mysqlEnum('contestFormat', ['PHYSICAL','VIRTUAL','HYBRID']);
+export const contestStatusEnum = mysqlEnum('contestStatus', ['DRAFT','OPEN','ONGOING','CLOSED','COMPLETED']);
+export const contestPhaseTypeEnum = mysqlEnum('contestPhaseType', ['PRELIM','SEMI','FINAL']);
+export const contestPhaseStatusEnum = mysqlEnum('contestPhaseStatus', ['SCHEDULED','ONGOING','COMPLETED']);
+export const contestRepresentativeStatusEnum = mysqlEnum('representativeStatus', ['REGISTERED','CALLED','DISQUALIFIED','PROMOTED','PAID']);
+export const contestCallStatusEnum = mysqlEnum('callStatus', ['QUEUED','CALLED','GRADING','COMPLETED']);
+export const contestWrittenStatusEnum = mysqlEnum('writtenStatus', ['DRAFT','SUBMITTED']);
+
+export const contestEvents = mysqlTable("contest_events", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
+    organizationId: varchar("organizationId", { length: 255 }).references(() => organizations.id, { onDelete: "cascade" }),
+    title: varchar("title", { length: 255 }).notNull(),
+    description: text("description"),
+    category: contestCategoryEnum.notNull(),
+    format: contestFormatEnum.default('PHYSICAL'),
+    year: int("year").notNull(),
+    level: orgLevelEnum.notNull(),
+    status: contestStatusEnum.default('DRAFT'),
+    rruleString: varchar("rruleString", { length: 500 }),
+    seriesId: varchar("seriesId", { length: 255 }),
+    targetAudience: targetAudienceEnum.default('PUBLIC'),
+    paymentRequired: boolean("paymentRequired").default(false),
+    amount: decimal("amount", { precision: 10, scale: 2 }).default("0.00"),
+    earlyBirdAmount: decimal("earlyBirdAmount", { precision: 10, scale: 2 }),
+    earlyBirdDeadline: timestamp("earlyBirdDeadline", { mode: "date", fsp: 3 }),
+    allowInstallments: boolean("allowInstallments").default(false),
+    minInstallmentAmount: decimal("minInstallmentAmount", { precision: 10, scale: 2 }).default("0.00"),
+    hasCertificate: boolean("hasCertificate").default(false),
+    createdBy: varchar("createdBy", { length: 255 }).notNull().references(() => users.id),
+    createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).$defaultFn(() => new Date()).$onUpdateFn(() => new Date()),
+});
+
+export const contestPhases = mysqlTable("contest_phases", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
+    contestId: varchar("contestId", { length: 255 }).notNull().references(() => contestEvents.id, { onDelete: "cascade" }),
+    phaseNo: int("phaseNo").notNull(),
+    title: varchar("title", { length: 255 }).notNull(),
+    type: contestPhaseTypeEnum.notNull(),
+    level: orgLevelEnum.notNull(),
+    organizationId: varchar("organizationId", { length: 255 }).references(() => organizations.id),
+    venue: varchar("venue", { length: 255 }),
+    startAt: timestamp("startAt", { mode: "date", fsp: 3 }),
+    endAt: timestamp("endAt", { mode: "date", fsp: 3 }),
+    status: contestPhaseStatusEnum.default('SCHEDULED'),
+    meetingId: varchar("meetingId", { length: 255 }).references(() => meetings.id, { onDelete: "set null" }),
+    createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).$defaultFn(() => new Date()).$onUpdateFn(() => new Date()),
+});
+
+export const contestRepresentatives = mysqlTable("contest_representatives", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
+    contestId: varchar("contestId", { length: 255 }).notNull().references(() => contestEvents.id, { onDelete: "cascade" }),
+    phaseId: varchar("phaseId", { length: 255 }).references(() => contestPhases.id, { onDelete: "cascade" }),
+    organizationId: varchar("organizationId", { length: 255 }).notNull().references(() => organizations.id),
+    participantName: varchar("participantName", { length: 255 }).notNull(),
+    participantUserId: varchar("participantUserId", { length: 255 }).references(() => users.id, { onDelete: "set null" }),
+    category: varchar("category", { length: 100 }),
+    status: contestRepresentativeStatusEnum.default('REGISTERED'),
+    lockedAmount: decimal("lockedAmount", { precision: 10, scale: 2 }),
+    paymentStatus: paymentStatusEnum.default('PENDING'),
+    paymentRef: varchar("paymentRef", { length: 255 }),
+    createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).$defaultFn(() => new Date()).$onUpdateFn(() => new Date()),
+});
+
+export const contestTimetable = mysqlTable("contest_timetable", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
+    phaseId: varchar("phaseId", { length: 255 }).notNull().references(() => contestPhases.id, { onDelete: "cascade" }),
+    participantId: varchar("participantId", { length: 255 }).notNull().references(() => contestRepresentatives.id, { onDelete: "cascade" }),
+    slotOrder: int("slotOrder").notNull(),
+    scheduledAt: timestamp("scheduledAt", { mode: "date", fsp: 3 }),
+    durationMin: int("durationMin").default(5),
+    createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+});
+
+export const contestCalls = mysqlTable("contest_calls", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
+    phaseId: varchar("phaseId", { length: 255 }).notNull().references(() => contestPhases.id, { onDelete: "cascade" }),
+    participantId: varchar("participantId", { length: 255 }).notNull().references(() => contestRepresentatives.id, { onDelete: "cascade" }),
+    queueOrder: int("queueOrder").notNull(),
+    status: contestCallStatusEnum.default('QUEUED'),
+    liveRoomId: varchar("liveRoomId", { length: 255 }),
+    calledAt: timestamp("calledAt", { mode: "date", fsp: 3 }),
+    completedAt: timestamp("completedAt", { mode: "date", fsp: 3 }),
+    calledBy: varchar("calledBy", { length: 255 }).references(() => users.id),
+    createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+});
+
+export const contestScores = mysqlTable("contest_scores", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
+    callId: varchar("callId", { length: 255 }).notNull().references(() => contestCalls.id, { onDelete: "cascade" }),
+    judgeId: varchar("judgeId", { length: 255 }).notNull().references(() => users.id, { onDelete: "cascade" }),
+    criteria: json("criteria").notNull(),
+    total: int("total").notNull(),
+    comment: text("comment"),
+    createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+}, (t) => ({
+    uniqueCallJudge: uniqueIndex("contest_scores_call_judge_unique").on(t.callId, t.judgeId),
+}));
+
+export const contestResults = mysqlTable("contest_results", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
+    phaseId: varchar("phaseId", { length: 255 }).notNull().references(() => contestPhases.id, { onDelete: "cascade" }),
+    participantId: varchar("participantId", { length: 255 }).notNull().references(() => contestRepresentatives.id, { onDelete: "cascade" }),
+    totalScore: int("totalScore").notNull(),
+    avgScore: decimal("avgScore", { precision: 5, scale: 2 }).notNull(),
+    rank: int("rank").notNull(),
+    promoted: boolean("promoted").default(false),
+    decidedAt: timestamp("decidedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+});
+
+export const contestWritten = mysqlTable("contest_written", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
+    phaseId: varchar("phaseId", { length: 255 }).notNull().references(() => contestPhases.id, { onDelete: "cascade" }),
+    participantId: varchar("participantId", { length: 255 }).notNull().references(() => contestRepresentatives.id, { onDelete: "cascade" }),
+    prompt: text("prompt"),
+    answer: json("answer"),
+    html: text("html"),
+    plainText: text("plainText"),
+    submittedAt: timestamp("submittedAt", { mode: "date", fsp: 3 }),
+    timeSpentSec: int("timeSpentSec").default(0),
+    status: contestWrittenStatusEnum.default('DRAFT'),
+    createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).$defaultFn(() => new Date()).$onUpdateFn(() => new Date()),
+});
+
+export const contestPayments = mysqlTable("contest_payments", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
+    representativeId: varchar("representativeId", { length: 255 }).notNull().references(() => contestRepresentatives.id, { onDelete: "cascade" }),
+    paymentId: varchar("paymentId", { length: 255 }).notNull().references(() => payments.id, { onDelete: "cascade" }),
+    amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+    createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+});
+
+// Relations for contests
+export const contestEventsRelations = relations(contestEvents, ({ one, many }) => ({
+    organization: one(organizations, { fields: [contestEvents.organizationId], references: [organizations.id] }),
+    creator: one(users, { fields: [contestEvents.createdBy], references: [users.id] }),
+    phases: many(contestPhases),
+}));
+export const contestPhasesRelations = relations(contestPhases, ({ one, many }) => ({
+    contest: one(contestEvents, { fields: [contestPhases.contestId], references: [contestEvents.id] }),
+    organization: one(organizations, { fields: [contestPhases.organizationId], references: [organizations.id] }),
+    meeting: one(meetings, { fields: [contestPhases.meetingId], references: [meetings.id] }),
+    representatives: many(contestRepresentatives),
+    timetable: many(contestTimetable),
+    calls: many(contestCalls),
+    results: many(contestResults),
+}));
+export const contestRepresentativesRelations = relations(contestRepresentatives, ({ one, many }) => ({
+    contest: one(contestEvents, { fields: [contestRepresentatives.contestId], references: [contestEvents.id] }),
+    phase: one(contestPhases, { fields: [contestRepresentatives.phaseId], references: [contestPhases.id] }),
+    organization: one(organizations, { fields: [contestRepresentatives.organizationId], references: [organizations.id] }),
+    participant: one(users, { fields: [contestRepresentatives.participantUserId], references: [users.id] }),
+    timetable: many(contestTimetable),
+}));
+export const contestCallsRelations = relations(contestCalls, ({ one, many }) => ({
+    phase: one(contestPhases, { fields: [contestCalls.phaseId], references: [contestPhases.id] }),
+    participant: one(contestRepresentatives, { fields: [contestCalls.participantId], references: [contestRepresentatives.id] }),
+    caller: one(users, { fields: [contestCalls.calledBy], references: [users.id] }),
+    scores: many(contestScores),
+}));
+export const contestScoresRelations = relations(contestScores, ({ one }) => ({
+    call: one(contestCalls, { fields: [contestScores.callId], references: [contestCalls.id] }),
+    judge: one(users, { fields: [contestScores.judgeId], references: [users.id] }),
 }));
 
