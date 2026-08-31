@@ -1896,14 +1896,14 @@ export const meetingNoteVersionsRelations = relations(meetingNoteVersions, ({ on
 }));
 
 // ─── Real-Time Contests (Isolated from competitions) ───────────────────────
-export const contestCategoryEnum = mysqlEnum('contestCategory', ['QURAN','DEBATE','WRITTEN','OTHER']);
-export const contestFormatEnum = mysqlEnum('contestFormat', ['PHYSICAL','VIRTUAL','HYBRID']);
-export const contestStatusEnum = mysqlEnum('contestStatus', ['DRAFT','OPEN','ONGOING','CLOSED','COMPLETED']);
-export const contestPhaseTypeEnum = mysqlEnum('contestPhaseType', ['PRELIM','SEMI','FINAL']);
-export const contestPhaseStatusEnum = mysqlEnum('contestPhaseStatus', ['SCHEDULED','ONGOING','COMPLETED']);
-export const contestRepresentativeStatusEnum = mysqlEnum('representativeStatus', ['REGISTERED','CALLED','DISQUALIFIED','PROMOTED','PAID']);
-export const contestCallStatusEnum = mysqlEnum('callStatus', ['QUEUED','CALLED','GRADING','COMPLETED']);
-export const contestWrittenStatusEnum = mysqlEnum('writtenStatus', ['DRAFT','SUBMITTED']);
+export const contestCategoryEnum = mysqlEnum('category', ['QURAN','DEBATE','WRITTEN','OTHER']);
+export const contestFormatEnum = mysqlEnum('format', ['PHYSICAL','VIRTUAL','HYBRID']);
+export const contestStatusEnum = mysqlEnum('status', ['DRAFT','OPEN','ONGOING','CLOSED','COMPLETED']);
+export const contestPhaseTypeEnum = mysqlEnum('type', ['PRELIM','SEMI','FINAL']);
+export const contestPhaseStatusEnum = mysqlEnum('status', ['SCHEDULED','ONGOING','COMPLETED']);
+export const contestRepresentativeStatusEnum = mysqlEnum('status', ['REGISTERED','CALLED','DISQUALIFIED','PROMOTED','PAID']);
+export const contestCallStatusEnum = mysqlEnum('status', ['QUEUED','CALLED','GRADING','COMPLETED']);
+export const contestWrittenStatusEnum = mysqlEnum('status', ['DRAFT','SUBMITTED']);
 
 export const contestEvents = mysqlTable("contest_events", {
     id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
