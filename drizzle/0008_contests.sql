@@ -23,7 +23,7 @@ CREATE TABLE `contest_events` (
 	`hasCertificate` boolean DEFAULT false,
 	`createdBy` varchar(255) NOT NULL,
 	`createdAt` datetime(3) DEFAULT CURRENT_TIMESTAMP(3),
-	`updatedAt` datetime(3) DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP,
+	`updatedAt` datetime(3) DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
 	CONSTRAINT `contest_events_id` PRIMARY KEY(`id`),
 	CONSTRAINT `contest_events_organizationId_organizations_id_fk` FOREIGN KEY (`organizationId`) REFERENCES `organizations`(`id`) ON DELETE cascade ON UPDATE no action,
 	CONSTRAINT `contest_events_createdBy_users_id_fk` FOREIGN KEY (`createdBy`) REFERENCES `users`(`id`) ON DELETE no action ON UPDATE no action
@@ -43,7 +43,7 @@ CREATE TABLE `contest_phases` (
 	`status` enum('SCHEDULED','ONGOING','COMPLETED') DEFAULT 'SCHEDULED',
 	`meetingId` varchar(255),
 	`createdAt` datetime(3) DEFAULT CURRENT_TIMESTAMP(3),
-	`updatedAt` datetime(3) DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP,
+	`updatedAt` datetime(3) DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
 	CONSTRAINT `contest_phases_id` PRIMARY KEY(`id`),
 	CONSTRAINT `contest_phases_contestId_contest_events_id_fk` FOREIGN KEY (`contestId`) REFERENCES `contest_events`(`id`) ON DELETE cascade ON UPDATE no action
 );
@@ -61,7 +61,7 @@ CREATE TABLE `contest_representatives` (
 	`paymentStatus` enum('PENDING','SUCCESS','FAILED','CANCELLED','REFUNDED') DEFAULT 'PENDING',
 	`paymentRef` varchar(255),
 	`createdAt` datetime(3) DEFAULT CURRENT_TIMESTAMP(3),
-	`updatedAt` datetime(3) DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP,
+	`updatedAt` datetime(3) DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
 	CONSTRAINT `contest_representatives_id` PRIMARY KEY(`id`)
 );
 --> statement-breakpoint
@@ -126,7 +126,7 @@ CREATE TABLE `contest_written` (
 	`timeSpentSec` int DEFAULT 0,
 	`status` enum('DRAFT','SUBMITTED') DEFAULT 'DRAFT',
 	`createdAt` datetime(3) DEFAULT CURRENT_TIMESTAMP(3),
-	`updatedAt` datetime(3) DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP,
+	`updatedAt` datetime(3) DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
 	CONSTRAINT `contest_written_id` PRIMARY KEY(`id`)
 );
 --> statement-breakpoint
