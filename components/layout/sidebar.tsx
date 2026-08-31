@@ -77,6 +77,7 @@ const adminNavItems = [
   { href: "/dashboard/admin/occasions", label: "Engagements & Occasions", icon: Handshake },
   { href: "/dashboard/admin/competitions", label: "Competitions (Forms)", icon: Award },
   { href: "/dashboard/contests", label: "Contests Live", icon: Trophy },
+  { href: "/dashboard/contests/guide", label: "Contest Guide", icon: BookOpen },
   { href: "/dashboard/admin/members", label: "Members", icon: Users },
   { href: "/dashboard/admin/officials", label: "Officials", icon: UserCheck },
   { href: "/dashboard/admin/organizations", label: "Organizations", icon: Building2 },
