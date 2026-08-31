@@ -1635,14 +1635,13 @@ model MeetingNoteVersion {
   @@map("meeting_note_versions")
 }
 
-// ─── Real-Time Contests (Isolated) ──────────────────────────────────────────
+// ─── Real-Time Contests (Isolated — scalar FKs only; Drizzle owns relations) ──
 model ContestEvent {
   id                String   @id @default(cuid())
   organizationId    String?
-  organization      Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   title             String
   description       String?  @db.Text
-  category          String   // QURAN/DEBATE/WRITTEN/OTHER
+  category          String
   format            String   @default("PHYSICAL")
   year              Int
   level             String
@@ -1658,10 +1657,8 @@ model ContestEvent {
   minInstallmentAmount Decimal? @default(0.00) @db.Decimal(10,2)
   hasCertificate    Boolean  @default(false)
   createdBy         String
-  creator           User     @relation(fields: [createdBy], references: [id])
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
-  phases            ContestPhase[]
   @@index([organizationId])
   @@map("contest_events")
 }
@@ -1669,25 +1666,18 @@ model ContestEvent {
 model ContestPhase {
   id             String   @id @default(cuid())
   contestId      String
-  contest        ContestEvent @relation(fields: [contestId], references: [id], onDelete: Cascade)
   phaseNo        Int
   title          String
-  type           String   // PRELIM/SEMI/FINAL
+  type           String
   level          String
   organizationId String?
-  organization   Organization? @relation(fields: [organizationId], references: [id])
   venue          String?
   startAt        DateTime?
   endAt          DateTime?
   status         String   @default("SCHEDULED")
   meetingId      String?
-  meeting        Meeting? @relation(fields: [meetingId], references: [id])
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
-  representatives ContestRepresentative[]
-  timetable      ContestTimetable[]
-  calls          ContestCall[]
-  results        ContestResult[]
   @@index([contestId])
   @@map("contest_phases")
 }
@@ -1695,14 +1685,10 @@ model ContestPhase {
 model ContestRepresentative {
   id                String   @id @default(cuid())
   contestId         String
-  contest           ContestEvent @relation(fields: [contestId], references: [id], onDelete: Cascade)
   phaseId           String?
-  phase             ContestPhase? @relation(fields: [phaseId], references: [id], onDelete: Cascade)
   organizationId    String
-  organization      Organization @relation(fields: [organizationId], references: [id])
   participantName   String
   participantUserId String?
-  participant       User?    @relation(fields: [participantUserId], references: [id])
   category          String?
   status            String   @default("REGISTERED")
   lockedAmount      Decimal? @db.Decimal(10,2)
@@ -1718,9 +1704,7 @@ model ContestRepresentative {
 model ContestTimetable {
   id            String   @id @default(cuid())
   phaseId       String
-  phase         ContestPhase @relation(fields: [phaseId], references: [id], onDelete: Cascade)
   participantId String
-  participant   ContestRepresentative @relation(fields: [participantId], references: [id], onDelete: Cascade)
   slotOrder     Int
   scheduledAt   DateTime?
   durationMin   Int      @default(5)
@@ -1732,18 +1716,14 @@ model ContestTimetable {
 model ContestCall {
   id            String   @id @default(cuid())
   phaseId       String
-  phase         ContestPhase @relation(fields: [phaseId], references: [id], onDelete: Cascade)
   participantId String
-  participant   ContestRepresentative @relation(fields: [participantId], references: [id], onDelete: Cascade)
   queueOrder    Int
   status        String   @default("QUEUED")
   liveRoomId    String?
   calledAt      DateTime?
   completedAt   DateTime?
   calledBy      String?
-  caller        User?    @relation(fields: [calledBy], references: [id])
   createdAt     DateTime @default(now())
-  scores        ContestScore[]
   @@index([phaseId])
   @@map("contest_calls")
 }
@@ -1751,9 +1731,7 @@ model ContestCall {
 model ContestScore {
   id        String   @id @default(cuid())
   callId    String
-  call      ContestCall @relation(fields: [callId], references: [id], onDelete: Cascade)
   judgeId   String
-  judge     User     @relation(fields: [judgeId], references: [id], onDelete: Cascade)
   criteria  Json
   total     Int
   comment   String?  @db.Text
@@ -1765,9 +1743,7 @@ model ContestScore {
 model ContestResult {
   id            String   @id @default(cuid())
   phaseId       String
-  phase         ContestPhase @relation(fields: [phaseId], references: [id], onDelete: Cascade)
   participantId String
-  participant   ContestRepresentative @relation(fields: [participantId], references: [id], onDelete: Cascade)
   totalScore    Int
   avgScore      Decimal  @db.Decimal(5,2)
   rank          Int
@@ -1780,9 +1756,7 @@ model ContestResult {
 model ContestWritten {
   id            String   @id @default(cuid())
   phaseId       String
-  phase         ContestPhase @relation(fields: [phaseId], references: [id], onDelete: Cascade)
   participantId String
-  participant   ContestRepresentative @relation(fields: [participantId], references: [id], onDelete: Cascade)
   prompt        String?  @db.Text
   answer        Json?
   html          String?  @db.Text
@@ -1799,9 +1773,7 @@ model ContestWritten {
 model ContestPayment {
   id               String   @id @default(cuid())
   representativeId String
-  representative   ContestRepresentative @relation(fields: [representativeId], references: [id], onDelete: Cascade)
   paymentId        String
-  payment          Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
   amount           Decimal  @db.Decimal(10,2)
   createdAt        DateTime @default(now())
   @@map("contest_payments")
