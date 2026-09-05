@@ -90,7 +90,7 @@ export default async function ContestGuidePage() {
           {/* Tips */}
           <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-900">
             <div className="flex items-center gap-2 font-semibold mb-1"><User className="h-4 w-4" /> Tip</div>
-            <p>The full guide is also stored in the repository as <code>CONTEST_USER_GUIDE.md</code>. You can also reach the general portal guide from the sidebar under <b>User Guide</b>.</p>
+            <p>The full guide is also stored in the repository as <code>CONTEST_USER_GUIDE.md</code>. You can also reach the general portal guide from the sidebar under <b>User Guide</b>, and the dedicated <b>Quiz Guide</b> for the LIVE SYNC RACE / ASYNC STANDARD quiz module.</p>
           </div>
         </div>
       </div>

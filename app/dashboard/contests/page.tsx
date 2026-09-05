@@ -7,7 +7,7 @@ import Link from "next/link";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trophy, Plus } from "lucide-react";
+import { Trophy, Plus, ListChecks, BookOpen } from "lucide-react";
 
 export default async function ContestsDashboardPage() {
   const session = await getServerSession();
@@ -21,7 +21,11 @@ export default async function ContestsDashboardPage() {
             <h2 className="text-3xl font-bold tracking-tight">Contests — Real-Time (Quran/Debate/Written)</h2>
             <p className="text-sm text-muted-foreground">Isolated from Forms. Payment-enabled. Jurisdiction-based representatives, timetable, umpire calls, judge grading, phased promotion.</p>
           </div>
-          <Button asChild><Link href="/dashboard/contests/new"><Plus className="mr-2 h-4 w-4" />New Contest</Link></Button>
+          <div className="flex gap-2">
+            <Button asChild variant="outline"><Link href="/dashboard/contests/quiz-guide"><ListChecks className="mr-2 h-4 w-4" />Quiz Guide</Link></Button>
+            <Button asChild variant="outline"><Link href="/dashboard/contests/guide"><BookOpen className="mr-2 h-4 w-4" />Contest Guide</Link></Button>
+            <Button asChild><Link href="/dashboard/contests/new"><Plus className="mr-2 h-4 w-4" />New Contest</Link></Button>
+          </div>
         </div>
         {contests.length === 0 ? (
           <div className="p-12 text-center border-2 border-dashed rounded-xl">No contests yet. Create one.</div>

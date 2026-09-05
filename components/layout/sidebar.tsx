@@ -34,6 +34,7 @@ import {
   Award,
   Database,
   StickyNote,
+  ListChecks,
   Trophy,
 } from "lucide-react"
 import { signOut } from "next-auth/react"
@@ -78,6 +79,7 @@ const adminNavItems = [
   { href: "/dashboard/admin/competitions", label: "Competitions (Forms)", icon: Award },
   { href: "/dashboard/contests", label: "Contests Live", icon: Trophy },
   { href: "/dashboard/guide", label: "User Guide", icon: BookOpen },
+  { href: "/dashboard/contests/quiz-guide", label: "Quiz Guide", icon: ListChecks },
   { href: "/dashboard/admin/members", label: "Members", icon: Users },
   { href: "/dashboard/admin/officials", label: "Officials", icon: UserCheck },
   { href: "/dashboard/admin/organizations", label: "Organizations", icon: Building2 },

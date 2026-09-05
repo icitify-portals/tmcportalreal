@@ -376,6 +376,8 @@ async function NationalContent() {
             <ul className="space-y-2 text-sm">
               <li><Link href="/constitution" className="hover:text-white transition-colors font-semibold">TMC Constitution</Link></li>
               <li><Link href="/dashboard/guide" className="hover:text-white transition-colors font-semibold text-emerald-300">📘 User Guide</Link></li>
+              <li><Link href="/dashboard/contests/quiz-guide" className="hover:text-white transition-colors font-semibold text-emerald-300">📝 Contest Quiz Guide</Link></li>
+              <li><Link href="/dashboard/contests/guide" className="hover:text-white transition-colors font-semibold text-emerald-300">🏆 Contest Guide</Link></li>
               <li><Link href="#" className="hover:text-white transition-colors">Publications</Link></li>
               <li><Link href="#" className="hover:text-white transition-colors">Audio/Video</Link></li>
               <li><Link href="#" className="hover:text-white transition-colors">Photo Gallery</Link></li>
