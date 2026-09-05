@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { CheckCircle2, AlertCircle, XCircle, UserCheck, BarChart3, MessageSquare, Video, CalendarDays, FileText } from "lucide-react"
+import { CheckCircle2, AlertCircle, XCircle, UserCheck, BarChart3, MessageSquare, Video, CalendarDays, FileText, Users } from "lucide-react"
 import { format } from "date-fns"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { db } from "@/lib/db"
@@ -255,6 +255,12 @@ export default async function ProgrammesPage() {
                             <a href="/dashboard/admin/programmes/reports">
                                 <BarChart3 className="mr-2 h-4 w-4" />
                                 Cumulative Reports
+                            </a>
+                        </Button>
+                        <Button variant="outline" asChild>
+                            <a href="/dashboard/programmes/bulk">
+                                <Users className="mr-2 h-4 w-4" />
+                                Bulk Register
                             </a>
                         </Button>
                         {(isSuperAdmin || userLevel === 'NATIONAL') && (

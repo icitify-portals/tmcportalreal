@@ -1106,8 +1106,34 @@ export const programmeRegistrations = mysqlTable("programme_registrations", {
     checkOutBy: varchar("checkOutBy", { length: 255 }).references(() => users.id),
     checkInWaiver: boolean("checkInWaiver").default(false),
     lockedAmount: decimal("lockedAmount", { precision: 10, scale: 2 }), // effective amount locked at registration (early bird)
+    // Bulk registration (paymaster registers multiple people at once)
+    bulkGroupId: varchar("bulkGroupId", { length: 255 }).references(() => bulkRegistrationGroups.id, { onDelete: "set null" }),
+    bulkClaimToken: varchar("bulkClaimToken", { length: 100 }),
+    bulkClaimedAt: timestamp("bulkClaimedAt", { mode: "date", fsp: 3 }),
 
     registeredAt: timestamp("registeredAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+});
+
+// Bulk registration groups: paymaster + payment for many representatives at once
+export const bulkRegistrationStatusEnum = mysqlEnum('bulk_status', ['PENDING','PAID','PARTIALLY_PAID','REFUNDED']);
+
+export const bulkRegistrationGroups = mysqlTable("bulk_registration_groups", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
+    programmeId: varchar("programmeId", { length: 255 }).notNull().references(() => programmes.id, { onDelete: "cascade" }),
+    paymasterUserId: varchar("paymasterUserId", { length: 255 }).references(() => users.id, { onDelete: "set null" }),
+    paymasterName: varchar("paymasterName", { length: 255 }).notNull(),
+    paymasterEmail: varchar("paymasterEmail", { length: 255 }).notNull(),
+    paymasterPhone: varchar("paymasterPhone", { length: 100 }),
+    attendeeCount: int("attendeeCount").notNull(),
+    amountPerAttendee: decimal("amountPerAttendee", { precision: 10, scale: 2 }).notNull(),
+    totalAmount: decimal("totalAmount", { precision: 12, scale: 2 }).notNull(),
+    currency: varchar("currency", { length: 10 }).default("NGN"),
+    status: bulkRegistrationStatusEnum.default('PENDING'),
+    paymentRef: varchar("paymentRef", { length: 255 }),
+    paymentId: varchar("paymentId", { length: 255 }).references(() => payments.id, { onDelete: "set null" }),
+    notes: text("notes"),
+    createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).$defaultFn(() => new Date()).$onUpdateFn(() => new Date()),
 });
 
 // Programme Reports

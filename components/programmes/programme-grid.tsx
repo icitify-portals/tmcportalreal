@@ -61,6 +61,11 @@ export async function ProgrammeGrid({ level, state, organizationId, organization
                             <p className="text-sm text-gray-600 line-clamp-3">
                                 {p.description}
                             </p>
+                            {p.paymentRequired && (
+                                <div className="text-[11px]">
+                                    <Link href="/dashboard/programmes/bulk" className="text-emerald-700 underline">Register multiple people at once →</Link>
+                                </div>
+                            )}
 
                             <div className="flex flex-col gap-2 text-sm text-muted-foreground">
                                 <div className="flex items-center" suppressHydrationWarning>
