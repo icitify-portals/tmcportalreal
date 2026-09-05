@@ -2033,6 +2033,75 @@ export const contestPayments = mysqlTable("contest_payments", {
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
 });
 
+// ─── Contest Quiz (isolated) ─────────────────────────────────────────────────
+export const contestQuizModeEnum = mysqlEnum('quiz_mode', ['LIVE_SYNC_RACE','ASYNC_STANDARD']);
+export const contestQuizAttemptStatusEnum = mysqlEnum('quiz_attempt_status', ['IN_PROGRESS','COMPLETED','DISQUALIFIED']);
+
+export const contestQuizzes = mysqlTable("contest_quizzes", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
+    phaseId: varchar("phaseId", { length: 255 }).notNull().references(() => contestPhases.id, { onDelete: "cascade" }),
+    title: varchar("title", { length: 255 }).notNull(),
+    description: text("description"),
+    mode: contestQuizModeEnum.notNull(),
+    durationSec: int("durationSec").default(60),
+    // For LIVE_SYNC_RACE only: question reveal time per question (seconds)
+    questionWindowSec: int("questionWindowSec").default(30),
+    maxAttempts: int("maxAttempts").default(1),
+    shuffleQuestions: boolean("shuffleQuestions").default(false),
+    startsAt: timestamp("startsAt", { mode: "date", fsp: 3 }),
+    endsAt: timestamp("endsAt", { mode: "date", fsp: 3 }),
+    published: boolean("published").default(false),
+    createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).$defaultFn(() => new Date()).$onUpdateFn(() => new Date()),
+});
+
+export const contestQuizQuestions = mysqlTable("contest_quiz_questions", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
+    quizId: varchar("quizId", { length: 255 }).notNull().references(() => contestQuizzes.id, { onDelete: "cascade" }),
+    questionNo: int("questionNo").notNull(),
+    prompt: text("prompt").notNull(),
+    imageUrl: varchar("imageUrl", { length: 500 }),
+    points: int("points").default(1),
+    correctOptionId: varchar("correctOptionId", { length: 255 }),
+    explanation: text("explanation"),
+    createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+});
+
+export const contestQuizOptions = mysqlTable("contest_quiz_options", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
+    questionId: varchar("questionId", { length: 255 }).notNull().references(() => contestQuizQuestions.id, { onDelete: "cascade" }),
+    label: varchar("label", { length: 500 }).notNull(),
+    optionNo: int("optionNo").notNull(),
+    createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+});
+
+export const contestQuizAttempts = mysqlTable("contest_quiz_attempts", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
+    quizId: varchar("quizId", { length: 255 }).notNull().references(() => contestQuizzes.id, { onDelete: "cascade" }),
+    participantId: varchar("participantId", { length: 255 }).notNull().references(() => contestRepresentatives.id, { onDelete: "cascade" }),
+    userId: varchar("userId", { length: 255 }).references(() => users.id, { onDelete: "set null" }),
+    status: contestQuizAttemptStatusEnum.default('IN_PROGRESS'),
+    totalScore: int("totalScore").default(0),
+    correctCount: int("correctCount").default(0),
+    totalTimeMs: int("totalTimeMs").default(0),
+    finishedAt: timestamp("finishedAt", { mode: "date", fsp: 3 }),
+    startedAt: timestamp("startedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+});
+
+export const contestQuizAnswers = mysqlTable("contest_quiz_answers", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
+    attemptId: varchar("attemptId", { length: 255 }).notNull().references(() => contestQuizAttempts.id, { onDelete: "cascade" }),
+    questionId: varchar("questionId", { length: 255 }).notNull().references(() => contestQuizQuestions.id, { onDelete: "cascade" }),
+    selectedOptionId: varchar("selectedOptionId", { length: 255 }),
+    isCorrect: boolean("isCorrect").default(false),
+    pointsEarned: int("pointsEarned").default(0),
+    timeMs: int("timeMs").default(0),
+    // For LIVE_SYNC_RACE: the timestamp of the click, used to find fastest correct answer
+    submittedAt: timestamp("submittedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+}, (t) => ({
+    uniqueAttemptQuestion: uniqueIndex("contest_quiz_answer_attempt_q_unique").on(t.attemptId, t.questionId),
+}));
+
 // Relations for contests
 export const contestEventsRelations = relations(contestEvents, ({ one, many }) => ({
     organization: one(organizations, { fields: [contestEvents.organizationId], references: [organizations.id] }),

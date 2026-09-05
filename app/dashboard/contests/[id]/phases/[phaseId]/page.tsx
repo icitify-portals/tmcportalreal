@@ -8,6 +8,8 @@ import { ResultsPanel } from "@/components/contests-live/results-panel";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { generateTimetable } from "@/lib/actions/contests";
+import { getQuizByPhase } from "@/lib/actions/contest-quiz";
+import { ListChecks } from "lucide-react";
 import { revalidatePath } from "next/cache";
 
 async function generateTT(phaseId: string) {
@@ -26,6 +28,8 @@ export default async function ContestPhaseManagePage({ params }: { params: Promi
   if (!phase) return notFound();
   const calls = await getLiveQueue(phaseId);
   const results = await getContestResults(phaseId);
+  const quizData = await getQuizByPhase(phaseId);
+  const quiz = quizData?.quiz;
 
   return (
     <DashboardLayout>
@@ -36,6 +40,7 @@ export default async function ContestPhaseManagePage({ params }: { params: Promi
             <p className="text-sm text-muted-foreground">{phase.type} • {phase.level} • {phase.status} {phase.venue ? `• ${phase.venue}` : ""}</p>
           </div>
           <div className="flex gap-2">
+            <Button asChild size="sm" variant="outline"><Link href={`/dashboard/contests/${id}/phases/${phaseId}/quiz`}><ListChecks className="h-4 w-4 mr-2" />{quiz ? "Edit Quiz" : "Set up Quiz"}</Link></Button>
             <form action={async () => { "use server"; await generateTT(phaseId); }}>
               <Button size="sm" variant="outline">Generate Timetable ({calls.length} queued)</Button>
             </form>

@@ -1,8 +1,10 @@
 export const dynamic = "force-dynamic";
 import { notFound } from "next/navigation";
 import { getContestById, getContestPhases, getLiveQueue, getContestResults } from "@/lib/actions/contests";
+import { getQuizByPhase } from "@/lib/actions/contest-quiz";
 import { getServerSession } from "@/lib/session";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { PublicNav } from "@/components/layout/public-nav";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { ContestLiveRoom } from "@/components/contests-live/contest-live-room";
@@ -11,6 +13,8 @@ import { LiveBoard } from "@/components/contests-live/live-board";
 import { WrittenEditor } from "@/components/contests-live/written-editor";
 import { ResultsPanel } from "@/components/contests-live/results-panel";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { ListChecks } from "lucide-react";
 
 export default async function ContestLivePhasePage({ params }: { params: Promise<{ id: string; phaseId: string }> }) {
   const { id, phaseId } = await params;
@@ -24,6 +28,8 @@ export default async function ContestLivePhasePage({ params }: { params: Promise
   const calls = await getLiveQueue(phaseId);
   const results = await getContestResults(phaseId);
   const activeCall = calls.find((c: any) => c.status === "CALLED" || c.status === "GRADING");
+  const quizData = await getQuizByPhase(phaseId);
+  const hasQuiz = !!quizData?.quiz && quizData.quiz.published;
 
   const isCoordinator = session.user.isSuperAdmin || session.user.roles?.some((r: any) => r.jurisdictionLevel === "SYSTEM") || !!session.user.officialId;
   const isWritten = contest.category === "WRITTEN";
@@ -32,11 +38,18 @@ export default async function ContestLivePhasePage({ params }: { params: Promise
     <DashboardLayout>
       <div className="p-4 md:p-6 space-y-4">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-          <div>
-            <h2 className="text-2xl font-bold">{contest.title} — {phase.title}</h2>
-            <p className="text-sm text-muted-foreground">{contest.category} • {phase.type} • {phase.level} • {phase.status}</p>
-          </div>
-          <Badge className="bg-emerald-600 text-white">Live</Badge>
+            <div>
+                <h2 className="text-2xl font-bold">{contest.title} — {phase.title}</h2>
+                <p className="text-sm text-muted-foreground">{contest.category} • {phase.type} • {phase.level} • {phase.status}</p>
+            </div>
+            <div className="flex items-center gap-2">
+                {hasQuiz && (
+                    <Button asChild size="sm" variant="outline" className="border-emerald-300 text-emerald-800 hover:bg-emerald-50">
+                        <Link href={`/contests-live/${id}/quiz/${phaseId}`}><ListChecks className="h-4 w-4 mr-2" />Take Quiz</Link>
+                    </Button>
+                )}
+                <Badge className="bg-emerald-600 text-white">Live</Badge>
+            </div>
         </div>
 
         {isWritten ? (
