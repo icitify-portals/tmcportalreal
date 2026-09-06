@@ -107,6 +107,7 @@ export const GUIDES: GuideModule[] = [
     audience: "Admins",
     summary: "Cumulative reports, analytics and performance grading.",
     sections: [
+      { heading: "Programme report vs activity report", body: "A programme report is the record of one event (summary, attendees, spend, challenges) and marks that event COMPLETED. An activity report is an office's monthly compilation of its events' outcomes. Programme reports are the raw material that feeds the monthly activity reports." },
       { heading: "Cumulative reports", body: "Filter by monthly/quarterly/annual/YTD, year, quarter, month, office and jurisdiction. See totals (programmes, attendees, spend, budget), charts by period/office/level, and a detailed table." },
       { heading: "Export & share", body: "Download a report as CSV or PDF, or copy a shareable link for the same filtered view." },
       { heading: "Grading", body: "Each programme/department is graded on 5 weighted factors — completion, punctuality, attendance, budget discipline, quality — into a score (0–100) and a letter grade (A–F)." },
@@ -341,6 +342,7 @@ export const GUIDES: GuideModule[] = [
       { heading: "Monthly office report", body: "Each office submits a monthly activity report (summary, achievements, challenges, attachment) to executives at its jurisdiction." },
       { heading: "Quarterly & annual", body: "Admins auto-generate a quarterly/annual rollup for an individual office or the national office from the monthly reports. Approve or reject pending ones." },
       { heading: "Generate", body: "Use the 'Generate Quarterly & Annual' panel on the Activity Reports page, previewing coverage before creating." },
+      { heading: "How it relates to programme reports", body: "A programme report is the story of one event — who attended, how much was spent, what the challenges were; submitting it marks the event COMPLETED. An activity report is the story of an office's month — a digest of everything that office did, largely drawn from the programme reports of events held in that period. Programme reports are the raw material; activity reports compile them and move up the chain: branch → state → national, then roll into quarterly and annual reports." },
     ],
   },
   {
