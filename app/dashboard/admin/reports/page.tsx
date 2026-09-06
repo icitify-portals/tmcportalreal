@@ -244,7 +244,9 @@ export default async function ReportsPage({ searchParams }: { searchParams?: Pro
                         </div>
                         <div className="flex items-end gap-2">
                             <Button type="submit" size="sm">Filter</Button>
-                            <Button type="button" variant="outline" size="sm" onClick={()=>{ if(typeof window!=='undefined') window.location.href='/dashboard/admin/reports' }}>Clear</Button>
+                            <Button asChild type="button" variant="outline" size="sm">
+                                <a href="/dashboard/admin/reports">Clear</a>
+                            </Button>
                         </div>
                         <div className="flex items-end">
                             <p className="text-[11px] text-muted-foreground">Each office Monthly → Executives at respective jurisdiction. National sees all.</p>
