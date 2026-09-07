@@ -61,6 +61,7 @@ model User {
   createdProgrammes  Programme[] @relation("ProgrammeCreator")
   programmeRegistrations ProgrammeRegistration[]
   submittedReports   ProgrammeReport[]
+  paymasterGroups    BulkRegistrationGroup[]
   createdSpecialProgrammes SpecialProgramme[]
   custodianAssets    Asset[]
   createdBudgets     FinanceBudget[] @relation("BudgetCreator")
@@ -420,6 +421,7 @@ model Payment {
   updatedAt       DateTime      @updatedAt
 
   feeAssignments  FeeAssignment[]
+  bulkRegistrationGroups BulkRegistrationGroup[]
 
   @@map("payments")
 }
@@ -799,10 +801,14 @@ model Programme {
 
   feedbackFields     Json?
   isArchive          Boolean  @default(false)
+  recurrenceType     String   @default("BY_DATE")
+  weekDay            Int?
+  weekOrdinal        Int?
 
   registrations      ProgrammeRegistration[]
   report             ProgrammeReport?
   feedbackSubmissions ProgrammeFeedbackSubmission[]
+  bulkRegistrationGroups BulkRegistrationGroup[]
 
   @@index([organizationId])
   @@map("programmes")
