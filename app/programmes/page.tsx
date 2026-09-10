@@ -3,8 +3,9 @@ import { PublicNav } from "@/components/layout/public-nav"
 import { Metadata } from "next"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import Link from "next/link"
-import { Filter } from "lucide-react"
+import { Filter, Search } from "lucide-react"
 
 export const dynamic = 'force-dynamic'
 
@@ -18,8 +19,9 @@ const NIGERIAN_STATES = [
 ];
 import { ProgrammeGrid } from "@/components/programmes/programme-grid"
 
-export default async function ProgrammesPage({ searchParams }: { searchParams: Promise<{ level?: string, state?: string }> }) {
+export default async function ProgrammesPage({ searchParams }: { searchParams: Promise<{ level?: string, state?: string, q?: string }> }) {
     const filters = await searchParams;
+    const query = (filters.q || "").trim()
 
     return (
         <div className="min-h-screen bg-background pb-12">
@@ -38,7 +40,21 @@ export default async function ProgrammesPage({ searchParams }: { searchParams: P
             <div className="container mx-auto px-4 max-w-7xl">
                 {/* Filter Bar */}
                 <div className="bg-white border rounded-xl p-4 mb-8 shadow-sm">
-                    <form action="/programmes" method="GET" className="flex flex-col md:flex-row items-end gap-4 w-full">
+                    <form action="/programmes" method="GET" className="grid grid-cols-1 md:grid-cols-[1fr_11rem_13rem_11rem] items-end gap-4 w-full">
+                        <div>
+                            <label className="text-xs font-bold uppercase text-gray-500 mb-1.5 block">Search programmes</label>
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                <Input
+                                    type="search"
+                                    name="q"
+                                    defaultValue={query}
+                                    placeholder="Search by title, venue or host (e.g. Islamic Training)"
+                                    className="pl-9"
+                                />
+                            </div>
+                        </div>
+
                         <div className="w-full md:w-48">
                             <label className="text-xs font-bold uppercase text-gray-500 mb-1.5 block">Organization Level</label>
                             <Select name="level" defaultValue={filters.level || "ALL"}>
@@ -70,7 +86,7 @@ export default async function ProgrammesPage({ searchParams }: { searchParams: P
                             </Select>
                         </div>
 
-                        <div className="flex gap-2 w-full md:w-auto">
+                        <div className="flex gap-2 w-full md:w-auto justify-end">
                             <Button asChild variant="outline" className="flex-1 md:flex-none">
                                 <Link href="/programmes">
                                     Clear
@@ -94,6 +110,7 @@ export default async function ProgrammesPage({ searchParams }: { searchParams: P
                     <ProgrammeGrid 
                         level={filters.level === "ALL" ? undefined : filters.level} 
                         state={filters.state === "ALL" ? undefined : filters.state} 
+                        query={query || undefined} 
                     />
                 </Suspense>
             </div>

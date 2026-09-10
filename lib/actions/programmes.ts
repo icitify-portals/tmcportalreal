@@ -9,7 +9,7 @@ import {
 } from "@/lib/db/schema"
 import { v4 as uuidv4 } from "uuid"
 import { getYearPlannerSettings } from "@/lib/actions/settings"
-import { eq, desc, and, or, aliasedTable, inArray, sql, asc } from "drizzle-orm"
+import { eq, desc, and, or, aliasedTable, inArray, sql, asc, like } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { getServerSession } from "@/lib/session"
@@ -909,7 +909,7 @@ export async function rejectProgramme(programmeId: string, reason: string) {
 }
 
 // Public/Listing Filter
-export async function getProgrammes(filters?: { level?: string, state?: string, status?: string, organizationId?: string, organizationCode?: string }) {
+export async function getProgrammes(filters?: { level?: string, state?: string, status?: string, organizationId?: string, organizationCode?: string, query?: string }) {
     const org = aliasedTable(organizations, "org")
     let conditions: any[] = [eq(programmes.isPublic, true)]
     
@@ -930,6 +930,15 @@ export async function getProgrammes(filters?: { level?: string, state?: string, 
     }
     if (filters?.organizationCode) {
         conditions.push(eq(org.code, filters.organizationCode))
+    }
+    if (filters?.query && filters.query.trim()) {
+        const q = `%${filters.query.trim()}%`
+        conditions.push(or(
+            like(programmes.title, q),
+            like(programmes.description, q),
+            like(programmes.venue, q),
+            like(org.name, q)
+        ))
     }
 
     const results = await db.select({

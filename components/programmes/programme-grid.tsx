@@ -7,8 +7,8 @@ import { format } from "date-fns"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 
-export async function ProgrammeGrid({ level, state, organizationId, organizationCode }: { level?: string, state?: string, organizationId?: string, organizationCode?: string }) {
-    const programmes = await getProgrammes({ status: 'APPROVED', level, state, organizationId, organizationCode }) || []
+export async function ProgrammeGrid({ level, state, organizationId, organizationCode, query }: { level?: string, state?: string, organizationId?: string, organizationCode?: string, query?: string }) {
+    const programmes = await getProgrammes({ status: 'APPROVED', level, state, organizationId, organizationCode, query }) || []
     const userRegs = await getUserRegistrations()
     const registeredProgrammesMap = new Map(userRegs.map(r => [r.programmeId, r]))
 
