@@ -28,6 +28,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { updateProgramme, getOffices, getOfficials } from "@/lib/actions/programmes"
+import { getBanks } from "@/lib/actions/payment-settings"
 import { toast } from "sonner"
 import { Loader2, Edit, AlertCircle, XCircle, Plus, Trash2 } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -77,6 +78,11 @@ const ProgrammeSchema = z.object({
     certPartnerSignatory: z.string().optional(),
     earlyBirdAmount: z.string().optional(),
     earlyBirdDeadline: z.string().optional(),
+    paymentRouting: z.enum(['ORG_DEFAULT', 'CUSTOM']).default('ORG_DEFAULT'),
+    progBankName: z.string().optional(),
+    progBankCode: z.string().optional(),
+    progBankAccountNumber: z.string().optional(),
+    progBankAccountName: z.string().optional(),
     pricingTiers: z.any().optional(),
 })
 
@@ -134,6 +140,11 @@ export function EditProgrammeDialog({ programme, open, onOpenChange }: EditProgr
             certPartnerSignatory: programme.certPartnerSignatory || "",
             earlyBirdAmount: programme.earlyBirdAmount?.toString() || "",
             earlyBirdDeadline: programme.earlyBirdDeadline ? new Date(programme.earlyBirdDeadline).toISOString().split('T')[0] : "",
+            paymentRouting: programme.paystackSubaccountCode ? "CUSTOM" : "ORG_DEFAULT",
+            progBankName: programme.progBankName || "",
+            progBankCode: programme.progBankCode || "",
+            progBankAccountNumber: programme.progBankAccountNumber || "",
+            progBankAccountName: programme.progBankAccountName || "",
             pricingTiers: programme.pricingTiers ? (typeof programme.pricingTiers === 'string' ? JSON.parse(programme.pricingTiers) : programme.pricingTiers) : undefined,
         },
     })
@@ -163,9 +174,15 @@ export function EditProgrammeDialog({ programme, open, onOpenChange }: EditProgr
         }, {}) : undefined)
     }
 
-    // Reset when programme changes
+    const [banks, setBanks] = useState<any[]>([])
     useEffect(() => {
-        if (programme) {
+        if (open && banks.length === 0) {
+            getBanks().then((b: any) => setBanks(Array.isArray(b) ? b : [])).catch(() => {})
+        }
+    }, [open, banks.length])
+
+    // Reset when programme changes
+    useEffect(() => {        if (programme) {
             form.reset({
                 title: programme.title,
                 description: programme.description || "",
@@ -195,6 +212,11 @@ export function EditProgrammeDialog({ programme, open, onOpenChange }: EditProgr
                 certPartnerSignatory: programme.certPartnerSignatory || "",
                 earlyBirdAmount: programme.earlyBirdAmount?.toString() || "",
                 earlyBirdDeadline: programme.earlyBirdDeadline ? new Date(programme.earlyBirdDeadline).toISOString().split('T')[0] : "",
+                paymentRouting: programme.paystackSubaccountCode ? "CUSTOM" : "ORG_DEFAULT",
+                progBankName: programme.progBankName || "",
+                progBankCode: programme.progBankCode || "",
+                progBankAccountNumber: programme.progBankAccountNumber || "",
+                progBankAccountName: programme.progBankAccountName || "",
                 pricingTiers: programme.pricingTiers ? (typeof programme.pricingTiers === 'string' ? JSON.parse(programme.pricingTiers) : programme.pricingTiers) : undefined,
             })
             
@@ -246,6 +268,17 @@ export function EditProgrammeDialog({ programme, open, onOpenChange }: EditProgr
                 minInstallmentAmount: parseFloat(data.minInstallmentAmount || "0"),
                 budget: parseFloat(data.budget || "0"),
                 attendanceWindow: parseInt(data.attendanceWindow || "3"),
+                ...(data.paymentRouting === 'CUSTOM' && data.progBankCode && data.progBankAccountNumber ? {
+                    progBankName: data.progBankName,
+                    progBankCode: data.progBankCode,
+                    progBankAccountNumber: data.progBankAccountNumber,
+                    progBankAccountName: data.progBankAccountName,
+                } : {
+                    progBankName: null,
+                    progBankCode: null,
+                    progBankAccountNumber: null,
+                    progBankAccountName: null,
+                }),
                 pricingTiers: data.pricingTiers
             }
 
@@ -784,6 +817,92 @@ export function EditProgrammeDialog({ programme, open, onOpenChange }: EditProgr
                                 </FormItem>
                             )}
                         />
+
+                        <FormField
+                            control={form.control}
+                            name="paymentRouting"
+                            render={({ field }) => (
+                                <FormItem className="border border-emerald-800/40 p-4 rounded-md bg-emerald-950/20">
+                                    <FormLabel className="text-emerald-100 font-bold text-xs uppercase tracking-wider">Payment Destination</FormLabel>
+                                    <Select onValueChange={field.onChange} value={field.value || 'ORG_DEFAULT'}>
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Where should fees be paid?" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            <SelectItem value="ORG_DEFAULT">Main organization account (default)</SelectItem>
+                                            <SelectItem value="CUSTOM">Another bank account (this programme only)</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <FormDescription className="text-[10px] text-emerald-100/60">
+                                        {programme.paystackSubaccountCode ? `Currently routed to ${programme.progBankName || 'a custom account'} (${programme.progBankAccountNumber || ''}).` : 'Optionally route this programme\'s fees to a dedicated account instead of the main account.'}
+                                    </FormDescription>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        {(form.watch('paymentRouting') === 'CUSTOM') && (
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <FormField
+                                        control={form.control}
+                                        name="progBankName"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Bank</FormLabel>
+                                                <Select onValueChange={(val) => {
+                                                    const [code, name] = val.split('||')
+                                                    form.setValue('progBankCode', code || '')
+                                                    form.setValue('progBankName', name || '')
+                                                }} value={form.watch('progBankCode') ? `${form.watch('progBankCode')}||${form.watch('progBankName')}` : undefined}>
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Select bank (e.g. Albarakah MFB)" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent className="max-h-72">
+                                                        {banks.map((b: any) => (
+                                                            <SelectItem key={b.code} value={`${b.code}||${b.name}`}>{b.name}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="progBankAccountNumber"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Account Number</FormLabel>
+                                                <FormControl>
+                                                    <Input inputMode="numeric" placeholder="e.g. 0123456789" {...field} value={field.value || ''} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                                <FormField
+                                    control={form.control}
+                                    name="progBankAccountName"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Account Name / Display Label (optional)</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="e.g. TMC National — Training Programme" {...field} value={field.value || ''} />
+                                            </FormControl>
+                                            <FormDescription className="text-[10px]">Used as the subaccount label in Paystack. Actual account name is resolved by Paystack.</FormDescription>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <p className="text-[10px] text-muted-foreground">Saving creates a Paystack subaccount for this programme. All registration fees for this programme pay into it; every other programme continues using the main account.</p>
+                            </div>
+                        )}
 
                         <FormField
                             control={form.control}

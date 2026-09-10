@@ -28,6 +28,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { createProgramme, getOffices, getOfficials, addProgrammeMaterial } from "@/lib/actions/programmes"
+import { getBanks } from "@/lib/actions/payment-settings"
 import { getOrganizations } from "@/lib/actions/organization"
 import { toast } from "sonner"
 import { Loader2, Plus, Trash2 } from "lucide-react"
@@ -74,6 +75,9 @@ const ProgrammeSchema = z.object({
     meetingUrl: z.string().optional(),
     frequency: z.enum(['ONCE', 'WEEKLY', 'MONTHLY', 'QUARTERLY', 'BI-ANNUALLY', 'ANNUALLY', 'CUSTOM']).default('ONCE'),
     rruleString: z.string().optional(),
+    recurrenceType: z.enum(['BY_DATE', 'BY_DAY_OF_WEEK']).default('BY_DATE'),
+    weekDay: z.number().int().min(0).max(6).nullable().optional(),
+    weekOrdinal: z.number().int().min(1).max(5).nullable().optional(),
     budget: z.string().default("0"),
     objectives: z.string().optional(),
     committee: z.string().optional(),
@@ -87,6 +91,11 @@ const ProgrammeSchema = z.object({
     certPartnerSignatory: z.string().optional(),
     earlyBirdAmount: z.string().optional(),
     earlyBirdDeadline: z.string().optional(),
+    paymentRouting: z.enum(['ORG_DEFAULT', 'CUSTOM']).default('ORG_DEFAULT'),
+    progBankName: z.string().optional(),
+    progBankCode: z.string().optional(),
+    progBankAccountNumber: z.string().optional(),
+    progBankAccountName: z.string().optional(),
     materials: z.array(z.object({ title: z.string(), url: z.string(), fileType: z.string() })).default([]),
     isRecurringAdmin: z.boolean().default(false),
     flyerUrl: z.string().optional(),
@@ -136,6 +145,9 @@ export function CreateProgrammeDialog({
             meetingUrl: "",
             frequency: "ONCE",
             rruleString: "",
+            recurrenceType: "BY_DATE",
+            weekDay: 0,
+            weekOrdinal: 1,
             budget: "0",
             objectives: "",
             committee: "",
@@ -149,6 +161,11 @@ export function CreateProgrammeDialog({
             certPartnerSignatory: "",
             earlyBirdAmount: "",
             earlyBirdDeadline: "",
+            paymentRouting: "ORG_DEFAULT",
+            progBankName: "",
+            progBankCode: "",
+            progBankAccountNumber: "",
+            progBankAccountName: "",
             materials: [],
             isRecurringAdmin: false,
             flyerUrl: "",
@@ -196,6 +213,13 @@ export function CreateProgrammeDialog({
         }
     }, [open, isSuperAdmin])
 
+    const [banks, setBanks] = useState<any[]>([])
+    useEffect(() => {
+        if (open && banks.length === 0) {
+            getBanks().then((b) => setBanks(Array.isArray(b) ? b : []) as any).catch(() => {})
+        }
+    }, [open, banks.length])
+
     useEffect(() => {
         if (open && !isNationalAdmin) {
             if (userOfficialId) form.setValue("organizingOfficialId", userOfficialId)
@@ -220,6 +244,13 @@ export function CreateProgrammeDialog({
                 attendanceWindow: parseInt(data.attendanceWindow || "3"),
                 hasCertificate: data.hasCertificate,
                 isRecurringAdmin: data.isRecurringAdmin,
+                paymentRouting: data.paymentRouting,
+                ...(data.paymentRouting === 'CUSTOM' && data.progBankCode && data.progBankAccountNumber ? {
+                    progBankName: data.progBankName,
+                    progBankCode: data.progBankCode,
+                    progBankAccountNumber: data.progBankAccountNumber,
+                    progBankAccountName: data.progBankAccountName,
+                } : {}),
                 flyerUrl: data.flyerUrl || undefined,
                 pricingTiers: data.pricingTiers && data.pricingTiers.length > 0
                     ? data.pricingTiers.reduce((acc: Record<string, number>, tier) => {
@@ -634,19 +665,102 @@ export function CreateProgrammeDialog({
                                                     <SelectValue placeholder="Select frequency" />
                                                 </SelectTrigger>
                                             </FormControl>
-                                            <SelectContent>
-                                                {['ONCE', 'WEEKLY', 'MONTHLY', 'QUARTERLY', 'BI-ANNUALLY', 'ANNUALLY'].map(freq => (
-                                                    <SelectItem key={freq} value={freq}>{freq}</SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
+<SelectContent>
+                                        {['ONCE', 'WEEKLY', 'MONTHLY', 'QUARTERLY', 'BI-ANNUALLY', 'ANNUALLY'].map(freq => (
+                                            <SelectItem key={freq} value={freq}>{freq}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
 
-                        {(form.watch('format') === 'VIRTUAL' || form.watch('format') === 'HYBRID') && (
+                    <FormField
+                        control={form.control}
+                        name="recurrenceType"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Recurrence Basis</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select recurrence basis" />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        <SelectItem value="BY_DATE">Same date each period (e.g. 3rd day of month)</SelectItem>
+                                        <SelectItem value="BY_DAY_OF_WEEK">Nth weekday (e.g. first Saturday)</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
+
+                {(form.watch('recurrenceType') === 'BY_DAY_OF_WEEK' && form.watch('frequency') === 'MONTHLY') && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2">
+                        <FormField
+                            control={form.control}
+                            name="weekDay"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Weekday</FormLabel>
+                                    <Select
+                                        onValueChange={(val) => field.onChange(Number(val))}
+                                        value={field.value === null || field.value === undefined ? "0" : String(field.value)}
+                                    >
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select weekday" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            <SelectItem value="0">Sunday</SelectItem>
+                                            <SelectItem value="1">Monday</SelectItem>
+                                            <SelectItem value="2">Tuesday</SelectItem>
+                                            <SelectItem value="3">Wednesday</SelectItem>
+                                            <SelectItem value="4">Thursday</SelectItem>
+                                            <SelectItem value="5">Friday</SelectItem>
+                                            <SelectItem value="6">Saturday</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="weekOrdinal"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Occurrence</FormLabel>
+                                    <Select
+                                        onValueChange={(val) => field.onChange(Number(val))}
+                                        value={field.value === null || field.value === undefined ? "1" : String(field.value)}
+                                    >
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select occurrence" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            <SelectItem value="1">First</SelectItem>
+                                            <SelectItem value="2">Second</SelectItem>
+                                            <SelectItem value="3">Third</SelectItem>
+                                            <SelectItem value="4">Fourth</SelectItem>
+                                            <SelectItem value="5">Last</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>
+                )}
+
+                {(form.watch('format') === 'VIRTUAL' || form.watch('format') === 'HYBRID') && (
                             <FormField
                                 control={form.control}
                                 name="meetingUrl"
@@ -876,6 +990,90 @@ export function CreateProgrammeDialog({
                                 </>
                             )}
                         </div>
+
+                        <FormField
+                            control={form.control}
+                            name="paymentRouting"
+                            render={({ field }) => (
+                                <FormItem className="border border-emerald-800/40 p-4 rounded-md bg-emerald-950/20">
+                                    <FormLabel className="text-emerald-100 font-bold text-xs uppercase tracking-wider">Payment Destination</FormLabel>
+                                    <Select onValueChange={field.onChange} value={field.value || 'ORG_DEFAULT'}>
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Where should fees be paid?" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            <SelectItem value="ORG_DEFAULT">Main organization account (default)</SelectItem>
+                                            <SelectItem value="CUSTOM">Another bank account (this programme only)</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <FormDescription className="text-[10px] text-emerald-100/60">Optionally route this programme's fees to a dedicated account instead of the main account.</FormDescription>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        {(form.watch('paymentRouting') === 'CUSTOM') && (
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <FormField
+                                        control={form.control}
+                                        name="progBankName"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Bank</FormLabel>
+                                                <Select onValueChange={(val) => {
+                                                    const [code, name] = val.split('||')
+                                                    form.setValue('progBankCode', code || '')
+                                                    form.setValue('progBankName', name || '')
+                                                }} value={form.watch('progBankCode') ? `${form.watch('progBankCode')}||${form.watch('progBankName')}` : undefined}>
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Select bank (e.g. Albarakah MFB)" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent className="max-h-72">
+                                                        {banks.map((b: any) => (
+                                                            <SelectItem key={b.code} value={`${b.code}||${b.name}`}>{b.name}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="progBankAccountNumber"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Account Number</FormLabel>
+                                                <FormControl>
+                                                    <Input inputMode="numeric" placeholder="e.g. 0123456789" {...field} value={field.value || ''} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                                <FormField
+                                    control={form.control}
+                                    name="progBankAccountName"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Account Name / Display Label (optional)</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="e.g. TMC National — Training Programme" {...field} value={field.value || ''} />
+                                            </FormControl>
+                                            <FormDescription className="text-[10px]">Used as the subaccount label in Paystack. Actual account name is resolved by Paystack.</FormDescription>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <p className="text-[10px] text-muted-foreground">Saving creates a Paystack subaccount for this programme. All registration fees for this programme pay into it; every other programme continues using the main account.</p>
+                            </div>
+                        )}
 
                         <FormField
                             control={form.control}

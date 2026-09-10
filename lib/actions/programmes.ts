@@ -15,6 +15,7 @@ import { z } from "zod"
 import { getServerSession } from "@/lib/session"
 import { members } from "@/lib/db/schema"
 import { initializePayment, verifyPayment } from "@/lib/payments"
+import { createPaystackSubaccount } from "@/lib/payments"
 import { sendEmail, emailTemplates } from "@/lib/email"
 import crypto from "crypto"
 import { RRule } from "rrule"
@@ -272,6 +273,9 @@ const ProgrammeSchema = z.object({
     meetingUrl: z.string().optional().nullable(),
     frequency: z.enum(['ONCE', 'WEEKLY', 'MONTHLY', 'QUARTERLY', 'BI-ANNUALLY', 'ANNUALLY', 'CUSTOM']).default('ONCE'),
     rruleString: z.string().optional(),
+    recurrenceType: z.enum(['BY_DATE', 'BY_DAY_OF_WEEK']).default('BY_DATE'),
+    weekDay: z.number().int().min(0).max(6).nullable().optional(),
+    weekOrdinal: z.number().int().min(1).max(5).nullable().optional(),
     budget: z.preprocess((val) => Number(String(val).replace(/,/g, '')), z.number().nonnegative()).default(0),
     objectives: z.string().optional(),
     committee: z.string().optional(),
@@ -286,6 +290,10 @@ const ProgrammeSchema = z.object({
     isRecurringAdmin: z.boolean().default(false),
     flyerUrl: z.string().optional().nullable(),
     pricingTiers: z.any().optional(),
+    progBankName: z.string().optional().nullable(),
+    progBankCode: z.string().optional().nullable(),
+    progBankAccountNumber: z.string().optional().nullable(),
+    progBankAccountName: z.string().optional().nullable(),
 })
 
 const ReportSchema = z.object({
@@ -459,7 +467,26 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
 
         const programmeInstances: any[] = [];
         const budgetInstances: any[] = [];
-        
+
+        // Per-programme payment routing: create a Paystack subaccount if custom bank details supplied
+        let resolvedSubaccountCode: string | null = null
+        if (validData.progBankCode && validData.progBankAccountNumber) {
+            try {
+                const result = await createPaystackSubaccount({
+                    business_name: validData.progBankAccountName || `${org.name} — ${validData.title}`,
+                    settlement_bank: validData.progBankCode,
+                    account_number: validData.progBankAccountNumber,
+                    percentage_charge: 0,
+                    description: `Programme payment destination for ${validData.title}`,
+                })
+                if (result.success && (result as any).data?.subaccount_code) {
+                    resolvedSubaccountCode = (result as any).data.subaccount_code
+                }
+            } catch (e) {
+                console.error("Programme subaccount creation failed:", e)
+            }
+        }
+
         const firstProgrammeId = programmeId;
         const seriesId = uuidv4();
 
@@ -503,6 +530,9 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
                 meetingUrl: validData.meetingUrl || null,
                 frequency: validData.frequency as any,
                 rruleString: validData.rruleString || null,
+                recurrenceType: validData.recurrenceType as any,
+                weekDay: validData.weekDay ?? null,
+                weekOrdinal: validData.weekOrdinal ?? null,
                 budget: validData.budget !== undefined && validData.budget !== null ? Number(String(validData.budget).replace(/,/g, '')).toFixed(2) : "0.00",
                 objectives: validData.objectives || null,
                 committee: validData.committee || null,
@@ -519,6 +549,11 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
                 isArchive,
                 flyerUrl: validData.flyerUrl || null,
                 pricingTiers: validData.pricingTiers ? JSON.parse(JSON.stringify(validData.pricingTiers)) : null,
+                paystackSubaccountCode: resolvedSubaccountCode,
+                progBankName: validData.progBankName || null,
+                progBankCode: validData.progBankCode || null,
+                progBankAccountNumber: validData.progBankAccountNumber || null,
+                progBankAccountName: validData.progBankAccountName || null,
                 createdBy: finalCreatedBy,
                 createdAt: new Date(),
                 updatedAt: new Date(),
@@ -540,6 +575,47 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
             }
 
             if (validData.frequency === 'ONCE') break;
+
+            if (validData.frequency === 'MONTHLY' && validData.recurrenceType === 'BY_DAY_OF_WEEK' && validData.weekDay !== null && validData.weekDay !== undefined) {
+                // "Every Nth weekday of the month" e.g. first Saturday -> FREQ=MONTHLY;BYDAY=SA;BYSETPOS=1
+                try {
+                    const weekdays = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
+                    const weekday = weekdays[validData.weekDay] || 'SU';
+                    const ordinal = (validData.weekOrdinal ?? 1).toString();
+                    const rule = RRule.fromString(`FREQ=MONTHLY;BYDAY=${weekday};BYSETPOS=${ordinal}`);
+                    const occurrences = rule.between(new Date(currentDate.getTime() + 1000), targetYearEnd, true);
+
+                    for (const occDate of occurrences) {
+                        const newProgId = uuidv4();
+                        let occEndDate = null;
+                        if (endDateOriginal) {
+                            occEndDate = new Date(occDate.getTime() + durationMs);
+                        }
+
+                        programmeInstances.push({
+                            ...programmeInstances[0],
+                            id: newProgId,
+                            startDate: occDate,
+                            endDate: occEndDate,
+                            createdAt: new Date(),
+                            updatedAt: new Date(),
+                        });
+
+                        if (validData.budget && parseFloat(validData.budget.toString()) > 0) {
+                            budgetInstances.push({
+                                ...budgetInstances[0],
+                                programmeId: newProgId,
+                                year: occDate.getFullYear(),
+                                createdAt: new Date(),
+                                updatedAt: new Date(),
+                            });
+                        }
+                    }
+                } catch (err) {
+                    console.error("Invalid weekday recurrence:", err);
+                }
+                break; // Break the main while loop since RRule generated all of them
+            }
 
             if (validData.frequency === 'CUSTOM' && validData.rruleString) {
                 // If it's custom, we generate all instances upfront using RRule
@@ -1292,7 +1368,7 @@ export async function initializeProgrammeRegistrationPayment(registrationId: str
             email: registration.email,
             amount: currentPayAmount,
             callbackUrl: `${process.env.NEXT_PUBLIC_APP_URL}/programmes/registrations/${registrationId}/verify`,
-            subaccount: registration.organization?.paystackSubaccountCode || undefined,
+            subaccount: (registration.programme as any).paystackSubaccountCode || registration.organization?.paystackSubaccountCode || undefined,
             metadata: {
                 registrationId: registrationId,
                 type: "PROGRAMME_REGISTRATION",
@@ -1570,6 +1646,40 @@ export async function updateProgramme(programmeId: string, data: Partial<z.infer
             }
         }
 
+        // Per-programme payment routing: (re)create subaccount if bank details supplied or changed
+        let resolvedSubaccountCode: string | null | undefined = undefined
+        const incomingBank = {
+            bankName: validData.progBankName ?? null,
+            bankCode: validData.progBankCode ?? null,
+            accountNumber: validData.progBankAccountNumber ?? null,
+            accountName: validData.progBankAccountName ?? null,
+        }
+        const bankSupplied = !!(incomingBank.bankCode && incomingBank.accountNumber)
+        const bankChanged = bankSupplied && (
+            incomingBank.bankCode !== current.progBankCode ||
+            incomingBank.accountNumber !== current.progBankAccountNumber
+        )
+        if (bankSupplied && (bankChanged || !current.paystackSubaccountCode)) {
+            try {
+                const result = await createPaystackSubaccount({
+                    business_name: incomingBank.accountName || `${current.title} — payments`,
+                    settlement_bank: incomingBank.bankCode!,
+                    account_number: incomingBank.accountNumber!,
+                    percentage_charge: 0,
+                    description: `Programme payment destination for ${current.title}`,
+                })
+                if (result.success && (result as any).data?.subaccount_code) {
+                    resolvedSubaccountCode = (result as any).data.subaccount_code
+                }
+            } catch (e) {
+                console.error("Programme subaccount creation failed:", e)
+            }
+        }
+        if (validData.progBankCode === null && current.paystackSubaccountCode) {
+            // Routing switched back to the organization default
+            resolvedSubaccountCode = null
+        }
+
         const updatePayload: any = {
             title: validData.title,
             description: validData.description,
@@ -1589,6 +1699,10 @@ export async function updateProgramme(programmeId: string, data: Partial<z.infer
             format: validData.format,
             meetingUrl: validData.meetingUrl,
             frequency: validData.frequency,
+            rruleString: validData.rruleString,
+            recurrenceType: validData.recurrenceType,
+            weekDay: validData.weekDay ?? null,
+            weekOrdinal: validData.weekOrdinal ?? null,
             budget: validData.budget !== undefined ? validData.budget.toString() : undefined,
             objectives: validData.objectives,
             committee: validData.committee,
@@ -1605,6 +1719,11 @@ export async function updateProgramme(programmeId: string, data: Partial<z.infer
             isRecurringAdmin: validData.isRecurringAdmin,
             flyerUrl: validData.flyerUrl !== undefined ? validData.flyerUrl : current.flyerUrl,
             pricingTiers: validData.pricingTiers !== undefined ? JSON.parse(JSON.stringify(validData.pricingTiers)) : current.pricingTiers,
+            progBankName: validData.progBankName !== undefined ? validData.progBankName : current.progBankName,
+            progBankCode: validData.progBankCode !== undefined ? validData.progBankCode : current.progBankCode,
+            progBankAccountNumber: validData.progBankAccountNumber !== undefined ? validData.progBankAccountNumber : current.progBankAccountNumber,
+            progBankAccountName: validData.progBankAccountName !== undefined ? validData.progBankAccountName : current.progBankAccountName,
+            ...(resolvedSubaccountCode !== undefined ? { paystackSubaccountCode: resolvedSubaccountCode } : {}),
             updatedAt: new Date()
         };
 

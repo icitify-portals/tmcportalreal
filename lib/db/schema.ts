@@ -48,6 +48,7 @@ export const targetAudienceEnum = mysqlEnum('targetAudience', ['PUBLIC', 'MEMBER
 export const registrationStatusEnum = mysqlEnum('status', ['REGISTERED', 'PENDING_PAYMENT', 'PARTIALLY_PAID', 'PAID', 'ATTENDED', 'CANCELLED']);
 export const programmeFormatEnum = mysqlEnum('format', ['PHYSICAL', 'VIRTUAL', 'HYBRID']);
 export const programmeFrequencyEnum = mysqlEnum('frequency', ['WEEKLY', 'MONTHLY', 'QUARTERLY', 'BI-ANNUALLY', 'ANNUALLY', 'ONCE', 'CUSTOM']);
+export const recurrenceTypeEnum = mysqlEnum('recurrence_type', ['BY_DATE','BY_DAY_OF_WEEK']);
 
 // Asset Enums
 export const assetCategoryEnum = mysqlEnum('category', ['FURNITURE', 'ELECTRONICS', 'VEHICLE', 'PROPERTY', 'EQUIPMENT', 'OTHER']);
@@ -1068,8 +1069,16 @@ export const programmes = mysqlTable("programmes", {
     feedbackFields: json("feedbackFields"),
     isRecurringAdmin: boolean("isRecurringAdmin").default(false),
     isArchive: boolean("isArchive").default(false),
+    recurrenceType: recurrenceTypeEnum.default('BY_DATE'),
+    weekDay: int("weekDay"),
+    weekOrdinal: int("weekOrdinal"),
     flyerUrl: varchar("flyerUrl", { length: 500 }),
     pricingTiers: json("pricingTiers"),
+    paystackSubaccountCode: varchar("paystackSubaccountCode", { length: 255 }),
+    progBankName: varchar("progBankName", { length: 255 }),
+    progBankCode: varchar("progBankCode", { length: 100 }),
+    progBankAccountNumber: varchar("progBankAccountNumber", { length: 50 }),
+    progBankAccountName: varchar("progBankAccountName", { length: 255 }),
     createdBy: varchar("createdBy", { length: 255 }).notNull().references(() => users.id),
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
     updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).$defaultFn(() => new Date()).$onUpdateFn(() => new Date()),

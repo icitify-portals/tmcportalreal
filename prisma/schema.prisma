@@ -781,6 +781,11 @@ model Programme {
   earlyBirdAmount    Decimal? @db.Decimal(10, 2)
   earlyBirdDeadline  DateTime? @db.DateTime(3)
   pricingTiers       Json?
+  paystackSubaccountCode String? @db.VarChar(255)
+  progBankName       String?   @db.VarChar(255)
+  progBankCode       String?   @db.VarChar(100)
+  progBankAccountNumber String? @db.VarChar(50)
+  progBankAccountName String?  @db.VarChar(255)
   isRecurringAdmin   Boolean  @default(false)
   flyerUrl           String?  @db.VarChar(500)
   hasCertificate     Boolean  @default(false)
