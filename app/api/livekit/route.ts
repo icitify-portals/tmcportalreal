@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from "@/lib/session";
 import { getLiveKitSettings } from "@/lib/actions/settings";
 import { db } from "@/lib/db";
-import { meetings, meetingAttendances, systemSettings } from "@/lib/db/schema";
+import { meetings, meetingAttendances, systemSettings, officials } from "@/lib/db/schema";
 import { and, eq } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
@@ -81,12 +81,20 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: 'LiveKit server misconfigured. Please configure API keys in System Settings.' }, { status: 500 });
         }
 
+        let isAdmin = false;
+        if (session?.user?.id) {
+            const userOfficials = await db.select().from(officials).where(eq(officials.userId, session.user.id));
+            if (userOfficials.length > 0 || session.user.isSuperAdmin) {
+                isAdmin = true;
+            }
+        }
+
         const at = new AccessToken(apiKey, apiSecret, {
             identity: identity!,
             name: name,
         });
 
-        at.addGrant({ room, roomJoin: true, canPublish: true, canSubscribe: true, canPublishData: true });
+        at.addGrant({ room, roomJoin: true, canPublish: true, canSubscribe: true, canPublishData: true, roomAdmin: isAdmin });
 
         const token = await at.toJwt();
 

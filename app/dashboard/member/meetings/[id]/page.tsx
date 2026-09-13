@@ -49,6 +49,34 @@ export default async function MeetingRoomPage({ params }: MeetingRoomPageProps) 
                         {meeting.status}
                     </Badge>
                 </div>
+                
+                {meeting.isOnline && (
+                    <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-900 rounded-lg p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+                        <div>
+                            <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-100">Virtual Meeting Room</h3>
+                            <p className="text-blue-700 dark:text-blue-300 text-sm">Join the live video conference for this meeting.</p>
+                        </div>
+                        <Button asChild size="lg" className="bg-blue-600 hover:bg-blue-700 text-white w-full md:w-auto">
+                            <Link href={`/dashboard/member/meetings/${meeting.id}/room`}>
+                                Join Virtual Meeting
+                            </Link>
+                        </Button>
+                    </div>
+                )}
+                
+                {meeting.meetingLink && !meeting.virtualRoomId && (
+                    <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-900 rounded-lg p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+                        <div>
+                            <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-100">External Meeting Link</h3>
+                            <p className="text-blue-700 dark:text-blue-300 text-sm">Join via external provider (Zoom, Meet, etc).</p>
+                        </div>
+                        <Button asChild size="lg" className="bg-blue-600 hover:bg-blue-700 text-white w-full md:w-auto">
+                            <a href={meeting.meetingLink} target="_blank" rel="noopener noreferrer">
+                                Open Meeting Link
+                            </a>
+                        </Button>
+                    </div>
+                )}
 
                 <div className="grid gap-6 md:grid-cols-2">
                     <Card>
@@ -83,24 +111,6 @@ export default async function MeetingRoomPage({ params }: MeetingRoomPageProps) 
                                 </ul>
                             ) : (
                                 <p className="text-sm text-muted-foreground">No minutes uploaded yet.</p>
-                            )}
-                            {meeting.virtualRoomId && (
-                                <div className="mt-4 pt-4 border-t">
-                                    <Label>Native Virtual Meeting</Label>
-                                    <Button asChild className="w-full mt-2" size="lg">
-                                        <Link href={`/dashboard/member/meetings/${meeting.id}/room`}>
-                                            Join Virtual Meeting
-                                        </Link>
-                                    </Button>
-                                </div>
-                            )}
-                            {meeting.meetingLink && !meeting.virtualRoomId && (
-                                <div className="mt-4 pt-4 border-t">
-                                    <Label>External Meeting Link</Label>
-                                    <a href={meeting.meetingLink} target="_blank" className="block text-blue-600 underline text-lg truncate">
-                                        {meeting.meetingLink}
-                                    </a>
-                                </div>
                             )}
                         </CardContent>
                     </Card>
