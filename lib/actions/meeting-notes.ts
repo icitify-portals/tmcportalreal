@@ -28,8 +28,18 @@ export async function getMeetingNotes(filter: { meetingId?: string; programmeId?
   if (filter.section) conds.push(eq(meetingNotes.section, filter.section as any));
   if (filter.query) conds.push(like(meetingNotes.plainText, `%${filter.query}%`));
 
-  // If not shared filter, show own + shared
-  // For simplicity return all in scope; shared handled via isShared flag in UI
+  // If we are looking at general notes, scope it strictly to the current user
+  if (!filter.meetingId && !filter.programmeId) {
+      conds.push(eq(meetingNotes.createdBy, session.user.id));
+  } else {
+      // In a meeting/programme context, show user's notes + shared notes
+      conds.push(
+          or(
+              eq(meetingNotes.createdBy, session.user.id),
+              eq(meetingNotes.isShared, true)
+          )
+      );
+  }
 
   const rows = await db
     .select({ note: meetingNotes, creator: users })

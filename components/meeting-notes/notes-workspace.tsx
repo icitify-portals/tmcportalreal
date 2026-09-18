@@ -93,8 +93,10 @@ export function NotesWorkspace({
       const next = selected.html || "";
       if (cur !== next) editor.commands.setContent(selected.content || next || "<p></p>");
       setTitle(selected.title);
+    } else if (!selected && editor && notes.length > 0) {
+      // Fallback if selected is lost
     }
-  }, [selectedId]);
+  }, [selectedId, notes, editor]);
 
   async function createNote() {
     const newTitle = `Note ${filtered.length + 1} — ${section}`;
@@ -212,7 +214,7 @@ export function NotesWorkspace({
           </div>
         </div>
         <div className="flex-1 overflow-auto p-4 bg-[#fbfbfb]">
-          {editor ? <EditorContent editor={editor} className="prose prose-sm max-w-none bg-white rounded-xl border p-4 min-h-[400px] shadow-sm" /> : null}
+          {editor ? <EditorContent editor={editor} className="prose prose-slate prose-headings:text-black prose-p:text-gray-900 max-w-none bg-white rounded-xl border p-4 min-h-[400px] shadow-sm focus:outline-none focus-within:ring-2 focus-within:ring-emerald-500/20" /> : null}
           <div className="mt-4 rounded-lg border bg-amber-50 p-3 text-xs">
             <b>Tip:</b> Use sections like OneNote — Agenda before meeting, Minutes during, Actions after. Checklist: type <code>- [ ]</code> at line start. Paste images, drag files. Every keystroke auto-saves (800ms). Shared pages visible to meeting attendees.
           </div>
