@@ -466,7 +466,7 @@ export async function getMonthlyDraftData(organizationId: string, officeId: stri
         
         const present = attendances.filter(a => a.status === 'PRESENT').length;
         const absent = attendances.filter(a => a.status === 'ABSENT').length;
-        const excused = attendances.filter(a => a.status === 'EXCUSED').length;
+        const excused = 0; // Not currently supported by db schema enum
 
         return {
             id: m.id,
