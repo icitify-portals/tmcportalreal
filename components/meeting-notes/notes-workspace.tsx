@@ -5,6 +5,11 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import Image from "@tiptap/extension-image";
+import TaskList from "@tiptap/extension-task-list";
+import TaskItem from "@tiptap/extension-task-item";
+import { generateNoteSummary } from "@/lib/actions/ai-notes";
+import { exportDocxAction } from "@/lib/actions/export-docx";
+import { saveAs } from "file-saver";
 // import Placeholder from "@tiptap/extension-placeholder";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { upsertMeetingNote, deleteMeetingNote, toggleShareNote, searchNotes } from "@/lib/actions/meeting-notes";
-import { Save, Share2, Trash2, Download, Search, Plus, FileText, CheckSquare, StickyNote } from "lucide-react";
+import { Save, Share2, Trash2, Download, Search, Plus, FileText, CheckSquare, StickyNote, Sparkles } from "lucide-react";
 import jsPDF from "jspdf";
 
 const SECTIONS = [
@@ -53,6 +58,8 @@ export function NotesWorkspace({
       StarterKit,
       Link.configure({ openOnClick: false }),
       Image,
+      TaskList,
+      TaskItem.configure({ nested: true }),
       // Placeholder.configure({ placeholder: "Start writing notes… Type / for commands, paste images, add checklists (- [ ])" }),
     ],
     content: selected?.content || selected?.html || "<p></p>",
@@ -135,6 +142,41 @@ export function NotesWorkspace({
     }
   }
 
+  async function handleAI() {
+    if (!selected) return;
+    toast.info("Generating AI summary...");
+    startTransition(async () => {
+      const res = await generateNoteSummary(selected.plainText || "");
+      if (res.success && editor) {
+        editor.commands.setContent(editor.getHTML() + res.html);
+        toast.success("Summary appended!");
+      } else {
+        toast.error("AI generation failed.");
+      }
+    });
+  }
+
+  async function handleDocx() {
+    if (!selected) return;
+    toast.info("Preparing DOCX...");
+    try {
+      const html = `<h1>${meetingTitle || "Meeting"} - ${title}</h1>` + (editor?.getHTML() || selected.html || "");
+      const res = await exportDocxAction(html);
+      if (res.success && res.base64) {
+        const byteCharacters = atob(res.base64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+        saveAs(blob, `${title}.docx`);
+      }
+    } catch(e) {
+      toast.error("Export failed");
+    }
+  }
+
   function exportPDF() {
     const doc = new jsPDF();
     doc.setFontSize(14);
@@ -208,8 +250,10 @@ export function NotesWorkspace({
           <Input value={title} onChange={(e) => setTitle(e.target.value)} onBlur={() => { if (selectedId) upsertMeetingNote({ id: selectedId, meetingId: meetingId || null, programmeId: programmeId || null, title, section: section as any, content: editor?.getJSON() as any, html: editor?.getHTML() || "", plainText: editor?.getText() || "" } as any); }} className="max-w-md font-semibold" placeholder="Page title" />
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground hidden md:inline">{saving ? "Saving…" : "Auto-saved"}</span>
+            <Button size="sm" variant="secondary" onClick={handleAI} disabled={isPending}><Sparkles className="h-4 w-4 mr-1 text-purple-500" />Summarize</Button>
             <Button size="sm" variant="outline" onClick={handleShare}><Share2 className="h-4 w-4 mr-1" />{selected?.isShared ? "Unshare" : "Share"}</Button>
             <Button size="sm" variant="outline" onClick={exportPDF}><Download className="h-4 w-4 mr-1" />PDF</Button>
+            <Button size="sm" variant="outline" onClick={handleDocx}><FileText className="h-4 w-4 mr-1" />DOCX</Button>
             <Button size="sm" variant="ghost" onClick={handleDelete}><Trash2 className="h-4 w-4" /></Button>
           </div>
         </div>

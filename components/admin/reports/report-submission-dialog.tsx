@@ -67,9 +67,13 @@ export function ReportSubmissionDialog({
             const data = await getMonthlyDraftData(organizationId, officeId, period)
             setDraftData(data)
             if (data.officeMandate && !form.getValues("summary")) {
-                form.setValue("summary", "Mandate: " + data.officeMandate + "\\n\\n")
+                form.setValue("summary", "Mandate: " + data.officeMandate + "\n\n")
             }
-            toast.success("Loaded automated data from Programmes and Meetings")
+            if (data.actionItems && data.actionItems !== 'No explicit action items recorded in notes.') {
+                const existing = form.getValues("achievements") || "";
+                form.setValue("achievements", existing + (existing ? "\n\n" : "") + "### Meeting Action Items Completed:\n" + data.actionItems);
+            }
+            toast.success("Loaded automated data from Programmes, Meetings, and Notes")
         } catch(e) {
             toast.error("Failed to load automated data")
         } finally {
@@ -132,7 +136,7 @@ export function ReportSubmissionDialog({
                     achievements: data.achievements,
                     challenges: data.challenges,
                     ...(fileUrl && { fileUrl }),
-                    ...(draftData && { programmes: draftData.programmes, meetings: draftData.meetings })
+                    ...(draftData && { programmes: draftData.programmes, meetings: draftData.meetings, actionItems: draftData.actionItems })
                 }
             }
             if (data.officeId) {

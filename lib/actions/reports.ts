@@ -476,11 +476,34 @@ export async function getMonthlyDraftData(organizationId: string, officeId: stri
         };
     }));
 
+    // 4. Extract Action Items from Meeting Notes
+    const officeNotes = await db.select()
+        .from(meetingNotes)
+        .where(
+            and(
+                eq(meetingNotes.section, 'ACTIONS'),
+                inArray(meetingNotes.createdBy, officialUserIds),
+                sql`${meetingNotes.updatedAt} >= ${startDate}`,
+                sql`${meetingNotes.updatedAt} <= ${endDate}`
+            )
+        );
+    
+    // Extract checked or raw items from plain text
+    const extractedActions = officeNotes.map(n => {
+        const title = n.title;
+        // Basic extraction: grab lines that look like bullet points or tasks
+        const lines = (n.plainText || '').split('\n')
+            .map(l => l.trim())
+            .filter(l => l.length > 5 && (l.startsWith('-') || l.startsWith('*') || l.match(/^[a-zA-Z]/)));
+        return lines.length > 0 ? `[${title}]:\n` + lines.map(l => `  • ${l.replace(/^-\s*\[[x ]?\]\s*/i, '')}`).join('\n') : null;
+    }).filter(Boolean).join('\n\n');
+
     return {
         officeName: office?.name || 'General',
         officeMandate: office?.description || '',
         programmes: formattedProgrammes,
-        meetings: formattedMeetings
+        meetings: formattedMeetings,
+        actionItems: extractedActions || 'No explicit action items recorded in notes.'
     };
 }
 
