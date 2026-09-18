@@ -1,5 +1,6 @@
 "use server"
 
+// @ts-ignore
 import HTMLtoDOCX from "html-to-docx"
 
 export async function exportDocxAction(html: string) {
