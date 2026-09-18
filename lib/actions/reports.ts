@@ -351,8 +351,8 @@ export async function generateAnnualReport(params: {
         period,
         content: {
             summary,
-            achievements: rollup.rows.map(r=>\`- [\${r.period}] \${r.title}\`).join('\\n'),
-            challenges: allChallenges.length > 0 ? allChallenges.join('\\n') : '—',
+            achievements: rollup.rows.map(r=>`- [${r.period}] ${r.title}`).join('\n'),
+            challenges: allChallenges.length > 0 ? allChallenges.join('\n') : '—',
             programmes: allProgrammes,
             meetings: allMeetings,
             stats: { total: rollup.total, expected: rollup.expected, coverage: rollup.coverage, byOffice: rollup.byOffice },
