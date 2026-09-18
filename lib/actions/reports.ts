@@ -427,8 +427,8 @@ export async function getMonthlyDraftData(organizationId: string, officeId: stri
             and(
                 eq(programmes.organizationId, organizationId),
                 eq(programmes.organizingOfficeId, officeId),
-                sql\`\${programmes.startDate} <= \${endDate}\`,
-                sql\`(\${programmes.endDate} IS NULL OR \${programmes.endDate} >= \${startDate})\`
+                sql`${programmes.startDate} <= ${endDate}`,
+                sql`(${programmes.endDate} IS NULL OR ${programmes.endDate} >= ${startDate})`
             )
         );
 
@@ -454,8 +454,8 @@ export async function getMonthlyDraftData(organizationId: string, officeId: stri
             and(
                 eq(meetings.organizationId, organizationId),
                 inArray(meetings.createdBy, officialUserIds),
-                sql\`\${meetings.scheduledAt} >= \${startDate}\`,
-                sql\`\${meetings.scheduledAt} <= \${endDate}\`
+                sql`${meetings.scheduledAt} >= ${startDate}`,
+                sql`${meetings.scheduledAt} <= ${endDate}`
             )
         );
 
