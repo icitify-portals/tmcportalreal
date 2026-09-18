@@ -310,19 +310,19 @@ export async function generateAnnualReport(params: {
 }) {
     const session = await getServerSession()
     if (!session?.user?.id) return { success:false, error:"Unauthorized" }
-    const period = \`\${params.year}\`
+    const period = `${params.year}`
     const [dup] = await db.select({id:reports.id}).from(reports).where(and(
         eq(reports.organizationId, params.organizationId),
         eq(reports.type,'ANNUAL_CONGRESS'),
         eq(reports.period, period),
         ...(params.officeId ? [eq(reports.officeId, params.officeId)] : [])
     )).limit(1)
-    if (dup) return { success:false, error:\`Annual report for \${period} already exists\` }
+    if (dup) return { success:false, error:`Annual report for ${period} already exists` }
 
     const rollup = await getOfficeRollup({ organizationId: params.organizationId, officeId: params.officeId, year: params.year, includeHierarchy: !params.officeId })
     if (rollup.total===0) return { success:false, error:"No monthly reports found for this year" }
 
-    const summary = \`Annual rollup \${period}: \${rollup.total}/\${rollup.expected} monthly reports (\${rollup.coverage}% coverage).\`
+    const summary = `Annual rollup ${period}: ${rollup.total}/${rollup.expected} monthly reports (${rollup.coverage}% coverage).`
 
     // Extract detailed JSON arrays from all monthly reports
     const allProgrammes: any[] = [];
@@ -338,7 +338,7 @@ export async function generateAnnualReport(params: {
             allMeetings.push(...c.meetings);
         }
         if (c?.challenges && typeof c.challenges === 'string' && c.challenges.trim().length > 0) {
-            allChallenges.push(\`- [\${r.period}] \${c.challenges}\`);
+            allChallenges.push(`- [${r.period}] ${c.challenges}`);
         }
     });
 
@@ -347,7 +347,7 @@ export async function generateAnnualReport(params: {
         userId: session.user.id,
         officeId: params.officeId || null,
         type: 'ANNUAL_CONGRESS',
-        title: params.title || \`Annual Report \${period}\${params.officeId ? \` — \${rollup.byOffice[0]?.name || ''}\` : ' — National'}\`,
+        title: params.title || `Annual Report ${period}${params.officeId ? ` — ${rollup.byOffice[0]?.name || ''}` : ' — National'}`,
         period,
         content: {
             summary,
