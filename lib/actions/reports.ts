@@ -3,7 +3,7 @@
 import { db } from "@/lib/db"
 import {
     reports, reportTypeEnum, reportStatusEnum,
-    organizations, offices, users, meetings, meetingAttendances, programmes
+    organizations, offices, users, meetings, meetingAttendances, programmes, meetingNotes
 } from "@/lib/db/schema"
 import { eq, and, desc, inArray, sql, like, asc } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
