@@ -25,7 +25,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { submitReport } from "@/lib/actions/reports"
+import { submitReport, getMonthlyDraftData } from "@/lib/actions/reports"
 import { toast } from "sonner"
 import { Loader2, Plus, FileText, Upload } from "lucide-react"
 import { useEffect } from "react"
@@ -52,6 +52,30 @@ export function ReportSubmissionDialog({
     const [open, setOpen] = useState(false)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [attachmentFile, setAttachmentFile] = useState<File | null>(null)
+    const [draftData, setDraftData] = useState<any>(null)
+    const [isLoadingDraft, setIsLoadingDraft] = useState(false)
+
+    const handleLoadDraft = async () => {
+        const period = form.getValues("period")
+        const officeId = form.getValues("officeId")
+        if (!period || !officeId) {
+            toast.error("Select period and office first")
+            return
+        }
+        setIsLoadingDraft(true)
+        try {
+            const data = await getMonthlyDraftData(organizationId, officeId, period)
+            setDraftData(data)
+            if (data.officeMandate && !form.getValues("summary")) {
+                form.setValue("summary", "Mandate: " + data.officeMandate + "\\n\\n")
+            }
+            toast.success("Loaded automated data from Programmes and Meetings")
+        } catch(e) {
+            toast.error("Failed to load automated data")
+        } finally {
+            setIsLoadingDraft(false)
+        }
+    }
 
     const form = useForm({
         resolver: zodResolver(ReportSchema),
@@ -107,7 +131,8 @@ export function ReportSubmissionDialog({
                     summary: data.summary,
                     achievements: data.achievements,
                     challenges: data.challenges,
-                    ...(fileUrl && { fileUrl })
+                    ...(fileUrl && { fileUrl }),
+                    ...(draftData && { programmes: draftData.programmes, meetings: draftData.meetings })
                 }
             }
             if (data.officeId) {
@@ -220,18 +245,59 @@ export function ReportSubmissionDialog({
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>{form.watch("type") === "MONTHLY_ACTIVITY" ? "Period (Month)" : "Period (YYYY-MM or Year)"}</FormLabel>
-                                        <FormControl>
-                                            {form.watch("type") === "MONTHLY_ACTIVITY" ? (
-                                                <Input type="month" {...field} />
-                                            ) : (
-                                                <Input placeholder="2024 or 2024-Q1" {...field} />
+                                        <div className="flex gap-2">
+                                            <FormControl>
+                                                {form.watch("type") === "MONTHLY_ACTIVITY" ? (
+                                                    <Input type="month" {...field} />
+                                                ) : (
+                                                    <Input placeholder="2024 or 2024-Q1" {...field} />
+                                                )}
+                                            </FormControl>
+                                            {form.watch("type") === "MONTHLY_ACTIVITY" && (
+                                                <Button type="button" variant="secondary" onClick={handleLoadDraft} disabled={isLoadingDraft}>
+                                                    {isLoadingDraft ? <Loader2 className="h-4 w-4 animate-spin" /> : "Auto-Fill Data"}
+                                                </Button>
                                             )}
-                                        </FormControl>
+                                        </div>
                                         <FormMessage />
                                     </FormItem>
                                 )}
                             />
                         </div>
+
+                        {draftData && form.watch("type") === "MONTHLY_ACTIVITY" && (
+                            <div className="p-4 bg-muted/50 rounded-lg border text-sm space-y-4">
+                                <div>
+                                    <h4 className="font-semibold mb-2">Automated Data Handshake</h4>
+                                    <p className="text-muted-foreground mb-4">This data is automatically pulled from your year planner and meetings. You don't need to type it again.</p>
+                                    
+                                    <h5 className="font-medium text-xs uppercase tracking-wider mb-1">Programmes & Events ({draftData.programmes?.length || 0})</h5>
+                                    {draftData.programmes?.length > 0 ? (
+                                        <ul className="list-disc pl-5 mb-3 text-xs">
+                                            {draftData.programmes.map((p: any) => (
+                                                <li key={p.id}>
+                                                    {p.title} - {new Date(p.date).toLocaleDateString()} - <span className="text-[10px] uppercase font-bold">{p.status}</span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    ) : <p className="text-xs italic text-muted-foreground mb-3">No programmes recorded this month.</p>}
+
+                                    <h5 className="font-medium text-xs uppercase tracking-wider mb-1">Meetings & Attendance ({draftData.meetings?.length || 0})</h5>
+                                    {draftData.meetings?.length > 0 ? (
+                                        <ul className="list-disc pl-5 mb-3 text-xs">
+                                            {draftData.meetings.map((m: any) => (
+                                                <li key={m.id}>
+                                                    {m.title} - {new Date(m.date).toLocaleDateString()}
+                                                    <div className="text-muted-foreground mt-0.5">
+                                                        Present: {m.attendance?.present} | Absent: {m.attendance?.absent} | Excused: {m.attendance?.excused}
+                                                    </div>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    ) : <p className="text-xs italic text-muted-foreground">No meetings recorded this month.</p>}
+                                </div>
+                            </div>
+                        )}
 
                         <FormField
                             control={form.control}

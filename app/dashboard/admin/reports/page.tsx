@@ -62,14 +62,48 @@ async function ReportList({ orgId, type, period, officeId, targetOrgId }: { orgI
                             <Badge className={getStatusColor(r.status || "")}>{r.status}</Badge>
                         </div>
                     </CardHeader>
-                    <CardContent className="space-y-2">
-                        <div className="flex justify-between items-center text-sm text-muted-foreground">
+                    <CardContent className="space-y-4">
+                        <div className="flex justify-between items-center text-sm text-muted-foreground border-b pb-2">
                             <span>Submitted by: {r.user?.name || "Unknown"}</span>
                             <span>{r.office?.name || "General"}</span>
                         </div>
                         
+                        <div className="text-sm space-y-2">
+                            {((r.content as any)?.summary) && (
+                                <div><strong className="block text-xs uppercase text-muted-foreground">Summary:</strong><p className="whitespace-pre-wrap">{(r.content as any).summary}</p></div>
+                            )}
+                            {((r.content as any)?.achievements) && (
+                                <div><strong className="block text-xs uppercase text-muted-foreground mt-2">Achievements:</strong><p className="whitespace-pre-wrap">{(r.content as any).achievements}</p></div>
+                            )}
+                            {((r.content as any)?.challenges) && (
+                                <div><strong className="block text-xs uppercase text-muted-foreground mt-2">Challenges:</strong><p className="whitespace-pre-wrap">{(r.content as any).challenges}</p></div>
+                            )}
+                            
+                            {((r.content as any)?.programmes?.length > 0) && (
+                                <div className="mt-4 p-3 bg-muted/30 rounded-md">
+                                    <strong className="block text-xs uppercase text-muted-foreground mb-2">Auto-synced Programmes:</strong>
+                                    <ul className="list-disc pl-4 space-y-1 text-xs">
+                                        {(r.content as any).programmes.map((p: any) => (
+                                            <li key={p.id}>{p.title} - <span className="font-medium text-[10px]">{p.status}</span></li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+
+                            {((r.content as any)?.meetings?.length > 0) && (
+                                <div className="mt-4 p-3 bg-muted/30 rounded-md">
+                                    <strong className="block text-xs uppercase text-muted-foreground mb-2">Auto-synced Meetings:</strong>
+                                    <ul className="list-disc pl-4 space-y-1 text-xs">
+                                        {(r.content as any).meetings.map((m: any) => (
+                                            <li key={m.id}>{m.title} ({m.attendance?.total} attendees)</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+                        </div>
+
                         {(r.content as any)?.fileUrl && (
-                            <div className="mt-2">
+                            <div className="mt-2 pt-2 border-t">
                                 <a href={(r.content as any).fileUrl} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline flex items-center text-sm font-medium">
                                     <FileText className="h-4 w-4 mr-1" /> View Attachment
                                 </a>
@@ -120,9 +154,31 @@ async function QuarterlyAnnualList({ orgId, type, officeId, targetOrgId }: { org
                             <Badge className={getStatusColor(r.status || "")}>{r.status}</Badge>
                         </div>
                     </CardHeader>
-                    <CardContent className="text-sm text-muted-foreground">
-                        <div>{r.organization?.name} • {r.office?.name || 'National (all offices)'} • by {r.user?.name}</div>
-                        {(r.content as any)?.summary && <p className="mt-2 text-gray-700 line-clamp-3">{(r.content as any).summary}</p>}
+                    <CardContent className="text-sm space-y-3">
+                        <div className="text-muted-foreground border-b pb-2">{r.organization?.name} • {r.office?.name || 'National (all offices)'} • compiled by {r.user?.name}</div>
+                        
+                        {((r.content as any)?.summary) && (
+                            <div><strong className="block text-xs uppercase text-muted-foreground">Summary:</strong><p className="whitespace-pre-wrap">{(r.content as any).summary}</p></div>
+                        )}
+                        {((r.content as any)?.achievements) && (
+                            <div><strong className="block text-xs uppercase text-muted-foreground mt-2">Achievements / Reports:</strong><p className="whitespace-pre-wrap text-xs">{(r.content as any).achievements}</p></div>
+                        )}
+                        {((r.content as any)?.challenges) && (
+                            <div><strong className="block text-xs uppercase text-muted-foreground mt-2">Challenges Rolled Up:</strong><p className="whitespace-pre-wrap text-xs">{(r.content as any).challenges}</p></div>
+                        )}
+
+                        {type === 'ANNUAL_CONGRESS' && ((r.content as any)?.programmes?.length > 0) && (
+                            <div className="mt-4 p-3 bg-muted/30 rounded-md">
+                                <strong className="block text-xs uppercase text-muted-foreground mb-2">All Year Programmes:</strong>
+                                <div className="max-h-[150px] overflow-y-auto">
+                                    <ul className="list-disc pl-4 space-y-1 text-xs">
+                                        {(r.content as any).programmes.map((p: any, i: number) => (
+                                            <li key={p.id + i}>{p.title} - <span className="font-medium text-[10px]">{p.status}</span></li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
             ))}

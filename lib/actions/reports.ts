@@ -3,7 +3,7 @@
 import { db } from "@/lib/db"
 import {
     reports, reportTypeEnum, reportStatusEnum,
-    organizations, offices, users
+    organizations, offices, users, meetings, meetingAttendances, programmes
 } from "@/lib/db/schema"
 import { eq, and, desc, inArray, sql, like, asc } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
@@ -310,31 +310,51 @@ export async function generateAnnualReport(params: {
 }) {
     const session = await getServerSession()
     if (!session?.user?.id) return { success:false, error:"Unauthorized" }
-    const period = `${params.year}`
+    const period = \`\${params.year}\`
     const [dup] = await db.select({id:reports.id}).from(reports).where(and(
         eq(reports.organizationId, params.organizationId),
         eq(reports.type,'ANNUAL_CONGRESS'),
         eq(reports.period, period),
         ...(params.officeId ? [eq(reports.officeId, params.officeId)] : [])
     )).limit(1)
-    if (dup) return { success:false, error:`Annual report for ${period} already exists` }
+    if (dup) return { success:false, error:\`Annual report for \${period} already exists\` }
 
     const rollup = await getOfficeRollup({ organizationId: params.organizationId, officeId: params.officeId, year: params.year, includeHierarchy: !params.officeId })
     if (rollup.total===0) return { success:false, error:"No monthly reports found for this year" }
 
-    const summary = `Annual rollup ${period}: ${rollup.total}/${rollup.expected} monthly reports (${rollup.coverage}% coverage).`
+    const summary = \`Annual rollup \${period}: \${rollup.total}/\${rollup.expected} monthly reports (\${rollup.coverage}% coverage).\`
+
+    // Extract detailed JSON arrays from all monthly reports
+    const allProgrammes: any[] = [];
+    const allMeetings: any[] = [];
+    const allChallenges: string[] = [];
+    
+    rollup.rows.forEach(r => {
+        const c = r.content as any;
+        if (c?.programmes && Array.isArray(c.programmes)) {
+            allProgrammes.push(...c.programmes);
+        }
+        if (c?.meetings && Array.isArray(c.meetings)) {
+            allMeetings.push(...c.meetings);
+        }
+        if (c?.challenges && typeof c.challenges === 'string' && c.challenges.trim().length > 0) {
+            allChallenges.push(\`- [\${r.period}] \${c.challenges}\`);
+        }
+    });
 
     const [created] = await db.insert(reports).values({
         organizationId: params.organizationId,
         userId: session.user.id,
         officeId: params.officeId || null,
         type: 'ANNUAL_CONGRESS',
-        title: params.title || `Annual Report ${period}${params.officeId ? ` — ${rollup.byOffice[0]?.name || ''}` : ' — National'}`,
+        title: params.title || \`Annual Report \${period}\${params.officeId ? \` — \${rollup.byOffice[0]?.name || ''}\` : ' — National'}\`,
         period,
         content: {
             summary,
-            achievements: rollup.rows.map(r=>`- [${r.period}] ${r.title}`).join('\n'),
-            challenges: '—',
+            achievements: rollup.rows.map(r=>\`- [\${r.period}] \${r.title}\`).join('\\n'),
+            challenges: allChallenges.length > 0 ? allChallenges.join('\\n') : '—',
+            programmes: allProgrammes,
+            meetings: allMeetings,
             stats: { total: rollup.total, expected: rollup.expected, coverage: rollup.coverage, byOffice: rollup.byOffice },
             sourcePeriods: rollup.rows.map(r=>r.period),
             sourceReportIds: rollup.rows.map(r=>r.id),
@@ -384,3 +404,83 @@ export async function getAggregatedData(type: 'QUARTERLY' | 'ANNUAL', organizati
         return []
     }
 }
+
+export async function getMonthlyDraftData(organizationId: string, officeId: string, period: string) {
+    const session = await getServerSession();
+    if (!session?.user?.id) throw new Error("Unauthorized");
+
+    // parse period 'YYYY-MM'
+    const [yearStr, monthStr] = period.split('-');
+    const year = parseInt(yearStr);
+    const month = parseInt(monthStr) - 1; // 0-indexed for Date
+
+    const startDate = new Date(year, month, 1);
+    const endDate = new Date(year, month + 1, 0, 23, 59, 59, 999);
+
+    // 1. Fetch Office Details
+    const [office] = await db.select().from(offices).where(eq(offices.id, officeId)).limit(1);
+
+    // 2. Fetch Programmes for this office in this period
+    const officeProgrammes = await db.select()
+        .from(programmes)
+        .where(
+            and(
+                eq(programmes.organizationId, organizationId),
+                eq(programmes.organizingOfficeId, officeId),
+                sql\`\${programmes.startDate} <= \${endDate}\`,
+                sql\`(\${programmes.endDate} IS NULL OR \${programmes.endDate} >= \${startDate})\`
+            )
+        );
+
+    const formattedProgrammes = officeProgrammes.map(p => ({
+        id: p.id,
+        title: p.title,
+        status: p.status,
+        venue: p.venue,
+        date: p.startDate,
+    }));
+
+    // 3. Fetch Meetings created by the user or within the org
+    const officeOfficials = await db.select({ userId: officialsTable.userId })
+        .from(officialsTable)
+        .where(eq(officialsTable.officeId, officeId));
+    
+    const officialUserIds = officeOfficials.map(o => o.userId).filter(Boolean) as string[];
+    if (!officialUserIds.includes(session.user.id)) officialUserIds.push(session.user.id);
+
+    const officeMeetings = await db.select()
+        .from(meetings)
+        .where(
+            and(
+                eq(meetings.organizationId, organizationId),
+                inArray(meetings.createdBy, officialUserIds),
+                sql\`\${meetings.scheduledAt} >= \${startDate}\`,
+                sql\`\${meetings.scheduledAt} <= \${endDate}\`
+            )
+        );
+
+    const formattedMeetings = await Promise.all(officeMeetings.map(async (m) => {
+        const attendances = await db.select({ status: meetingAttendances.status })
+            .from(meetingAttendances)
+            .where(eq(meetingAttendances.meetingId, m.id));
+        
+        const present = attendances.filter(a => a.status === 'PRESENT').length;
+        const absent = attendances.filter(a => a.status === 'ABSENT').length;
+        const excused = attendances.filter(a => a.status === 'EXCUSED').length;
+
+        return {
+            id: m.id,
+            title: m.title,
+            date: m.scheduledAt,
+            attendance: { present, absent, excused, total: attendances.length }
+        };
+    }));
+
+    return {
+        officeName: office?.name || 'General',
+        officeMandate: office?.description || '',
+        programmes: formattedProgrammes,
+        meetings: formattedMeetings
+    };
+}
+
