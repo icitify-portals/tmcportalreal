@@ -7,72 +7,17 @@ import { organizations, users, officials, userRoles, roles } from "@/lib/db/sche
 import { eq, and } from "drizzle-orm"
 import { getAssets, getAssetStats } from "@/lib/actions/assets"
 import { CreateAssetDialog } from "@/components/admin/assets/create-asset-dialog"
+import { AssetsTable } from "@/components/admin/assets/assets-table"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Layers, DollarSign } from "lucide-react"
 import { formatCurrency } from "@/lib/utils"
-import { Monitor, Box, Car, Home, Layers, DollarSign } from "lucide-react"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 
 
 async function AssetsList({ organizationId }: { organizationId: string }) {
     const assets = await getAssets(organizationId)
 
-    if (assets.length === 0) {
-        return (
-            <div className="text-center py-10 border-2 border-dashed rounded-lg">
-                <p className="text-muted-foreground">No assets found for this jurisdiction.</p>
-            </div>
-        )
-    }
-
-    return (
-        <div className="rounded-md border">
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>Asset Name</TableHead>
-                        <TableHead>Category</TableHead>
-                        <TableHead>Condition</TableHead>
-                        <TableHead>Jurisdiction</TableHead>
-                        <TableHead>Location</TableHead>
-                        <TableHead className="text-right">Current Value</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {assets.map((asset) => (
-                        <TableRow key={asset.id}>
-                            <TableCell className="font-medium">
-                                <span className="block">{asset.name}</span>
-                                <span className="text-xs text-muted-foreground">{asset.serialNumber}</span>
-                            </TableCell>
-                            <TableCell>
-                                <Badge variant="outline">{asset.category}</Badge>
-                            </TableCell>
-                            <TableCell>
-                                <Badge variant={
-                                    asset.condition === 'GOOD' || asset.condition === 'NEW' ? 'default' :
-                                        asset.condition === 'FAIR' ? 'secondary' : 'destructive'
-                                }>
-                                    {asset.condition}
-                                </Badge>
-                            </TableCell>
-                            <TableCell>
-                                <span className="text-sm">{asset.organizationName}</span>
-                                <span className="ml-2 text-xs text-muted-foreground block">{asset.organizationLevel}</span>
-                            </TableCell>
-                            <TableCell>{asset.location || 'N/A'}</TableCell>
-                            <TableCell className="text-right" suppressHydrationWarning>
-                                {formatCurrency(parseFloat(asset.currentValue || "0"))}
-                            </TableCell>
-
-
-                        </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
-        </div>
-    )
+    return <AssetsTable assets={assets} organizationId={organizationId} />
 }
 
 async function AssetStats({ organizationId }: { organizationId: string }) {
@@ -180,4 +125,3 @@ export default async function AssetsPage() {
         </DashboardLayout>
     )
 }
-

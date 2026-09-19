@@ -12,7 +12,6 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
 } from "@/components/ui/dialog"
 import {
     Form,
@@ -25,9 +24,9 @@ import {
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { createAsset, getOrganizationMembers } from "@/lib/actions/assets"
+import { updateAsset, getOrganizationMembers } from "@/lib/actions/assets"
 import { toast } from "sonner"
-import { Loader2, Plus } from "lucide-react"
+import { Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 const assetSchema = z.object({
@@ -36,6 +35,7 @@ const assetSchema = z.object({
     serialNumber: z.string().optional(),
     category: z.enum(['FURNITURE', 'ELECTRONICS', 'VEHICLE', 'PROPERTY', 'EQUIPMENT', 'OTHER']),
     condition: z.enum(['NEW', 'GOOD', 'FAIR', 'POOR', 'DAMAGED', 'LOST']),
+    status: z.enum(['ACTIVE', 'IN_MAINTENANCE', 'DISPOSED', 'STOLEN', 'ARCHIVED']),
     purchasePrice: z.coerce.number().min(0).optional(),
     currentValue: z.coerce.number().min(0).optional(),
     location: z.string().optional(),
@@ -44,12 +44,14 @@ const assetSchema = z.object({
 
 type AssetFormValues = z.infer<typeof assetSchema>
 
-interface CreateAssetDialogProps {
+interface EditAssetDialogProps {
+    asset: any
     organizationId: string
+    open: boolean
+    onOpenChange: (open: boolean) => void
 }
 
-export function CreateAssetDialog({ organizationId }: CreateAssetDialogProps) {
-    const [open, setOpen] = useState(false)
+export function EditAssetDialog({ asset, organizationId, open, onOpenChange }: EditAssetDialogProps) {
     const [members, setMembers] = useState<{id: string, name: string | null}[]>([])
     const router = useRouter()
 
@@ -62,14 +64,15 @@ export function CreateAssetDialog({ organizationId }: CreateAssetDialogProps) {
     const form = useForm({
         resolver: zodResolver(assetSchema),
         defaultValues: {
-            name: "",
-            description: "",
-            category: "EQUIPMENT",
-            condition: "GOOD",
-            purchasePrice: 0,
-            currentValue: 0,
-            location: "",
-            custodianId: "",
+            name: asset.name || "",
+            description: asset.description || "",
+            category: asset.category || "EQUIPMENT",
+            condition: asset.condition || "GOOD",
+            status: asset.status || "ACTIVE",
+            purchasePrice: asset.purchasePrice ? parseFloat(asset.purchasePrice) : 0,
+            currentValue: asset.currentValue ? parseFloat(asset.currentValue) : 0,
+            location: asset.location || "",
+            custodianId: asset.custodianId || "none",
         },
     })
 
@@ -82,19 +85,17 @@ export function CreateAssetDialog({ organizationId }: CreateAssetDialogProps) {
                 location: data.location || undefined,
                 serialNumber: data.serialNumber || undefined,
                 description: data.description || undefined,
-                custodianId: data.custodianId || undefined,
-                status: "ACTIVE" as const,
+                custodianId: data.custodianId === "none" ? null : data.custodianId,
             }
 
-            const result = await createAsset(formData, organizationId)
+            const result = await updateAsset(asset.id, formData as any)
 
             if (result.success) {
-                toast.success("Asset created successfully")
-                setOpen(false)
-                form.reset()
+                toast.success("Asset updated successfully")
+                onOpenChange(false)
                 router.refresh()
             } else {
-                toast.error(result.error || "Failed to create asset")
+                toast.error(result.error || "Failed to update asset")
             }
         } catch (error) {
             toast.error("An error occurred")
@@ -102,18 +103,12 @@ export function CreateAssetDialog({ organizationId }: CreateAssetDialogProps) {
     }
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-                <Button>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Register Asset
-                </Button>
-            </DialogTrigger>
+        <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>Register New Asset</DialogTitle>
+                    <DialogTitle>Edit Asset</DialogTitle>
                     <DialogDescription>
-                        Enter details of the asset to track in the inventory.
+                        Update the details of this asset.
                     </DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
@@ -152,6 +147,31 @@ export function CreateAssetDialog({ organizationId }: CreateAssetDialogProps) {
                                                 <SelectItem value="PROPERTY">Property</SelectItem>
                                                 <SelectItem value="EQUIPMENT">Equipment</SelectItem>
                                                 <SelectItem value="OTHER">Other</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            
+                            <FormField
+                                control={form.control}
+                                name="status"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Status</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select Status" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="ACTIVE">Active</SelectItem>
+                                                <SelectItem value="IN_MAINTENANCE">In Maintenance</SelectItem>
+                                                <SelectItem value="DISPOSED">Disposed</SelectItem>
+                                                <SelectItem value="STOLEN">Stolen</SelectItem>
+                                                <SelectItem value="ARCHIVED">Archived</SelectItem>
                                             </SelectContent>
                                         </Select>
                                         <FormMessage />
@@ -212,6 +232,32 @@ export function CreateAssetDialog({ organizationId }: CreateAssetDialogProps) {
                                     </FormItem>
                                 )}
                             />
+                            
+                            <FormField
+                                control={form.control}
+                                name="custodianId"
+                                render={({ field }) => (
+                                    <FormItem className="col-span-2">
+                                        <FormLabel>Custodian (Optional)</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select Custodian" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="none">None</SelectItem>
+                                                {members.map(member => (
+                                                    <SelectItem key={member.id} value={member.id}>
+                                                        {member.name || 'Unknown'}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
 
                             <FormField
                                 control={form.control}
@@ -240,32 +286,6 @@ export function CreateAssetDialog({ organizationId }: CreateAssetDialogProps) {
                                     </FormItem>
                                 )}
                             />
-                            
-                            <FormField
-                                control={form.control}
-                                name="custodianId"
-                                render={({ field }) => (
-                                    <FormItem className="col-span-2">
-                                        <FormLabel>Custodian (Optional)</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <FormControl>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Select Custodian" />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent>
-                                                <SelectItem value="none">None</SelectItem>
-                                                {members.map(member => (
-                                                    <SelectItem key={member.id} value={member.id}>
-                                                        {member.name || 'Unknown'}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
                         </div>
 
                         <FormField
@@ -283,12 +303,12 @@ export function CreateAssetDialog({ organizationId }: CreateAssetDialogProps) {
                         />
 
                         <DialogFooter>
-                            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+                            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                                 Cancel
                             </Button>
                             <Button type="submit" disabled={isSubmitting}>
                                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Register Asset
+                                Save Changes
                             </Button>
                         </DialogFooter>
                     </form>

@@ -3,7 +3,8 @@
 import { db } from "@/lib/db"
 import {
     assets, assetMaintenanceLogs, organizations,
-    assetCategoryEnum, assetConditionEnum, assetStatusEnum, maintenanceTypeEnum
+    assetCategoryEnum, assetConditionEnum, assetStatusEnum, maintenanceTypeEnum,
+    users, userRoles
 } from "@/lib/db/schema"
 import { eq, desc, and, or, aliasedTable, inArray, sql, count, sum } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
@@ -94,9 +95,6 @@ export async function getAssets(organizationId: string) {
 
         // Hierarchical Logic
         if (org.level === 'NATIONAL') {
-            // National sees ALL. Fetch logic simplified: If National, ignore org filter? 
-            // Or fetch all valid orgs? 
-            // For massive scale, "All" might be too much, but for now:
             const allAssets = await db.select({
                 asset: assets,
                 organization: organizations
@@ -108,7 +106,6 @@ export async function getAssets(organizationId: string) {
             return allAssets.map(r => ({ ...r.asset, organizationName: r.organization?.name, organizationLevel: r.organization?.level }))
 
         } else if (org.level === 'STATE') {
-            // State sees Self + Children (Branches/LGAs)
             const children = await db.select({ id: organizations.id })
                 .from(organizations)
                 .where(eq(organizations.parentId, organizationId))
@@ -141,7 +138,8 @@ export async function getAssetById(assetId: string) {
             maintenanceLogs: {
                 orderBy: (logs, { desc }) => [desc(logs.date)]
             },
-            organization: true
+            organization: true,
+            custodian: true
         }
     })
     return result
@@ -156,20 +154,12 @@ export async function recordMaintenance(assetId: string, data: z.infer<typeof Ma
 
         const validData = MaintenanceLogSchema.parse(data)
 
-        // Add Log
         await db.insert(assetMaintenanceLogs).values({
             assetId,
             ...validData,
             cost: validData.cost.toString(),
         })
 
-        // Update Asset Status if needed (e.g. if Inspection Passed -> ACTIVE, if Repair -> IN_MAINTENANCE)
-        // For now, let's auto-set to ACTIVE if type is SERVICE or REPAIR is done? 
-        // Or keep separate status update. 
-        // Let's assume maintenance implies current activity. 
-        // If type is REPAIR, maybe set to IN_MAINTENANCE?
-        // But usually, you log it *after* it's done. 
-        // Let's just update the asset's updatedAt for now.
         await db.update(assets).set({ updatedAt: new Date() }).where(eq(assets.id, assetId));
 
         revalidatePath(`/dashboard/admin/assets`)
@@ -182,14 +172,13 @@ export async function recordMaintenance(assetId: string, data: z.infer<typeof Ma
 // --- Reporting ---
 
 export async function getAssetStats(organizationId: string) {
-    // Similar hierarchical logic to getAssets, but aggregate
     const [org] = await db.select().from(organizations).where(eq(organizations.id, organizationId))
     if (!org) return null
 
     let whereCondition = eq(assets.organizationId, organizationId)
 
     if (org.level === 'NATIONAL') {
-        whereCondition = undefined as any // All
+        whereCondition = undefined as any 
     } else if (org.level === 'STATE') {
         const children = await db.select({ id: organizations.id }).from(organizations).where(eq(organizations.parentId, organizationId))
         const ids = [organizationId, ...children.map(c => c.id)]
@@ -206,4 +195,40 @@ export async function getAssetStats(organizationId: string) {
         .groupBy(assets.category)
 
     return stats
+}
+
+export async function deleteAsset(assetId: string) {
+    try {
+        const session = await getServerSession();
+        if (!session?.user?.id) return { success: false, error: "Unauthorized" };
+
+        await db.delete(assets).where(eq(assets.id, assetId));
+        revalidatePath("/dashboard/admin/assets");
+        return { success: true };
+    } catch (error) {
+        return { success: false, error: "Failed to delete asset" };
+    }
+}
+
+export async function getOrganizationMembers(organizationId: string) {
+    try {
+        const orgUsers = await db.select({
+            id: users.id,
+            name: users.name,
+            email: users.email
+        })
+        .from(users)
+        .innerJoin(userRoles, eq(users.id, userRoles.userId))
+        .where(
+            and(
+                eq(userRoles.organizationId, organizationId),
+                eq(userRoles.isActive, true)
+            )
+        )
+        .groupBy(users.id);
+
+        return orgUsers;
+    } catch (error) {
+        return [];
+    }
 }
