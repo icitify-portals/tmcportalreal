@@ -49,7 +49,7 @@ interface RecordMaintenanceDialogProps {
 export function RecordMaintenanceDialog({ asset, open, onOpenChange }: RecordMaintenanceDialogProps) {
     const router = useRouter()
 
-    const form = useForm<MaintenanceFormValues>({
+    const form = useForm({
         resolver: zodResolver(maintenanceSchema),
         defaultValues: {
             type: "SERVICE",
