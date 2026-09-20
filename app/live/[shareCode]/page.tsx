@@ -47,12 +47,19 @@ export default async function LiveMeetingPublicPage({ params }: { params: Promis
                         {meeting.description || "Join the live virtual room"}
                     </p>
 
-                    <GuestJoinForm 
-                        virtualRoomId={meeting.virtualRoomId} 
-                        meetingTitle={meeting.title}
-                        isLoggedIn={!!session?.user}
-                        defaultName={session?.user?.name || ""}
-                    />
+                    {meeting.isLocked && !session?.user?.isSuperAdmin ? (
+                        <div className="bg-red-50 text-red-600 p-4 rounded-md text-center border border-red-200">
+                            <strong>Meeting Locked</strong>
+                            <p className="mt-1 text-sm">This meeting has been locked by the host. New participants can no longer join.</p>
+                        </div>
+                    ) : (
+                        <GuestJoinForm 
+                            virtualRoomId={meeting.virtualRoomId} 
+                            meetingTitle={meeting.title}
+                            isLoggedIn={!!session?.user}
+                            defaultName={session?.user?.name || ""}
+                        />
+                    )}
                 </div>
             </div>
         </div>

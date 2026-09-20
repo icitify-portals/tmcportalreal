@@ -514,6 +514,19 @@ export async function endMeeting(id: string) {
     return { success: true }
 }
 
+export async function toggleMeetingLock(id: string, lock: boolean) {
+    const session = await getServerSession()
+    if (!session?.user?.id) return { success: false, error: "Unauthorized" }
+
+    await db.update(meetings).set({
+        isLocked: lock,
+        updatedAt: new Date()
+    }).where(eq(meetings.id, id))
+
+    revalidatePath(`/dashboard/admin/meetings/${id}`)
+    return { success: true }
+}
+
 export async function getMeetings(organizationId?: string) {
     const session = await getServerSession()
     let query = db.select().from(meetings).orderBy(desc(meetings.scheduledAt)).$dynamic()

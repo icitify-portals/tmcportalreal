@@ -2,8 +2,8 @@
 
 import { useState } from "react"
 import { Button as UIButton } from "@/components/ui/button"
-import { Play, Square, Loader2, Video, Copy, StopCircle } from "lucide-react"
-import { startMeeting, endMeeting } from "@/lib/actions/meetings"
+import { Play, Square, Loader2, Video, Copy, StopCircle, Lock, Unlock } from "lucide-react"
+import { startMeeting, endMeeting, toggleMeetingLock } from "@/lib/actions/meetings"
 import Link from "next/link"
 import { toast } from "sonner"
 
@@ -11,6 +11,7 @@ export function MeetingControlButtons({ meeting }: { meeting: any }) {
     const [loading, setLoading] = useState(false)
     const [recording, setRecording] = useState(!!meeting.egressId)
     const [startingRecording, setStartingRecording] = useState(false)
+    const [isLocked, setIsLocked] = useState(!!meeting.isLocked)
 
     async function handleStart() {
         setLoading(true)
@@ -39,6 +40,23 @@ export function MeetingControlButtons({ meeting }: { meeting: any }) {
             }
         } catch (error) {
             toast.error("An error occurred while ending the meeting")
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    async function handleToggleLock() {
+        setLoading(true)
+        try {
+            const res = await toggleMeetingLock(meeting.id, !isLocked)
+            if (res.success) {
+                setIsLocked(!isLocked)
+                toast.success(isLocked ? "Meeting unlocked" : "Meeting locked")
+            } else {
+                toast.error(res.error || "Failed to toggle lock")
+            }
+        } catch (error) {
+            toast.error("An error occurred while toggling the lock")
         } finally {
             setLoading(false)
         }
@@ -141,6 +159,11 @@ export function MeetingControlButtons({ meeting }: { meeting: any }) {
                             Recording...
                         </UIButton>
                     )}
+
+                    <UIButton onClick={handleToggleLock} disabled={loading} size="sm" variant="outline" className="border-gray-300">
+                        {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isLocked ? <Unlock className="mr-2 h-4 w-4" /> : <Lock className="mr-2 h-4 w-4" />}
+                        {isLocked ? "Unlock Meeting" : "Lock Meeting"}
+                    </UIButton>
 
                     <UIButton onClick={handleEnd} disabled={loading} size="sm" variant="destructive">
                         {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Square className="mr-2 h-4 w-4 fill-current" />}

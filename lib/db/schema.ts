@@ -925,6 +925,7 @@ export const meetings = mysqlTable("meetings", {
     meetingLink: varchar("meetingLink", { length: 500 }),
     virtualRoomId: varchar("virtualRoomId", { length: 500 }),
     recordingUrl: varchar("recordingUrl", { length: 500 }),
+    isLocked: boolean("isLocked").default(false),
     groupId: varchar("groupId", { length: 255 }), // Link to a specific meeting group
     programmeId: varchar("programmeId", { length: 255 }), // Link to an auto-generated virtual workshop
     staticAttendanceToken: varchar("staticAttendanceToken", { length: 255 }),

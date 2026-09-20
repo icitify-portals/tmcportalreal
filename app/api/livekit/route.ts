@@ -20,9 +20,18 @@ export async function GET(req: NextRequest) {
         }
 
         // --- SECURITY CHECK ---
+        let isAdmin = false;
+        if (session?.user?.id) {
+            const userOfficials = await db.select().from(officials).where(eq(officials.userId, session.user.id));
+            if (userOfficials.length > 0 || session.user.isSuperAdmin) {
+                isAdmin = true;
+            }
+        }
+
         const matchingMeetings = await db.select({
             id: meetings.id,
-            status: meetings.status
+            status: meetings.status,
+            isLocked: meetings.isLocked
         })
         .from(meetings)
         .where(eq(meetings.virtualRoomId, room))
@@ -38,6 +47,10 @@ export async function GET(req: NextRequest) {
         }
 
         const meeting = ongoingMeeting;
+
+        if (meeting.isLocked && !isAdmin) {
+            return NextResponse.json({ error: 'This meeting has been locked by the host.' }, { status: 403 });
+        }
 
         // Check if user is authenticated member
         if (session?.user?.id) {
@@ -79,14 +92,6 @@ export async function GET(req: NextRequest) {
         if (!apiKey || !apiSecret || !wsUrl) {
             console.error("LiveKit misconfigured:", { apiKey: !!apiKey, apiSecret: !!apiSecret, wsUrl: !!wsUrl });
             return NextResponse.json({ error: 'LiveKit server misconfigured. Please configure API keys in System Settings.' }, { status: 500 });
-        }
-
-        let isAdmin = false;
-        if (session?.user?.id) {
-            const userOfficials = await db.select().from(officials).where(eq(officials.userId, session.user.id));
-            if (userOfficials.length > 0 || session.user.isSuperAdmin) {
-                isAdmin = true;
-            }
         }
 
         const at = new AccessToken(apiKey, apiSecret, {
