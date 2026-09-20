@@ -269,6 +269,7 @@ export async function createMeeting(data: z.infer<typeof CreateMeetingSchema>) {
                 .where(inArray(users.id, allInvitees))
 
             const meetingUrl = `${process.env.NEXTAUTH_URL}/dashboard/member/meetings/${meeting.id}`
+            const guestUrl = data.isOnline ? `${process.env.NEXTAUTH_URL}/live/${shareCode}` : undefined
             const scheduledDate = format(new Date(data.scheduledAt), "PPP p")
 
             // Send Emails (Asynchronous)
@@ -279,7 +280,8 @@ export async function createMeeting(data: z.infer<typeof CreateMeetingSchema>) {
                     data.title + (data.previousMinutesUrl ? " (Minutes attached)" : ""),
                     scheduledDate,
                     data.venue || (data.isOnline ? "Online (Link in Dashboard)" : "Not specified"),
-                    meetingUrl
+                    meetingUrl,
+                    guestUrl
                 )
                 return sendEmail({
                     to: user.email,
@@ -436,6 +438,7 @@ export async function updateMeeting(id: string, data: z.infer<typeof CreateMeeti
                 .where(inArray(users.id, attendeesToAdd))
 
             const meetingUrl = `${process.env.NEXTAUTH_URL}/dashboard/member/meetings/${id}`
+            const guestUrl = data.isOnline && existingMeeting.shareCode ? `${process.env.NEXTAUTH_URL}/live/${existingMeeting.shareCode}` : undefined
             const scheduledDate = format(new Date(data.scheduledAt), "PPP p")
 
             // Send Emails (Asynchronous)
@@ -446,7 +449,8 @@ export async function updateMeeting(id: string, data: z.infer<typeof CreateMeeti
                     data.title,
                     scheduledDate,
                     data.venue || (data.isOnline ? "Online (Link in Dashboard)" : "Not specified"),
-                    meetingUrl
+                    meetingUrl,
+                    guestUrl
                 )
                 return sendEmail({
                     to: user.email,

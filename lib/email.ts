@@ -250,7 +250,7 @@ export const emailTemplates = {
       Visit our website for more details.
     `,
   }),
-  meetingInvitation: (name: string, title: string, date: string, venue: string, meetingUrl: string) => ({
+  meetingInvitation: (name: string, title: string, date: string, venue: string, meetingUrl: string, guestUrl?: string) => ({
     subject: `Meeting Invitation: ${title}`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -263,10 +263,16 @@ export const emailTemplates = {
           <p style="margin: 5px 0;"><strong>📍 Venue:</strong> ${venue}</p>
         </div>
         <p>You can view the meeting details and join the session (if online) through your dashboard:</p>
-        <div style="text-align: center; margin: 30px 0;">
-          <a href="${meetingUrl}" style="background-color: #166534; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">View Meeting</a>
+        <div style="text-align: center; margin: 20px 0;">
+          <a href="${meetingUrl}" style="background-color: #166534; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">View Meeting Dashboard</a>
         </div>
-        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+        ${guestUrl ? `
+        <p style="margin-top: 30px;"><strong>Not signed in?</strong> You can join the online video room directly as a guest:</p>
+        <div style="text-align: center; margin: 20px 0;">
+          <a href="${guestUrl}" style="background-color: #f3f4f6; color: #374151; border: 1px solid #d1d5db; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">Join Live Room Directly</a>
+        </div>
+        ` : ''}
+        <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0 20px 0;">
         <p style="color: #666; font-size: 12px;">This is an automated message from TMC Connect.</p>
       </div>
     `,
@@ -282,6 +288,7 @@ export const emailTemplates = {
       Venue: ${venue}
       
       View meeting details here: ${meetingUrl}
+      ${guestUrl ? `\n      Join directly as guest: ${guestUrl}` : ''}
     `,
   }),
   programmeRegistrationReceipt: (name: string, programmeTitle: string, amount: number, registrationId: string, memberId?: string) => ({
