@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Calendar, MapPin, Video } from "lucide-react"
+import { Calendar, MapPin, Video, BookOpen } from "lucide-react"
 import Link from "next/link"
 import { getAvailableOrganizations } from "@/lib/actions/occasions"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
@@ -148,6 +148,12 @@ export default async function AdminMeetingsPage({
                         )}
                         <CreateMeetingGroupDialog availableMembers={members} currentOrgId={selectedOrgId} isSuperAdmin={isSuperAdmin} />
                         <CreateMeetingDialog members={members} currentOrgId={selectedOrgId} isSuperAdmin={isSuperAdmin} />
+                        <Button variant="outline" asChild>
+                            <Link href="/dashboard/admin/meetings/guide">
+                                <BookOpen className="mr-2 h-4 w-4" />
+                                Guide
+                            </Link>
+                        </Button>
                     </div>
                 </div>
 
