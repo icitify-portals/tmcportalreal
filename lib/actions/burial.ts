@@ -18,6 +18,15 @@ const BurialRequestSchema = z.object({
     causeOfDeath: z.string().min(1, "Cause of Death is required").max(255),
     dateOfDeath: z.coerce.date(),
     placeOfDeath: z.string().min(1, "Place of Death is required").max(100),
+    age: z.coerce.number().min(0).max(150),
+    sex: z.enum(['MALE', 'FEMALE']),
+    maritalStatus: z.enum(['SINGLE', 'MARRIED', 'DIVORCED', 'WIDOWED']).optional().nullable(),
+    educationalAttainment: z.enum(['NONE', 'PRIMARY', 'SECONDARY', 'TERTIARY', 'OTHER']).optional().nullable(),
+    occupation: z.string().optional().nullable(),
+    stateOfOrigin: z.string().min(1, "State of Origin is required"),
+    lgaOfOrigin: z.string().optional().nullable(),
+    proposedBurialDate: z.coerce.date().optional().nullable(),
+    burialLocation: z.string().optional().nullable(),
     contactPhone: z.string().min(10, "Valid phone number is required").max(20),
     contactEmail: z.string().email("Invalid email address"),
 })
@@ -301,3 +310,69 @@ export async function verifyBurialPayment(requestId: string, reference: string) 
     }
 }
 
+
+export async function getBurialAnalytics() {
+    try {
+        const session = await getServerSession()
+        if (!session?.user?.id) return { success: false, error: "Unauthorized" }
+
+        const allBurials = await db.select().from(burialRequests)
+        
+        let total = 0;
+        let sumAge = 0;
+        let males = 0;
+        let females = 0;
+        const ageCounts = { '0-18': 0, '19-35': 0, '36-50': 0, '51-70': 0, '71+': 0 };
+        const stateCounts: Record<string, number> = {};
+        const maritalCounts: Record<string, number> = {};
+
+        for (const b of allBurials) {
+            total++;
+            sumAge += b.age || 0;
+            if (b.sex === 'MALE') males++;
+            if (b.sex === 'FEMALE') females++;
+
+            const age = b.age || 0;
+            if (age <= 18) ageCounts['0-18']++;
+            else if (age <= 35) ageCounts['19-35']++;
+            else if (age <= 50) ageCounts['36-50']++;
+            else if (age <= 70) ageCounts['51-70']++;
+            else ageCounts['71+']++;
+
+            const state = b.stateOfOrigin || 'Unknown';
+            stateCounts[state] = (stateCounts[state] || 0) + 1;
+
+            const marital = b.maritalStatus || 'Unknown';
+            maritalCounts[marital] = (maritalCounts[marital] || 0) + 1;
+        }
+
+        const averageAge = total > 0 ? Math.round(sumAge / total) : 0;
+        
+        let topState = 'None';
+        let maxStateCount = 0;
+        for (const state in stateCounts) {
+            if (stateCounts[state] > maxStateCount && state !== 'Unknown') {
+                maxStateCount = stateCounts[state];
+                topState = state;
+            }
+        }
+
+        return {
+            success: true,
+            data: {
+                total,
+                averageAge,
+                males,
+                females,
+                topState,
+                ageGroups: Object.keys(ageCounts).map(k => ({ name: k, value: ageCounts[k as keyof typeof ageCounts] })),
+                sexDistribution: [{ name: 'Male', value: males }, { name: 'Female', value: females }],
+                stateDistribution: Object.keys(stateCounts).map(k => ({ name: k, value: stateCounts[k] })).sort((a,b) => b.value - a.value).slice(0, 10),
+                maritalDistribution: Object.keys(maritalCounts).map(k => ({ name: k, value: maritalCounts[k] }))
+            }
+        }
+    } catch (error) {
+        console.error("Analytics error:", error)
+        return { success: false, error: "Failed to fetch analytics" }
+    }
+}

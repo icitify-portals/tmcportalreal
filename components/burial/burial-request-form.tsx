@@ -20,6 +20,9 @@ import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { Card, CardContent } from "@/components/ui/card"
 
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+
+
 const formSchema = z.object({
     deceasedName: z.string().min(2, "Name must be at least 2 characters"),
     relationship: z.string().min(1, "Relationship is required"),
@@ -28,6 +31,17 @@ const formSchema = z.object({
     placeOfDeath: z.string().min(1, "Place of death is required"),
     contactPhone: z.string().min(10, "Phone number required"),
     contactEmail: z.string().email("Invalid email address"),
+
+    age: z.coerce.number().min(0, "Age must be positive"),
+    sex: z.enum(['MALE', 'FEMALE']),
+    maritalStatus: z.enum(['SINGLE', 'MARRIED', 'DIVORCED', 'WIDOWED']).optional().nullable(),
+    educationalAttainment: z.enum(['NONE', 'PRIMARY', 'SECONDARY', 'TERTIARY', 'OTHER']).optional().nullable(),
+    occupation: z.string().optional().nullable(),
+    stateOfOrigin: z.string().min(1, "State of Origin is required"),
+    lgaOfOrigin: z.string().optional().nullable(),
+    proposedBurialDate: z.string().optional().nullable(),
+    burialLocation: z.string().optional().nullable(),
+
 })
 
 interface BurialRequestFormProps {
@@ -47,15 +61,29 @@ export function BurialRequestForm({ defaultFee }: BurialRequestFormProps) {
             placeOfDeath: "",
             contactPhone: "",
             contactEmail: "",
+
+            age: 0,
+            sex: 'MALE',
+            maritalStatus: null,
+            educationalAttainment: null,
+            occupation: '',
+            stateOfOrigin: '',
+            lgaOfOrigin: '',
+            proposedBurialDate: '',
+            burialLocation: '',
+
         },
     })
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
         try {
+            
             const payload = {
                 ...values,
                 dateOfDeath: new Date(values.dateOfDeath),
+                proposedBurialDate: values.proposedBurialDate ? new Date(values.proposedBurialDate) : null
             }
+
             const res = await createBurialRequest(payload)
             if (res.success) {
                 toast.success("Request submitted successfully")

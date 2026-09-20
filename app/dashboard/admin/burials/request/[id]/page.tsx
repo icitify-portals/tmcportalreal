@@ -69,7 +69,50 @@ export default async function AdminRequestDetailsPage({ params }: { params: Prom
                                 </div>
                             </div>
 
-                            <div className="border-t pt-4">
+                            
+                            <div className="border-t pt-4 mt-6">
+                                <h3 className="font-semibold mb-3">Demographics & Details</h3>
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <span className="text-sm text-muted-foreground block">Age</span>
+                                        <span className="font-medium">{request.age}</span>
+                                    </div>
+                                    <div>
+                                        <span className="text-sm text-muted-foreground block">Sex</span>
+                                        <span className="font-medium">{request.sex}</span>
+                                    </div>
+                                    <div>
+                                        <span className="text-sm text-muted-foreground block">Marital Status</span>
+                                        <span className="font-medium">{request.maritalStatus || 'N/A'}</span>
+                                    </div>
+                                    <div>
+                                        <span className="text-sm text-muted-foreground block">State of Origin</span>
+                                        <span className="font-medium">{request.stateOfOrigin}</span>
+                                    </div>
+                                    <div>
+                                        <span className="text-sm text-muted-foreground block">LGA of Origin</span>
+                                        <span className="font-medium">{request.lgaOfOrigin || 'N/A'}</span>
+                                    </div>
+                                    <div>
+                                        <span className="text-sm text-muted-foreground block">Education</span>
+                                        <span className="font-medium">{request.educationalAttainment || 'N/A'}</span>
+                                    </div>
+                                    <div className="col-span-2">
+                                        <span className="text-sm text-muted-foreground block">Occupation</span>
+                                        <span className="font-medium">{request.occupation || 'N/A'}</span>
+                                    </div>
+                                    <div>
+                                        <span className="text-sm text-muted-foreground block">Proposed Burial Date</span>
+                                        <span className="font-medium">{request.proposedBurialDate ? format(request.proposedBurialDate, "PPP") : 'N/A'}</span>
+                                    </div>
+                                    <div className="col-span-2">
+                                        <span className="text-sm text-muted-foreground block">Burial Location</span>
+                                        <span className="font-medium">{request.burialLocation || 'N/A'}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="border-t pt-4 mt-6">
                                 <h3 className="font-semibold mb-3">Contact Information</h3>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>

@@ -30,6 +30,9 @@ export const feeTargetEnum = mysqlEnum('targetType', ['ALL_MEMBERS', 'OFFICIALS'
 
 // Burial Enums
 export const burialRequestStatusEnum = mysqlEnum('status', ['PENDING', 'APPROVED_UNPAID', 'PAID', 'BURIAL_DONE', 'REJECTED']);
+export const sexEnum = mysqlEnum('sex', ['MALE', 'FEMALE']);
+export const maritalStatusEnum = mysqlEnum('maritalStatus', ['SINGLE', 'MARRIED', 'DIVORCED', 'WIDOWED']);
+export const educationalAttainmentEnum = mysqlEnum('educationalAttainment', ['NONE', 'PRIMARY', 'SECONDARY', 'TERTIARY', 'OTHER']);
 export const documentTypeEnum = mysqlEnum('documentType', ['ID_CARD', 'CERTIFICATE', 'PHOTO', 'CONTRACT', 'REPORT', 'MINUTES', 'OTHER']);
 export const emailStatusEnum = mysqlEnum('status', ['PENDING', 'SENT', 'FAILED', 'BOUNCED']);
 export const notificationTypeEnum = mysqlEnum('type', ['INFO', 'SUCCESS', 'WARNING', 'ERROR']);
@@ -1383,6 +1386,17 @@ export const burialRequests = mysqlTable("burial_requests", {
     causeOfDeath: varchar("causeOfDeath", { length: 255 }).notNull(),
     dateOfDeath: timestamp("dateOfDeath", { mode: "date", fsp: 3 }).notNull(),
     placeOfDeath: varchar("placeOfDeath", { length: 255 }).notNull(),
+
+    // Demographic fields
+    age: int("age").notNull().default(0),
+    sex: sexEnum.notNull().default('MALE'),
+    maritalStatus: maritalStatusEnum,
+    educationalAttainment: educationalAttainmentEnum,
+    occupation: varchar("occupation", { length: 255 }),
+    stateOfOrigin: varchar("stateOfOrigin", { length: 255 }).notNull().default(''),
+    lgaOfOrigin: varchar("lgaOfOrigin", { length: 255 }),
+    proposedBurialDate: timestamp("proposedBurialDate", { mode: "date", fsp: 3 }),
+    burialLocation: varchar("burialLocation", { length: 255 }),
 
     contactPhone: varchar("contactPhone", { length: 255 }).notNull(),
     contactEmail: varchar("contactEmail", { length: 255 }).notNull(),
