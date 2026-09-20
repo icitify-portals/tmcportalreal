@@ -4,6 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Users, Info } from "lucide-react"
 import { EditMeetingGroupDialog } from "./edit-meeting-group-dialog"
 import { DeleteMeetingGroupButton } from "./delete-meeting-group-button"
+import { InstantCallButton } from "./instant-call-button"
 import { Badge } from "@/components/ui/badge"
 
 interface Group {
@@ -67,6 +68,7 @@ export function GroupsList({ groups, availableMembers }: GroupsListProps) {
                             </TableCell>
                             <TableCell className="text-right">
                                 <div className="flex justify-end gap-1">
+                                    <InstantCallButton groupId={group.id} groupName={group.name} />
                                     <EditMeetingGroupDialog group={group} availableMembers={availableMembers} />
                                     <DeleteMeetingGroupButton groupId={group.id} groupName={group.name} />
                                 </div>

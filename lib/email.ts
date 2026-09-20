@@ -291,6 +291,34 @@ export const emailTemplates = {
       ${guestUrl ? `\n      Join directly as guest: ${guestUrl}` : ''}
     `,
   }),
+  instantCallInvitation: (name: string, groupName: string, callUrl: string) => ({
+    subject: `📞 Instant Call Started: ${groupName}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h1 style="color: #166534;">📞 Incoming Group Call</h1>
+        <p>Dear ${name},</p>
+        <p>An instant call has just been started for the group: <strong>${groupName}</strong>.</p>
+        <p>Please click the button below to join the live room immediately:</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${callUrl}" style="background-color: #166534; color: white; padding: 15px 30px; font-size: 16px; font-weight: bold; text-decoration: none; border-radius: 8px; display: inline-block;">Join Call Now</a>
+        </div>
+        <p style="color: #666; font-size: 14px;">If you miss this call, you can safely ignore this message.</p>
+        <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0 20px 0;">
+        <p style="color: #666; font-size: 12px;">This is an automated message from TMC Connect.</p>
+      </div>
+    `,
+    text: `
+      Incoming Group Call: ${groupName}
+      
+      Dear ${name},
+      
+      An instant call has just been started for the group: ${groupName}.
+      
+      Join the call immediately using this link: ${callUrl}
+      
+      If you miss this call, you can safely ignore this message.
+    `,
+  }),
   programmeRegistrationReceipt: (name: string, programmeTitle: string, amount: number, registrationId: string, memberId?: string) => ({
     subject: `Registration Confirmation: ${programmeTitle} - TMC`,
     html: `

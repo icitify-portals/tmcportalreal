@@ -527,6 +527,96 @@ export async function toggleMeetingLock(id: string, lock: boolean) {
     return { success: true }
 }
 
+export async function startInstantGroupCall(groupId: string) {
+    const session = await getServerSession()
+    if (!session?.user?.id) return { success: false, error: "Unauthorized" }
+
+    try {
+        const [group] = await db.select().from(meetingGroups).where(eq(meetingGroups.id, groupId))
+        if (!group) return { success: false, error: "Group not found" }
+
+        const members = await db.select().from(meetingGroupMembers).where(eq(meetingGroupMembers.groupId, groupId))
+        const userIds = members.map(m => m.userId)
+
+        const meetingId = uuidv4()
+        const virtualRoomId = `room-${uuidv4()}`
+        const shareCode = Math.random().toString(36).substring(2, 8).toLowerCase() + "-" + Math.random().toString(36).substring(2, 8).toLowerCase()
+        
+        await db.insert(meetings).values({
+            id: meetingId,
+            title: `Instant Call: ${group.name}`,
+            description: "Instant group call started by admin",
+            organizationId: group.organizationId,
+            scheduledAt: new Date(),
+            endAt: new Date(Date.now() + 60 * 60 * 1000), // 1 hour default
+            isOnline: true,
+            status: 'ONGOING',
+            virtualRoomId: virtualRoomId,
+            shareCode: shareCode,
+            groupId: groupId,
+            createdBy: session.user.id,
+            targetAudience: 'ALL_MEMBERS_JURISDICTION',
+            attendanceWindow: 30,
+            createdAt: new Date()
+        })
+
+        if (userIds.length > 0) {
+            await db.insert(meetingAttendances).values(
+                userIds.map(userId => ({
+                    id: uuidv4(),
+                    meetingId: meetingId,
+                    userId,
+                    status: 'PENDING'
+                }))
+            )
+
+            // Notifications
+            await db.insert(notifications).values(
+                userIds.map(userId => ({
+                    userId: userId,
+                    title: `📞 Incoming Group Call`,
+                    message: `An instant call has started for: ${group.name}`,
+                    type: 'INFO' as const,
+                    actionUrl: `/dashboard/member/meetings/${meetingId}/room`,
+                    createdAt: new Date(),
+                    updatedAt: new Date()
+                }))
+            )
+
+            // Fetch user emails
+            const inviteesInfo = await db.select({ name: users.name, email: users.email })
+                .from(users)
+                .where(inArray(users.id, userIds))
+
+            const callUrl = `${process.env.NEXTAUTH_URL}/dashboard/member/meetings/${meetingId}/room`
+
+            // Send Emails asynchronously
+            Promise.all(inviteesInfo.map(user => {
+                if (!user.email) return Promise.resolve();
+                const template = emailTemplates.instantCallInvitation(
+                    user.name || "Member",
+                    group.name,
+                    callUrl
+                )
+                return sendEmail({
+                    to: user.email,
+                    subject: template.subject,
+                    html: template.html,
+                    text: template.text,
+                    template: "instant_call_invitation"
+                })
+            })).catch(err => console.error("Error sending instant call emails:", err))
+        }
+
+        revalidatePath("/dashboard/admin/meetings")
+        revalidatePath("/dashboard/member/meetings")
+        return { success: true, meetingId }
+    } catch (error: any) {
+        console.error("Error starting instant call:", error)
+        return { success: false, error: "Failed to start instant call" }
+    }
+}
+
 export async function getMeetings(organizationId?: string) {
     const session = await getServerSession()
     let query = db.select().from(meetings).orderBy(desc(meetings.scheduledAt)).$dynamic()
