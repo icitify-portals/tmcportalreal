@@ -566,7 +566,7 @@ export async function startInstantGroupCall(groupId: string) {
                     id: uuidv4(),
                     meetingId: meetingId,
                     userId,
-                    status: 'PENDING'
+                    status: 'INVITED' as const
                 }))
             )
 
