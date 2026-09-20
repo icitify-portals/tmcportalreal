@@ -34,6 +34,20 @@ export function startScheduler() {
         console.log('Running Monthly Office Report Nudge (missing)...');
         await processMonthlyOfficeReportReminders(true);
     });
+
+    // Schedule: Automated System Backup — Every Day at 02:00 AM
+    cron.schedule('0 2 * * *', () => {
+        console.log('Running Automated Daily Backup...');
+        const { exec } = require('child_process');
+        exec('npx tsx scripts/automated-backup.ts', (error: any, stdout: string, stderr: string) => {
+            if (error) {
+                console.error('Automated Backup failed:', error);
+                return;
+            }
+            console.log('Automated Backup output:', stdout);
+            if (stderr) console.error('Automated Backup stderr:', stderr);
+        });
+    });
 }
 
 async function processWeeklyNotifications() {
