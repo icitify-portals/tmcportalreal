@@ -30,6 +30,57 @@ const CreateMeetingSchema = z.object({
     occurrences: z.number().min(1).max(52).optional().default(5)
 })
 
+async function resolveGroupInvitees(group: typeof meetingGroups.$inferSelect): Promise<string[]> {
+    const autoUserIds: string[] = []
+    const rules = group.dynamicRules as any
+
+    if (rules) {
+        if (rules.includeAllMembers) {
+            const jurisdictionMembers = await db.select({ userId: members.userId })
+                .from(members)
+                .where(and(
+                    eq(members.organizationId, group.organizationId),
+                    eq(members.isActive, true)
+                ))
+            autoUserIds.push(...jurisdictionMembers.map(m => m.userId).filter(Boolean) as string[])
+        }
+
+        if (rules.includeOfficials) {
+            const jurisdictionOfficials = await db.select({ userId: officials.userId })
+                .from(officials)
+                .where(and(
+                    eq(officials.organizationId, group.organizationId),
+                    eq(officials.isActive, true)
+                ))
+            autoUserIds.push(...jurisdictionOfficials.map(o => o.userId).filter(Boolean) as string[])
+        }
+
+        if (rules.includeChildAdmins) {
+            const childOrgs = await db.select({ id: organizations.id })
+                .from(organizations)
+                .where(eq(organizations.parentId, group.organizationId))
+
+            if (childOrgs.length > 0) {
+                const childOrgIds = childOrgs.map(o => o.id)
+                const childAdmins = await db.select({ userId: officials.userId })
+                    .from(officials)
+                    .where(and(
+                        inArray(officials.organizationId, childOrgIds),
+                        eq(officials.isActive, true)
+                    ))
+                autoUserIds.push(...childAdmins.map(o => o.userId).filter(Boolean) as string[])
+            }
+        }
+    }
+
+    const groupMembers = await db.select({ userId: meetingGroupMembers.userId })
+        .from(meetingGroupMembers)
+        .where(eq(meetingGroupMembers.groupId, group.id))
+    const groupUserIds = groupMembers.map(m => m.userId).filter(Boolean) as string[]
+
+    return Array.from(new Set([...autoUserIds, ...groupUserIds]))
+}
+
 export async function createMeeting(data: z.infer<typeof CreateMeetingSchema>) {
     const session = await getServerSession()
     if (!session?.user?.id) return { success: false, error: "Unauthorized" }
@@ -59,13 +110,20 @@ export async function createMeeting(data: z.infer<typeof CreateMeetingSchema>) {
         const staticAttendanceToken = Math.random().toString(36).substring(2, 10).toUpperCase();
         const shareCode = Math.random().toString(36).substring(2, 8).toLowerCase() + "-" + Math.random().toString(36).substring(2, 8).toLowerCase();
 
-        if (data.frequency === 'CUSTOM' && data.rruleString) {
+        if (data.frequency === 'CUSTOM') {
+            if (!data.rruleString) {
+                return { success: false, error: "Custom recurrence requires an RRULE string" }
+            }
             try {
                 const rule = RRule.fromString(data.rruleString);
                 // Calculate end of year or max 52 occurrences
                 const endOfYear = new Date(meetingDate.getFullYear(), 11, 31, 23, 59, 59);
                 const occurrences = rule.between(meetingDate, endOfYear, true).slice(0, 52);
-                
+
+                if (occurrences.length === 0) {
+                    return { success: false, error: "This recurrence rule produced no future dates within the calendar year" }
+                }
+
                 occurrencesCount = occurrences.length;
                 
                 const durationMs = data.endAt ? new Date(data.endAt).getTime() - meetingDate.getTime() : 0;
@@ -106,7 +164,8 @@ export async function createMeeting(data: z.infer<typeof CreateMeetingSchema>) {
                     });
                 }
             } catch (err) {
-                console.error("Invalid RRule for Meeting:", data.rruleString);
+                console.error("Invalid RRule for Meeting:", data.rruleString, err);
+                return { success: false, error: "Invalid recurrence rule. Please check the RRULE and try again." }
             }
         } else {
             for (let i = 0; i < occurrencesCount; i++) {
@@ -155,6 +214,10 @@ export async function createMeeting(data: z.infer<typeof CreateMeetingSchema>) {
             }
         }
 
+        if (meetingIds.length === 0) {
+            return { success: false, error: "No meetings could be created from this schedule" }
+        }
+
         const meeting = { id: meetingIds[0] };
 
         // 0. Handle Previous Minutes if provided
@@ -169,61 +232,12 @@ export async function createMeeting(data: z.infer<typeof CreateMeetingSchema>) {
             })
         }
 
-        // 1. Resolve Dynamic Rules from Group
-        let autoUserIds: string[] = []
-        const rules = group.dynamicRules as any
+        // 1. Resolve Dynamic Rules + explicit group members
+        const resolvedInvitees = await resolveGroupInvitees(group)
 
-        if (rules) {
-            if (rules.includeAllMembers) {
-                const jurisdictionMembers = await db.select({ userId: members.userId })
-                    .from(members)
-                    .where(and(
-                        eq(members.organizationId, group.organizationId),
-                        eq(members.isActive, true)
-                    ))
-                autoUserIds.push(...jurisdictionMembers.map(m => m.userId).filter(Boolean) as string[])
-            }
-
-            if (rules.includeOfficials) {
-                const jurisdictionOfficials = await db.select({ userId: officials.userId })
-                    .from(officials)
-                    .where(and(
-                        eq(officials.organizationId, group.organizationId),
-                        eq(officials.isActive, true)
-                    ))
-                autoUserIds.push(...jurisdictionOfficials.map(o => o.userId).filter(Boolean) as string[])
-            }
-
-            if (rules.includeChildAdmins) {
-                // Fetch child organizations
-                const childOrgs = await db.select({ id: organizations.id })
-                    .from(organizations)
-                    .where(eq(organizations.parentId, group.organizationId))
-                
-                if (childOrgs.length > 0) {
-                    const childOrgIds = childOrgs.map(o => o.id)
-                    const childAdmins = await db.select({ userId: officials.userId })
-                        .from(officials)
-                        .where(and(
-                            inArray(officials.organizationId, childOrgIds),
-                            eq(officials.isActive, true)
-                        ))
-                    autoUserIds.push(...childAdmins.map(o => o.userId).filter(Boolean) as string[])
-                }
-            }
-        }
-
-        // 2. Add Manual Group Members
-        let groupUserIds: string[] = []
-        const groupMembers = await db.select({ userId: meetingGroupMembers.userId })
-            .from(meetingGroupMembers)
-            .where(eq(meetingGroupMembers.groupId, data.groupId))
-        groupUserIds = groupMembers.map(m => m.userId).filter(Boolean) as string[]
-
-        // Combine all unique invitees
+        // Combine with manual invites
         const allInvitees = Array.from(new Set([
-            ...autoUserIds,
-            ...groupUserIds,
+            ...resolvedInvitees,
             ...(data.attendees || [])
         ]))
 
@@ -339,63 +353,12 @@ export async function updateMeeting(id: string, data: z.infer<typeof CreateMeeti
         const existingAttendances = await db.select().from(meetingAttendances).where(eq(meetingAttendances.meetingId, id))
         const existingUserIds = existingAttendances.map(a => a.userId)
 
-        // Re-calculate who should be invited
-        let autoUserIds: string[] = []
-        
+        // Re-calculate who should be invited (dynamic rules + explicit members)
         const [group] = await db.select().from(meetingGroups).where(eq(meetingGroups.id, data.groupId))
-        if (group) {
-            const rules = group.dynamicRules as any
-            if (rules) {
-                if (rules.includeAllMembers) {
-                    const jurisdictionMembers = await db.select({ userId: members.userId })
-                        .from(members)
-                        .where(and(
-                            eq(members.organizationId, group.organizationId),
-                            eq(members.isActive, true)
-                        ))
-                    autoUserIds.push(...jurisdictionMembers.map(m => m.userId).filter(Boolean) as string[])
-                }
-
-                if (rules.includeOfficials) {
-                    const jurisdictionOfficials = await db.select({ userId: officials.userId })
-                        .from(officials)
-                        .where(and(
-                            eq(officials.organizationId, group.organizationId),
-                            eq(officials.isActive, true)
-                        ))
-                    autoUserIds.push(...jurisdictionOfficials.map(o => o.userId).filter(Boolean) as string[])
-                }
-
-                if (rules.includeChildAdmins) {
-                    const childOrgs = await db.select({ id: organizations.id })
-                        .from(organizations)
-                        .where(eq(organizations.parentId, group.organizationId))
-                    
-                    if (childOrgs.length > 0) {
-                        const childOrgIds = childOrgs.map(o => o.id)
-                        const childAdmins = await db.select({ userId: officials.userId })
-                            .from(officials)
-                            .where(and(
-                                inArray(officials.organizationId, childOrgIds),
-                                eq(officials.isActive, true)
-                            ))
-                        autoUserIds.push(...childAdmins.map(o => o.userId).filter(Boolean) as string[])
-                    }
-                }
-            }
-        }
-
-        let groupUserIds: string[] = []
-        if (data.groupId) {
-            const groupMembers = await db.select({ userId: meetingGroupMembers.userId })
-                .from(meetingGroupMembers)
-                .where(eq(meetingGroupMembers.groupId, data.groupId))
-            groupUserIds = groupMembers.map(m => m.userId).filter(Boolean) as string[]
-        }
+        const resolvedInvitees = group ? await resolveGroupInvitees(group) : []
 
         const allNewRequiredInvitees = Array.from(new Set([
-            ...autoUserIds,
-            ...groupUserIds,
+            ...resolvedInvitees,
             ...data.attendees
         ]))
 
@@ -531,12 +494,20 @@ export async function startInstantGroupCall(groupId: string) {
     const session = await getServerSession()
     if (!session?.user?.id) return { success: false, error: "Unauthorized" }
 
+    // Only superadmins or officials can start an instant call
+    if (!session.user.isSuperAdmin && !session.user.officialLevel) {
+        return { success: false, error: "Admin access required" }
+    }
+
     try {
         const [group] = await db.select().from(meetingGroups).where(eq(meetingGroups.id, groupId))
         if (!group) return { success: false, error: "Group not found" }
 
-        const members = await db.select().from(meetingGroupMembers).where(eq(meetingGroupMembers.groupId, groupId))
-        const userIds = members.map(m => m.userId)
+        const userIds = await resolveGroupInvitees(group)
+
+        if (userIds.length === 0) {
+            return { success: false, error: "This group has no members to call. Add members or dynamic rules first." }
+        }
 
         const meetingId = uuidv4()
         const virtualRoomId = `room-${uuidv4()}`
@@ -551,6 +522,7 @@ export async function startInstantGroupCall(groupId: string) {
             endAt: new Date(Date.now() + 60 * 60 * 1000), // 1 hour default
             isOnline: true,
             status: 'ONGOING',
+            isInstantCall: true,
             virtualRoomId: virtualRoomId,
             shareCode: shareCode,
             groupId: groupId,
@@ -670,10 +642,21 @@ export async function joinMeeting(meetingId: string) {
     const session = await getServerSession()
     if (!session?.user?.id) return { success: false, error: "Unauthorized" }
 
+    const [meeting] = await db.select().from(meetings).where(eq(meetings.id, meetingId))
+    if (!meeting) return { success: false, error: "Meeting not found" }
+
+    if (meeting.status !== 'ONGOING') {
+        return { success: false, error: "This meeting has not started yet." }
+    }
+
     const [attendance] = await db.select().from(meetingAttendances).where(and(
         eq(meetingAttendances.meetingId, meetingId),
         eq(meetingAttendances.userId, session.user.id)
     ))
+
+    if (!attendance && !session.user.isSuperAdmin) {
+        return { success: false, error: "You are not invited to this meeting." }
+    }
 
     if (!attendance) {
         await db.insert(meetingAttendances).values({
@@ -704,6 +687,18 @@ export async function joinMeeting(meetingId: string) {
 export async function leaveMeeting(meetingId: string) {
     const session = await getServerSession()
     if (!session?.user?.id) return { success: false, error: "Unauthorized" }
+
+    const [meeting] = await db.select().from(meetings).where(eq(meetings.id, meetingId))
+    if (!meeting) return { success: false, error: "Meeting not found" }
+
+    const [attendance] = await db.select().from(meetingAttendances).where(and(
+        eq(meetingAttendances.meetingId, meetingId),
+        eq(meetingAttendances.userId, session.user.id)
+    ))
+
+    if (!attendance) {
+        return { success: false, error: "You are not currently checked in to this meeting." }
+    }
 
     await db.update(meetingAttendances).set({
         leftAt: new Date(),

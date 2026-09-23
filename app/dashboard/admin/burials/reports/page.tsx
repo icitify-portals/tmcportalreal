@@ -28,8 +28,10 @@ export default function BurialReportsPage() {
     useEffect(() => {
         async function fetchData() {
             const result = await getBurialAnalytics()
-            if (result.success) {
+            if (result.success && result.data) {
                 setData(result.data)
+            } else {
+                setData(null)
             }
             setLoading(false)
         }
@@ -135,7 +137,16 @@ export default function BurialReportsPage() {
                         <CardContent className="h-80">
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
-                                    <Pie data={data.sexDistribution} cx="50%" cy="50%" labelLine={false} label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`} outerRadius={100} fill="#8884d8" dataKey="value">
+                                    <Pie
+                                        data={data.sexDistribution}
+                                        cx="50%"
+                                        cy="50%"
+                                        labelLine={false}
+                                        label={({ name, percent }) => `${name} (${((Number(percent ?? 0)) * 100).toFixed(0)}%)`}
+                                        outerRadius={100}
+                                        fill="#8884d8"
+                                        dataKey="value"
+                                    >
                                         {data.sexDistribution.map((entry: { name: string, value: number }, index: number) => (
                                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                         ))}

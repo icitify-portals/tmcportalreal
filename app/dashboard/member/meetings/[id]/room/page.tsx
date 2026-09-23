@@ -4,7 +4,7 @@ import VideoRoom from "@/components/meetings/video-room";
 import { getServerSession } from "@/lib/session";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, StickyNote } from "lucide-react";
 
 export default async function VirtualMeetingRoomPage(props: { params: Promise<{ id: string }> }) {
     const params = await props.params;
@@ -34,12 +34,20 @@ export default async function VirtualMeetingRoomPage(props: { params: Promise<{ 
                     <h1 className="text-2xl font-bold tracking-tight">{meeting.title} - Virtual Room</h1>
                     <p className="text-muted-foreground text-sm">You are joining as {session.user.name}</p>
                 </div>
-                <Button variant="outline" asChild>
-                    <Link href={`/dashboard/member/meetings/${meeting.id}`}>
-                        <ArrowLeft className="mr-2 h-4 w-4" />
-                        Back to Meeting Details
-                    </Link>
-                </Button>
+                <div className="flex items-center gap-2">
+                    <Button variant="outline" asChild>
+                        <Link href={`/dashboard/meetings/${meeting.id}/notes`} target="_blank" rel="noopener noreferrer">
+                            <StickyNote className="mr-2 h-4 w-4" />
+                            Open Meeting Workspace
+                        </Link>
+                    </Button>
+                    <Button variant="outline" asChild>
+                        <Link href={`/dashboard/member/meetings/${meeting.id}`}>
+                            <ArrowLeft className="mr-2 h-4 w-4" />
+                            Back to Details
+                        </Link>
+                    </Button>
+                </div>
             </div>
 
             <div className="flex-grow">

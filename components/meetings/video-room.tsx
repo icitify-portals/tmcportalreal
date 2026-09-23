@@ -4,19 +4,128 @@ import { useState, useEffect } from "react";
 
 import {
     LiveKitRoom,
+    PreJoin,
     VideoConference,
     RoomAudioRenderer,
+    useParticipants,
 } from "@livekit/components-react";
 import "@livekit/components-styles";
 import { joinMeeting, leaveMeeting } from "@/lib/actions/meetings";
-import { Track } from "livekit-client";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { ShieldAlert, Zap, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ShieldAlert, Zap, Loader2, Video, MicOff, UserX, Volume2 } from "lucide-react";
+
+type UserChoices = {
+    audioEnabled: boolean;
+    videoEnabled: boolean;
+    audioDeviceId: string;
+    videoDeviceId: string;
+    username: string;
+};
 
 interface VideoRoomProps {
     roomName: string;
     meetingId: string;
+}
+
+function HostModerationPanel({ roomName }: { roomName: string }) {
+    const participants = useParticipants();
+    const [isModerator, setIsModerator] = useState(false);
+    const [muted, setMuted] = useState<Record<string, boolean>>({});
+    const [busyIdentity, setBusyIdentity] = useState<string | null>(null);
+
+    useEffect(() => {
+        let active = true;
+        fetch(`/api/livekit/moderate?room=${encodeURIComponent(roomName)}`)
+            .then(async (response) => {
+                if (!response.ok) return;
+                const data = await response.json();
+                if (active) setIsModerator(Boolean(data.isModerator));
+            })
+            .catch(() => undefined);
+
+        return () => {
+            active = false;
+        };
+    }, [roomName]);
+
+    if (!isModerator) return null;
+
+    const remoteParticipants = participants.filter((participant) => !participant.isLocal);
+
+    async function moderate(identity: string, action: "mute" | "unmute" | "remove") {
+        setBusyIdentity(identity);
+        try {
+            const response = await fetch("/api/livekit/moderate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ room: roomName, identity, action }),
+            });
+            if (!response.ok) return;
+            if (action === "remove") {
+                setMuted((current) => {
+                    const next = { ...current };
+                    delete next[identity];
+                    return next;
+                });
+            } else {
+                setMuted((current) => ({ ...current, [identity]: action === "mute" }));
+            }
+        } finally {
+            setBusyIdentity(null);
+        }
+    }
+
+    return (
+        <aside className="absolute right-4 top-4 z-10 w-72 rounded-lg border border-slate-700 bg-slate-950/95 p-3 text-white shadow-xl">
+            <div className="mb-3 flex items-center justify-between">
+                <div>
+                    <p className="text-sm font-semibold">Host controls</p>
+                    <p className="text-xs text-slate-400">{remoteParticipants.length} participant{remoteParticipants.length === 1 ? "" : "s"}</p>
+                </div>
+            </div>
+            {remoteParticipants.length === 0 ? (
+                <p className="text-xs text-slate-400">No other participants are connected.</p>
+            ) : (
+                <div className="space-y-2">
+                    {remoteParticipants.map((participant) => {
+                        const isMuted = Boolean(muted[participant.identity]);
+                        const isBusy = busyIdentity === participant.identity;
+                        return (
+                            <div key={participant.identity} className="flex items-center justify-between gap-2 rounded-md bg-slate-900 px-2 py-2">
+                                <span className="min-w-0 truncate text-sm">{participant.name || participant.identity}</span>
+                                <div className="flex shrink-0 gap-1">
+                                    <Button
+                                        type="button"
+                                        size="icon"
+                                        variant="ghost"
+                                        title={isMuted ? "Allow participant to publish" : "Mute participant"}
+                                        disabled={isBusy}
+                                        onClick={() => moderate(participant.identity, isMuted ? "unmute" : "mute")}
+                                        className="h-7 w-7 text-slate-200 hover:bg-slate-700 hover:text-white"
+                                    >
+                                        {isMuted ? <Volume2 className="h-3.5 w-3.5" /> : <MicOff className="h-3.5 w-3.5" />}
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        size="icon"
+                                        variant="ghost"
+                                        title="Remove participant"
+                                        disabled={isBusy}
+                                        onClick={() => moderate(participant.identity, "remove")}
+                                        className="h-7 w-7 text-red-300 hover:bg-red-950 hover:text-red-200"
+                                    >
+                                        <UserX className="h-3.5 w-3.5" />
+                                    </Button>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
+        </aside>
+    );
 }
 
 export default function VideoRoom({ roomName, meetingId }: VideoRoomProps) {
@@ -24,6 +133,7 @@ export default function VideoRoom({ roomName, meetingId }: VideoRoomProps) {
     const [wsUrl, setWsUrl] = useState("");
     const [error, setError] = useState<string | null>(null);
     const [dataSaver, setDataSaver] = useState(false);
+    const [userChoices, setUserChoices] = useState<UserChoices | null>(null);
 
     useEffect(() => {
         (async () => {
@@ -44,10 +154,16 @@ export default function VideoRoom({ roomName, meetingId }: VideoRoomProps) {
     }, [roomName]);
 
     if (error) {
+        const isNotStarted = /not been started|not started/i.test(error)
+        const isLocked = /locked/i.test(error)
+        const isUnauthorized = /not invited|unauthorized|denied/i.test(error)
+
         return (
             <div className="flex flex-col items-center justify-center p-12 text-center rounded-lg bg-red-50 border border-red-200">
                 <ShieldAlert className="h-12 w-12 text-red-500 mb-4" />
-                <h3 className="text-lg font-semibold text-red-700 mb-2">Access Denied</h3>
+                <h3 className="text-lg font-semibold text-red-700 mb-2">
+                    {isNotStarted ? "Meeting Not Started" : isLocked ? "Meeting Locked" : isUnauthorized ? "Access Denied" : "Unable to Join"}
+                </h3>
                 <p className="text-red-600 max-w-md">{error}</p>
             </div>
         );
@@ -59,6 +175,8 @@ export default function VideoRoom({ roomName, meetingId }: VideoRoomProps) {
             Connecting to secure meeting server...
         </div>;
     }
+
+    const roomVideoEnabled = Boolean(userChoices?.videoEnabled) && !dataSaver;
 
     return (
         <div className="flex flex-col h-full space-y-4">
@@ -80,54 +198,81 @@ export default function VideoRoom({ roomName, meetingId }: VideoRoomProps) {
                 </div>
             </div>
 
-            <LiveKitRoom
-                video={!dataSaver} // Join with video off if data saver is on
-                audio={true}
-                token={token}
-                serverUrl={wsUrl}
-                onConnected={async () => {
-                    await joinMeeting(meetingId);
-                }}
-                onDisconnected={async () => {
-                    await leaveMeeting(meetingId);
-                }}
-                // Bandwidth Optimization settings
-                options={{
-                    adaptiveStream: true,
-                    audioCaptureDefaults: {
-                        autoGainControl: true,
-                        echoCancellation: true,
-                        noiseSuppression: true,
-                    },
-                    videoCaptureDefaults: {
-                        resolution: dataSaver ? { width: 320, height: 180 } : { width: 1280, height: 720 },
-                    },
-                    publishDefaults: {
-                        videoEncoding: dataSaver ? {
-                            maxBitrate: 100_000,
-                            maxFramerate: 10,
-                        } : {
-                            maxBitrate: 800_000,
-                            maxFramerate: 30,
+            {!userChoices ? (
+                <div className="flex-grow rounded-lg border border-gray-200 bg-slate-950 p-4 shadow-xl">
+                    <div className="mx-auto flex h-full max-w-4xl flex-col justify-center gap-4">
+                        <div className="flex items-center gap-3 text-white">
+                            <Video className="h-5 w-5 text-blue-300" />
+                            <div>
+                                <h2 className="font-semibold">Check your setup before joining</h2>
+                                <p className="text-sm text-slate-300">Choose your camera and microphone, then enter when you are ready.</p>
+                            </div>
+                        </div>
+                        <PreJoin
+                            defaults={{
+                                audioEnabled: true,
+                                videoEnabled: !dataSaver,
+                            }}
+                            onSubmit={setUserChoices}
+                            onError={(deviceError) => setError(deviceError.message)}
+                            joinLabel="Enter meeting"
+                            persistUserChoices
+                            className="rounded-lg bg-white p-4"
+                        />
+                    </div>
+                </div>
+            ) : (
+                <LiveKitRoom
+                    video={roomVideoEnabled}
+                    audio={userChoices.audioEnabled}
+                    token={token}
+                    serverUrl={wsUrl}
+                    onConnected={async () => {
+                        await joinMeeting(meetingId);
+                    }}
+                    onDisconnected={async () => {
+                        await leaveMeeting(meetingId);
+                    }}
+                    options={{
+                        adaptiveStream: true,
+                        audioCaptureDefaults: {
+                            deviceId: userChoices.audioDeviceId,
+                            autoGainControl: true,
+                            echoCancellation: true,
+                            noiseSuppression: true,
                         },
-                        screenShareEncoding: dataSaver ? {
-                            maxBitrate: 500_000,
-                            maxFramerate: 10,
-                        } : {
-                            maxBitrate: 1_500_000,
-                            maxFramerate: 15,
+                        videoCaptureDefaults: {
+                            deviceId: userChoices.videoDeviceId,
+                            resolution: dataSaver ? { width: 320, height: 180 } : { width: 1280, height: 720 },
                         },
-                    },
-                }}
-                connectOptions={{
-                    autoSubscribe: true,
-                }}
-                data-lk-theme="default"
-                className="flex-grow rounded-lg overflow-hidden border border-gray-200 shadow-xl"
-            >
-                <VideoConference />
-                <RoomAudioRenderer />
-            </LiveKitRoom>
+                        publishDefaults: {
+                            videoEncoding: dataSaver ? {
+                                maxBitrate: 100_000,
+                                maxFramerate: 10,
+                            } : {
+                                maxBitrate: 800_000,
+                                maxFramerate: 30,
+                            },
+                            screenShareEncoding: dataSaver ? {
+                                maxBitrate: 500_000,
+                                maxFramerate: 10,
+                            } : {
+                                maxBitrate: 1_500_000,
+                                maxFramerate: 15,
+                            },
+                        },
+                    }}
+                    connectOptions={{
+                        autoSubscribe: true,
+                    }}
+                    data-lk-theme="default"
+                    className="flex-grow rounded-lg overflow-hidden border border-gray-200 shadow-xl"
+                >
+                    <HostModerationPanel roomName={roomName} />
+                    <VideoConference />
+                    <RoomAudioRenderer />
+                </LiveKitRoom>
+            )}
         </div>
     );
 }

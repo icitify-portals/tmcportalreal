@@ -28,7 +28,7 @@ export default async function SecureRecordingPage({ params }: { params: Promise<
     const region = livekit.s3Region || storage.s3Region || "us-east-1";
     const endpoint = livekit.s3Endpoint || storage.s3Endpoint;
 
-    if (!bucket || !accessKey) {
+    if (!bucket || !accessKey || !secretKey) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
                 <Card className="max-w-lg w-full">

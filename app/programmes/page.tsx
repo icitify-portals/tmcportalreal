@@ -1,7 +1,6 @@
 import { Suspense } from "react"
 import { PublicNav } from "@/components/layout/public-nav"
 import { Metadata } from "next"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import Link from "next/link"
@@ -22,6 +21,8 @@ import { ProgrammeGrid } from "@/components/programmes/programme-grid"
 export default async function ProgrammesPage({ searchParams }: { searchParams: Promise<{ level?: string, state?: string, q?: string }> }) {
     const filters = await searchParams;
     const query = (filters.q || "").trim()
+    const level = filters.level && filters.level !== "ALL" ? filters.level : undefined
+    const state = filters.state && filters.state !== "ALL" ? filters.state : undefined
 
     return (
         <div className="min-h-screen bg-background pb-12">
@@ -57,33 +58,31 @@ export default async function ProgrammesPage({ searchParams }: { searchParams: P
 
                         <div className="w-full md:w-48">
                             <label className="text-xs font-bold uppercase text-gray-500 mb-1.5 block">Organization Level</label>
-                            <Select name="level" defaultValue={filters.level || "ALL"}>
-                                <SelectTrigger className="w-full">
-                                    <SelectValue placeholder="All Levels" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="ALL">All Levels</SelectItem>
-                                    <SelectItem value="NATIONAL">National</SelectItem>
-                                    <SelectItem value="STATE">State</SelectItem>
-                                    <SelectItem value="LOCAL_GOVERNMENT">LGA</SelectItem>
-                                    <SelectItem value="BRANCH">Branch</SelectItem>
-                                </SelectContent>
-                            </Select>
+                            <select
+                                name="level"
+                                defaultValue={filters.level || "ALL"}
+                                className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring"
+                            >
+                                <option value="ALL">All Levels</option>
+                                <option value="NATIONAL">National</option>
+                                <option value="STATE">State</option>
+                                <option value="LOCAL_GOVERNMENT">LGA</option>
+                                <option value="BRANCH">Branch</option>
+                            </select>
                         </div>
 
                         <div className="w-full md:w-56">
                             <label className="text-xs font-bold uppercase text-gray-500 mb-1.5 block">State / Jurisdiction</label>
-                            <Select name="state" defaultValue={filters.state || "ALL"}>
-                                <SelectTrigger className="w-full">
-                                    <SelectValue placeholder="All States" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="ALL">All States</SelectItem>
-                                    {NIGERIAN_STATES.map(state => (
-                                        <SelectItem key={state} value={state}>{state}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            <select
+                                name="state"
+                                defaultValue={filters.state || "ALL"}
+                                className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring"
+                            >
+                                <option value="ALL">All States</option>
+                                {NIGERIAN_STATES.map(state => (
+                                    <option key={state} value={state}>{state}</option>
+                                ))}
+                            </select>
                         </div>
 
                         <div className="flex gap-2 w-full md:w-auto justify-end">
@@ -108,8 +107,8 @@ export default async function ProgrammesPage({ searchParams }: { searchParams: P
                     </div>
                 }>
                     <ProgrammeGrid 
-                        level={filters.level === "ALL" ? undefined : filters.level} 
-                        state={filters.state === "ALL" ? undefined : filters.state} 
+                        level={level} 
+                        state={state} 
                         query={query || undefined} 
                     />
                 </Suspense>

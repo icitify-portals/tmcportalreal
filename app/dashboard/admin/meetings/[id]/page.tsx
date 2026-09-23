@@ -1,7 +1,8 @@
 export const dynamic = 'force-dynamic'
 
 import { Suspense } from "react"
-import { getMeeting, uploadMinutes, getAvailableMembers } from "@/lib/actions/meetings"
+import Link from "next/link"
+import { getMeeting, getAvailableMembers } from "@/lib/actions/meetings"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
@@ -40,6 +41,12 @@ export default async function AdminMeetingDetailPage({ params }: AdminMeetingPag
                         {meeting.isOnline && (
                             <MeetingControlButtons meeting={meeting} />
                         )}
+                        <Button asChild variant="outline" size="sm">
+                            <Link href={`/dashboard/admin/meetings/${meeting.id}/attendance`}>Check-in Kiosk</Link>
+                        </Button>
+                        <Button asChild variant="outline" size="sm">
+                            <Link href={`/dashboard/admin/meetings/${meeting.id}/analytics`}>Analytics</Link>
+                        </Button>
                         <EditMeetingDialog meeting={meeting} members={members} />
                         <DeleteMeetingButton meetingId={meeting.id} meetingTitle={meeting.title} redirect={true} />
                         <Badge variant={

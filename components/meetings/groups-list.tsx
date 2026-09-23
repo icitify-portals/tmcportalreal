@@ -68,7 +68,7 @@ export function GroupsList({ groups, availableMembers }: GroupsListProps) {
                             </TableCell>
                             <TableCell className="text-right">
                                 <div className="flex justify-end gap-1">
-                                    <InstantCallButton groupId={group.id} groupName={group.name} />
+                                    <InstantCallButton groupId={group.id} groupName={group.name} disabled={group.memberCount === 0 && !group.dynamicRules?.includeAllMembers && !group.dynamicRules?.includeOfficials && !group.dynamicRules?.includeChildAdmins} />
                                     <EditMeetingGroupDialog group={group} availableMembers={availableMembers} />
                                     <DeleteMeetingGroupButton groupId={group.id} groupName={group.name} />
                                 </div>

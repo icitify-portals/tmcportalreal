@@ -7,7 +7,7 @@ import { startInstantGroupCall } from "@/lib/actions/meetings"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 
-export function InstantCallButton({ groupId, groupName }: { groupId: string, groupName: string }) {
+export function InstantCallButton({ groupId, groupName, disabled = false }: { groupId: string, groupName: string, disabled?: boolean }) {
     const [loading, setLoading] = useState(false)
     const router = useRouter()
 
@@ -30,7 +30,7 @@ export function InstantCallButton({ groupId, groupName }: { groupId: string, gro
     }
 
     return (
-        <Button onClick={handleStartCall} disabled={loading} size="sm" variant="outline" className="border-green-200 hover:bg-green-50 hover:text-green-700 text-green-600">
+        <Button onClick={handleStartCall} disabled={loading || disabled} size="sm" variant="outline" className="border-green-200 hover:bg-green-50 hover:text-green-700 text-green-600">
             {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PhoneCall className="mr-2 h-4 w-4" />}
             Instant Call
         </Button>

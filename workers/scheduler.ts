@@ -1,6 +1,6 @@
 import cron from 'node-cron';
 import { db } from '@/lib/db';
-import { programmes, users, organizations, notifications, reports, offices, officials } from '@/lib/db/schema';
+import { programmes, users, organizations, notifications, reports, offices, officials, meetings } from '@/lib/db/schema';
 import { and, eq, gte, lte, sql } from 'drizzle-orm';
 import { emailQueue } from '@/lib/queue';
 import { emailTemplates } from '@/lib/email';
@@ -48,6 +48,38 @@ export function startScheduler() {
             if (stderr) console.error('Automated Backup stderr:', stderr);
         });
     });
+
+    // Schedule: Expire stale instant calls — Every 5 minutes
+    cron.schedule('*/5 * * * *', async () => {
+        await expireStaleInstantCalls();
+    });
+}
+
+async function expireStaleInstantCalls() {
+    try {
+        const now = new Date();
+        const stale = await db.select({ id: meetings.id })
+            .from(meetings)
+            .where(and(
+                eq(meetings.isInstantCall, true),
+                eq(meetings.status, 'ONGOING'),
+                lte(meetings.endAt, now)
+            ));
+
+        if (stale.length === 0) return;
+
+        await db.update(meetings)
+            .set({ status: 'ENDED', updatedAt: now })
+            .where(and(
+                eq(meetings.isInstantCall, true),
+                eq(meetings.status, 'ONGOING'),
+                lte(meetings.endAt, now)
+            ));
+
+        console.log(`Expired ${stale.length} stale instant call(s).`);
+    } catch (err) {
+        console.error('Error expiring instant calls:', err);
+    }
 }
 
 async function processWeeklyNotifications() {

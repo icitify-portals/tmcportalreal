@@ -33,6 +33,12 @@ export default async function LiveMeetingPublicPage({ params }: { params: Promis
 
     const session = await getServerSession()
 
+    const canBypassLock = !!session?.user && (
+        session.user.isSuperAdmin ||
+        !!session.user.officialLevel ||
+        session.user.id === meeting.createdBy
+    )
+
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-zinc-950 flex flex-col items-center justify-center p-4">
             <div className="max-w-md w-full bg-white dark:bg-zinc-900 rounded-xl shadow-xl overflow-hidden">
@@ -47,12 +53,21 @@ export default async function LiveMeetingPublicPage({ params }: { params: Promis
                         {meeting.description || "Join the live virtual room"}
                     </p>
 
-                    {meeting.isLocked && !session?.user?.isSuperAdmin ? (
+                    {meeting.status !== 'ONGOING' && (
+                        <div className="bg-amber-50 text-amber-700 p-4 rounded-md text-center border border-amber-200">
+                            <strong>This meeting has not started yet</strong>
+                            <p className="mt-1 text-sm">The host will start the meeting and the room will open for joining. Please check back shortly.</p>
+                        </div>
+                    )}
+
+                    {meeting.status === 'ONGOING' && meeting.isLocked && !canBypassLock && (
                         <div className="bg-red-50 text-red-600 p-4 rounded-md text-center border border-red-200">
                             <strong>Meeting Locked</strong>
                             <p className="mt-1 text-sm">This meeting has been locked by the host. New participants can no longer join.</p>
                         </div>
-                    ) : (
+                    )}
+
+                    {meeting.status === 'ONGOING' && (meeting.isLocked ? canBypassLock : true) && (
                         <GuestJoinForm 
                             virtualRoomId={meeting.virtualRoomId} 
                             meetingTitle={meeting.title}

@@ -173,6 +173,13 @@ export function EditMeetingDialog({ meeting, members }: EditMeetingDialogProps) 
                 </DialogHeader>
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                        {meeting.frequency && meeting.frequency !== 'ONCE' ? (
+                            <div className="rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
+                                <strong>Recurring meeting ({meeting.frequency})</strong>
+                                <p className="text-xs mt-1">This is one occurrence of a recurring series. Changes here apply to this meeting only — other occurrences are not modified.</p>
+                            </div>
+                        ) : null}
+
                         <FormField control={form.control} name="title" render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Title</FormLabel>

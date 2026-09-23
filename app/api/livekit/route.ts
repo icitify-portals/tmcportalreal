@@ -31,7 +31,10 @@ export async function GET(req: NextRequest) {
         const matchingMeetings = await db.select({
             id: meetings.id,
             status: meetings.status,
-            isLocked: meetings.isLocked
+            isLocked: meetings.isLocked,
+            isInstantCall: meetings.isInstantCall,
+            endAt: meetings.endAt,
+            createdBy: meetings.createdBy
         })
         .from(meetings)
         .where(eq(meetings.virtualRoomId, room))
@@ -40,36 +43,48 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: 'Meeting room not found.' }, { status: 404 });
         }
 
-        const ongoingMeeting = matchingMeetings.find(m => m.status === 'ONGOING');
+        const activeMeeting = matchingMeetings.find(m => m.status === 'ONGOING');
 
-        if (!ongoingMeeting) {
-            return NextResponse.json({ error: 'Admin has not yet started the meeting. Kindly reach out.' }, { status: 403 });
+        if (!activeMeeting) {
+            return NextResponse.json({ error: 'This meeting has not been started by the host yet.' }, { status: 403 });
         }
 
-        const meeting = ongoingMeeting;
+        const meeting = activeMeeting;
 
-        if (meeting.isLocked && !isAdmin) {
+        if (meeting.isLocked && !isAdmin && session?.user?.id !== meeting.createdBy) {
             return NextResponse.json({ error: 'This meeting has been locked by the host.' }, { status: 403 });
         }
 
-        // Check if user is authenticated member
+        // Expired instant calls must not issue new tokens
+        if (meeting.isInstantCall && meeting.endAt && new Date(meeting.endAt).getTime() < Date.now()) {
+            return NextResponse.json({ error: 'This instant call has expired.' }, { status: 403 });
+        }
+
         if (session?.user?.id) {
-            const [access] = await db.select({ id: meetingAttendances.id })
+            const [access] = await db.select({
+                id: meetingAttendances.id,
+                status: meetingAttendances.status
+            })
                 .from(meetingAttendances)
                 .where(and(
                     eq(meetingAttendances.meetingId, meeting.id),
                     eq(meetingAttendances.userId, session.user.id)
                 ));
-            
-            // Allow if invited, OR if they're joining via the share code (we bypass this if they're a guest)
-            // Wait, if they are authenticated but not explicitly invited, do we let them in?
-            // The user wants members to be able to use the link too. If they use the link, we should let them in.
+
+            const isHost = session.user.id === meeting.createdBy;
+
+            if (!isAdmin && !isHost && !access) {
+                return NextResponse.json({ error: 'You are not invited to this meeting.' }, { status: 403 });
+            }
+
+            if (!isAdmin && !isHost && access && access.status === 'DECLINED') {
+                return NextResponse.json({ error: 'You have declined this meeting invitation.' }, { status: 403 });
+            }
         } else if (guestName) {
-            // Guest Flow
             identity = `guest-${Math.random().toString(36).substring(2, 9)}`;
             name = guestName + " (Guest)";
         } else {
-            return NextResponse.json({ error: 'Unauthorized. Please login or provide guest name.' }, { status: 401 });
+            return NextResponse.json({ error: 'Unauthorized. Please login or provide your name to join as a guest.' }, { status: 401 });
         }
         // --- END SECURITY CHECK ---
 

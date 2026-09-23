@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { EgressClient } from "livekit-server-sdk"
-import { db } from "@/lib/db"
-import { meetings } from "@/lib/db/schema"
-import { eq } from "drizzle-orm"
 import { getServerSession } from "@/lib/session"
 import { getLiveKitSettings } from "@/lib/actions/settings"
+import { getMeetingManagerAccess } from "@/lib/meeting-access"
 
 export async function POST(req: NextRequest) {
     const session = await getServerSession()
@@ -14,9 +12,9 @@ export async function POST(req: NextRequest) {
         const { meetingId } = await req.json()
         if (!meetingId) return NextResponse.json({ error: "Meeting ID required" }, { status: 400 })
 
-        const [meeting] = await db.select().from(meetings).where(eq(meetings.id, meetingId))
+        const meeting = await getMeetingManagerAccess(meetingId, session.user.id, session.user.isSuperAdmin)
         if (!meeting || !meeting.egressId) {
-            return NextResponse.json({ error: "No active recording found" }, { status: 404 })
+            return NextResponse.json({ error: "No active recording found or access denied" }, { status: 404 })
         }
 
         const liveKitSettings = await getLiveKitSettings()

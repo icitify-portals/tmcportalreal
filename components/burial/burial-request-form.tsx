@@ -27,11 +27,10 @@ const formSchema = z.object({
     deceasedName: z.string().min(2, "Name must be at least 2 characters"),
     relationship: z.string().min(1, "Relationship is required"),
     causeOfDeath: z.string().min(1, "Cause of death is required"),
-    dateOfDeath: z.string().min(1, "Date of death is required"), // Using string for date input
+    dateOfDeath: z.string().min(1, "Date of death is required"),
     placeOfDeath: z.string().min(1, "Place of death is required"),
     contactPhone: z.string().min(10, "Phone number required"),
     contactEmail: z.string().email("Invalid email address"),
-
     age: z.coerce.number().min(0, "Age must be positive"),
     sex: z.enum(['MALE', 'FEMALE']),
     maritalStatus: z.enum(['SINGLE', 'MARRIED', 'DIVORCED', 'WIDOWED']).optional().nullable(),
@@ -41,8 +40,28 @@ const formSchema = z.object({
     lgaOfOrigin: z.string().optional().nullable(),
     proposedBurialDate: z.string().optional().nullable(),
     burialLocation: z.string().optional().nullable(),
-
 })
+
+const defaultValues = {
+    deceasedName: "",
+    relationship: "",
+    causeOfDeath: "",
+    dateOfDeath: "",
+    placeOfDeath: "",
+    contactPhone: "",
+    contactEmail: "",
+    age: 0,
+    sex: 'MALE' as const,
+    maritalStatus: null,
+    educationalAttainment: null,
+    occupation: '',
+    stateOfOrigin: '',
+    lgaOfOrigin: '',
+    proposedBurialDate: '',
+    burialLocation: '',
+}
+
+type BurialFormValues = z.infer<typeof formSchema>
 
 interface BurialRequestFormProps {
     defaultFee?: number
@@ -51,31 +70,12 @@ interface BurialRequestFormProps {
 export function BurialRequestForm({ defaultFee }: BurialRequestFormProps) {
 
     const router = useRouter()
-    const form = useForm<z.infer<typeof formSchema>>({
-        resolver: zodResolver(formSchema),
-        defaultValues: {
-            deceasedName: "",
-            relationship: "",
-            causeOfDeath: "",
-            dateOfDeath: "",
-            placeOfDeath: "",
-            contactPhone: "",
-            contactEmail: "",
-
-            age: 0,
-            sex: 'MALE',
-            maritalStatus: null,
-            educationalAttainment: null,
-            occupation: '',
-            stateOfOrigin: '',
-            lgaOfOrigin: '',
-            proposedBurialDate: '',
-            burialLocation: '',
-
-        },
+    const form = useForm<BurialFormValues>({
+        resolver: zodResolver(formSchema) as any,
+        defaultValues: defaultValues as BurialFormValues,
     })
 
-    async function onSubmit(values: z.infer<typeof formSchema>) {
+    async function onSubmit(values: BurialFormValues) {
         try {
             
             const payload = {

@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { meetingNotes, meetingNoteVersions, meetings, programmes, users } from "@/lib/db/schema";
+import { meetingNotes, meetingNoteVersions, meetings, meetingAttendances, officials, programmes, users } from "@/lib/db/schema";
 import { eq, and, or, like, desc, sql } from "drizzle-orm";
 import { getServerSession } from "@/lib/session";
 import { revalidatePath } from "next/cache";
@@ -18,9 +18,47 @@ const NoteSchema = z.object({
   isShared: z.boolean().optional(),
 });
 
+export async function getMeetingAccess(meetingId: string, userId: string, isSuperAdmin = false) {
+  const [meeting] = await db.select({ createdBy: meetings.createdBy })
+    .from(meetings)
+    .where(eq(meetings.id, meetingId))
+    .limit(1);
+  if (!meeting) return { allowed: false, isHost: false };
+
+  const isHost = meeting.createdBy === userId;
+  if (isHost || isSuperAdmin) return { allowed: true, isHost };
+
+  const [official] = await db.select({ userId: officials.userId })
+    .from(officials)
+    .where(eq(officials.userId, userId))
+    .limit(1);
+  if (official) return { allowed: true, isHost: false };
+
+  const [attendance] = await db.select({ id: meetingAttendances.id })
+    .from(meetingAttendances)
+    .where(and(
+      eq(meetingAttendances.meetingId, meetingId),
+      eq(meetingAttendances.userId, userId),
+    ))
+    .limit(1);
+
+  return { allowed: Boolean(attendance), isHost: false };
+}
+
+async function canAccessNote(note: typeof meetingNotes.$inferSelect, userId: string, isSuperAdmin = false) {
+  if (!note.meetingId) return note.createdBy === userId;
+  const access = await getMeetingAccess(note.meetingId, userId, isSuperAdmin);
+  return access.allowed && (note.createdBy === userId || note.isShared || access.isHost || isSuperAdmin);
+}
+
 export async function getMeetingNotes(filter: { meetingId?: string; programmeId?: string; section?: string; query?: string }) {
   const session = await getServerSession();
   if (!session?.user?.id) return [];
+
+  if (filter.meetingId) {
+    const access = await getMeetingAccess(filter.meetingId, session.user.id, session.user.isSuperAdmin);
+    if (!access.allowed) return [];
+  }
 
   const conds: any[] = [];
   if (filter.meetingId) conds.push(eq(meetingNotes.meetingId, filter.meetingId));
@@ -52,8 +90,11 @@ export async function getMeetingNotes(filter: { meetingId?: string; programmeId?
 }
 
 export async function getNote(id: string) {
+  const session = await getServerSession();
+  if (!session?.user?.id) return null;
   const [row] = await db.select().from(meetingNotes).where(eq(meetingNotes.id, id)).limit(1);
-  return row || null;
+  if (!row || !(await canAccessNote(row, session.user.id, session.user.isSuperAdmin))) return null;
+  return row;
 }
 
 export async function upsertMeetingNote(data: z.infer<typeof NoteSchema> & { id?: string }) {
@@ -64,6 +105,9 @@ export async function upsertMeetingNote(data: z.infer<typeof NoteSchema> & { id?
   if (data.id) {
     const [existing] = await db.select().from(meetingNotes).where(eq(meetingNotes.id, data.id)).limit(1);
     if (!existing) return { success: false, error: "Note not found" };
+    if (!(await canAccessNote(existing, session.user.id, session.user.isSuperAdmin))) {
+      return { success: false, error: "You do not have access to this note" };
+    }
     // version snapshot
     await db.insert(meetingNoteVersions).values({
       noteId: existing.id,
@@ -90,6 +134,10 @@ export async function upsertMeetingNote(data: z.infer<typeof NoteSchema> & { id?
     revalidatePath(`/dashboard/meetings`);
     return { success: true, id: data.id };
   } else {
+    if (parsed.meetingId) {
+      const access = await getMeetingAccess(parsed.meetingId, session.user.id, session.user.isSuperAdmin);
+      if (!access.allowed) return { success: false, error: "You do not have access to this meeting" };
+    }
     const id = crypto.randomUUID();
     await db.insert(meetingNotes).values({
       id,
@@ -114,23 +162,39 @@ export async function upsertMeetingNote(data: z.infer<typeof NoteSchema> & { id?
 export async function deleteMeetingNote(id: string) {
   const session = await getServerSession();
   if (!session?.user?.id) return { success: false, error: "Unauthorized" };
+  const [note] = await db.select().from(meetingNotes).where(eq(meetingNotes.id, id)).limit(1);
+  if (!note || !(await canAccessNote(note, session.user.id, session.user.isSuperAdmin))) {
+    return { success: false, error: "You do not have access to this note" };
+  }
   await db.delete(meetingNotes).where(eq(meetingNotes.id, id));
   revalidatePath(`/dashboard/meetings`);
   return { success: true };
 }
 
 export async function toggleShareNote(id: string) {
+  const session = await getServerSession();
+  if (!session?.user?.id) return { success: false, error: "Unauthorized" };
   const [note] = await db.select().from(meetingNotes).where(eq(meetingNotes.id, id)).limit(1);
   if (!note) return { success: false, error: "Not found" };
+  if (!(await canAccessNote(note, session.user.id, session.user.isSuperAdmin))) {
+    return { success: false, error: "You do not have access to this note" };
+  }
   await db.update(meetingNotes).set({ isShared: !note.isShared, updatedAt: new Date() }).where(eq(meetingNotes.id, id));
   return { success: true, isShared: !note.isShared };
 }
 
 export async function searchNotes(query: string, meetingId?: string, programmeId?: string) {
   if (!query.trim()) return [];
+  const session = await getServerSession();
+  if (!session?.user?.id) return [];
+  if (meetingId) {
+    const access = await getMeetingAccess(meetingId, session.user.id, session.user.isSuperAdmin);
+    if (!access.allowed) return [];
+  }
   const conds: any[] = [like(meetingNotes.plainText, `%${query}%`)];
   if (meetingId) conds.push(eq(meetingNotes.meetingId, meetingId));
   if (programmeId) conds.push(eq(meetingNotes.programmeId, programmeId));
+  conds.push(or(eq(meetingNotes.createdBy, session.user.id), eq(meetingNotes.isShared, true)));
   const rows = await db
     .select()
     .from(meetingNotes)
@@ -141,5 +205,9 @@ export async function searchNotes(query: string, meetingId?: string, programmeId
 }
 
 export async function getNoteVersions(noteId: string) {
+  const session = await getServerSession();
+  if (!session?.user?.id) return [];
+  const [note] = await db.select().from(meetingNotes).where(eq(meetingNotes.id, noteId)).limit(1);
+  if (!note || !(await canAccessNote(note, session.user.id, session.user.isSuperAdmin))) return [];
   return db.select().from(meetingNoteVersions).where(eq(meetingNoteVersions.noteId, noteId)).orderBy(desc(meetingNoteVersions.version));
 }

@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { upsertMeetingNote, deleteMeetingNote, toggleShareNote, searchNotes } from "@/lib/actions/meeting-notes";
 import { Save, Share2, Trash2, Download, Search, Plus, FileText, CheckSquare, StickyNote, Sparkles } from "lucide-react";
 import jsPDF from "jspdf";
+import { ActionItemsPanel } from "@/components/meeting-notes/action-items-panel";
 
 const SECTIONS = [
   { key: "GENERAL", label: "General", icon: StickyNote, color: "bg-gray-100" },
@@ -34,13 +35,18 @@ export function NotesWorkspace({
   meetingId,
   programmeId,
   meetingTitle,
+  initialActionItems,
+  attendees,
 }: {
   initialNotes: any[];
   meetingId?: string;
   programmeId?: string;
   meetingTitle?: string;
+  initialActionItems?: any[];
+  attendees?: { id: string; name: string | null; email: string | null }[];
 }) {
   const [notes, setNotes] = useState(initialNotes);
+  const [showActionItems, setShowActionItems] = useState(false);
   const [section, setSection] = useState<string>("GENERAL");
   const [selectedId, setSelectedId] = useState<string | null>(initialNotes[0]?.id || null);
   const [title, setTitle] = useState(initialNotes[0]?.title || "Untitled note");
@@ -156,6 +162,61 @@ export function NotesWorkspace({
     });
   }
 
+  async function handleMeetingRecap() {
+    if (!meetingId) return;
+    const sourceText = notes
+      .filter((note) => note.plainText)
+      .map((note) => `${note.section}: ${note.title}\n${note.plainText}`)
+      .join("\n\n")
+      .slice(0, 12000);
+
+    if (sourceText.length < 10) {
+      toast.error("Add more meeting notes before generating a recap.");
+      return;
+    }
+
+    toast.info("Generating meeting recap...");
+    startTransition(async () => {
+      const summary = await generateNoteSummary(sourceText);
+      if (!summary.success) {
+        toast.error(summary.error || "AI generation failed.");
+        return;
+      }
+
+      const recapTitle = `${meetingTitle || "Meeting"} - AI Recap`;
+      const summaryHtml = summary.html || "";
+      const plainText = summaryHtml.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+      const result = await upsertMeetingNote({
+        meetingId,
+        title: recapTitle,
+        section: "MINUTES",
+        html: summaryHtml,
+        plainText,
+        isShared: true,
+        content: { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: plainText }] }] },
+      });
+
+      if (result.success && result.id) {
+        setNotes((current) => [{
+          id: result.id,
+          title: recapTitle,
+          section: "MINUTES",
+          html: summaryHtml,
+          plainText,
+          content: null,
+          isShared: true,
+          createdBy: "",
+          updatedAt: new Date().toISOString(),
+        }, ...current]);
+        setSection("MINUTES");
+        setSelectedId(result.id);
+        toast.success("Meeting recap saved to Minutes.");
+      } else {
+        toast.error(result.error || "Could not save the meeting recap.");
+      }
+    });
+  }
+
   async function handleDocx() {
     if (!selected) return;
     toast.info("Preparing DOCX...");
@@ -250,6 +311,8 @@ export function NotesWorkspace({
           <Input value={title} onChange={(e) => setTitle(e.target.value)} onBlur={() => { if (selectedId) upsertMeetingNote({ id: selectedId, meetingId: meetingId || null, programmeId: programmeId || null, title, section: section as any, content: editor?.getJSON() as any, html: editor?.getHTML() || "", plainText: editor?.getText() || "" } as any); }} className="max-w-md font-semibold" placeholder="Page title" />
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground hidden md:inline">{saving ? "Saving…" : "Auto-saved"}</span>
+            {meetingId && <Button size="sm" variant={showActionItems ? "default" : "outline"} onClick={() => setShowActionItems((current) => !current)}><CheckSquare className="h-4 w-4 mr-1" />Action items</Button>}
+            {meetingId && <Button size="sm" variant="secondary" onClick={handleMeetingRecap} disabled={isPending}><Sparkles className="h-4 w-4 mr-1 text-emerald-600" />Meeting recap</Button>}
             <Button size="sm" variant="secondary" onClick={handleAI} disabled={isPending}><Sparkles className="h-4 w-4 mr-1 text-purple-500" />Summarize</Button>
             <Button size="sm" variant="outline" onClick={handleShare}><Share2 className="h-4 w-4 mr-1" />{selected?.isShared ? "Unshare" : "Share"}</Button>
             <Button size="sm" variant="outline" onClick={exportPDF}><Download className="h-4 w-4 mr-1" />PDF</Button>
@@ -257,6 +320,7 @@ export function NotesWorkspace({
             <Button size="sm" variant="ghost" onClick={handleDelete}><Trash2 className="h-4 w-4" /></Button>
           </div>
         </div>
+        {showActionItems && meetingId && <ActionItemsPanel meetingId={meetingId} initialItems={initialActionItems || []} attendees={attendees || []} />}
         <div className="flex-1 overflow-auto p-4 bg-[#fbfbfb]">
           {editor ? <EditorContent editor={editor} className="prose prose-slate prose-headings:text-black prose-p:text-gray-900 max-w-none bg-white rounded-xl border p-4 min-h-[400px] shadow-sm focus:outline-none focus-within:ring-2 focus-within:ring-emerald-500/20" /> : null}
           <div className="mt-4 rounded-lg border bg-amber-50 p-3 text-xs">

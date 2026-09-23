@@ -10,7 +10,8 @@ import {
     mysqlEnum,
     decimal,
     bigint,
-    uniqueIndex
+    uniqueIndex,
+    index
 } from "drizzle-orm/mysql-core";
 import { relations } from "drizzle-orm";
 import type { AdapterAccountType } from "next-auth/adapters";
@@ -929,6 +930,7 @@ export const meetings = mysqlTable("meetings", {
     virtualRoomId: varchar("virtualRoomId", { length: 500 }),
     recordingUrl: varchar("recordingUrl", { length: 500 }),
     isLocked: boolean("isLocked").default(false),
+    isInstantCall: boolean("isInstantCall").default(false), // Ephemeral ad-hoc call (auto-expires at endAt)
     groupId: varchar("groupId", { length: 255 }), // Link to a specific meeting group
     programmeId: varchar("programmeId", { length: 255 }), // Link to an auto-generated virtual workshop
     staticAttendanceToken: varchar("staticAttendanceToken", { length: 255 }),
@@ -1944,6 +1946,31 @@ export const meetingNotesRelations = relations(meetingNotes, ({ one, many }) => 
 
 export const meetingNoteVersionsRelations = relations(meetingNoteVersions, ({ one }) => ({
     note: one(meetingNotes, { fields: [meetingNoteVersions.noteId], references: [meetingNotes.id] }),
+}));
+
+export const meetingActionItemStatusEnum = mysqlEnum('status', ['OPEN', 'IN_PROGRESS', 'COMPLETED']);
+
+export const meetingActionItems = mysqlTable("meeting_action_items", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
+    meetingId: varchar("meetingId", { length: 255 }).notNull().references(() => meetings.id, { onDelete: "cascade" }),
+    title: varchar("title", { length: 500 }).notNull(),
+    description: text("description"),
+    assignedTo: varchar("assignedTo", { length: 255 }).references(() => users.id, { onDelete: "set null" }),
+    dueDate: timestamp("dueDate", { mode: "date", fsp: 3 }),
+    status: meetingActionItemStatusEnum.default('OPEN'),
+    createdBy: varchar("createdBy", { length: 255 }).notNull().references(() => users.id),
+    completedAt: timestamp("completedAt", { mode: "date", fsp: 3 }),
+    createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).$defaultFn(() => new Date()).$onUpdateFn(() => new Date()),
+}, (t) => ({
+    meetingIdx: index("meeting_action_items_meeting_idx").on(t.meetingId),
+    assigneeIdx: index("meeting_action_items_assignee_idx").on(t.assignedTo),
+}));
+
+export const meetingActionItemsRelations = relations(meetingActionItems, ({ one }) => ({
+    meeting: one(meetings, { fields: [meetingActionItems.meetingId], references: [meetings.id] }),
+    assignee: one(users, { fields: [meetingActionItems.assignedTo], references: [users.id] }),
+    creator: one(users, { fields: [meetingActionItems.createdBy], references: [users.id] }),
 }));
 
 // ─── Real-Time Contests (Isolated from competitions) ───────────────────────

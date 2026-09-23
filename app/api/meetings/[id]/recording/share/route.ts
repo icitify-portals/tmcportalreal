@@ -3,6 +3,7 @@ import { db } from "@/lib/db"
 import { meetings } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
 import { getServerSession } from "@/lib/session"
+import { getMeetingManagerAccess } from "@/lib/meeting-access"
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     const session = await getServerSession()
@@ -11,9 +12,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     try {
         const { id: meetingId } = await params
-        const [meeting] = await db.select().from(meetings).where(eq(meetings.id, meetingId))
-        
-        if (!meeting) return NextResponse.json({ error: "Meeting not found" }, { status: 404 })
+        const meeting = await getMeetingManagerAccess(meetingId, session.user.id, session.user.isSuperAdmin)
+        if (!meeting) return NextResponse.json({ error: "Meeting not found or access denied" }, { status: 404 })
+        if (!meeting.egressId && !meeting.recordingUrl) {
+            return NextResponse.json({ error: "No completed recording is available" }, { status: 409 })
+        }
 
         const shareCode = Math.random().toString(36).substring(2, 10).toUpperCase()
 

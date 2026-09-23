@@ -13,6 +13,7 @@ import { MeetingRoomActions } from "@/components/meetings/meeting-room-actions" 
 import { MeetingReportForm } from "@/components/meetings/meeting-report-form" // Client component for upload
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import Link from "next/link"
+import { StickyNote } from "lucide-react"
 
 interface MeetingRoomPageProps {
     params: Promise<{ id: string }>
@@ -59,6 +60,12 @@ export default async function MeetingRoomPage({ params }: MeetingRoomPageProps) 
                         <Button asChild size="lg" className="bg-blue-600 hover:bg-blue-700 text-white w-full md:w-auto">
                             <Link href={`/dashboard/member/meetings/${meeting.id}/room`}>
                                 Join Virtual Meeting
+                            </Link>
+                        </Button>
+                        <Button asChild size="lg" variant="outline" className="w-full md:w-auto">
+                            <Link href={`/dashboard/meetings/${meeting.id}/notes`} target="_blank" rel="noopener noreferrer">
+                                <StickyNote className="mr-2 h-4 w-4" />
+                                Meeting Workspace
                             </Link>
                         </Button>
                     </div>

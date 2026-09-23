@@ -5,6 +5,7 @@ import { meetings } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
 import { getServerSession } from "@/lib/session"
 import { getLiveKitSettings, getStorageSettings } from "@/lib/actions/settings"
+import { getMeetingManagerAccess } from "@/lib/meeting-access"
 
 export async function POST(req: NextRequest) {
     const session = await getServerSession()
@@ -14,9 +15,15 @@ export async function POST(req: NextRequest) {
         const { meetingId } = await req.json()
         if (!meetingId) return NextResponse.json({ error: "Meeting ID required" }, { status: 400 })
 
-        const [meeting] = await db.select().from(meetings).where(eq(meetings.id, meetingId))
+        const meeting = await getMeetingManagerAccess(meetingId, session.user.id, session.user.isSuperAdmin)
         if (!meeting || !meeting.virtualRoomId) {
-            return NextResponse.json({ error: "Meeting room not found" }, { status: 404 })
+            return NextResponse.json({ error: "Meeting room not found or access denied" }, { status: 404 })
+        }
+        if (meeting.status !== "ONGOING") {
+            return NextResponse.json({ error: "Recording can only start for an ongoing meeting" }, { status: 409 })
+        }
+        if (meeting.egressId) {
+            return NextResponse.json({ error: "A recording is already active" }, { status: 409 })
         }
 
         const liveKitSettings = await getLiveKitSettings()
