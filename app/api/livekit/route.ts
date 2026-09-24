@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from "@/lib/session";
 import { getLiveKitSettings } from "@/lib/actions/settings";
 import { db } from "@/lib/db";
-import { meetings, meetingAttendances, systemSettings, officials } from "@/lib/db/schema";
+import { meetings, meetingAttendances, meetingGuestAttendances, systemSettings, officials } from "@/lib/db/schema";
 import { and, eq } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
@@ -83,6 +83,16 @@ export async function GET(req: NextRequest) {
         } else if (guestName) {
             identity = `guest-${Math.random().toString(36).substring(2, 9)}`;
             name = guestName + " (Guest)";
+            // Log anonymous guest join for headcount (best-effort, never blocks joining)
+            try {
+                await db.insert(meetingGuestAttendances).values({
+                    id: crypto.randomUUID(),
+                    meetingId: meeting.id,
+                    name: guestName.slice(0, 255),
+                });
+            } catch (logErr) {
+                console.error("Failed to log guest attendance:", logErr);
+            }
         } else {
             return NextResponse.json({ error: 'Unauthorized. Please login or provide your name to join as a guest.' }, { status: 401 });
         }

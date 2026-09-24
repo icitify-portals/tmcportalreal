@@ -53,7 +53,21 @@ export default async function LiveMeetingPublicPage({ params }: { params: Promis
                         {meeting.description || "Join the live virtual room"}
                     </p>
 
-                    {meeting.status !== 'ONGOING' && (
+                    {meeting.status === 'ENDED' && (
+                        <div className="bg-gray-100 text-gray-700 p-4 rounded-md text-center border border-gray-200">
+                            <strong>This meeting has ended</strong>
+                            <p className="mt-1 text-sm">Thanks for your interest. Contact the host for the recording or minutes.</p>
+                        </div>
+                    )}
+
+                    {meeting.status === 'CANCELLED' && (
+                        <div className="bg-gray-100 text-gray-700 p-4 rounded-md text-center border border-gray-200">
+                            <strong>This meeting has been cancelled</strong>
+                            <p className="mt-1 text-sm">Please contact the host for further information.</p>
+                        </div>
+                    )}
+
+                    {meeting.status !== 'ONGOING' && meeting.status !== 'ENDED' && meeting.status !== 'CANCELLED' && (
                         <div className="bg-amber-50 text-amber-700 p-4 rounded-md text-center border border-amber-200">
                             <strong>This meeting has not started yet</strong>
                             <p className="mt-1 text-sm">The host will start the meeting and the room will open for joining. Please check back shortly.</p>

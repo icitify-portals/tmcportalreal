@@ -1706,11 +1706,27 @@ export const meetingsRelations = relations(meetings, ({ one, many }) => ({
     creator: one(users, { fields: [meetings.createdBy], references: [users.id] }),
     attendances: many(meetingAttendances),
     docs: many(meetingDocs),
+    guests: many(meetingGuestAttendances),
 }));
 
 export const meetingAttendancesRelations = relations(meetingAttendances, ({ one }) => ({
     meeting: one(meetings, { fields: [meetingAttendances.meetingId], references: [meetings.id] }),
     user: one(users, { fields: [meetingAttendances.userId], references: [users.id] }),
+}));
+
+// Anonymous guest joins via share link (no user account) — headcount log
+export const meetingGuestAttendances = mysqlTable("meeting_guest_attendances", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
+    meetingId: varchar("meetingId", { length: 255 }).notNull().references(() => meetings.id, { onDelete: "cascade" }),
+    name: varchar("name", { length: 255 }).notNull(),
+    joinedAt: timestamp("joinedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+    createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+}, (t) => ({
+    meetingIdx: index("meeting_guest_attendance_meeting_idx").on(t.meetingId),
+}));
+
+export const meetingGuestAttendancesRelations = relations(meetingGuestAttendances, ({ one }) => ({
+    meeting: one(meetings, { fields: [meetingGuestAttendances.meetingId], references: [meetings.id] }),
 }));
 
 export const meetingDocsRelations = relations(meetingDocs, ({ one }) => ({

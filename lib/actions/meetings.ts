@@ -1,7 +1,7 @@
 "use server"
 
 import { db } from "@/lib/db"
-import { meetings, meetingAttendances, meetingDocs, users, organizations, officials, meetingGroups, meetingGroupMembers, notifications, members } from "@/lib/db/schema"
+import { meetings, meetingAttendances, meetingDocs, users, organizations, officials, meetingGroups, meetingGroupMembers, meetingGuestAttendances, notifications, members } from "@/lib/db/schema"
 import { eq, and, desc, asc, inArray, sql } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
@@ -633,6 +633,19 @@ export async function getMeeting(id: string) {
         .where(eq(meetingDocs.meetingId, id))
 
     return { ...meeting, attendees, docs }
+}
+
+export async function getMeetingGuestAttendances(meetingId: string) {
+    const session = await getServerSession()
+    if (!session?.user?.id) return []
+    return db.select({
+        id: meetingGuestAttendances.id,
+        name: meetingGuestAttendances.name,
+        joinedAt: meetingGuestAttendances.joinedAt,
+    })
+        .from(meetingGuestAttendances)
+        .where(eq(meetingGuestAttendances.meetingId, meetingId))
+        .orderBy(desc(meetingGuestAttendances.joinedAt))
 }
 
 

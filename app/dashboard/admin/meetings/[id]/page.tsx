@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic'
 
 import { Suspense } from "react"
 import Link from "next/link"
-import { getMeeting, getAvailableMembers } from "@/lib/actions/meetings"
+import { getMeeting, getAvailableMembers, getMeetingGuestAttendances } from "@/lib/actions/meetings"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
@@ -27,6 +27,7 @@ export default async function AdminMeetingDetailPage({ params }: AdminMeetingPag
     if (!meeting) return <div>Not found</div>
 
     const members = await getAvailableMembers()
+    const guests = await getMeetingGuestAttendances(id)
     const scheduledTime = new Date(meeting.scheduledAt)
 
     return (
@@ -131,6 +132,18 @@ export default async function AdminMeetingDetailPage({ params }: AdminMeetingPag
                                     </TableBody>
                                 </Table>
                             </div>
+                            {guests.length > 0 && (
+                                <div className="mt-4 rounded-md border bg-muted/40 p-3">
+                                    <h4 className="text-sm font-semibold mb-2">Guest Participants ({guests.length} join{guests.length === 1 ? "" : "s"} via share link)</h4>
+                                    <div className="flex flex-wrap gap-1.5">
+                                        {guests.map(g => (
+                                            <Badge key={g.id} variant="secondary" className="font-normal">
+                                                {g.name}{g.joinedAt ? ` • ${format(new Date(g.joinedAt), "p")}` : ""}
+                                            </Badge>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
 

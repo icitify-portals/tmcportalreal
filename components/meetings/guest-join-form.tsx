@@ -39,7 +39,7 @@ export function GuestJoinForm({
                 setToken(data.token)
                 setJoined(true)
             } else {
-                toast.error("Failed to get room access token")
+                toast.error(data.error || "Failed to get room access token")
             }
         } catch (error) {
             toast.error("Connection error")
