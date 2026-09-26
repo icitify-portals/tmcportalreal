@@ -27,11 +27,9 @@ export default async function LiveMeetingPublicPage({ params }: { params: Promis
         }
     }
 
-    if (!meeting.isOnline || !meeting.virtualRoomId) {
-        return notFound()
-    }
-
     const session = await getServerSession()
+
+    const isPhysicalMeeting = !meeting.isOnline || !meeting.virtualRoomId
 
     const canBypassLock = !!session?.user && (
         session.user.isSuperAdmin ||
@@ -53,6 +51,15 @@ export default async function LiveMeetingPublicPage({ params }: { params: Promis
                         {meeting.description || "Join the live virtual room"}
                     </p>
 
+                    {isPhysicalMeeting ? (
+                        <div className="bg-blue-50 text-blue-800 p-4 rounded-md text-center border border-blue-200">
+                            <strong>In-person meeting</strong>
+                            <p className="mt-1 text-sm">
+                                This meeting holds physically{meeting.venue ? ` at ${meeting.venue}` : ""}. There is no virtual room for this meeting — please attend in person.
+                            </p>
+                        </div>
+                    ) : (
+                    <>
                     {meeting.status === 'ENDED' && (
                         <div className="bg-gray-100 text-gray-700 p-4 rounded-md text-center border border-gray-200">
                             <strong>This meeting has ended</strong>
@@ -83,11 +90,13 @@ export default async function LiveMeetingPublicPage({ params }: { params: Promis
 
                     {meeting.status === 'ONGOING' && (meeting.isLocked ? canBypassLock : true) && (
                         <GuestJoinForm 
-                            virtualRoomId={meeting.virtualRoomId} 
+                            virtualRoomId={meeting.virtualRoomId!} 
                             meetingTitle={meeting.title}
                             isLoggedIn={!!session?.user}
                             defaultName={session?.user?.name || ""}
                         />
+                    )}
+                    </>
                     )}
                 </div>
             </div>

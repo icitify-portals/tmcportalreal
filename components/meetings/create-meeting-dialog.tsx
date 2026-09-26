@@ -75,7 +75,7 @@ export function CreateMeetingDialog({
   const [groups, setGroups] = useState<{ id: string; name: string }[]>([]);
   const [organizationsList, setOrganizationsList] = useState<any[]>([]);
   const [minutesFile, setMinutesFile] = useState<File | null>(null);
-  const [createdMeeting, setCreatedMeeting] = useState<{ id: string, shareCode?: string, title: string } | null>(null);
+  const [createdMeeting, setCreatedMeeting] = useState<{ id: string, shareCode?: string, title: string, isOnline: boolean, venue?: string } | null>(null);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -144,7 +144,7 @@ export function CreateMeetingDialog({
 
       if (res.success) {
         toast.success("Meeting scheduled and Notifications sent");
-        setCreatedMeeting({ id: res.meetingId as string, shareCode: res.shareCode, title: values.title });
+        setCreatedMeeting({ id: res.meetingId as string, shareCode: res.shareCode, title: values.title, isOnline: values.isOnline, venue: values.venue });
         form.reset();
         setMinutesFile(null);
       } else {
@@ -177,6 +177,8 @@ export function CreateMeetingDialog({
             </div>
             <h3 className="text-lg font-semibold">{createdMeeting.title}</h3>
             
+            {createdMeeting.isOnline && createdMeeting.shareCode ? (
+            <>
             <div className="w-full space-y-2">
               <p className="text-sm font-medium">Shareable Guest Link</p>
               <div className="flex gap-2">
@@ -202,6 +204,20 @@ export function CreateMeetingDialog({
                 Close
               </Button>
             </div>
+            </>
+            ) : (
+            <>
+            <div className="w-full rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800 text-center">
+              In-person meeting{createdMeeting.venue ? ` at ${createdMeeting.venue}` : ""}. Invitees will join physically — no virtual link for this meeting.
+            </div>
+
+            <div className="w-full flex flex-col gap-3 pt-4 border-t">
+              <Button variant="outline" className="w-full" onClick={() => setOpen(false)}>
+                Close
+              </Button>
+            </div>
+            </>
+            )}
           </div>
         ) : (
         <ScrollArea className="max-h-[70vh] pr-4">
