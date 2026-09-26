@@ -14,7 +14,8 @@ import { joinMeeting, leaveMeeting } from "@/lib/actions/meetings";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { ShieldAlert, Zap, Loader2, Video, MicOff, UserX, Volume2 } from "lucide-react";
+import { toast } from "sonner";
+import { ShieldAlert, Zap, Loader2, Video, MicOff, UserX, Volume2, SkipForward } from "lucide-react";
 
 type UserChoices = {
     audioEnabled: boolean;
@@ -135,6 +136,11 @@ export default function VideoRoom({ roomName, meetingId }: VideoRoomProps) {
     const [dataSaver, setDataSaver] = useState(false);
     const [userChoices, setUserChoices] = useState<UserChoices | null>(null);
 
+    function handleSkipSetup() {
+        // Join straight into the room with mic/cam off — devices can be enabled in-room
+        setUserChoices({ audioEnabled: false, videoEnabled: false, audioDeviceId: "", videoDeviceId: "", username: "" });
+    }
+
     useEffect(() => {
         (async () => {
             try {
@@ -214,11 +220,21 @@ export default function VideoRoom({ roomName, meetingId }: VideoRoomProps) {
                                 videoEnabled: !dataSaver,
                             }}
                             onSubmit={setUserChoices}
-                            onError={(deviceError) => setError(deviceError.message)}
+                            onError={(deviceError) => {
+                                // Non-blocking: device failures must never prevent joining
+                                toast.error(`Camera/microphone unavailable (${deviceError.message}). You can still join using Skip setup.`);
+                            }}
                             joinLabel="Enter meeting"
                             persistUserChoices
                             className="rounded-lg bg-white p-4"
                         />
+                        <div className="flex flex-col items-center gap-1">
+                            <Button type="button" variant="secondary" onClick={handleSkipSetup}>
+                                <SkipForward className="mr-2 h-4 w-4" />
+                                Skip setup — join directly
+                            </Button>
+                            <p className="text-xs text-slate-400">Optional. You can turn on your camera and microphone inside the meeting.</p>
+                        </div>
                     </div>
                 </div>
             ) : (
