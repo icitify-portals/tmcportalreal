@@ -18,6 +18,7 @@ import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Textarea } from "@/components/ui/textarea"
 import { registerForProgramme, initializeProgrammeRegistrationPayment } from "@/lib/actions/programmes"
+import { createTogetherCheckout } from "@/lib/actions/programme-together"
 import { payWithWalletBalance } from "@/lib/actions/wallet"
 import { toast } from "sonner"
 import { Loader2, UserPlus, CreditCard, MapPin, Globe } from "lucide-react"
@@ -69,6 +70,10 @@ export function RegisterForProgrammeDialog({
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [customAmount, setCustomAmount] = useState<string>(displayAmount.toString())
     const [paymentMethod, setPaymentMethod] = useState<"PAYSTACK" | "WALLET">("PAYSTACK")
+    // Pay-together extras: named people (bulk) or open seats (sponsorship), one checkout
+    const [extrasMode, setExtrasMode] = useState<"none" | "named" | "open">("none")
+    const [extraRows, setExtraRows] = useState([{ name: "", email: "" }])
+    const [extraSeats, setExtraSeats] = useState("5")
     
     // Guest form state
     const [formData, setFormData] = useState({
@@ -88,6 +93,51 @@ export function RegisterForProgrammeDialog({
         e.preventDefault()
         setIsSubmitting(true)
         try {
+            // Pay-together flow: own registration + extra seats in ONE checkout (card only)
+            if (extrasMode !== "none" && displayAmount > 0) {
+                if (session && paymentMethod === "WALLET") {
+                    toast.info("Extra seats need card payment — continuing with Paystack")
+                }
+                let res: any
+                if (extrasMode === "named") {
+                    const cleaned = extraRows.filter(r => r.name.trim() && r.email.trim()).slice(0, 100)
+                    if (cleaned.length === 0) {
+                        toast.error("Add at least one extra person (name + email)")
+                        setIsSubmitting(false)
+                        return
+                    }
+                    res = await createTogetherCheckout({
+                        programmeId,
+                        guest: session ? undefined : { name: formData.name, email: formData.email, phone: formData.phone },
+                        extraMode: "named",
+                        attendees: cleaned,
+                    })
+                } else {
+                    const n = Math.floor(Number(extraSeats))
+                    if (!n || n < 1 || n > 100) {
+                        toast.error("Extra seats must be between 1 and 100")
+                        setIsSubmitting(false)
+                        return
+                    }
+                    res = await createTogetherCheckout({
+                        programmeId,
+                        guest: session ? undefined : { name: formData.name, email: formData.email, phone: formData.phone },
+                        extraMode: "open",
+                        seatCount: n,
+                    })
+                }
+                if (res.success && res.authorizationUrl) {
+                    toast.info("Registration saved. Redirecting to combined payment...")
+                    window.location.href = res.authorizationUrl
+                } else if (res.success && (res as any).free) {
+                    toast.success("Successfully registered for programme")
+                    setOpen(false)
+                } else {
+                    toast.error(res.error || "Failed to start combined payment")
+                }
+                return
+            }
+
             // If logged in, we don't need formData (action handles it from session)
             // If guest, we pass formData
             const result = await registerForProgramme(programmeId, session ? undefined : formData)
@@ -220,6 +270,54 @@ export function RegisterForProgrammeDialog({
                                         <p className="text-[10px] text-green-600">Minimum installment allowed: ₦{minInstallmentAmount}</p>
                                     )}
                                 </div>
+                            )}
+                        </div>
+                    )}
+
+                    {displayAmount > 0 && (
+                        <div className="border p-3 rounded-md bg-blue-50/50 my-2 space-y-3">
+                            <Label className="text-xs font-bold uppercase tracking-wider text-blue-800 block">Paying for others too?</Label>
+                            <RadioGroup
+                                value={extrasMode}
+                                onValueChange={(v: "none" | "named" | "open") => setExtrasMode(v)}
+                                className="flex flex-wrap gap-4"
+                            >
+                                <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="none" id="extras-none" />
+                                    <Label htmlFor="extras-none" className="text-sm font-medium">Just me</Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="named" id="extras-named" />
+                                    <Label htmlFor="extras-named" className="text-sm font-medium">Name each person</Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="open" id="extras-open" />
+                                    <Label htmlFor="extras-open" className="text-sm font-medium">Just seats (share code)</Label>
+                                </div>
+                            </RadioGroup>
+
+                            {extrasMode === "named" && (
+                                <div className="space-y-2">
+                                    {extraRows.map((r, i) => (
+                                        <div key={i} className="grid grid-cols-[1fr_1fr_36px] gap-2">
+                                            <Input value={r.name} onChange={(e) => setExtraRows(extraRows.map((x, j) => j === i ? { ...x, name: e.target.value } : x))} placeholder="Full name" />
+                                            <Input type="email" value={r.email} onChange={(e) => setExtraRows(extraRows.map((x, j) => j === i ? { ...x, email: e.target.value } : x))} placeholder="Email" />
+                                            <Button type="button" size="icon" variant="ghost" onClick={() => setExtraRows(extraRows.filter((_, j) => j !== i))} disabled={extraRows.length <= 1}>×</Button>
+                                        </div>
+                                    ))}
+                                    <Button type="button" size="sm" variant="outline" onClick={() => extraRows.length < 100 && setExtraRows([...extraRows, { name: "", email: "" }])}>+ Add person</Button>
+                                </div>
+                            )}
+
+                            {extrasMode === "open" && (
+                                <div className="flex items-center gap-2">
+                                    <Label htmlFor="extra-seats" className="text-sm font-medium whitespace-nowrap">Extra seats</Label>
+                                    <Input id="extra-seats" type="number" min={1} max={100} value={extraSeats} onChange={(e) => setExtraSeats(e.target.value)} className="w-24 bg-white" />
+                                </div>
+                            )}
+
+                            {extrasMode !== "none" && (
+                                <p className="text-[11px] text-blue-700">One combined card payment covers you plus the extras in full. Each named person gets a claim link; open seats get a shareable sponsor code.</p>
                             )}
                         </div>
                     )}
