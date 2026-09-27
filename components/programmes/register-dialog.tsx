@@ -21,6 +21,7 @@ import { registerForProgramme, initializeProgrammeRegistrationPayment } from "@/
 import { payWithWalletBalance } from "@/lib/actions/wallet"
 import { toast } from "sonner"
 import { Loader2, UserPlus, CreditCard, MapPin, Globe } from "lucide-react"
+import { getActiveEarlyBird, formatTierWindows } from "@/lib/pricing"
 import { nigerianStatesAndLgas } from "@/lib/nigeria-data"
 import { countries } from "@/lib/countries"
 import {
@@ -37,6 +38,7 @@ export function RegisterForProgrammeDialog({
     amount,
     earlyBirdAmount,
     earlyBirdDeadline,
+    tiers,
     allowInstallments,
     minInstallmentAmount,
     triggerText,
@@ -47,13 +49,21 @@ export function RegisterForProgrammeDialog({
     amount: number,
     earlyBirdAmount?: number,
     earlyBirdDeadline?: string | Date,
+    tiers?: { label?: string | null, startAt?: string | Date | null, endAt?: string | Date | null, amount: number | string }[],
     allowInstallments?: boolean,
     minInstallmentAmount?: number,
     triggerText?: string,
     variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link"
 }) {
-    const isEarlyBird = earlyBirdAmount != null && earlyBirdDeadline && new Date() <= new Date(earlyBirdDeadline);
-    const displayAmount = isEarlyBird && earlyBirdAmount ? earlyBirdAmount : amount;
+    const activeTier = tiers && tiers.length > 0
+        ? getActiveEarlyBird({ amount, earlyBirdAmount, earlyBirdDeadline, tiers })
+        : null;
+    const legacyEb = earlyBirdAmount != null && earlyBirdDeadline && new Date() <= new Date(earlyBirdDeadline);
+    const isEarlyBird = !!activeTier || legacyEb;
+    const displayAmount = activeTier ? activeTier.amount : (legacyEb && earlyBirdAmount ? earlyBirdAmount : amount);
+    // Deadline by which an EB-discounted price must be fully paid (tier window end or legacy deadline)
+    const ebCompletionDeadline = activeTier?.deadline || (legacyEb && earlyBirdDeadline ? new Date(earlyBirdDeadline) : null);
+    const tierWindows = tiers && tiers.length > 0 ? formatTierWindows(tiers) : [];
     const { data: session } = useSession()
     const [open, setOpen] = useState(false)
     const [isSubmitting, setIsSubmitting] = useState(false)
@@ -142,9 +152,28 @@ export function RegisterForProgrammeDialog({
                         </DialogDescription>
                     </DialogHeader>
                     {isEarlyBird && amount > 0 && (
-                        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-xs">
-                            <span className="font-bold text-emerald-700">Early bird ₦{Number(earlyBirdAmount).toLocaleString()} till {new Date(earlyBirdDeadline!).toLocaleDateString()}</span>
-                            <span className="text-muted-foreground"> — normal ₦{Number(amount).toLocaleString()} after. You lock the early bird price now.</span>
+                        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-xs space-y-1">
+                            <div>
+                                <span className="font-bold text-emerald-700">
+                                    {activeTier
+                                        ? `${activeTier.label || "Early bird"} ₦${Number(activeTier.amount).toLocaleString()}${activeTier.endAt ? ` till ${activeTier.endAt.toLocaleDateString()}` : ""}`
+                                        : `Early bird ₦${Number(earlyBirdAmount).toLocaleString()} till ${new Date(earlyBirdDeadline!).toLocaleDateString()}`}
+                                </span>
+                                <span className="text-muted-foreground"> — normal ₦{Number(amount).toLocaleString()} after.</span>
+                            </div>
+                            {ebCompletionDeadline && (
+                                <div className="font-medium text-emerald-800">
+                                    Paying in installments? Complete the full payment before {ebCompletionDeadline.toLocaleDateString()} to keep this price — any balance left after that is charged at the normal fee.
+                                </div>
+                            )}
+                        </div>
+                    )}
+                    {tierWindows.length > 0 && (
+                        <div className="rounded-lg border p-3 text-xs space-y-0.5 bg-white">
+                            <p className="font-bold text-gray-700 uppercase tracking-wider text-[10px]">Early bird schedule</p>
+                            {tierWindows.map((w, i) => (
+                                <div key={i} className="text-gray-600">{w}</div>
+                            ))}
                         </div>
                     )}
                     {!isEarlyBird && earlyBirdDeadline && amount > 0 && (

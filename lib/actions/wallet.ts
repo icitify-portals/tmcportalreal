@@ -6,6 +6,8 @@ import { eq, desc, and } from "drizzle-orm"
 import { getServerSession } from "@/lib/session"
 import { initializePayment, verifyPayment } from "@/lib/payments"
 import { revalidatePath } from "next/cache"
+import { resolvePayableTotal } from "@/lib/pricing"
+import { getEarlyBirdTiers } from "@/lib/actions/programme-early-bird"
 
 /**
  * Get or create wallet for the logged in user
@@ -179,7 +181,20 @@ export async function payWithWalletBalance(registrationId: string, customAmount?
 
         if (!results || !results.programme) return { success: false, error: "Programme not found" }
 
-        const totalAmount = parseFloat(results.programme.amount || "0")
+        // Honor locked/early-bird pricing exactly like card payments (incl. tier windows + EB-expiry rule)
+        const walletTiers = await getEarlyBirdTiers(results.programme.id);
+        const { total: totalAmount, ebExpiredReprice } = resolvePayableTotal({
+            amount: results.programme.amount,
+            earlyBirdAmount: (results.programme as any).earlyBirdAmount,
+            earlyBirdDeadline: (results.programme as any).earlyBirdDeadline,
+            tiers: walletTiers,
+            lockedAmount: (results as any).lockedAmount,
+            lockedEarlyBirdDeadline: (results as any).lockedEarlyBirdDeadline,
+            amountPaid: results.amountPaid,
+        });
+        if (ebExpiredReprice) {
+            console.log(`Wallet payment repriced to normal fee (EB window ended) for registration ${registrationId}`);
+        }
         const paidAlready = parseFloat(results.amountPaid || "0")
         const balance = Math.max(0, totalAmount - paidAlready)
 

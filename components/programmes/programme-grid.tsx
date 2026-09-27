@@ -6,6 +6,7 @@ import { CalendarIcon, MapPinIcon, ClockIcon, UsersIcon, CheckCircle2, CreditCar
 import { format } from "date-fns"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import { getActiveEarlyBird, formatTierWindows } from "@/lib/pricing"
 
 export async function ProgrammeGrid({ level, state, organizationId, organizationCode, query }: { level?: string, state?: string, organizationId?: string, organizationCode?: string, query?: string }) {
     const programmes = await getProgrammes({ status: 'APPROVED', level, state, organizationId, organizationCode, query }) || []
@@ -30,16 +31,30 @@ export async function ProgrammeGrid({ level, state, organizationId, organization
                 const isPaid = p.paymentRequired && (parseFloat(p.amount || "0") > 0);
                 const isEarlyBird = p.earlyBirdAmount && p.earlyBirdDeadline && new Date() <= new Date(p.earlyBirdDeadline);
                 const effectiveAmount = isEarlyBird ? parseFloat(p.earlyBirdAmount) : parseFloat(p.amount || "0");
+                const tiers = Array.isArray(p.tiers) ? p.tiers : [];
+                const activeTier = tiers.length > 0 ? getActiveEarlyBird({ amount: p.amount, earlyBirdAmount: p.earlyBirdAmount, earlyBirdDeadline: p.earlyBirdDeadline, tiers }) : null;
+                const tierWindows = tiers.length > 0 ? formatTierWindows(tiers) : [];
+                // Tier price wins when a window is active, else legacy single-EB, else normal
+                const pricedAmount = activeTier ? activeTier.amount : effectiveAmount;
 
                 return (
                     <Card key={p.id} className="flex flex-col h-full hover:shadow-md transition-shadow relative overflow-hidden">
                         <CardHeader>
                             <div className="flex justify-between items-start mb-2">
                                 <div className="flex gap-1.5 flex-wrap">
-                                    <Badge variant={isPaid ? "default" : "secondary"} className="mb-2">
-                                        {isPaid ? (isEarlyBird ? `Early Bird ₦${Number(p.earlyBirdAmount).toLocaleString()}` : `₦${Number(p.amount).toLocaleString()}`) : "Free Entry"}
-                                    </Badge>
-                                    {isEarlyBird && isPaid && (
+                                    {activeTier ? (
+                                        <Badge variant={isPaid ? "default" : "secondary"} className="mb-2">
+                                            {activeTier.label ? `${activeTier.label} ` : ""}₦{Number(activeTier.amount).toLocaleString()}
+                                        </Badge>
+                                    ) : (
+                                        <Badge variant={isPaid ? "default" : "secondary"} className="mb-2">
+                                            {isPaid ? (isEarlyBird ? `Early Bird ₦${Number(p.earlyBirdAmount).toLocaleString()}` : `₦${Number(p.amount).toLocaleString()}`) : "Free Entry"}
+                                        </Badge>
+                                    )}
+                                    {activeTier && activeTier.endAt && isPaid && (
+                                        <Badge className="bg-emerald-600 text-white mb-2">Till {new Date(activeTier.endAt).toLocaleDateString()}</Badge>
+                                    )}
+                                    {!activeTier && isEarlyBird && isPaid && (
                                         <Badge className="bg-emerald-600 text-white mb-2">Till {new Date(p.earlyBirdDeadline).toLocaleDateString()}</Badge>
                                     )}
                                     {p.status === 'POSTPONED' && (
@@ -62,8 +77,9 @@ export async function ProgrammeGrid({ level, state, organizationId, organization
                                 {p.description}
                             </p>
                             {p.paymentRequired && (
-                                <div className="text-[11px]">
-                                    <Link href="/dashboard/programmes/bulk" className="text-emerald-700 underline">Register multiple people at once →</Link>
+                                <div className="text-[11px] space-y-1">
+                                    <div><Link href="/dashboard/programmes/bulk" className="text-emerald-700 underline">Register multiple people at once →</Link></div>
+                                    <div><Link href="/dashboard/programmes/sponsorship" className="text-emerald-700 underline">Sponsor seats for others →</Link></div>
                                 </div>
                             )}
 
@@ -82,10 +98,17 @@ export async function ProgrammeGrid({ level, state, organizationId, organization
                                     <UsersIcon className="mr-2 h-4 w-4 text-primary" />
                                     <span>Target: {p.targetAudience}</span>
                                 </div>
-                                {isPaid && isEarlyBird && (
+                                {tierWindows.length > 0 && (
+                                    <div className="text-xs text-emerald-700 font-medium space-y-0.5">
+                                        {tierWindows.map((w, i) => (
+                                            <div key={i}>{w}</div>
+                                        ))}
+                                    </div>
+                                )}
+                                {tierWindows.length === 0 && isPaid && isEarlyBird && (
                                     <div className="text-xs text-emerald-700 font-medium">Early bird ₦{Number(p.earlyBirdAmount).toLocaleString()} till {new Date(p.earlyBirdDeadline).toLocaleDateString()} → normal ₦{Number(p.amount).toLocaleString()}</div>
                                 )}
-                                {isPaid && !isEarlyBird && p.earlyBirdDeadline && new Date(p.earlyBirdDeadline) < new Date() && (
+                                {tierWindows.length === 0 && isPaid && !isEarlyBird && p.earlyBirdDeadline && new Date(p.earlyBirdDeadline) < new Date() && (
                                     <div className="text-xs text-muted-foreground">Early bird ended — normal ₦{Number(p.amount).toLocaleString()}</div>
                                 )}
                             </div>
@@ -124,9 +147,10 @@ export async function ProgrammeGrid({ level, state, organizationId, organization
                                                     <RegisterForProgrammeDialog
                                                         programmeId={p.id}
                                                         programmeTitle={p.title}
-                                                        amount={effectiveAmount}
+                                                        amount={pricedAmount}
                                                         earlyBirdAmount={p.earlyBirdAmount ? parseFloat(p.earlyBirdAmount) : undefined}
                                                         earlyBirdDeadline={p.earlyBirdDeadline}
+                                                        tiers={tiers}
                                                         allowInstallments={p.allowInstallments || false}
                                                         minInstallmentAmount={parseFloat(p.minInstallmentAmount || "0")}
                                                         triggerText="Restart"
@@ -158,9 +182,10 @@ export async function ProgrammeGrid({ level, state, organizationId, organization
                                         <RegisterForProgrammeDialog
                                             programmeId={p.id}
                                             programmeTitle={p.title}
-                                            amount={effectiveAmount}
+                                            amount={pricedAmount}
                                             earlyBirdAmount={p.earlyBirdAmount ? parseFloat(p.earlyBirdAmount) : undefined}
                                             earlyBirdDeadline={p.earlyBirdDeadline}
+                                            tiers={tiers}
                                             allowInstallments={p.allowInstallments || false}
                                             minInstallmentAmount={parseFloat(p.minInstallmentAmount || "0")}
                                         />

@@ -1,4 +1,5 @@
 import { getRegistrationDetails, verifyProgrammeRegistrationPayment } from "@/lib/actions/programmes"
+import { resolvePayableTotal } from "@/lib/pricing"
 import { db } from "@/lib/db"
 import { members, organizations } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
@@ -65,10 +66,22 @@ export default async function AccessSlipPage({ params }: { params: Promise<{ id:
     const isPartiallyPaid = registration.status === 'PARTIALLY_PAID' && !registration.checkInWaiver
     const isPending = isUnpaid || isPartiallyPaid
 
-    const totalAmount = parseFloat(registration.programme.amount || "0")
+    // Payable total honors locked/early-bird pricing (incl. tier windows + EB-expiry repricing)
+    const payable = resolvePayableTotal({
+        amount: registration.programme.amount,
+        earlyBirdAmount: (registration.programme as any).earlyBirdAmount,
+        earlyBirdDeadline: (registration.programme as any).earlyBirdDeadline,
+        tiers: (registration.programme as any).tiers,
+        lockedAmount: (registration as any).lockedAmount,
+        lockedEarlyBirdDeadline: (registration as any).lockedEarlyBirdDeadline,
+        amountPaid: registration.amountPaid,
+    })
+    const totalAmount = payable.total
     const paidAmount = parseFloat(registration.amountPaid || "0")
     const balance = Math.max(0, totalAmount - paidAmount)
     const minInstallment = parseFloat(registration.programme.minInstallmentAmount || "0")
+    const ebGraceDeadline = (registration as any).lockedEarlyBirdDeadline ? new Date((registration as any).lockedEarlyBirdDeadline) : null
+    const ebWindowOpen = !!ebGraceDeadline && balance > 0 && new Date().getTime() <= ebGraceDeadline.getTime()
 
     return (
         <div className="min-h-screen bg-gray-50 py-12 px-4 print:bg-white print:py-0 print:px-0 flex justify-center print:block print:w-full">
@@ -126,6 +139,16 @@ export default async function AccessSlipPage({ params }: { params: Promise<{ id:
                                         <> Please complete your payment to access your slip and QR code.</>
                                     )}
                                 </p>
+                                {payable.ebExpiredReprice && balance > 0 && (
+                                    <p className="text-red-600 font-semibold">
+                                        The early-bird window for your locked price ended — the remaining balance is charged at the normal fee.
+                                    </p>
+                                )}
+                                {ebWindowOpen && (
+                                    <p className="text-emerald-700 font-semibold">
+                                        Early-bird price locked! Complete the full payment before {ebGraceDeadline!.toLocaleDateString()} to keep it.
+                                    </p>
+                                )}
                             </div>
                             <div className="flex flex-col gap-3 pt-4 print:hidden">
                                 <ResumePaymentButton 
@@ -155,7 +178,13 @@ export default async function AccessSlipPage({ params }: { params: Promise<{ id:
                                 <br className="hidden print:block" />
                                 <strong className="print:text-gray-900">Please pay the remaining balance of ₦{balance}.</strong>
                                 <br />
-                                <span className="text-red-600 font-bold">Disclaimer: This does not grant entry until full payment is made.</span>
+                                {payable.ebExpiredReprice ? (
+                                    <span className="text-red-600 font-bold">Early-bird window ended — balance charged at the normal fee.</span>
+                                ) : ebWindowOpen ? (
+                                    <span className="text-emerald-700 font-bold">Complete payment before {ebGraceDeadline!.toLocaleDateString()} to keep your early-bird price.</span>
+                                ) : (
+                                    <span className="text-red-600 font-bold">Disclaimer: This does not grant entry until full payment is made.</span>
+                                )}
                             </p>
                             <div className="flex flex-col gap-3 pt-2 print:hidden justify-center items-center">
                                 <ResumePaymentButton 

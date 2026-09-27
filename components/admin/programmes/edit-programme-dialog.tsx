@@ -28,6 +28,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { updateProgramme, getOffices, getOfficials } from "@/lib/actions/programmes"
+import { getEarlyBirdTiers } from "@/lib/actions/programme-early-bird"
+import { EarlyBirdTiersField } from "./early-bird-tiers-field"
 import { getBanks } from "@/lib/actions/payment-settings"
 import { toast } from "sonner"
 import { Loader2, Edit, AlertCircle, XCircle, Plus, Trash2 } from "lucide-react"
@@ -78,6 +80,12 @@ const ProgrammeSchema = z.object({
     certPartnerSignatory: z.string().optional(),
     earlyBirdAmount: z.string().optional(),
     earlyBirdDeadline: z.string().optional(),
+    earlyBirdTiers: z.array(z.object({
+        label: z.string().optional().default(""),
+        startAt: z.string().optional().default(""),
+        endAt: z.string().optional().default(""),
+        amount: z.string().optional().default(""),
+    })).default([]),
     paymentRouting: z.enum(['ORG_DEFAULT', 'CUSTOM']).default('ORG_DEFAULT'),
     progBankName: z.string().optional(),
     progBankCode: z.string().optional(),
@@ -99,13 +107,27 @@ export function EditProgrammeDialog({ programme, open, onOpenChange }: EditProgr
     const [officeSearch, setOfficeSearch] = useState("")
     const [officialSearch, setOfficialSearch] = useState("")
     const [applyToSeries, setApplyToSeries] = useState(false)
+    // Tracks whether phased EB windows finished loading (prevents wiping them on fast submit)
+    const [tiersLoaded, setTiersLoaded] = useState(false)
 
     useEffect(() => {
         if (open && programme.organizationId) {
             getOffices(programme.organizationId).then(setOffices)
             getOfficials(programme.organizationId).then(setOfficials)
         }
-    }, [open, programme.organizationId])
+        if (open && programme.id) {
+            setTiersLoaded(false)
+            getEarlyBirdTiers(programme.id).then((tiers: any[]) => {
+                form.setValue("earlyBirdTiers", (tiers || []).map(t => ({
+                    label: t.label || "",
+                    startAt: t.startAt ? new Date(t.startAt).toISOString().split('T')[0] : "",
+                    endAt: t.endAt ? new Date(t.endAt).toISOString().split('T')[0] : "",
+                    amount: t.amount?.toString() || "",
+                })) as any)
+                setTiersLoaded(true)
+            }).catch(() => {})
+        }
+    }, [open, programme.organizationId, programme.id])
 
     const form = useForm({
         resolver: zodResolver(ProgrammeSchema),
@@ -140,6 +162,7 @@ export function EditProgrammeDialog({ programme, open, onOpenChange }: EditProgr
             certPartnerSignatory: programme.certPartnerSignatory || "",
             earlyBirdAmount: programme.earlyBirdAmount?.toString() || "",
             earlyBirdDeadline: programme.earlyBirdDeadline ? new Date(programme.earlyBirdDeadline).toISOString().split('T')[0] : "",
+            earlyBirdTiers: [],
             paymentRouting: programme.paystackSubaccountCode ? "CUSTOM" : "ORG_DEFAULT",
             progBankName: programme.progBankName || "",
             progBankCode: programme.progBankCode || "",
@@ -264,6 +287,13 @@ export function EditProgrammeDialog({ programme, open, onOpenChange }: EditProgr
                 amount: parseFloat(data.amount || "0"),
                 earlyBirdAmount: (data as any).earlyBirdAmount ? parseFloat((data as any).earlyBirdAmount) : null,
                 earlyBirdDeadline: (data as any).earlyBirdDeadline ? new Date((data as any).earlyBirdDeadline) : null,
+                // Drop untouched/blank windows (server requires positive amounts).
+                // NOTE: providing the array (even empty) replaces all windows —
+                // clearing it removes phased windows, falling back to the single EB.
+                // If windows haven't loaded yet, omit the key so existing windows are kept.
+                ...(tiersLoaded
+                    ? { earlyBirdTiers: ((data as any).earlyBirdTiers || []).filter((t: any) => t.amount !== "" && t.amount != null) }
+                    : {}),
                 allowInstallments: data.allowInstallments,
                 minInstallmentAmount: parseFloat(data.minInstallmentAmount || "0"),
                 budget: parseFloat(data.budget || "0"),
@@ -281,6 +311,10 @@ export function EditProgrammeDialog({ programme, open, onOpenChange }: EditProgr
                 }),
                 pricingTiers: data.pricingTiers
             }
+
+            // If phased windows haven't loaded yet, drop the key entirely so the
+            // server leaves existing windows untouched (avoids wiping on fast submit)
+            if (!tiersLoaded) delete payload.earlyBirdTiers
 
             const result = await updateProgramme(programme.id, payload, applyToSeries)
 
@@ -732,6 +766,21 @@ export function EditProgrammeDialog({ programme, open, onOpenChange }: EditProgr
                                         />
                                     )}
                                 </div>
+                                <FormField
+                                    control={form.control}
+                                    name="earlyBirdTiers"
+                                    render={({ field }) => (
+                                        <FormItem className="mt-2">
+                                            <FormControl>
+                                                <EarlyBirdTiersField
+                                                    value={(field.value || []) as any}
+                                                    onChange={(v) => field.onChange(v)}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
                                 </>
                             )}
                         </div>

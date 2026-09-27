@@ -7,7 +7,8 @@ import {
     TableCell, 
     TableHead, 
     TableHeader, 
-    TableRow 
+    TableRow,
+    TableFooter,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -52,6 +53,16 @@ export function RegistrationsClientTable({
             setSelectedIds([...selectedIds, id])
         }
     }
+
+    const rowTotal = (reg: any) => reg.lockedAmount ? parseFloat(reg.lockedAmount) : parseFloat(programmeAmount || "0")
+    const totals = registrations.reduce((acc, reg) => {
+        acc.expected += rowTotal(reg)
+        acc.collected += parseFloat(reg.amountPaid || "0")
+        return acc
+    }, { expected: 0, collected: 0 })
+    const totalOutstanding = Math.max(0, totals.expected - totals.collected)
+    const paidCount = registrations.filter(r => r.status === 'PAID' || r.status === 'ATTENDED').length
+    const partialCount = registrations.filter(r => r.status === 'PARTIALLY_PAID').length
 
     const handleBulkMarkAttended = async () => {
         if (selectedIds.length === 0) return
@@ -205,16 +216,23 @@ export function RegistrationsClientTable({
                                 </TableCell>
                                 <TableCell className="py-4 text-black font-medium text-sm">{reg.phone || 'N/A'}</TableCell>
                                 <TableCell className="py-4">
-                                    <Badge variant="outline" className="font-bold uppercase tracking-tighter text-[9px] px-2 py-0.5 text-black border-black border">
-                                        {reg.userId ? "Member" : "Guest"}
-                                    </Badge>
+                                    <div className="flex flex-col gap-1 items-start">
+                                        <Badge variant="outline" className="font-bold uppercase tracking-tighter text-[9px] px-2 py-0.5 text-black border-black border">
+                                            {reg.userId ? "Member" : "Guest"}
+                                        </Badge>
+                                        {reg.sponsorPoolId && (
+                                            <Badge className="bg-purple-600 text-white font-bold uppercase tracking-tighter text-[9px] px-2 py-0.5">
+                                                Sponsored
+                                            </Badge>
+                                        )}
+                                    </div>
                                 </TableCell>
                                 <TableCell className="py-4">
                                     <ClientCurrency amount={parseFloat(reg.amountPaid || "0")} className="font-bold text-black text-sm" />
                                 </TableCell>
                                 <TableCell className="py-4">
                                     {(() => {
-                                        const total = parseFloat(programmeAmount || "0");
+                                        const total = rowTotal(reg);
                                         const paid = parseFloat(reg.amountPaid || "0");
                                         const outstanding = Math.max(0, total - paid);
                                         return outstanding > 0 ? (
@@ -279,6 +297,29 @@ export function RegistrationsClientTable({
                             </TableRow>
                         ))}
                     </TableBody>
+                    <TableFooter className="bg-gray-50">
+                        <TableRow>
+                            <TableCell colSpan={6} className="py-3 text-xs font-bold uppercase tracking-wider text-gray-700">
+                                Totals ({registrations.length} registered • {paidCount} paid • {partialCount} partial)
+                            </TableCell>
+                            <TableCell className="py-3">
+                                <div className="text-[10px] font-bold uppercase text-gray-500">Collected</div>
+                                <ClientCurrency amount={totals.collected} className="font-bold text-green-700 text-sm" />
+                            </TableCell>
+                            <TableCell className="py-3">
+                                <div className="text-[10px] font-bold uppercase text-gray-500">Outstanding</div>
+                                {totalOutstanding > 0 ? (
+                                    <ClientCurrency amount={totalOutstanding} className="font-bold text-red-600 text-sm" />
+                                ) : (
+                                    <span className="font-bold text-green-600 text-sm">None</span>
+                                )}
+                            </TableCell>
+                            <TableCell colSpan={4} className="py-3 text-right">
+                                <div className="text-[10px] font-bold uppercase text-gray-500">Expected</div>
+                                <ClientCurrency amount={totals.expected} className="font-bold text-black text-sm" />
+                            </TableCell>
+                        </TableRow>
+                    </TableFooter>
                 </Table>
             </div>
         </div>

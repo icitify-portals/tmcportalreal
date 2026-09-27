@@ -34,6 +34,7 @@ import { toast } from "sonner"
 import { Loader2, Plus, Trash2 } from "lucide-react"
 import { FileUpload as FileUploadInput } from "@/components/ui/file-upload"
 import { ProgrammeMaterialsField } from "./programme-materials-field"
+import { EarlyBirdTiersField } from "./early-bird-tiers-field"
 
 // Predefined tier labels for easy selection
 const TIER_LABELS = [
@@ -91,6 +92,12 @@ const ProgrammeSchema = z.object({
     certPartnerSignatory: z.string().optional(),
     earlyBirdAmount: z.string().optional(),
     earlyBirdDeadline: z.string().optional(),
+    earlyBirdTiers: z.array(z.object({
+        label: z.string().optional().default(""),
+        startAt: z.string().optional().default(""),
+        endAt: z.string().optional().default(""),
+        amount: z.string().optional().default(""),
+    })).default([]),
     paymentRouting: z.enum(['ORG_DEFAULT', 'CUSTOM']).default('ORG_DEFAULT'),
     progBankName: z.string().optional(),
     progBankCode: z.string().optional(),
@@ -161,6 +168,7 @@ export function CreateProgrammeDialog({
             certPartnerSignatory: "",
             earlyBirdAmount: "",
             earlyBirdDeadline: "",
+            earlyBirdTiers: [],
             paymentRouting: "ORG_DEFAULT",
             progBankName: "",
             progBankCode: "",
@@ -238,6 +246,8 @@ export function CreateProgrammeDialog({
                 amount: parseFloat(data.amount || "0"),
                 earlyBirdAmount: data.earlyBirdAmount ? parseFloat(data.earlyBirdAmount) : null,
                 earlyBirdDeadline: data.earlyBirdDeadline ? new Date(data.earlyBirdDeadline) : null,
+                // Drop untouched/blank windows (server requires positive amounts)
+                earlyBirdTiers: (data.earlyBirdTiers || []).filter((t: any) => t.amount !== "" && t.amount != null),
                 allowInstallments: data.allowInstallments,
                 minInstallmentAmount: parseFloat(data.minInstallmentAmount || "0"),
                 budget: parseFloat(data.budget || "0"),
@@ -987,6 +997,21 @@ export function CreateProgrammeDialog({
                                         />
                                     )}
                                 </div>
+                                <FormField
+                                    control={form.control}
+                                    name="earlyBirdTiers"
+                                    render={({ field }) => (
+                                        <FormItem className="mt-2">
+                                            <FormControl>
+                                                <EarlyBirdTiersField
+                                                    value={(field.value || []) as any}
+                                                    onChange={(v) => field.onChange(v)}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
                                 </>
                             )}
                         </div>

@@ -3,7 +3,7 @@
 import { db } from "@/lib/db"
 import {
     programmes, programmeRegistrations, programmeReports, programmeMaterials,
-    programmeStatusEnum, registrationStatusEnum,
+    programmeStatusEnum, registrationStatusEnum, programmeEarlyBirdTiers,
     users, organizations, offices, officials, notifications,
     financeBudgets, financeBudgetItems, meetings, financeTransactions
 } from "@/lib/db/schema"
@@ -19,7 +19,8 @@ import { createPaystackSubaccount } from "@/lib/payments"
 import { sendEmail, emailTemplates } from "@/lib/email"
 import crypto from "crypto"
 import { RRule } from "rrule"
-import { getEffectiveAmount, isEarlyBirdActive } from "@/lib/pricing"
+import { getEffectiveAmount, isEarlyBirdActive, getActiveEarlyBird, resolvePayableTotal } from "@/lib/pricing"
+import { validateEarlyBirdTiers, getEarlyBirdTiersForProgrammes, getEarlyBirdTiers } from "@/lib/actions/programme-early-bird"
 
 export async function generateSecurityHash(registrationId: string, email: string) {
     const secret = process.env.SLIP_SECRET || "tmc-secure-slip-2026"
@@ -266,6 +267,13 @@ const ProgrammeSchema = z.object({
     amount: z.preprocess((val) => Number(String(val).replace(/,/g, '')), z.number().nonnegative()).default(0),
     earlyBirdAmount: z.preprocess((val) => val === "" || val === undefined || val === null ? null : Number(String(val).replace(/,/g, '')), z.number().nonnegative().nullable().optional()),
     earlyBirdDeadline: z.preprocess((val) => !val ? null : new Date(val as string), z.date().nullable().optional()),
+    // Phased early bird windows (each with own dates + amount). Active tier wins over the single EB above.
+    earlyBirdTiers: z.array(z.object({
+        label: z.string().max(100).optional().nullable(),
+        startAt: z.preprocess((val) => !val ? null : new Date(val as string), z.date().nullable().optional()),
+        endAt: z.preprocess((val) => !val ? null : new Date(val as string), z.date().nullable().optional()),
+        amount: z.preprocess((val) => Number(String(val).replace(/,/g, '')), z.number().positive()),
+    })).max(10).optional(),
     organizingOfficeId: z.string().optional().nullable(),
     organizingOfficialId: z.string().optional().nullable(),
     // New Planner Fields
@@ -371,6 +379,10 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
         }
 
         const validData = ProgrammeSchema.parse(data)
+
+        // Validate phased early bird windows early (fail fast before any insert)
+        const tierCheck = validateEarlyBirdTiers((validData as any).earlyBirdTiers)
+        if (!tierCheck.valid) return { success: false, error: tierCheck.error }
 
         // Retrieve sliding window settings
         const yearSettings = await getYearPlannerSettings()
@@ -685,6 +697,30 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
             await db.insert(programmes).values(fallbackInstances);
         }
 
+        // Persist phased early bird windows for every created instance (recurrence-safe)
+        const ebTiers = ((validData as any).earlyBirdTiers || []).filter((t: any) => Number(String(t.amount).replace(/,/g, "")) > 0)
+        if (ebTiers.length > 0) {
+            const tierRows: any[] = []
+            for (const inst of programmeInstances) {
+                ebTiers.forEach((t: any, i: number) => {
+                    tierRows.push({
+                        id: uuidv4(),
+                        programmeId: (inst as any).id,
+                        label: t.label?.toString().slice(0, 100) || `Early bird ${i + 1}`,
+                        startAt: t.startAt ? new Date(t.startAt) : null,
+                        endAt: t.endAt ? new Date(t.endAt) : null,
+                        amount: Number(String(t.amount).replace(/,/g, "")).toFixed(2),
+                        sortOrder: i,
+                        createdAt: new Date(),
+                        updatedAt: new Date(),
+                    })
+                })
+            }
+            if (tierRows.length > 0) {
+                await db.insert(programmeEarlyBirdTiers).values(tierRows)
+            }
+        }
+
         if (budgetInstances.length > 0) {
             try {
                 await db.insert(financeBudgets).values(budgetInstances);
@@ -952,7 +988,9 @@ export async function getProgrammes(filters?: { level?: string, state?: string, 
         .where(and(...conditions))
         .orderBy(desc(programmes.startDate))
 
-    return results.map(r => ({ ...r.programme, organization: r.organization, meeting: r.meeting }))
+    const tiersByProgramme = await getEarlyBirdTiersForProgrammes(results.map(r => r.programme.id))
+
+    return results.map(r => ({ ...r.programme, organization: r.organization, meeting: r.meeting, tiers: tiersByProgramme[r.programme.id] || [] }))
 }
 
 // For Admin Dashboard (My Programmes + Approvals)
@@ -1143,8 +1181,10 @@ export async function registerForProgramme(programmeId: string, data?: z.infer<t
             }
         }
 
-        // New Registration Logic — early bird aware
-        const effectiveBaseRaw = getEffectiveAmount({ amount: programme.amount, earlyBirdAmount: (programme as any).earlyBirdAmount, earlyBirdDeadline: (programme as any).earlyBirdDeadline });
+        // New Registration Logic — early bird aware (phased tiers first, legacy single-EB fallback)
+        const regTiers = await getEarlyBirdTiers(programme.id)
+        const ebFields = { amount: programme.amount, earlyBirdAmount: (programme as any).earlyBirdAmount, earlyBirdDeadline: (programme as any).earlyBirdDeadline, tiers: regTiers }
+        const effectiveBaseRaw = getEffectiveAmount(ebFields);
         let baseAmount = effectiveBaseRaw;
         
         if (data?.registrationTier && programme.pricingTiers) {
@@ -1182,7 +1222,17 @@ export async function registerForProgramme(programmeId: string, data?: z.infer<t
             checkInTime: checkInTime,
             registrationTier: data?.registrationTier || null,
             amountPaid: (initialStatus === 'PAID' || initialStatus === 'ATTENDED') ? userAmount.toString() : "0.00",
-            lockedAmount: baseAmount.toString()
+            lockedAmount: baseAmount.toString(),
+            // Remember which EB window the locked price came from (null when normal/category price).
+            // Used to enforce "complete part-payment before the EB window ends".
+            lockedEarlyBirdDeadline: (() => {
+                if (data?.registrationTier && programme.pricingTiers) return null
+                const applied = getActiveEarlyBird(ebFields)
+                if (!applied) return null
+                // Only a real discount counts as EB (locked price below normal fee)
+                if (applied.amount >= Number(programme.amount || 0)) return null
+                return applied.deadline
+            })(),
         }
 
         if (session?.user) {
@@ -1325,10 +1375,11 @@ export async function getRegistrationDetails(registrationId: string) {
         if (!result) return null
 
         const securityHash = await generateSecurityHash(result.registration.id, result.registration.email)
+        const tiers = await getEarlyBirdTiers(result.programme.id)
 
         return {
             ...result.registration,
-            programme: result.programme,
+            programme: { ...result.programme, tiers },
             member: result.member,
             organization: result.organization,
             user: result.user,
@@ -1346,8 +1397,15 @@ export async function initializeProgrammeRegistrationPayment(registrationId: str
         if (!registration) return { success: false, error: "Registration not found" }
         
         const locked = (registration as any).lockedAmount ? parseFloat((registration as any).lockedAmount) : null;
-        const effectiveNow = getEffectiveAmount({ amount: registration.programme.amount, earlyBirdAmount: (registration.programme as any).earlyBirdAmount, earlyBirdDeadline: (registration.programme as any).earlyBirdDeadline });
-        const totalAmount = locked ?? effectiveNow;
+        const { total: totalAmount, ebExpiredReprice } = resolvePayableTotal({
+            amount: registration.programme.amount,
+            earlyBirdAmount: (registration.programme as any).earlyBirdAmount,
+            earlyBirdDeadline: (registration.programme as any).earlyBirdDeadline,
+            tiers: (registration.programme as any).tiers,
+            lockedAmount: locked,
+            lockedEarlyBirdDeadline: (registration as any).lockedEarlyBirdDeadline,
+            amountPaid: registration.amountPaid,
+        });
         if (totalAmount <= 0) return { success: false, error: "No payment required" }
 
         const paidAlready = parseFloat(registration.amountPaid || "0")
@@ -1391,7 +1449,12 @@ export async function initializeProgrammeRegistrationPayment(registrationId: str
                 .set({ paymentReference: response.reference })
                 .where(eq(programmeRegistrations.id, registrationId))
             
-            return response
+            return {
+                ...response,
+                ...(ebExpiredReprice
+                    ? { ebExpiredReprice: true as const, ebMessage: "Early-bird window ended — remaining balance charged at the normal fee." }
+                    : {}),
+            }
         }
         
         return { success: false, error: response.error }
@@ -1410,8 +1473,15 @@ export async function verifyProgrammeRegistrationPayment(registrationId: string,
             if (!regDetails) return { success: false, error: "Registration not found" }
 
             const locked2 = (regDetails as any).lockedAmount ? parseFloat((regDetails as any).lockedAmount) : null;
-            const effective2 = getEffectiveAmount({ amount: regDetails.programme.amount, earlyBirdAmount: (regDetails.programme as any).earlyBirdAmount, earlyBirdDeadline: (regDetails.programme as any).earlyBirdDeadline });
-            const totalAmount = locked2 ?? effective2;
+            const { total: totalAmount } = resolvePayableTotal({
+                amount: regDetails.programme.amount,
+                earlyBirdAmount: (regDetails.programme as any).earlyBirdAmount,
+                earlyBirdDeadline: (regDetails.programme as any).earlyBirdDeadline,
+                tiers: (regDetails.programme as any).tiers,
+                lockedAmount: locked2,
+                lockedEarlyBirdDeadline: (regDetails as any).lockedEarlyBirdDeadline,
+                amountPaid: regDetails.amountPaid,
+            });
             const paidAlready = parseFloat(regDetails.amountPaid || "0")
             const justPaidAmount = parseFloat(response.data?.amount?.toString() || "0")
 
@@ -1620,6 +1690,12 @@ export async function updateProgramme(programmeId: string, data: Partial<z.infer
         const [current] = await db.select().from(programmes).where(eq(programmes.id, programmeId))
         if (!current) return { success: false, error: "Programme not found" }
 
+        // Validate phased early bird windows early when supplied
+        if ((validData as any).earlyBirdTiers !== undefined) {
+            const tierCheck = validateEarlyBirdTiers((validData as any).earlyBirdTiers)
+            if (!tierCheck.valid) return { success: false, error: tierCheck.error }
+        }
+
         // Determine if this is a re-submission
         let newStatus = current.status
         let rejectionReason = current.rejectionReason
@@ -1765,6 +1841,39 @@ export async function updateProgramme(programmeId: string, data: Partial<z.infer
                 await db.update(financeBudgets)
                     .set({ totalAmount: validData.budget.toString() })
                     .where(eq(financeBudgets.programmeId, programmeId));
+            }
+        }
+
+        // Replace phased early bird windows when supplied (series-wide when applyToSeries)
+        if ((validData as any).earlyBirdTiers !== undefined) {
+            let tierProgrammeIds = [programmeId]
+            if (applyToSeries && current.seriesId) {
+                const seriesRows = await db.select({ id: programmes.id })
+                    .from(programmes)
+                    .where(and(
+                        eq(programmes.seriesId, current.seriesId),
+                        sql`${programmes.startDate} >= ${current.startDate}`
+                    ))
+                tierProgrammeIds = seriesRows.map(p => p.id)
+            }
+            const ebTiers = (((validData as any).earlyBirdTiers || []) as any[]).filter((t: any) => Number(String(t.amount).replace(/,/g, "")) > 0)
+            for (const pid of tierProgrammeIds) {
+                await db.delete(programmeEarlyBirdTiers).where(eq(programmeEarlyBirdTiers.programmeId, pid))
+                if (ebTiers.length > 0) {
+                    await db.insert(programmeEarlyBirdTiers).values(
+                        ebTiers.map((t: any, i: number) => ({
+                            id: uuidv4(),
+                            programmeId: pid,
+                            label: t.label?.toString().slice(0, 100) || `Early bird ${i + 1}`,
+                            startAt: t.startAt ? new Date(t.startAt) : null,
+                            endAt: t.endAt ? new Date(t.endAt) : null,
+                            amount: Number(String(t.amount).replace(/,/g, "")).toFixed(2),
+                            sortOrder: i,
+                            createdAt: new Date(),
+                            updatedAt: new Date(),
+                        }))
+                    )
+                }
             }
         }
 

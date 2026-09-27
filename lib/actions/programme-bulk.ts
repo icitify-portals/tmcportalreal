@@ -14,7 +14,8 @@ import { revalidatePath } from "next/cache";
 import { getServerSession } from "@/lib/session";
 import { v4 as uuidv4 } from "uuid";
 import crypto from "crypto";
-import { getEffectiveAmount } from "@/lib/pricing";
+import { getEffectiveAmount, getActiveEarlyBird } from "@/lib/pricing";
+import { getEarlyBirdTiers } from "@/lib/actions/programme-early-bird";
 import { initializePayment, verifyPayment } from "@/lib/payments";
 
 function genToken(): string {
@@ -56,13 +57,19 @@ export async function createBulkRegistration(data: {
     if (prog.status !== "APPROVED")
         return { success: false, error: "Programme is not approved" };
 
+    const bulkTiers = await getEarlyBirdTiers(data.programmeId);
+    const bulkEbFields = {
+        amount: prog.amount as any,
+        earlyBirdAmount: (prog as any).earlyBirdAmount,
+        earlyBirdDeadline: (prog as any).earlyBirdDeadline,
+        tiers: bulkTiers,
+    };
     const effectivePerAttendee = prog.paymentRequired
-        ? Number(getEffectiveAmount({
-            amount: prog.amount as any,
-            earlyBirdAmount: (prog as any).earlyBirdAmount,
-            earlyBirdDeadline: (prog as any).earlyBirdDeadline,
-        }))
+        ? Number(getEffectiveAmount(bulkEbFields))
         : 0;
+    // EB window the bulk price was locked in (null when normal price) — informational for now
+    const bulkAppliedEb = getActiveEarlyBird(bulkEbFields);
+    const bulkLockedEbDeadline = bulkAppliedEb && bulkAppliedEb.amount < Number(prog.amount || 0) ? bulkAppliedEb.deadline : null;
 
     const totalAmount = effectivePerAttendee * data.attendees.length;
     const groupId = uuidv4();
@@ -104,6 +111,7 @@ export async function createBulkRegistration(data: {
             bulkClaimToken: token,
             bulkClaimedAt: null,
             lockedAmount: prog.paymentRequired ? effectivePerAttendee.toFixed(2) as any : null,
+            lockedEarlyBirdDeadline: bulkLockedEbDeadline as any,
         } as any);
         registrationIds.push(regId);
     }
