@@ -362,6 +362,75 @@ export const emailTemplates = {
       Download your access slip here: ${process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL}/programmes/registrations/${registrationId}/slip
     `,
   }),
+  bulkSeatClaim: (name: string, programmeTitle: string, claimUrl: string, paymasterName: string) => ({
+    subject: `Your seat is paid for: ${programmeTitle} - TMC`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 12px;">
+        <div style="text-align: center; margin-bottom: 24px;">
+           <h1 style="color: #15803d; margin: 0;">Your Seat Is Paid For</h1>
+           <p style="color: #6b7280; margin-top: 4px;">Thank you for being part of The Muslim Congress programmes</p>
+        </div>
+
+        <p>Dear ${name},</p>
+        <p><strong>${paymasterName}</strong> has paid for your seat at the upcoming programme:</p>
+
+        <div style="background-color: #f0fdf4; border: 1px solid #bcf0da; padding: 20px; border-radius: 8px; margin: 24px 0;">
+          <h2 style="margin-top: 0; color: #166534; font-size: 18px;">${programmeTitle}</h2>
+          <p style="margin: 4px 0; font-size: 14px; color: #4b5563;">Complete your details through your personal link below to finalise your registration.</p>
+        </div>
+
+        <div style="text-align: center; margin: 32px 0;">
+          <a href="${claimUrl}" style="background-color: #15803d; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Confirm My Seat</a>
+        </div>
+
+        <p style="font-size: 13px; color: #6b7280;">This link is personal to you. If you did not expect this email, please ignore it.</p>
+        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;">
+        <p style="text-align: center; color: #9ca3af; font-size: 11px;">© ${new Date().getFullYear()} The Muslim Congress. All rights reserved.</p>
+      </div>
+    `,
+    text: `
+      Your seat is paid for: ${programmeTitle}
+
+      Dear ${name},
+
+      ${paymasterName} has paid for your seat. Confirm it here: ${claimUrl}
+    `,
+  }),
+  sponsorshipCode: (sponsorName: string, programmeTitle: string, seatCount: number, sponsorCode: string, claimPageUrl: string) => ({
+    subject: `Your sponsorship is active: ${programmeTitle} - TMC`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 12px;">
+        <div style="text-align: center; margin-bottom: 24px;">
+           <h1 style="color: #15803d; margin: 0;">Sponsorship Active</h1>
+           <p style="color: #6b7280; margin-top: 4px;">Thank you for sponsoring seats at The Muslim Congress</p>
+        </div>
+
+        <p>Dear ${sponsorName},</p>
+        <p>Your payment is confirmed. You have sponsored <strong>${seatCount} seat(s)</strong> for <strong>${programmeTitle}</strong>.</p>
+
+        <div style="background-color: #f0fdf4; border: 1px solid #bcf0da; padding: 20px; border-radius: 8px; margin: 24px 0; text-align: center;">
+          <p style="margin: 4px 0; font-size: 14px; color: #4b5563;">Share this sponsor code with beneficiaries:</p>
+          <p style="font-family: monospace; font-size: 24px; font-weight: bold; letter-spacing: 4px; color: #166534; margin: 8px 0;">${sponsorCode}</p>
+        </div>
+
+        <div style="text-align: center; margin: 32px 0;">
+          <a href="${claimPageUrl}" style="background-color: #15803d; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Open Claim Page</a>
+        </div>
+
+        <p style="font-size: 13px; color: #6b7280;">Seats are claimed first-come, first-served. Beneficiaries need no account — just the code above.</p>
+        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;">
+        <p style="text-align: center; color: #9ca3af; font-size: 11px;">© ${new Date().getFullYear()} The Muslim Congress. All rights reserved.</p>
+      </div>
+    `,
+    text: `
+      Sponsorship active: ${programmeTitle}
+
+      Dear ${sponsorName},
+
+      You sponsored ${seatCount} seat(s). Sponsor code: ${sponsorCode}
+      Beneficiaries claim here: ${claimPageUrl}
+    `,
+  }),
   programmeCertificateThankYou: (name: string, programmeTitle: string, registrationId: string, materials: any[] = []) => ({
     subject: `Thank You for Attending: ${programmeTitle} - Certificate Included`,
     html: `

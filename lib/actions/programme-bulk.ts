@@ -17,6 +17,7 @@ import crypto from "crypto";
 import { getEffectiveAmount, getActiveEarlyBird } from "@/lib/pricing";
 import { getEarlyBirdTiers } from "@/lib/actions/programme-early-bird";
 import { initializePayment, verifyPayment, guestCreationCapHit } from "@/lib/payments";
+import { sendEmail, emailTemplates } from "@/lib/email";
 
 function genToken(): string {
     return crypto.randomBytes(24).toString("base64url");
@@ -211,10 +212,15 @@ export async function verifyBulkPayment(groupId: string, reference: string) {
         amountPaid: group.amountPerAttendee as any,
     } as any).where(eq(programmeRegistrations.bulkGroupId, groupId));
 
-    // Finance inflow
+    // Finance inflow (performer falls back to first user for guest paymasters)
     if (group.programmeId) {
         const [prog] = await db.select({ orgId: programmes.organizationId }).from(programmes).where(eq(programmes.id, group.programmeId)).limit(1);
-        if (prog?.orgId && group.paymasterUserId) {
+        let performerId = group.paymasterUserId;
+        if (!performerId) {
+            const [firstUser] = await db.select({ id: users.id }).from(users).orderBy(asc(users.createdAt)).limit(1);
+            performerId = firstUser?.id || null;
+        }
+        if (prog?.orgId && performerId) {
             await db.insert(financeTransactions).values({
                 id: uuidv4(),
                 organizationId: prog.orgId,
@@ -222,12 +228,15 @@ export async function verifyBulkPayment(groupId: string, reference: string) {
                 amount: amount.toFixed(2) as any,
                 category: "PROGRAMME_BULK_REGISTRATION",
                 description: `Bulk programme registration (${group.attendeeCount} attendees, ${group.paymasterName})`,
-                performedBy: group.paymasterUserId,
+                performedBy: performerId,
                 date: new Date(),
                 metadata: { reference } as any,
             } as any);
         }
     }
+
+    // Notify every attendee with their personal claim link (awaited; helper never throws)
+    await emailBulkClaimLinks(groupId);
 
     revalidatePath(`/dashboard/programmes/bulk`);
     return { success: true };
@@ -267,6 +276,33 @@ export async function claimBulkSeat(data: {
     } as any).where(eq(programmeRegistrations.id, reg.id));
 
     return { success: true, programmeId: reg.programmeId, name: reg.name };
+}
+
+/**
+ * Email every attendee their personal claim link (best-effort, never throws).
+ * Called after a bulk group is paid (standalone or together checkout).
+ */
+export async function emailBulkClaimLinks(groupId: string) {
+    try {
+        const [group] = await db.select().from(bulkRegistrationGroups).where(eq(bulkRegistrationGroups.id, groupId)).limit(1);
+        if (!group) return;
+        const [prog] = await db.select().from(programmes).where(eq(programmes.id, group.programmeId)).limit(1);
+        const attendees = await listBulkAttendees(groupId);
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || "";
+        if (!baseUrl) return;
+        await Promise.all(attendees.map((a: any) => {
+            if (!a.email || !a.bulkClaimToken) return Promise.resolve();
+            const template = emailTemplates.bulkSeatClaim(
+                a.name || "Participant",
+                prog?.title || "Programme",
+                `${baseUrl}/programmes/bulk/claim?token=${a.bulkClaimToken}`,
+                group.paymasterName || "Your sponsor"
+            );
+            return sendEmail({ to: a.email, subject: template.subject, html: template.html, text: template.text, template: "bulk_seat_claim" });
+        })).catch((err) => console.error("Error sending bulk claim emails:", err));
+    } catch (err) {
+        console.error("emailBulkClaimLinks failed:", err);
+    }
 }
 
 /**

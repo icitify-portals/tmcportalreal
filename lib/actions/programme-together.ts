@@ -22,9 +22,11 @@ import {
 } from "@/lib/actions/programmes";
 import {
     createBulkRegistration,
+    emailBulkClaimLinks,
 } from "@/lib/actions/programme-bulk";
 import {
     createSponsorshipPool,
+    emailSponsorCode,
 } from "@/lib/actions/programme-sponsorship";
 
 export interface TogetherAttendeeInput {
@@ -325,5 +327,11 @@ export async function verifyTogetherPayment(data: { registrationId: string; grou
     revalidatePath(`/programmes/registrations/${data.registrationId}/slip`);
     revalidatePath("/dashboard/programmes/sponsorship");
     revalidatePath("/dashboard/programmes/bulk");
+
+    // Notify attendees / sponsor (awaited; helpers never throw).
+    // Only for sides completed in this call — already-paid sides were notified before.
+    if (group && !groupDone) await emailBulkClaimLinks(group.id);
+    if (pool && !poolDone) await emailSponsorCode(pool.id);
+
     return { success: true, registrationId: data.registrationId, groupId: data.groupId, poolId: data.poolId, sponsorCode: pool?.sponsorCode };
 }

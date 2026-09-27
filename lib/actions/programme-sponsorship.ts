@@ -9,7 +9,7 @@ import {
     payments,
     financeTransactions,
 } from "@/lib/db/schema";
-import { and, eq, desc } from "drizzle-orm";
+import { and, eq, desc, asc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { getServerSession } from "@/lib/session";
 import { v4 as uuidv4 } from "uuid";
@@ -17,6 +17,7 @@ import crypto from "crypto";
 import { getEffectiveAmount } from "@/lib/pricing";
 import { getEarlyBirdTiers } from "@/lib/actions/programme-early-bird";
 import { initializePayment, verifyPayment, guestCreationCapHit } from "@/lib/payments";
+import { sendEmail, emailTemplates } from "@/lib/email";
 
 function genSponsorCode(): string {
     return "SP-" + crypto.randomBytes(4).toString("hex").toUpperCase();
@@ -164,7 +165,13 @@ export async function verifySponsorshipPayment(poolId: string, reference: string
 
     if (pool.programmeId) {
         const [prog] = await db.select({ orgId: programmes.organizationId }).from(programmes).where(eq(programmes.id, pool.programmeId)).limit(1);
-        if (prog?.orgId && pool.sponsorUserId) {
+        // Performer falls back to first user for guest sponsors (keeps finance rollups complete)
+        let performerId = pool.sponsorUserId;
+        if (!performerId) {
+            const [firstUser] = await db.select({ id: users.id }).from(users).orderBy(asc(users.createdAt)).limit(1);
+            performerId = firstUser?.id || null;
+        }
+        if (prog?.orgId && performerId) {
             await db.insert(financeTransactions).values({
                 id: uuidv4(),
                 organizationId: prog.orgId,
@@ -172,19 +179,45 @@ export async function verifySponsorshipPayment(poolId: string, reference: string
                 amount: amount.toFixed(2) as any,
                 category: "PROGRAMME_SPONSORSHIP",
                 description: `Sponsored seats (${pool.seatCount} seats, ${pool.sponsorName})`,
-                performedBy: pool.sponsorUserId,
+                performedBy: performerId,
                 date: new Date(),
                 metadata: { reference } as any,
             } as any);
         }
     }
 
+    // Notify the sponsor with their code (awaited; helper never throws)
+    await emailSponsorCode(poolId);
+
     revalidatePath("/dashboard/programmes/sponsorship");
     return { success: true, sponsorCode: pool.sponsorCode };
 }
 
-/** Public: look up a pool by sponsor code (claim page). */
-export async function getSponsorshipPoolByCode(code: string) {
+/**
+ * Email the sponsor their code + claim page link (best-effort, never throws).
+ * Called after a pool is paid (standalone or together checkout).
+ */
+export async function emailSponsorCode(poolId: string) {
+    try {
+        const [pool] = await db.select().from(programmeSponsorshipPools).where(eq(programmeSponsorshipPools.id, poolId)).limit(1);
+        if (!pool || !pool.sponsorEmail) return;
+        const [prog] = await db.select().from(programmes).where(eq(programmes.id, pool.programmeId)).limit(1);
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || "";
+        if (!baseUrl) return;
+        const template = emailTemplates.sponsorshipCode(
+            pool.sponsorName || "Sponsor",
+            prog?.title || "Programme",
+            pool.seatCount,
+            pool.sponsorCode,
+            `${baseUrl}/programmes/sponsored/claim?code=${pool.sponsorCode}`
+        );
+        await sendEmail({ to: pool.sponsorEmail, subject: template.subject, html: template.html, text: template.text, template: "sponsorship_code" });
+    } catch (err) {
+        console.error("emailSponsorCode failed:", err);
+    }
+}
+
+/** Public: look up a pool by sponsor code (claim page). */export async function getSponsorshipPoolByCode(code: string) {
     const normalized = (code || "").trim().toUpperCase();
     if (!normalized) return null;
     const [pool] = await db.select().from(programmeSponsorshipPools).where(eq(programmeSponsorshipPools.sponsorCode, normalized)).limit(1);
