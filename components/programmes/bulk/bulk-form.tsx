@@ -20,14 +20,14 @@ export function BulkRegistrationForm({ programmes: preselectedProgrammes }: { pr
     const [paymasterName, setPaymasterName] = useState("");
     const [paymasterEmail, setPaymasterEmail] = useState("");
     const [paymasterPhone, setPaymasterPhone] = useState("");
-    const [attendees, setAttendees] = useState([{ name: "", email: "", phone: "" }, { name: "", email: "", phone: "" }]);
+    const [attendees, setAttendees] = useState([{ name: "", email: "", phone: "", memberId: "" }, { name: "", email: "", phone: "", memberId: "" }]);
     const [notes, setNotes] = useState("");
     const [pending, startTransition] = useTransition();
     const [groupId, setGroupId] = useState<string | null>(null);
     const [perAttendee, setPerAttendee] = useState<number>(0);
     const [totalAmount, setTotalAmount] = useState<number>(0);
 
-    function addRow() { setAttendees((a) => [...a, { name: "", email: "", phone: "" }]); }
+    function addRow() { setAttendees((a) => [...a, { name: "", email: "", phone: "", memberId: "" }]); }
     function removeRow(i: number) { setAttendees((a) => a.filter((_, x) => x !== i)); }
     function update(i: number, field: string, value: string) {
         setAttendees((a) => a.map((r, x) => (x === i ? { ...r, [field]: value } : r)));
@@ -37,7 +37,7 @@ export function BulkRegistrationForm({ programmes: preselectedProgrammes }: { pr
         const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
         const rows = lines.map((l) => {
             const parts = l.split(/[,\t]/).map(p => p.trim());
-            return { name: parts[0] || "", email: parts[1] || "", phone: parts[2] || "" };
+            return { name: parts[0] || "", email: parts[1] || "", phone: parts[2] || "", memberId: parts[3] || "" };
         }).filter(r => r.name && r.email);
         if (rows.length) setAttendees(rows);
     }
@@ -101,13 +101,14 @@ export function BulkRegistrationForm({ programmes: preselectedProgrammes }: { pr
                     <Label>Attendees</Label>
                     <Button size="sm" variant="outline" onClick={addRow}><Plus className="h-3 w-3 mr-1" />Add row</Button>
                 </div>
-                <Textarea placeholder="Or bulk paste: One attendee per line — Name, Email, Phone&#10;Ahmed Musa, ahmed@x.com, 08012345678&#10;Fatima Zahra, fatima@x.com, 08087654321" onBlur={(e) => { if (e.target.value.trim()) bulkPaste(e.target.value); }} rows={3} />
+                <Textarea placeholder="Or bulk paste: One attendee per line — Name, Email, Phone, Membership ID (optional)&#10;Ahmed Musa, ahmed@x.com, 08012345678, TMC/2024/001&#10;Fatima Zahra, fatima@x.com, 08087654321" onBlur={(e) => { if (e.target.value.trim()) bulkPaste(e.target.value); }} rows={3} />
                 <div className="space-y-2 mt-3 max-h-72 overflow-auto">
                     {attendees.map((a, i) => (
-                        <div key={i} className="grid grid-cols-[1fr_1.4fr_1fr_36px] gap-2">
+                        <div key={i} className="grid grid-cols-[1fr_1.4fr_1fr_1fr_36px] gap-2">
                             <Input value={a.name} onChange={(e) => update(i, "name", e.target.value)} placeholder="Full name" />
                             <Input type="email" value={a.email} onChange={(e) => update(i, "email", e.target.value)} placeholder="Email" />
                             <Input value={a.phone} onChange={(e) => update(i, "phone", e.target.value)} placeholder="Phone" />
+                            <Input value={(a as any).memberId || ""} onChange={(e) => update(i, "memberId", e.target.value)} placeholder="Membership ID (optional)" />
                             <Button size="icon" variant="ghost" onClick={() => removeRow(i)} disabled={attendees.length <= 1}><Trash2 className="h-4 w-4 text-rose-500" /></Button>
                         </div>
                     ))}

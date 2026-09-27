@@ -72,7 +72,7 @@ export function RegisterForProgrammeDialog({
     const [paymentMethod, setPaymentMethod] = useState<"PAYSTACK" | "WALLET">("PAYSTACK")
     // Pay-together extras: named people (bulk) or open seats (sponsorship), one checkout
     const [extrasMode, setExtrasMode] = useState<"none" | "named" | "open">("none")
-    const [extraRows, setExtraRows] = useState([{ name: "", email: "" }])
+    const [extraRows, setExtraRows] = useState([{ name: "", email: "", memberId: "" }])
     const [extraSeats, setExtraSeats] = useState("5")
     
     // Guest form state
@@ -299,13 +299,14 @@ export function RegisterForProgrammeDialog({
                             {extrasMode === "named" && (
                                 <div className="space-y-2">
                                     {extraRows.map((r, i) => (
-                                        <div key={i} className="grid grid-cols-[1fr_1fr_36px] gap-2">
+                                        <div key={i} className="grid grid-cols-[1fr_1fr_1fr_36px] gap-2">
                                             <Input value={r.name} onChange={(e) => setExtraRows(extraRows.map((x, j) => j === i ? { ...x, name: e.target.value } : x))} placeholder="Full name" />
                                             <Input type="email" value={r.email} onChange={(e) => setExtraRows(extraRows.map((x, j) => j === i ? { ...x, email: e.target.value } : x))} placeholder="Email" />
+                                            <Input value={(r as any).memberId || ""} onChange={(e) => setExtraRows(extraRows.map((x, j) => j === i ? { ...x, memberId: e.target.value } : x))} placeholder="Member ID (optional)" />
                                             <Button type="button" size="icon" variant="ghost" onClick={() => setExtraRows(extraRows.filter((_, j) => j !== i))} disabled={extraRows.length <= 1}>×</Button>
                                         </div>
                                     ))}
-                                    <Button type="button" size="sm" variant="outline" onClick={() => extraRows.length < 100 && setExtraRows([...extraRows, { name: "", email: "" }])}>+ Add person</Button>
+                                    <Button type="button" size="sm" variant="outline" onClick={() => extraRows.length < 100 && setExtraRows([...extraRows, { name: "", email: "", memberId: "" }])}>+ Add person</Button>
                                 </div>
                             )}
 

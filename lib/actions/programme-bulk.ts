@@ -111,6 +111,7 @@ export async function createBulkRegistration(data: {
         await db.insert(programmeRegistrations).values({
             id: regId,
             programmeId: data.programmeId,
+            memberId: a.memberId?.trim() || null,
             name: a.name.trim(),
             email: a.email.trim(),
             phone: a.phone || null,
