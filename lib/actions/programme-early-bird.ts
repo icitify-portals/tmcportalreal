@@ -14,7 +14,7 @@ export interface EarlyBirdTierInput {
     amount: number | string;
 }
 
-export function validateEarlyBirdTiers(tiers: EarlyBirdTierInput[] | undefined | null): { valid: boolean; error?: string } {
+export async function validateEarlyBirdTiers(tiers: EarlyBirdTierInput[] | undefined | null): Promise<{ valid: boolean; error?: string }> {
     if (!tiers || tiers.length === 0) return { valid: true };
     if (tiers.length > 10) return { valid: false, error: "At most 10 early bird windows allowed" };
     for (let i = 0; i < tiers.length; i++) {
@@ -40,7 +40,7 @@ export async function replaceEarlyBirdTiers(programmeId: string, tiers: EarlyBir
     const session = await getServerSession();
     if (!session?.user?.id) return { success: false, error: "Unauthorized" };
 
-    const check = validateEarlyBirdTiers(tiers);
+    const check = await validateEarlyBirdTiers(tiers);
     if (!check.valid) return { success: false, error: check.error };
 
     const [prog] = await db.select({ id: programmes.id }).from(programmes).where(eq(programmes.id, programmeId)).limit(1);

@@ -381,7 +381,7 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
         const validData = ProgrammeSchema.parse(data)
 
         // Validate phased early bird windows early (fail fast before any insert)
-        const tierCheck = validateEarlyBirdTiers((validData as any).earlyBirdTiers)
+        const tierCheck = await validateEarlyBirdTiers((validData as any).earlyBirdTiers)
         if (!tierCheck.valid) return { success: false, error: tierCheck.error }
 
         // Retrieve sliding window settings
@@ -1692,7 +1692,7 @@ export async function updateProgramme(programmeId: string, data: Partial<z.infer
 
         // Validate phased early bird windows early when supplied
         if ((validData as any).earlyBirdTiers !== undefined) {
-            const tierCheck = validateEarlyBirdTiers((validData as any).earlyBirdTiers)
+            const tierCheck = await validateEarlyBirdTiers((validData as any).earlyBirdTiers)
             if (!tierCheck.valid) return { success: false, error: tierCheck.error }
         }
 
