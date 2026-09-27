@@ -12,6 +12,7 @@ export function SponsoredClaimForm({ sponsorCode, programmeTitle }: { sponsorCod
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [phone, setPhone] = useState("");
+    const [memberId, setMemberId] = useState("");
     const [pending, setPending] = useState(false);
     const [done, setDone] = useState<{ registrationId: string } | null>(null);
 
@@ -20,7 +21,7 @@ export function SponsoredClaimForm({ sponsorCode, programmeTitle }: { sponsorCod
         if (!name.trim() || !email.trim()) return toast.error("Name and email are required");
         setPending(true);
         try {
-            const res = await claimSponsoredSeat({ sponsorCode, name: name.trim(), email: email.trim(), phone: phone.trim() || undefined });
+            const res = await claimSponsoredSeat({ sponsorCode, name: name.trim(), email: email.trim(), phone: phone.trim() || undefined, memberId: memberId.trim() || undefined });
             if (res.success) {
                 setDone({ registrationId: (res as any).registrationId });
                 toast.success("Sponsored seat claimed!");
@@ -60,6 +61,10 @@ export function SponsoredClaimForm({ sponsorCode, programmeTitle }: { sponsorCod
             <div>
                 <Label>Phone (optional)</Label>
                 <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="080..." />
+            </div>
+            <div>
+                <Label>Membership ID (optional — links this seat to your TMC membership)</Label>
+                <Input value={memberId} onChange={(e) => setMemberId(e.target.value)} placeholder="e.g. TMC/2024/001" />
             </div>
             <Button type="submit" disabled={pending} className="w-full bg-emerald-700 hover:bg-emerald-800">
                 {pending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <TicketCheck className="h-4 w-4 mr-2" />}

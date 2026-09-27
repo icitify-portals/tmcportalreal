@@ -22,6 +22,7 @@ export function ClaimForm({ token, registration, programme }: { token: string; r
         phone: registration.phone || "",
         gender: registration.gender || "MALE",
         address: registration.address || "",
+        memberId: registration.memberId || "",
     });
 
     async function onSubmit(e: React.FormEvent) {
@@ -55,6 +56,7 @@ export function ClaimForm({ token, registration, programme }: { token: string; r
                         </div>
                     </div>
                     <div><Label>Address (optional)</Label><Textarea value={data.address} onChange={(e) => setData({ ...data, address: e.target.value })} rows={2} /></div>
+                    <div><Label>Membership ID (optional — links this seat to your TMC membership)</Label><Input value={data.memberId} onChange={(e) => setData({ ...data, memberId: e.target.value })} placeholder="e.g. TMC/2024/001" /></div>
                     <Button type="submit" disabled={pending} className="w-full bg-emerald-700 hover:bg-emerald-800">
                         {pending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CheckCircle className="h-4 w-4 mr-2" />}
                         Confirm my seat

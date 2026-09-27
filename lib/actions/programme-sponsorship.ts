@@ -16,7 +16,7 @@ import { v4 as uuidv4 } from "uuid";
 import crypto from "crypto";
 import { getEffectiveAmount } from "@/lib/pricing";
 import { getEarlyBirdTiers } from "@/lib/actions/programme-early-bird";
-import { initializePayment, verifyPayment } from "@/lib/payments";
+import { initializePayment, verifyPayment, guestCreationCapHit } from "@/lib/payments";
 
 function genSponsorCode(): string {
     return "SP-" + crypto.randomBytes(4).toString("hex").toUpperCase();
@@ -35,7 +35,6 @@ export async function createSponsorshipPool(data: {
     notes?: string;
 }) {
     const session = await getServerSession();
-    if (!session?.user?.id) return { success: false, error: "Unauthorized" };
 
     const seatCount = Math.floor(Number(data.seatCount));
     if (!seatCount || seatCount < 1) return { success: false, error: "Seat count must be at least 1" };
@@ -43,6 +42,18 @@ export async function createSponsorshipPool(data: {
     if (!data.sponsorName?.trim() || !data.sponsorEmail?.trim()) {
         return { success: false, error: "Sponsor name and email are required" };
     }
+
+    // Guest (no-account) sponsors allowed — abuse-guarded by per-email daily cap
+    if (!session?.user?.id) {
+        if (await guestCreationCapHit(data.sponsorEmail)) {
+            return { success: false, error: "Too many sponsorships from this email in the last 24 hours. Please try again tomorrow." };
+        }
+    }
+
+    // Normalize contact fields
+    data.sponsorName = data.sponsorName.trim();
+    data.sponsorEmail = data.sponsorEmail.trim().toLowerCase();
+    if (data.sponsorPhone) data.sponsorPhone = data.sponsorPhone.trim();
 
     const [prog] = await db.select().from(programmes).where(eq(programmes.id, data.programmeId)).limit(1);
     if (!prog) return { success: false, error: "Programme not found" };
@@ -78,10 +89,10 @@ export async function createSponsorshipPool(data: {
     await db.insert(programmeSponsorshipPools).values({
         id: poolId,
         programmeId: data.programmeId,
-        sponsorUserId: session.user.id,
-        sponsorName: data.sponsorName.trim(),
-        sponsorEmail: data.sponsorEmail.trim(),
-        sponsorPhone: data.sponsorPhone?.trim() || null,
+        sponsorUserId: session?.user?.id || null,
+        sponsorName: data.sponsorName,
+        sponsorEmail: data.sponsorEmail,
+        sponsorPhone: data.sponsorPhone || null,
         seatCount,
         seatsClaimed: 0,
         amountPerSeat: perSeat.toFixed(2) as any,
@@ -99,9 +110,13 @@ export async function createSponsorshipPool(data: {
 /** Initialize Paystack payment for the whole sponsored pool. */
 export async function initializeSponsorshipPayment(poolId: string) {
     const session = await getServerSession();
-    if (!session?.user?.id) return { success: false, error: "Unauthorized" };
     const [pool] = await db.select().from(programmeSponsorshipPools).where(eq(programmeSponsorshipPools.id, poolId)).limit(1);
     if (!pool) return { success: false, error: "Sponsorship not found" };
+    // Guest pools (no sponsorUserId) can be paid by anyone with the link;
+    // member-owned pools only by their owner.
+    if (pool.sponsorUserId && pool.sponsorUserId !== session?.user?.id) {
+        return { success: false, error: "Only the sponsor can pay for this sponsorship" };
+    }
     if (pool.status === "PAID") return { success: false, error: "Already paid" };
     if (pool.status === "CANCELLED") return { success: false, error: "This sponsorship was cancelled" };
 
@@ -109,7 +124,7 @@ export async function initializeSponsorshipPayment(poolId: string) {
     const res = await initializePayment({
         email: pool.sponsorEmail,
         amount: Number(pool.totalAmount),
-        callbackUrl: `${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL}/dashboard/programmes/sponsorship/verify?pool=${poolId}`,
+        callbackUrl: `${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL}/programmes/sponsored/verify?pool=${poolId}`,
         subaccount: (prog as any)?.paystackSubaccountCode || undefined,
         metadata: { sponsorshipPoolId: poolId, type: "SPONSORSHIP_POOL" },
     });

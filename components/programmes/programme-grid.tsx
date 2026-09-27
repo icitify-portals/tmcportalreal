@@ -80,6 +80,7 @@ export async function ProgrammeGrid({ level, state, organizationId, organization
                                 <div className="text-[11px] space-y-1">
                                     <div><Link href="/dashboard/programmes/bulk" className="text-emerald-700 underline">Register multiple people at once →</Link></div>
                                     <div><Link href="/dashboard/programmes/sponsorship" className="text-emerald-700 underline">Sponsor seats for others →</Link></div>
+                                    <div><Link href="/programmes/pay-for-others" className="text-emerald-700 underline">Pay for others, no account needed →</Link></div>
                                 </div>
                             )}
 

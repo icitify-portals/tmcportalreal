@@ -1,7 +1,7 @@
 import axios from "axios"
 import { db } from "@/lib/db"
-import { payments, paymentStatusEnum, paymentTypeEnum, fundraisingCampaigns, financeTransactions, organizations, users } from "@/lib/db/schema"
-import { eq, sql, asc } from "drizzle-orm"
+import { payments, paymentStatusEnum, paymentTypeEnum, fundraisingCampaigns, financeTransactions, organizations, users, bulkRegistrationGroups, programmeSponsorshipPools } from "@/lib/db/schema"
+import { eq, sql, asc, gte, and } from "drizzle-orm"
 
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY || ""
 const PAYSTACK_PUBLIC_KEY = process.env.PAYSTACK_PUBLIC_KEY || ""
@@ -241,6 +241,29 @@ export async function listBanks() {
     return response.data.data // Array of { name, code }
   } catch (error) {
     return []
+  }
+}
+
+/**
+ * Abuse guard for guest (no-account) paymasters: max N creations per email per 24h
+ * across bulk groups + sponsorship pools. Returns true when the cap is hit.
+ */
+export async function guestCreationCapHit(email: string, maxPerDay = 5): Promise<boolean> {
+  try {
+    const since = new Date(Date.now() - 24 * 3600 * 1000);
+    const normalized = email.trim().toLowerCase();
+    const bulk = await db
+      .select({ id: bulkRegistrationGroups.id })
+      .from(bulkRegistrationGroups)
+      .where(and(gte(bulkRegistrationGroups.createdAt, since), sql`LOWER(${bulkRegistrationGroups.paymasterEmail}) = ${normalized}`));
+    if (bulk.length >= maxPerDay) return true;
+    const pools = await db
+      .select({ id: programmeSponsorshipPools.id })
+      .from(programmeSponsorshipPools)
+      .where(and(gte(programmeSponsorshipPools.createdAt, since), sql`LOWER(${programmeSponsorshipPools.sponsorEmail}) = ${normalized}`));
+    return bulk.length + pools.length >= maxPerDay;
+  } catch {
+    return false;
   }
 }
 

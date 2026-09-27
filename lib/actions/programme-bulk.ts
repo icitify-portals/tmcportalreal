@@ -16,7 +16,7 @@ import { v4 as uuidv4 } from "uuid";
 import crypto from "crypto";
 import { getEffectiveAmount, getActiveEarlyBird } from "@/lib/pricing";
 import { getEarlyBirdTiers } from "@/lib/actions/programme-early-bird";
-import { initializePayment, verifyPayment } from "@/lib/payments";
+import { initializePayment, verifyPayment, guestCreationCapHit } from "@/lib/payments";
 
 function genToken(): string {
     return crypto.randomBytes(24).toString("base64url");
@@ -44,12 +44,25 @@ export async function createBulkRegistration(data: {
     notes?: string;
 }) {
     const session = await getServerSession();
-    if (!session?.user?.id) return { success: false, error: "Unauthorized" };
 
     if (!data.attendees?.length || data.attendees.length < 1)
         return { success: false, error: "Add at least one attendee" };
     if (data.attendees.length > 500)
         return { success: false, error: "Max 500 attendees per bulk" };
+    if (!data.paymasterName?.trim() || !data.paymasterEmail?.trim())
+        return { success: false, error: "Paymaster name and email are required" };
+
+    // Guest (no-account) paymasters allowed — abuse-guarded by per-email daily cap
+    if (!session?.user?.id) {
+        if (await guestCreationCapHit(data.paymasterEmail)) {
+            return { success: false, error: "Too many bulk registrations from this email in the last 24 hours. Please try again tomorrow." };
+        }
+    }
+
+    // Normalize contact fields (email gate on the public manage page depends on exact match)
+    data.paymasterName = data.paymasterName.trim();
+    data.paymasterEmail = data.paymasterEmail.trim().toLowerCase();
+    if (data.paymasterPhone) data.paymasterPhone = data.paymasterPhone.trim();
 
     // Validate programme
     const [prog] = await db.select().from(programmes).where(eq(programmes.id, data.programmeId)).limit(1);
@@ -77,7 +90,7 @@ export async function createBulkRegistration(data: {
     await db.insert(bulkRegistrationGroups).values({
         id: groupId,
         programmeId: data.programmeId,
-        paymasterUserId: session.user.id,
+        paymasterUserId: session?.user?.id || null,
         paymasterName: data.paymasterName,
         paymasterEmail: data.paymasterEmail,
         paymasterPhone: data.paymasterPhone || null,
@@ -132,9 +145,13 @@ export async function createBulkRegistration(data: {
  */
 export async function initializeBulkPayment(groupId: string) {
     const session = await getServerSession();
-    if (!session?.user?.id) return { success: false, error: "Unauthorized" };
     const [group] = await db.select().from(bulkRegistrationGroups).where(eq(bulkRegistrationGroups.id, groupId)).limit(1);
     if (!group) return { success: false, error: "Group not found" };
+    // Guest groups (no paymasterUserId) can be paid by anyone with the link (paying is harmless);
+    // member-owned groups can only be paid by their owner (or any official flow already authorized).
+    if (group.paymasterUserId && group.paymasterUserId !== session?.user?.id) {
+        return { success: false, error: "Only the paymaster can pay for this group" };
+    }
     if (group.status === "PAID") return { success: false, error: "Already paid" };
     if (Number(group.totalAmount) <= 0) {
         // Free event — mark paid directly, no payment needed
@@ -146,7 +163,7 @@ export async function initializeBulkPayment(groupId: string) {
     const res = await initializePayment({
         email: group.paymasterEmail,
         amount: Number(group.totalAmount),
-        callbackUrl: `${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL}/dashboard/programmes/bulk/verify?group=${groupId}`,
+        callbackUrl: `${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL}/programmes/bulk/verify?group=${groupId}`,
         subaccount: (prog as any)?.paystackSubaccountCode || undefined,
         metadata: { bulkGroupId: groupId, type: "BULK_REGISTRATION_FEE" },
     });
@@ -234,7 +251,12 @@ export async function claimBulkSeat(data: {
     if (!reg) return { success: false, error: "Link not found or already used" };
     if (reg.bulkClaimedAt) return { success: false, error: "Already claimed" };
 
+    // Link the claim to the logged-in member account when available (fixes "Guest" display)
+    const session = await getServerSession();
+
     await db.update(programmeRegistrations).set({
+        userId: reg.userId || session?.user?.id || null,
+        memberId: data.memberId?.trim() || reg.memberId,
         name: data.name?.trim() || reg.name,
         email: data.email?.trim() || reg.email,
         phone: data.phone || reg.phone,
@@ -244,6 +266,22 @@ export async function claimBulkSeat(data: {
     } as any).where(eq(programmeRegistrations.id, reg.id));
 
     return { success: true, programmeId: reg.programmeId, name: reg.name };
+}
+
+/**
+ * Public manage view for (guest) paymasters: group + attendees iff the
+ * supplied email matches the paymaster email (case-insensitive).
+ */
+export async function getBulkGroupForManager(groupId: string, email: string) {
+    if (!groupId || !email?.trim()) return { success: false as const, error: "Group and email are required" };
+    const [group] = await db.select().from(bulkRegistrationGroups).where(eq(bulkRegistrationGroups.id, groupId)).limit(1);
+    if (!group) return { success: false as const, error: "Group not found" };
+    if ((group.paymasterEmail || "").toLowerCase() !== email.trim().toLowerCase()) {
+        return { success: false as const, error: "Email does not match this group's paymaster" };
+    }
+    const [prog] = await db.select().from(programmes).where(eq(programmes.id, group.programmeId)).limit(1);
+    const attendees = await listBulkAttendees(groupId);
+    return { success: true as const, group, programme: prog, attendees };
 }
 
 /**
