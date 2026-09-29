@@ -31,6 +31,7 @@ export interface BulkAttendeeInput {
     memberId?: string;
     gender?: string;
     address?: string;
+    country?: string;
     state?: string;
     lga?: string;
     branch?: string;
@@ -123,7 +124,7 @@ export async function createBulkRegistration(data: {
             phone: a.phone?.trim() || null,
             gender: a.gender?.trim() || null,
             address: a.address?.trim() || null,
-            country: "Nigeria",
+            country: a.country?.trim() || "Nigeria",
             state: a.state?.trim() || null,
             lga: a.lga?.trim() || null,
             branch: a.branch?.trim() || null,
@@ -262,6 +263,7 @@ export async function claimBulkSeat(data: {
     gender?: string;
     address?: string;
     memberId?: string;
+    country?: string;
     state?: string;
     lga?: string;
 }) {
@@ -282,6 +284,7 @@ export async function claimBulkSeat(data: {
         phone: data.phone?.trim() || reg.phone,
         gender: data.gender?.trim() || reg.gender,
         address: data.address?.trim() || reg.address,
+        country: data.country?.trim() || reg.country,
         state: data.state?.trim() || reg.state,
         lga: data.lga?.trim() || reg.lga,
         bulkClaimedAt: new Date(),
@@ -332,6 +335,7 @@ export async function updateBulkAttendee(data: {
     gender?: string;
     address?: string;
     memberId?: string;
+    country?: string;
     state?: string;
     lga?: string;
 }) {
@@ -360,6 +364,7 @@ export async function updateBulkAttendee(data: {
         phone: data.phone?.trim() || null,
         gender: data.gender?.trim() || reg.gender,
         address: data.address?.trim() || null,
+        country: data.country?.trim() || reg.country,
         state: data.state?.trim() || reg.state,
         lga: data.lga?.trim() || reg.lga,
         bulkClaimedAt: reg.bulkClaimedAt || new Date(),

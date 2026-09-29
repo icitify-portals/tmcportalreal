@@ -7,8 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { createBulkRegistration, initializeBulkPayment } from "@/lib/actions/programme-bulk";
+import { countries } from "@/lib/countries";
 import { Loader2, Plus, Trash2, Copy } from "lucide-react";
 
 interface ProgrammeLite { id: string; title: string; amount: any; earlyBirdAmount: any; earlyBirdDeadline: any; paymentRequired: boolean; status: string; organizationName?: string }
@@ -25,6 +27,7 @@ export function BulkRegistrationForm({ programmes: preselectedProgrammes }: { pr
         { name: "", email: "", phone: "", memberId: "", state: "", lga: "" },
     ]);
     const [notes, setNotes] = useState("");
+    const [country, setCountry] = useState("Nigeria");
     const [pending, startTransition] = useTransition();
     const [groupId, setGroupId] = useState<string | null>(null);
     const [perAttendee, setPerAttendee] = useState<number>(0);
@@ -55,7 +58,7 @@ export function BulkRegistrationForm({ programmes: preselectedProgrammes }: { pr
     async function handleCreate() {
         if (!programmeId) return toast.error("Choose a programme");
         if (!paymasterName.trim() || !paymasterEmail.trim()) return toast.error("Paymaster name + email required");
-        const cleaned = attendees.filter(a => a.name.trim() && a.email.trim());
+        const cleaned = attendees.filter(a => a.name.trim() && a.email.trim()).map(a => ({ ...a, country }));
         if (cleaned.length === 0) return toast.error("Add at least one attendee");
         startTransition(async () => {
             const res: any = await createBulkRegistration({
@@ -109,6 +112,17 @@ export function BulkRegistrationForm({ programmes: preselectedProgrammes }: { pr
             <div>
                 <div className="flex items-center justify-between mb-2">
                     <Label>Attendees</Label>
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">Country (all):</span>
+                        <Select value={country} onValueChange={setCountry}>
+                            <SelectTrigger className="h-8 w-40"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                                {countries.map(c => (
+                                    <SelectItem key={c.code} value={c.name}>{c.name}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
                     <Button size="sm" variant="outline" onClick={addRow}><Plus className="h-3 w-3 mr-1" />Add row</Button>
                 </div>
                 <Textarea placeholder="Or bulk paste: One attendee per line — Name, Email, Phone, Membership ID, State, LGA (last 3 optional)&#10;Ahmed Musa, ahmed@x.com, 08012345678, TMC/2024/001, Lagos, Ikeja&#10;Fatima Zahra, fatima@x.com, 08087654321" onBlur={(e) => { if (e.target.value.trim()) bulkPaste(e.target.value); }} rows={3} />

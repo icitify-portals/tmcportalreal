@@ -12,6 +12,8 @@ import { useRouter } from "next/navigation";
 import { Loader2, CheckCircle } from "lucide-react";
 import { claimBulkSeat } from "@/lib/actions/programme-bulk";
 import { nigerianStatesAndLgas } from "@/lib/nigeria-data";
+import { countries } from "@/lib/countries";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export function ClaimForm({ token, registration, programme }: { token: string; registration: any; programme: any }) {
     const router = useRouter();
@@ -23,9 +25,11 @@ export function ClaimForm({ token, registration, programme }: { token: string; r
         gender: registration.gender || "MALE",
         address: registration.address || "",
         memberId: registration.memberId || "",
+        country: registration.country || "Nigeria",
         state: registration.state || "",
         lga: registration.lga || "",
     });
+    const isNigeria = data.country === "Nigeria";
     const selectedStateData = nigerianStatesAndLgas.find(s => s.state === data.state);
 
     async function onSubmit(e: React.FormEvent) {
@@ -60,32 +64,59 @@ export function ClaimForm({ token, registration, programme }: { token: string; r
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <Label>State</Label>
-                            <select
-                                value={data.state}
-                                onChange={(e) => setData({ ...data, state: e.target.value, lga: "" })}
-                                className="w-full h-9 border rounded-md px-3 text-sm"
-                            >
-                                <option value="">Select state…</option>
-                                {nigerianStatesAndLgas.map(s => (
-                                    <option key={s.state} value={s.state}>{s.state}</option>
-                                ))}
-                            </select>
+                            <Label>Country</Label>
+                            <Select value={data.country} onValueChange={(v) => setData({ ...data, country: v, state: "", lga: "" })}>
+                                <SelectTrigger className="w-full"><SelectValue placeholder="Select country" /></SelectTrigger>
+                                <SelectContent>
+                                    {countries.map(c => (
+                                        <SelectItem key={c.code} value={c.name}>{c.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
-                        <div>
-                            <Label>LGA</Label>
-                            <select
-                                value={data.lga}
-                                onChange={(e) => setData({ ...data, lga: e.target.value })}
-                                disabled={!data.state}
-                                className="w-full h-9 border rounded-md px-3 text-sm disabled:opacity-50"
-                            >
-                                <option value="">{data.state ? "Select LGA…" : "Select state first"}</option>
-                                {selectedStateData?.lgas.map(lga => (
-                                    <option key={lga} value={lga}>{lga}</option>
-                                ))}
-                            </select>
-                        </div>
+                        {isNigeria ? (
+                            <div>
+                                <Label>State</Label>
+                                <select
+                                    value={data.state}
+                                    onChange={(e) => setData({ ...data, state: e.target.value, lga: "" })}
+                                    className="w-full h-9 border rounded-md px-3 text-sm"
+                                >
+                                    <option value="">Select state…</option>
+                                    {nigerianStatesAndLgas.map(s => (
+                                        <option key={s.state} value={s.state}>{s.state}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        ) : (
+                            <div>
+                                <Label>State / Province</Label>
+                                <Input value={data.state} onChange={(e) => setData({ ...data, state: e.target.value })} placeholder="Enter state/province" />
+                            </div>
+                        )}
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {isNigeria ? (
+                            <div>
+                                <Label>LGA</Label>
+                                <select
+                                    value={data.lga}
+                                    onChange={(e) => setData({ ...data, lga: e.target.value })}
+                                    disabled={!data.state}
+                                    className="w-full h-9 border rounded-md px-3 text-sm disabled:opacity-50"
+                                >
+                                    <option value="">{data.state ? "Select LGA…" : "Select state first"}</option>
+                                    {selectedStateData?.lgas.map(lga => (
+                                        <option key={lga} value={lga}>{lga}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        ) : (
+                            <div>
+                                <Label>City / Local Govt</Label>
+                                <Input value={data.lga} onChange={(e) => setData({ ...data, lga: e.target.value })} placeholder="Enter city/LGA" />
+                            </div>
+                        )}
                     </div>
                     <div><Label>Address (optional)</Label><Textarea value={data.address} onChange={(e) => setData({ ...data, address: e.target.value })} rows={2} /></div>
                     <div><Label>Membership ID (optional — links this seat to your TMC membership)</Label><Input value={data.memberId} onChange={(e) => setData({ ...data, memberId: e.target.value })} placeholder="e.g. TMC/2024/001" /></div>

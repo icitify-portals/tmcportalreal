@@ -15,10 +15,12 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Loader2, UserCheck } from "lucide-react";
 import { updateBulkAttendee } from "@/lib/actions/programme-bulk";
 import { nigerianStatesAndLgas } from "@/lib/nigeria-data";
+import { countries } from "@/lib/countries";
 
 /**
  * Lets the paymaster fill in / correct one bulk seat (name, contacts, member ID…).
@@ -43,9 +45,11 @@ export function CompleteAttendeeDialog({
         gender: registration.gender || "MALE",
         address: registration.address || "",
         memberId: registration.memberId || "",
+        country: registration.country || "Nigeria",
         state: registration.state || "",
         lga: registration.lga || "",
     });
+    const isNigeria = form.country === "Nigeria";
     const selectedStateData = nigerianStatesAndLgas.find(s => s.state === form.state);
 
     async function onSubmit(e: React.FormEvent) {
@@ -121,32 +125,59 @@ export function CompleteAttendeeDialog({
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                             <div>
-                                <Label>State</Label>
-                                <select
-                                    value={form.state}
-                                    onChange={(e) => setForm({ ...form, state: e.target.value, lga: "" })}
-                                    className="w-full h-9 border rounded-md px-3 text-sm"
-                                >
-                                    <option value="">Select state…</option>
-                                    {nigerianStatesAndLgas.map(s => (
-                                        <option key={s.state} value={s.state}>{s.state}</option>
-                                    ))}
-                                </select>
+                                <Label>Country</Label>
+                                <Select value={form.country} onValueChange={(v) => setForm({ ...form, country: v, state: "", lga: "" })}>
+                                    <SelectTrigger className="w-full"><SelectValue placeholder="Select country" /></SelectTrigger>
+                                    <SelectContent>
+                                        {countries.map(c => (
+                                            <SelectItem key={c.code} value={c.name}>{c.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
-                            <div>
-                                <Label>LGA</Label>
-                                <select
-                                    value={form.lga}
-                                    onChange={(e) => setForm({ ...form, lga: e.target.value })}
-                                    disabled={!form.state}
-                                    className="w-full h-9 border rounded-md px-3 text-sm disabled:opacity-50"
-                                >
-                                    <option value="">{form.state ? "Select LGA…" : "Select state first"}</option>
-                                    {selectedStateData?.lgas.map(l => (
-                                        <option key={l} value={l}>{l}</option>
-                                    ))}
-                                </select>
-                            </div>
+                            {isNigeria ? (
+                                <div>
+                                    <Label>State</Label>
+                                    <select
+                                        value={form.state}
+                                        onChange={(e) => setForm({ ...form, state: e.target.value, lga: "" })}
+                                        className="w-full h-9 border rounded-md px-3 text-sm"
+                                    >
+                                        <option value="">Select state…</option>
+                                        {nigerianStatesAndLgas.map(s => (
+                                            <option key={s.state} value={s.state}>{s.state}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            ) : (
+                                <div>
+                                    <Label>State / Province</Label>
+                                    <Input value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} placeholder="Enter state/province" />
+                                </div>
+                            )}
+                        </div>
+                        <div>
+                            {isNigeria ? (
+                                <div>
+                                    <Label>LGA</Label>
+                                    <select
+                                        value={form.lga}
+                                        onChange={(e) => setForm({ ...form, lga: e.target.value })}
+                                        disabled={!form.state}
+                                        className="w-full h-9 border rounded-md px-3 text-sm disabled:opacity-50"
+                                    >
+                                        <option value="">{form.state ? "Select LGA…" : "Select state first"}</option>
+                                        {selectedStateData?.lgas.map(l => (
+                                            <option key={l} value={l}>{l}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            ) : (
+                                <div>
+                                    <Label>City / Local Govt</Label>
+                                    <Input value={form.lga} onChange={(e) => setForm({ ...form, lga: e.target.value })} placeholder="Enter city/LGA" />
+                                </div>
+                            )}
                         </div>
                         <div>
                             <Label>Address (optional)</Label>

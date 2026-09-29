@@ -242,6 +242,7 @@ export async function claimSponsoredSeat(data: {
     gender?: string;
     address?: string;
     memberId?: string;
+    country?: string;
     state?: string;
     lga?: string;
 }) {
@@ -277,7 +278,7 @@ export async function claimSponsoredSeat(data: {
             phone: data.phone || null,
             gender: data.gender || null,
             address: data.address || null,
-            country: "Nigeria",
+            country: data.country?.trim() || "Nigeria",
             state: data.state?.trim() || null,
             lga: data.lga?.trim() || null,
             status: "PAID" as any,

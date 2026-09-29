@@ -6,9 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { claimSponsoredSeat } from "@/lib/actions/programme-sponsorship";
 import { nigerianStatesAndLgas } from "@/lib/nigeria-data";
+import { countries } from "@/lib/countries";
 import { Loader2, TicketCheck } from "lucide-react";
 
 export function SponsoredClaimForm({ sponsorCode, programmeTitle }: { sponsorCode: string; programmeTitle?: string }) {
@@ -18,10 +20,12 @@ export function SponsoredClaimForm({ sponsorCode, programmeTitle }: { sponsorCod
     const [memberId, setMemberId] = useState("");
     const [gender, setGender] = useState("MALE");
     const [address, setAddress] = useState("");
+    const [country, setCountry] = useState("Nigeria");
     const [state, setState] = useState("");
     const [lga, setLga] = useState("");
     const [pending, setPending] = useState(false);
     const [done, setDone] = useState<{ registrationId: string } | null>(null);
+    const isNigeria = country === "Nigeria";
     const selectedStateData = nigerianStatesAndLgas.find(s => s.state === state);
 
     async function handleClaim(e: React.FormEvent) {
@@ -37,6 +41,7 @@ export function SponsoredClaimForm({ sponsorCode, programmeTitle }: { sponsorCod
                 gender: gender || undefined,
                 address: address.trim() || undefined,
                 memberId: memberId.trim() || undefined,
+                country: country.trim() || undefined,
                 state: state.trim() || undefined,
                 lga: lga.trim() || undefined,
             });
@@ -95,32 +100,59 @@ export function SponsoredClaimForm({ sponsorCode, programmeTitle }: { sponsorCod
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <Label>State</Label>
-                    <select
-                        value={state}
-                        onChange={(e) => { setState(e.target.value); setLga(""); }}
-                        className="w-full h-9 border rounded-md px-3 text-sm"
-                    >
-                        <option value="">Select state…</option>
-                        {nigerianStatesAndLgas.map(s => (
-                            <option key={s.state} value={s.state}>{s.state}</option>
-                        ))}
-                    </select>
+                    <Label>Country</Label>
+                    <Select value={country} onValueChange={(v) => { setCountry(v); setState(""); setLga(""); }}>
+                        <SelectTrigger className="w-full"><SelectValue placeholder="Select country" /></SelectTrigger>
+                        <SelectContent>
+                            {countries.map(c => (
+                                <SelectItem key={c.code} value={c.name}>{c.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                 </div>
-                <div>
-                    <Label>LGA</Label>
-                    <select
-                        value={lga}
-                        onChange={(e) => setLga(e.target.value)}
-                        disabled={!state}
-                        className="w-full h-9 border rounded-md px-3 text-sm disabled:opacity-50"
-                    >
-                        <option value="">{state ? "Select LGA…" : "Select state first"}</option>
-                        {selectedStateData?.lgas.map(l => (
-                            <option key={l} value={l}>{l}</option>
-                        ))}
-                    </select>
-                </div>
+                {isNigeria ? (
+                    <div>
+                        <Label>State</Label>
+                        <select
+                            value={state}
+                            onChange={(e) => { setState(e.target.value); setLga(""); }}
+                            className="w-full h-9 border rounded-md px-3 text-sm"
+                        >
+                            <option value="">Select state…</option>
+                            {nigerianStatesAndLgas.map(s => (
+                                <option key={s.state} value={s.state}>{s.state}</option>
+                            ))}
+                        </select>
+                    </div>
+                ) : (
+                    <div>
+                        <Label>State / Province</Label>
+                        <Input value={state} onChange={(e) => setState(e.target.value)} placeholder="Enter state/province" />
+                    </div>
+                )}
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {isNigeria ? (
+                    <div>
+                        <Label>LGA</Label>
+                        <select
+                            value={lga}
+                            onChange={(e) => setLga(e.target.value)}
+                            disabled={!state}
+                            className="w-full h-9 border rounded-md px-3 text-sm disabled:opacity-50"
+                        >
+                            <option value="">{state ? "Select LGA…" : "Select state first"}</option>
+                            {selectedStateData?.lgas.map(l => (
+                                <option key={l} value={l}>{l}</option>
+                            ))}
+                        </select>
+                    </div>
+                ) : (
+                    <div>
+                        <Label>City / Local Govt</Label>
+                        <Input value={lga} onChange={(e) => setLga(e.target.value)} placeholder="Enter city/LGA" />
+                    </div>
+                )}
             </div>
             <div>
                 <Label>Address (optional)</Label>
