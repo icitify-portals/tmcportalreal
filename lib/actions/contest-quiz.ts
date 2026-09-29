@@ -112,9 +112,28 @@ export async function getQuizByPhase(phaseId: string) {
 export async function startAttempt(quizId: string, participantId: string) {
     const session = await getServerSession();
     if (!session?.user?.id) return { success: false, error: "Unauthorized" };
+
+    // Enforce quiz publish state and availability window
+    const [quiz] = await db.select().from(contestQuizzes).where(eq(contestQuizzes.id, quizId)).limit(1);
+    if (!quiz) return { success: false, error: "Quiz not found" };
+    const isStaff = session.user.isSuperAdmin || !!session.user.officialId || !!session.user.officialLevel;
+    if (!quiz.published && !isStaff) return { success: false, error: "This quiz is not published yet" };
+    const now = new Date();
+    if (quiz.startsAt && now < new Date(quiz.startsAt)) return { success: false, error: "This quiz has not started yet" };
+    if (quiz.endsAt && now > new Date(quiz.endsAt)) return { success: false, error: "This quiz has closed" };
+
     // Already an attempt?
     const existing = await db.select().from(contestQuizAttempts).where(and(eq(contestQuizAttempts.quizId, quizId), eq(contestQuizAttempts.participantId, participantId))).limit(1);
-    if (existing.length) return { success: true, attemptId: existing[0].id, resumed: true };
+    if (existing.length) {
+        // Respect maxAttempts: if configured and attempts already at/over the cap, refuse a fresh attempt
+        // (resuming an in-progress attempt is always allowed)
+        const maxAttempts = quiz.maxAttempts ?? 1;
+        const attemptCount = (await db.select({ id: contestQuizAttempts.id }).from(contestQuizAttempts).where(and(eq(contestQuizAttempts.quizId, quizId), eq(contestQuizAttempts.participantId, participantId)))).length;
+        if (existing[0].status !== 'IN_PROGRESS' && attemptCount >= maxAttempts && maxAttempts > 0) {
+            return { success: false, error: `You have already used all ${maxAttempts} attempt(s)` };
+        }
+        return { success: true, attemptId: existing[0].id, resumed: true };
+    }
     const id = crypto.randomUUID();
     await db.insert(contestQuizAttempts).values({
         id, quizId, participantId,
@@ -173,12 +192,15 @@ export async function finishAttempt(attemptId: string) {
 export async function getAttemptForReview(attemptId: string) {
     const [a] = await db.select().from(contestQuizAttempts).where(eq(contestQuizAttempts.id, attemptId)).limit(1);
     if (!a) return null;
+    const answers = await db.select().from(contestQuizAnswers).where(eq(contestQuizAnswers.attemptId, attemptId));
+    return { attempt: a, answers };
 }
 
 export async function getAttemptLeaderboard(quizId: string) {
-    // For LIVE_SYNC_RACE: rank by correctCount desc, then avg time of correct submissions asc (fastest correct wins).
+    // For LIVE_SYNC_RACE: rank by correctCount desc, then total time asc (fastest correct wins).
     // For ASYNC_STANDARD: rank by totalScore desc.
-    return db
+    const [quiz] = await db.select({ mode: contestQuizzes.mode }).from(contestQuizzes).where(eq(contestQuizzes.id, quizId)).limit(1);
+    const rows = await db
         .select({
             attemptId: contestQuizAttempts.id,
             participantId: contestQuizAttempts.participantId,
@@ -190,6 +212,12 @@ export async function getAttemptLeaderboard(quizId: string) {
         })
         .from(contestQuizAttempts)
         .leftJoin(contestRepresentatives, eq(contestRepresentatives.id, contestQuizAttempts.participantId))
-        .where(and(eq(contestQuizAttempts.quizId, quizId), eq(contestQuizAttempts.status, 'COMPLETED' as any)))
-        .orderBy(desc(contestQuizAttempts.totalScore), asc(contestQuizAttempts.totalTimeMs));
+        .where(and(eq(contestQuizAttempts.quizId, quizId), eq(contestQuizAttempts.status, 'COMPLETED' as any)));
+
+    if (quiz?.mode === 'LIVE_SYNC_RACE') {
+        rows.sort((a: any, b: any) => (b.correctCount - a.correctCount) || (a.totalTimeMs - b.totalTimeMs));
+    } else {
+        rows.sort((a: any, b: any) => (b.totalScore - a.totalScore) || (a.totalTimeMs - b.totalTimeMs));
+    }
+    return rows;
 }

@@ -45,6 +45,22 @@ export function ResultsPanel({ phaseId, initialResults }: { phaseId: string; ini
         <p className="text-sm text-muted-foreground">No results yet. Grade all calls then click <b>Compute/Auto-Promote</b>.</p>
       ) : (
         <div className="space-y-2">
+          {(() => {
+            const winner = results.find((r: any) => r.isWinner || r.rank === 1);
+            return winner ? (
+              <div className="flex items-center gap-3 rounded-lg border-2 border-amber-400 bg-amber-50 px-4 py-3">
+                <Trophy className="h-7 w-7 text-amber-500" />
+                <div>
+                  <div className="text-xs font-bold uppercase tracking-wider text-amber-700">Winner</div>
+                  <div className="font-bold text-lg text-amber-900">{winner.participantName || "Participant"}</div>
+                </div>
+                <div className="ml-auto text-right">
+                  <div className="text-xs text-amber-700">Avg score</div>
+                  <div className="font-bold text-amber-900">{Number(winner.avgScore).toFixed(2)}</div>
+                </div>
+              </div>
+            ) : null;
+          })()}
           {results.map((r: any) => (
             <div key={r.participantId} className={`flex items-center justify-between px-3 py-2 rounded-lg border ${r.rank === 1 ? "bg-amber-50 border-amber-200" : "bg-white"}`}>
               <div className="flex items-center gap-3">
@@ -54,7 +70,10 @@ export function ResultsPanel({ phaseId, initialResults }: { phaseId: string; ini
                   <div className="text-xs text-muted-foreground">Avg score: {Number(r.avgScore).toFixed(2)} (total {r.totalScore})</div>
                 </div>
               </div>
-              {r.promoted && <Badge className="bg-emerald-600 text-white"><Award className="h-3 w-3 mr-1" />PROMOTED</Badge>}
+              <div className="flex items-center gap-2">
+                {(r.isWinner || r.rank === 1) && <Badge className="bg-amber-500 text-white"><Trophy className="h-3 w-3 mr-1" />WINNER</Badge>}
+                {r.promoted && <Badge className="bg-emerald-600 text-white"><Award className="h-3 w-3 mr-1" />PROMOTED</Badge>}
+              </div>
             </div>
           ))}
           <p className="text-xs text-muted-foreground">Top finishers auto-advance to the next phase. Use <b>Announce</b> or the broadcast module to publish results portal-wide.</p>

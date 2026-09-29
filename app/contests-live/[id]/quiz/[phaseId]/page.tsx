@@ -5,7 +5,7 @@ import { getContestById } from "@/lib/actions/contests";
 import { getQuizByPhase } from "@/lib/actions/contest-quiz";
 import { db } from "@/lib/db";
 import { contestRepresentatives } from "@/lib/db/schema";
-import { and, eq } from "drizzle-orm";
+import { and, eq, or, isNull } from "drizzle-orm";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { Badge } from "@/components/ui/badge";
 import { Zap, BookOpen, Trophy } from "lucide-react";
@@ -23,9 +23,17 @@ export default async function TakeQuizPage({ params }: { params: Promise<{ id: s
 
     const { quiz, questions } = result;
 
-    // Representative of current user
+    // Representative of current user — match by linked userId, or (for reps created
+    // without a linked account) by participant name so they aren't locked out.
     const userId = (session.user as any).id;
-    const repRows = await db.select().from(contestRepresentatives).where(and(eq(contestRepresentatives.phaseId, phaseId), eq(contestRepresentatives.participantUserId, userId))).limit(1);
+    const userName = (session.user as any).name || "";
+    const repRows = await db.select().from(contestRepresentatives).where(and(
+        eq(contestRepresentatives.phaseId, phaseId),
+        or(
+            eq(contestRepresentatives.participantUserId, userId),
+            and(isNull(contestRepresentatives.participantUserId), eq(contestRepresentatives.participantName, userName))
+        )
+    )).limit(1);
     const myRep = repRows[0];
 
     // Officials (coordinators) can take too via "umpire/judge" pass — allow if user is admin or has official role for this contest's org

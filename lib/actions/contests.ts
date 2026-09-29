@@ -363,21 +363,41 @@ export async function computePhaseResults(phaseId: string, promoteCount: number 
     results.push({ participantId: pid, avg, total });
   }
   results.sort((a, b) => b.avg - a.avg);
+
+  // participantId is contestRepresentatives.id — look up names for the result rows
+  const repRows = await db.select({ id: contestRepresentatives.id, name: contestRepresentatives.participantName })
+    .from(contestRepresentatives)
+    .where(inArray(contestRepresentatives.id, results.map((r) => r.participantId)));
+  const nameById = new Map(repRows.map((r) => [r.id, r.name]));
+
   await db.delete(contestResults).where(eq(contestResults.phaseId, phaseId));
+  const finalResults: any[] = [];
   for (let i = 0; i < results.length; i++) {
     const r = results[i];
+    const rank = i + 1;
+    const promoted = i < promoteCount;
+    const avgScore = r.avg.toFixed(2);
     await db.insert(contestResults).values({
       id: uuidv4(),
       phaseId,
       participantId: r.participantId,
       totalScore: r.total,
-      avgScore: r.avg.toFixed(2) as any,
-      rank: i + 1,
-      promoted: i < promoteCount,
+      avgScore: avgScore as any,
+      rank,
+      promoted,
     } as any);
-    if (i < promoteCount) {
+    if (promoted) {
       await db.update(contestRepresentatives).set({ status: "PROMOTED" as any } as any).where(eq(contestRepresentatives.id, r.participantId));
     }
+    finalResults.push({
+      participantId: r.participantId,
+      participantName: nameById.get(r.participantId) || "Participant",
+      totalScore: r.total,
+      avgScore,
+      rank,
+      promoted,
+      isWinner: rank === 1,
+    });
   }
   // Auto-create next phase representatives for promoted
   const [phase] = await db.select().from(contestPhases).where(eq(contestPhases.id, phaseId)).limit(1);
@@ -401,7 +421,7 @@ export async function computePhaseResults(phaseId: string, promoteCount: number 
       }
     }
   }
-  return { success: true, results };
+  return { success: true, results: finalResults };
 }
 
 export async function submitWritten(phaseId: string, participantId: string, answer: any, html?: string, plainText?: string, prompt?: string) {
@@ -430,5 +450,15 @@ export async function getLiveQueue(phaseId: string) {
 }
 
 export async function getContestResults(phaseId: string) {
-  return db.select().from(contestResults).where(eq(contestResults.phaseId, phaseId)).orderBy(asc(contestResults.rank));
+  const rows = await db.select().from(contestResults).where(eq(contestResults.phaseId, phaseId)).orderBy(asc(contestResults.rank));
+  if (rows.length === 0) return [];
+  const repRows = await db.select({ id: contestRepresentatives.id, name: contestRepresentatives.participantName })
+    .from(contestRepresentatives)
+    .where(inArray(contestRepresentatives.id, rows.map((r) => r.participantId)));
+  const nameById = new Map(repRows.map((r) => [r.id, r.name]));
+  return rows.map((r) => ({
+    ...r,
+    participantName: nameById.get(r.participantId) || "Participant",
+    isWinner: r.rank === 1,
+  }));
 }
