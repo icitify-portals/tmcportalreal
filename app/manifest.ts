@@ -2,9 +2,9 @@ import { MetadataRoute } from 'next'
 
 export default function manifest(): MetadataRoute.Manifest {
     return {
-        name: 'The TMC Portal',
+        name: 'TMC Portal',
         short_name: 'TMC Portal',
-        description: 'The TMC Portal — Member and Administration Portal',
+        description: 'TMC Portal — Member and Administration Portal',
         start_url: '/',
         display: 'standalone',
         background_color: '#ffffff',

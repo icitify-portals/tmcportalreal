@@ -205,8 +205,8 @@ export function Sidebar({ userRole, isRealAdmin, adminLevel, className, onNaviga
     <div className={cn("flex h-screen w-64 flex-col border-r bg-background", className)}>
       <div className="flex h-16 items-center border-b px-6">
         <div className="leading-tight">
-          <h1 className="text-xl font-extrabold tracking-tight">The TMC PORTAL</h1>
-          <p className="text-[10px] tracking-[0.2em] text-muted-foreground font-semibold -mt-1">MUSLIM CONGRESS</p>
+          <h1 className="text-xl font-extrabold tracking-tight">TMC Portal</h1>
+          <p className="text-[10px] tracking-[0.2em] text-muted-foreground font-semibold -mt-1">The Muslim Congress</p>
         </div>
       </div>
       <nav className="flex-1 space-y-1 p-4 overflow-y-auto">

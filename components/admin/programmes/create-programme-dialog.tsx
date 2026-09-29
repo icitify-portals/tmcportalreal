@@ -78,7 +78,7 @@ const ProgrammeSchema = z.object({
     rruleString: z.string().optional(),
     recurrenceType: z.enum(['BY_DATE', 'BY_DAY_OF_WEEK']).default('BY_DATE'),
     weekDay: z.number().int().min(0).max(6).nullable().optional(),
-    weekOrdinal: z.number().int().min(1).max(5).nullable().optional(),
+    weekOrdinal: z.number().int().min(-1).max(5).nullable().optional(),
     budget: z.string().default("0"),
     objectives: z.string().optional(),
     committee: z.string().optional(),
@@ -252,6 +252,8 @@ export function CreateProgrammeDialog({
                 minInstallmentAmount: parseFloat(data.minInstallmentAmount || "0"),
                 budget: parseFloat(data.budget || "0"),
                 attendanceWindow: parseInt(data.attendanceWindow || "3"),
+                weekDay: data.weekDay != null && (data.weekDay as any) !== "" ? Number(data.weekDay) : null,
+                weekOrdinal: data.weekOrdinal != null && (data.weekOrdinal as any) !== "" ? Number(data.weekOrdinal) : null,
                 hasCertificate: data.hasCertificate,
                 isRecurringAdmin: data.isRecurringAdmin,
                 paymentRouting: data.paymentRouting,
@@ -676,8 +678,8 @@ export function CreateProgrammeDialog({
                                                 </SelectTrigger>
                                             </FormControl>
 <SelectContent>
-                                        {['ONCE', 'WEEKLY', 'MONTHLY', 'QUARTERLY', 'BI-ANNUALLY', 'ANNUALLY'].map(freq => (
-                                            <SelectItem key={freq} value={freq}>{freq}</SelectItem>
+                                        {['ONCE', 'WEEKLY', 'MONTHLY', 'QUARTERLY', 'BI-ANNUALLY', 'ANNUALLY', 'CUSTOM'].map(freq => (
+                                            <SelectItem key={freq} value={freq}>{freq === 'CUSTOM' ? 'CUSTOM (RRULE)' : freq}</SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
@@ -685,6 +687,25 @@ export function CreateProgrammeDialog({
                             </FormItem>
                         )}
                     />
+
+                    {form.watch('frequency') === 'CUSTOM' && (
+                        <FormField
+                            control={form.control}
+                            name="rruleString"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Recurrence Rule (RRULE)</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="e.g. FREQ=MONTHLY;BYDAY=1SU  (first Sunday of every month)" {...field} />
+                                    </FormControl>
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                        Google-Calendar style iCalendar rule. Examples: <b>FREQ=WEEKLY;BYDAY=WE</b> (every Wednesday), <b>FREQ=MONTHLY;BYDAY=1SU</b> (first Sunday), <b>FREQ=MONTHLY;BYDAY=-1FR</b> (last Friday).
+                                    </p>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    )}
 
                     <FormField
                         control={form.control}
@@ -756,11 +777,11 @@ export function CreateProgrammeDialog({
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                            <SelectItem value="1">First</SelectItem>
-                                            <SelectItem value="2">Second</SelectItem>
-                                            <SelectItem value="3">Third</SelectItem>
-                                            <SelectItem value="4">Fourth</SelectItem>
-                                            <SelectItem value="5">Last</SelectItem>
+                                        <SelectItem value="1">First</SelectItem>
+                                        <SelectItem value="2">Second</SelectItem>
+                                        <SelectItem value="3">Third</SelectItem>
+                                        <SelectItem value="4">Fourth</SelectItem>
+                                        <SelectItem value="-1">Last</SelectItem>
                                         </SelectContent>
                                     </Select>
                                     <FormMessage />

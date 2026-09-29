@@ -283,7 +283,7 @@ const ProgrammeSchema = z.object({
     rruleString: z.string().optional(),
     recurrenceType: z.enum(['BY_DATE', 'BY_DAY_OF_WEEK']).default('BY_DATE'),
     weekDay: z.number().int().min(0).max(6).nullable().optional(),
-    weekOrdinal: z.number().int().min(1).max(5).nullable().optional(),
+    weekOrdinal: z.number().int().refine((v) => v === -1 || (v >= 1 && v <= 5), "Must be 1-4 or -1 (last)").nullable().optional(),
     budget: z.preprocess((val) => Number(String(val).replace(/,/g, '')), z.number().nonnegative()).default(0),
     objectives: z.string().optional(),
     committee: z.string().optional(),
@@ -591,10 +591,12 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
             if (validData.frequency === 'MONTHLY' && validData.recurrenceType === 'BY_DAY_OF_WEEK' && validData.weekDay !== null && validData.weekDay !== undefined) {
                 // "Every Nth weekday of the month" e.g. first Saturday -> FREQ=MONTHLY;BYDAY=SA;BYSETPOS=1
                 try {
-                    const weekdays = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
-                    const weekday = weekdays[validData.weekDay] || 'SU';
-                    const ordinal = (validData.weekOrdinal ?? 1).toString();
-                    const rule = RRule.fromString(`FREQ=MONTHLY;BYDAY=${weekday};BYSETPOS=${ordinal}`);
+                const weekdays = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
+                const weekday = weekdays[validData.weekDay] || 'SU';
+                // weekOrdinal 1-4 = first..fourth; 5 (legacy) and -1 both mean "last"
+                const ordNum = validData.weekOrdinal ?? 1;
+                const ordinal = (ordNum === 5 || ordNum === -1) ? "-1" : ordNum.toString();
+                const rule = RRule.fromString(`FREQ=MONTHLY;BYDAY=${weekday};BYSETPOS=${ordinal}`);
                     const occurrences = rule.between(new Date(currentDate.getTime() + 1000), targetYearEnd, true);
 
                     for (const occDate of occurrences) {

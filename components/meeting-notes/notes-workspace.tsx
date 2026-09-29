@@ -100,16 +100,22 @@ export function NotesWorkspace({
     },
   });
 
+  // Track which note is currently loaded into the editor so autosaves
+  // (which update `notes`) never reset the editor mid-typing.
+  const loadedNoteIdRef = useRef<string | null>(null);
+
   useEffect(() => {
-    if (selected && editor) {
-      const cur = editor.getHTML();
-      const next = selected.html || "";
-      if (cur !== next) editor.commands.setContent(selected.content || next || "<p></p>");
-      setTitle(selected.title);
-    } else if (!selected && editor && notes.length > 0) {
-      // Fallback if selected is lost
+    if (!editor) return;
+    // Only (re)load editor content when the selected note actually changes —
+    // never on autosave (which updates `notes` and would clobber live typing).
+    if (loadedNoteIdRef.current === selectedId) return;
+    loadedNoteIdRef.current = selectedId;
+    const note = notes.find((n) => n.id === selectedId);
+    if (note) {
+      editor.commands.setContent((note.content as any) || note.html || "<p></p>");
+      setTitle(note.title);
     }
-  }, [selectedId, notes, editor]);
+  }, [selectedId, editor, notes]);
 
   async function createNote() {
     const newTitle = `Note ${filtered.length + 1} — ${section}`;
@@ -123,7 +129,8 @@ export function NotesWorkspace({
       plainText: "Start writing…",
     });
     if (res.success && res.id) {
-      const newNote = { id: res.id, title: newTitle, section, html: "<p>Start writing…</p>", content: null, plainText: "Start writing…", isShared: false, createdBy: "", updatedAt: new Date().toISOString() };
+      const seedContent = { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "Start writing…" }] }] };
+      const newNote = { id: res.id, title: newTitle, section, html: "<p>Start writing…</p>", content: seedContent as any, plainText: "Start writing…", isShared: false, createdBy: "", updatedAt: new Date().toISOString() };
       setNotes((p) => [newNote, ...p]);
       setSelectedId(res.id);
       toast.success("New page created");
@@ -154,7 +161,8 @@ export function NotesWorkspace({
     startTransition(async () => {
       const res = await generateNoteSummary(selected.plainText || "");
       if (res.success && editor) {
-        editor.commands.setContent(editor.getHTML() + res.html);
+        // Append at the end without resetting the whole doc (keeps cursor stable)
+        editor.chain().focus("end").insertContent(res.html || "").run();
         toast.success("Summary appended!");
       } else {
         toast.error("AI generation failed.");
@@ -193,7 +201,9 @@ export function NotesWorkspace({
         html: summaryHtml,
         plainText,
         isShared: true,
-        content: { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: plainText }] }] },
+        // content intentionally left null — rich `html` is the source of truth here
+        // (editor will regenerate `content` as JSON on first edit)
+        content: null as any,
       });
 
       if (result.success && result.id) {

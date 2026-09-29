@@ -56,7 +56,7 @@ export function PublicNav() {
         return (
             <nav className="border-b bg-green-700 sticky top-0 z-50 text-white">
                 <div className="container flex h-16 items-center max-w-7xl mx-auto px-4">
-                    <span className="font-extrabold text-xl tracking-tight">The TMC PORTAL</span>
+                    <span className="font-extrabold text-xl tracking-tight">TMC Portal</span>
                 </div>
             </nav>
         )
@@ -71,8 +71,8 @@ export function PublicNav() {
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src="/images/logo.png" alt="TMC Logo" className="h-9 w-9 object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
                     <span className="hidden sm:inline leading-tight">
-                        <span className="block font-extrabold text-base tracking-tight">The TMC PORTAL</span>
-                        <span className="block text-[9px] tracking-[0.2em] font-semibold -mt-1 opacity-80">MUSLIM CONGRESS</span>
+                        <span className="block font-extrabold text-base tracking-tight">TMC Portal</span>
+                        <span className="block text-[9px] tracking-[0.2em] font-semibold -mt-1 opacity-80">The Muslim Congress</span>
                     </span>
                 </Link>
 
@@ -216,7 +216,7 @@ export function PublicNav() {
 
                 {/* ── Mobile Nav ─────────────────────────────────────────── */}
                 <div className="flex md:hidden items-center gap-2">
-                    <span className="font-extrabold text-base tracking-tight">The TMC PORTAL</span>
+                    <span className="font-extrabold text-base tracking-tight">TMC Portal</span>
                     <Sheet open={isOpen} onOpenChange={setIsOpen}>
                         <SheetTrigger asChild>
                             <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
@@ -232,7 +232,7 @@ export function PublicNav() {
                                 <Link href="/" className="flex items-center gap-2 font-extrabold text-lg leading-tight" onClick={() => setIsOpen(false)}>
                                     {/* eslint-disable-next-line @next/next/no-img-element */}
                                     <img src="/images/logo.png" alt="" className="h-8 w-8 object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
-                                    <span>The TMC PORTAL<span className="block text-[9px] tracking-[0.2em] font-semibold opacity-80 -mt-1">MUSLIM CONGRESS</span></span>
+                                    <span>TMC Portal<span className="block text-[9px] tracking-[0.2em] font-semibold opacity-80 -mt-1">The Muslim Congress</span></span>
                                 </Link>
                             </div>
 
