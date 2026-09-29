@@ -23,7 +23,10 @@ export function ClaimForm({ token, registration, programme }: { token: string; r
         gender: registration.gender || "MALE",
         address: registration.address || "",
         memberId: registration.memberId || "",
+        state: registration.state || "",
+        lga: registration.lga || "",
     });
+    const selectedStateData = nigerianStatesAndLgas.find(s => s.state === data.state);
 
     async function onSubmit(e: React.FormEvent) {
         e.preventDefault();
@@ -53,6 +56,35 @@ export function ClaimForm({ token, registration, programme }: { token: string; r
                                 <div className="flex items-center space-x-2"><RadioGroupItem value="MALE" id="male" /><Label htmlFor="male">Male</Label></div>
                                 <div className="flex items-center space-x-2"><RadioGroupItem value="FEMALE" id="female" /><Label htmlFor="female">Female</Label></div>
                             </RadioGroup>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <Label>State</Label>
+                            <select
+                                value={data.state}
+                                onChange={(e) => setData({ ...data, state: e.target.value, lga: "" })}
+                                className="w-full h-9 border rounded-md px-3 text-sm"
+                            >
+                                <option value="">Select state…</option>
+                                {nigerianStatesAndLgas.map(s => (
+                                    <option key={s.state} value={s.state}>{s.state}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <Label>LGA</Label>
+                            <select
+                                value={data.lga}
+                                onChange={(e) => setData({ ...data, lga: e.target.value })}
+                                disabled={!data.state}
+                                className="w-full h-9 border rounded-md px-3 text-sm disabled:opacity-50"
+                            >
+                                <option value="">{data.state ? "Select LGA…" : "Select state first"}</option>
+                                {selectedStateData?.lgas.map(lga => (
+                                    <option key={lga} value={lga}>{lga}</option>
+                                ))}
+                            </select>
                         </div>
                     </div>
                     <div><Label>Address (optional)</Label><Textarea value={data.address} onChange={(e) => setData({ ...data, address: e.target.value })} rows={2} /></div>

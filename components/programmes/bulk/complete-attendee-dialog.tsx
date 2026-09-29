@@ -18,6 +18,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
 import { Loader2, UserCheck } from "lucide-react";
 import { updateBulkAttendee } from "@/lib/actions/programme-bulk";
+import { nigerianStatesAndLgas } from "@/lib/nigeria-data";
 
 /**
  * Lets the paymaster fill in / correct one bulk seat (name, contacts, member ID…).
@@ -42,7 +43,10 @@ export function CompleteAttendeeDialog({
         gender: registration.gender || "MALE",
         address: registration.address || "",
         memberId: registration.memberId || "",
+        state: registration.state || "",
+        lga: registration.lga || "",
     });
+    const selectedStateData = nigerianStatesAndLgas.find(s => s.state === form.state);
 
     async function onSubmit(e: React.FormEvent) {
         e.preventDefault();
@@ -114,6 +118,35 @@ export function CompleteAttendeeDialog({
                                 <div className="flex items-center space-x-2"><RadioGroupItem value="MALE" id="ca-male" /><Label htmlFor="ca-male">Male</Label></div>
                                 <div className="flex items-center space-x-2"><RadioGroupItem value="FEMALE" id="ca-female" /><Label htmlFor="ca-female">Female</Label></div>
                             </RadioGroup>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div>
+                                <Label>State</Label>
+                                <select
+                                    value={form.state}
+                                    onChange={(e) => setForm({ ...form, state: e.target.value, lga: "" })}
+                                    className="w-full h-9 border rounded-md px-3 text-sm"
+                                >
+                                    <option value="">Select state…</option>
+                                    {nigerianStatesAndLgas.map(s => (
+                                        <option key={s.state} value={s.state}>{s.state}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <Label>LGA</Label>
+                                <select
+                                    value={form.lga}
+                                    onChange={(e) => setForm({ ...form, lga: e.target.value })}
+                                    disabled={!form.state}
+                                    className="w-full h-9 border rounded-md px-3 text-sm disabled:opacity-50"
+                                >
+                                    <option value="">{form.state ? "Select LGA…" : "Select state first"}</option>
+                                    {selectedStateData?.lgas.map(l => (
+                                        <option key={l} value={l}>{l}</option>
+                                    ))}
+                                </select>
+                            </div>
                         </div>
                         <div>
                             <Label>Address (optional)</Label>

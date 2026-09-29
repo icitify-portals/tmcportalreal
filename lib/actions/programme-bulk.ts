@@ -29,6 +29,11 @@ export interface BulkAttendeeInput {
     phone?: string;
     category?: string;
     memberId?: string;
+    gender?: string;
+    address?: string;
+    state?: string;
+    lga?: string;
+    branch?: string;
 }
 
 /**
@@ -115,17 +120,20 @@ export async function createBulkRegistration(data: {
             memberId: a.memberId?.trim() || null,
             name: a.name.trim(),
             email: a.email.trim(),
-            phone: a.phone || null,
-            gender: null,
-            address: null,
-            status: prog.paymentRequired ? "PENDING_PAYMENT" : "REGISTERED",
+            phone: a.phone?.trim() || null,
+            gender: a.gender?.trim() || null,
+            address: a.address?.trim() || null,
             country: "Nigeria",
-            amountPaid: prog.paymentRequired ? "0.00" : effectivePerAttendee.toFixed(2) as any,
-            paymentStatus: prog.paymentRequired ? "PENDING" as any : "SUCCESS" as any,
+            state: a.state?.trim() || null,
+            lga: a.lga?.trim() || null,
+            branch: a.branch?.trim() || null,
+            status: prog.paymentRequired ? "PENDING_PAYMENT" : "REGISTERED",
+            amountPaid: (prog.paymentRequired ? "0.00" : effectivePerAttendee.toFixed(2)) as any,
+            paymentStatus: (prog.paymentRequired ? "PENDING" : "SUCCESS") as any,
             bulkGroupId: groupId,
             bulkClaimToken: token,
             bulkClaimedAt: null,
-            lockedAmount: prog.paymentRequired ? effectivePerAttendee.toFixed(2) as any : null,
+            lockedAmount: (prog.paymentRequired ? effectivePerAttendee.toFixed(2) : null) as any,
             lockedEarlyBirdDeadline: bulkLockedEbDeadline as any,
         } as any);
         registrationIds.push(regId);
@@ -254,6 +262,8 @@ export async function claimBulkSeat(data: {
     gender?: string;
     address?: string;
     memberId?: string;
+    state?: string;
+    lga?: string;
 }) {
     if (!data.token) return { success: false, error: "Invalid link" };
 
@@ -269,9 +279,11 @@ export async function claimBulkSeat(data: {
         memberId: data.memberId?.trim() || reg.memberId,
         name: data.name?.trim() || reg.name,
         email: data.email?.trim() || reg.email,
-        phone: data.phone || reg.phone,
-        gender: data.gender || reg.gender,
-        address: data.address || reg.address,
+        phone: data.phone?.trim() || reg.phone,
+        gender: data.gender?.trim() || reg.gender,
+        address: data.address?.trim() || reg.address,
+        state: data.state?.trim() || reg.state,
+        lga: data.lga?.trim() || reg.lga,
         bulkClaimedAt: new Date(),
     } as any).where(eq(programmeRegistrations.id, reg.id));
 
@@ -320,6 +332,8 @@ export async function updateBulkAttendee(data: {
     gender?: string;
     address?: string;
     memberId?: string;
+    state?: string;
+    lga?: string;
 }) {
     const session = await getServerSession();
 
@@ -344,8 +358,10 @@ export async function updateBulkAttendee(data: {
         name: data.name.trim(),
         email: data.email.trim(),
         phone: data.phone?.trim() || null,
-        gender: data.gender || reg.gender,
+        gender: data.gender?.trim() || reg.gender,
         address: data.address?.trim() || null,
+        state: data.state?.trim() || reg.state,
+        lga: data.lga?.trim() || reg.lga,
         bulkClaimedAt: reg.bulkClaimedAt || new Date(),
     } as any).where(eq(programmeRegistrations.id, reg.id));
 

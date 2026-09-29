@@ -242,6 +242,8 @@ export async function claimSponsoredSeat(data: {
     gender?: string;
     address?: string;
     memberId?: string;
+    state?: string;
+    lga?: string;
 }) {
     const session = await getServerSession();
 
@@ -276,6 +278,8 @@ export async function claimSponsoredSeat(data: {
             gender: data.gender || null,
             address: data.address || null,
             country: "Nigeria",
+            state: data.state?.trim() || null,
+            lga: data.lga?.trim() || null,
             status: "PAID" as any,
             paymentStatus: "SUCCESS" as any,
             amountPaid: pool.amountPerSeat as any,
