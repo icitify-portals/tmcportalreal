@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Users, ExternalLink } from "lucide-react";
 import Link from "next/link";
+import { CompleteAttendeeDialog } from "@/components/programmes/bulk/complete-attendee-dialog";
 
 export const dynamic = "force-dynamic";
 
@@ -71,6 +72,7 @@ export default async function BulkManagePage({
                                         <div key={a.id} className="flex items-center gap-2 text-xs p-2 border rounded bg-gray-50">
                                             <span className="flex-1 truncate">{a.name} · {a.email}</span>
                                             {a.bulkClaimedAt && <Badge variant="outline" className="bg-emerald-50">claimed</Badge>}
+                                            <CompleteAttendeeDialog registration={a} paymasterEmail={email} />
                                             <a href={link} target="_blank" rel="noreferrer" className="text-emerald-700" title="Open claim link">
                                                 <ExternalLink className="h-3 w-3" />
                                             </a>

@@ -306,6 +306,54 @@ export async function emailBulkClaimLinks(groupId: string) {
 }
 
 /**
+ * Paymaster completes/corrects one attendee seat in their own group.
+ * Auth: session owner of the group, OR matching paymaster email (public manage flow).
+ * Attendee claim links keep working (token is per-row, not email-bound).
+ * Completing a seat marks it claimed so attendees aren't nagged afterwards.
+ */
+export async function updateBulkAttendee(data: {
+    registrationId: string;
+    paymasterEmail?: string;
+    name: string;
+    email: string;
+    phone?: string;
+    gender?: string;
+    address?: string;
+    memberId?: string;
+}) {
+    const session = await getServerSession();
+
+    if (!data.registrationId) return { success: false, error: "Registration not found" };
+    if (!data.name?.trim() || !data.email?.trim()) return { success: false, error: "Name and email are required" };
+
+    const [reg] = await db.select().from(programmeRegistrations).where(eq(programmeRegistrations.id, data.registrationId)).limit(1);
+    if (!reg || !reg.bulkGroupId) return { success: false, error: "Not a bulk seat" };
+
+    const [group] = await db.select().from(bulkRegistrationGroups).where(eq(bulkRegistrationGroups.id, reg.bulkGroupId)).limit(1);
+    if (!group) return { success: false, error: "Group not found" };
+
+    const isOwner = !!session?.user?.id && group.paymasterUserId === session.user.id;
+    const emailMatch = !!data.paymasterEmail?.trim() && (group.paymasterEmail || "").toLowerCase() === data.paymasterEmail.trim().toLowerCase();
+    if (!isOwner && !emailMatch) {
+        return { success: false, error: "Only the paymaster can edit this seat" };
+    }
+
+    await db.update(programmeRegistrations).set({
+        userId: reg.userId || session?.user?.id || null,
+        memberId: data.memberId?.trim() || reg.memberId,
+        name: data.name.trim(),
+        email: data.email.trim(),
+        phone: data.phone?.trim() || null,
+        gender: data.gender || reg.gender,
+        address: data.address?.trim() || null,
+        bulkClaimedAt: reg.bulkClaimedAt || new Date(),
+    } as any).where(eq(programmeRegistrations.id, reg.id));
+
+    revalidatePath("/dashboard/programmes/bulk");
+    return { success: true };
+}
+
+/**
  * Public manage view for (guest) paymasters: group + attendees iff the
  * supplied email matches the paymaster email (case-insensitive).
  */

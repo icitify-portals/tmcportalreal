@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Copy, ExternalLink, Users, CheckCircle } from "lucide-react";
 import { listBulkAttendees } from "@/lib/actions/programme-bulk";
+import { CompleteAttendeeDialog } from "@/components/programmes/bulk/complete-attendee-dialog";
 import { toast } from "sonner";
 
 export function BulkGroupCard({ group }: { group: any }) {
@@ -44,6 +45,7 @@ export function BulkGroupCard({ group }: { group: any }) {
                             <div key={a.id} className="flex items-center gap-2 text-xs p-2 border rounded bg-gray-50">
                                 <Users className="h-3 w-3" />
                                 <span className="flex-1 truncate">{a.name} · {a.email}</span>
+                                <CompleteAttendeeDialog registration={a} />
                                 <Button size="sm" variant="ghost" onClick={() => { navigator.clipboard.writeText(linkFor(a.bulkClaimToken)); copied("Claim link copied"); }}>
                                     <Copy className="h-3 w-3" />
                                 </Button>
