@@ -77,7 +77,6 @@ export const meetingStatusEnum = mysqlEnum('meetingStatus', ['SCHEDULED', 'ONGOI
 export const meetingAttendanceStatusEnum = mysqlEnum('meetingAttendanceStatus', ['INVITED', 'PRESENT', 'ABSENT', 'EXCUSED']);
 export const meetingDocTypeEnum = mysqlEnum('meetingDocType', ['AGENDA', 'MINUTES', 'MEMBER_REPORT', 'OTHER']);
 export const meetingDocSubmissionStatusEnum = mysqlEnum('meetingDocSubmissionStatus', ['ON_TIME', 'LATE']);
-export const broadcastTargetLevelEnum = mysqlEnum('broadcastTargetLevel', ['NATIONAL', 'STATE', 'LOCAL_GOVERNMENT', 'BRANCH']);
 export const certTemplateTypeEnum = mysqlEnum('certTemplateType', ['TMC_ONLY', 'PARTNER_ONLY', 'BOTH']);
 export const meetingTargetAudienceEnum = mysqlEnum('meetingTargetAudience', ['OFFICIALS_ONLY', 'ALL_MEMBERS_JURISDICTION', 'ALL_MEMBERS_GLOBAL']);
 
@@ -529,6 +528,9 @@ export const messages = mysqlTable("messages", {
 
 // Broadcast Messages
 export const targetTypeEnum = mysqlEnum('target_type', ['ALL', 'OFFICIALS_ONLY', 'INDIVIDUALS', 'JURISDICTION_MEMBERS']);
+// Broadcasts need TWO distinct level columns (they previously shared `level` → insert collision)
+export const broadcastTargetLevelEnum = mysqlEnum('target_level', ['NATIONAL', 'STATE', 'LOCAL_GOVERNMENT', 'BRANCH']);
+export const broadcastTargetOfficialLevelEnum = mysqlEnum('target_official_level', ['NATIONAL', 'STATE', 'LOCAL_GOVERNMENT', 'BRANCH']);
 
 export const broadcasts = mysqlTable("broadcasts", {
     id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
@@ -537,8 +539,8 @@ export const broadcasts = mysqlTable("broadcasts", {
     content: text("content").notNull(),
     media: json("media"), // Array of { type: 'image' | 'audio' | 'video', url: string }
     targetType: targetTypeEnum.default('JURISDICTION_MEMBERS'),
-    targetLevel: orgLevelEnum, // Optional if targetType is INDIVIDUALS
-    targetOfficialLevel: orgLevelEnum, // For OFFICIALS_ONLY
+    targetLevel: broadcastTargetLevelEnum, // Optional if targetType is INDIVIDUALS
+    targetOfficialLevel: broadcastTargetOfficialLevelEnum, // For OFFICIALS_ONLY
     targetId: varchar("targetId", { length: 255 }), // Organization ID
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
     updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).$defaultFn(() => new Date()).$onUpdateFn(() => new Date()),
