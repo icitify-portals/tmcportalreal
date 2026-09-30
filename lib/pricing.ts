@@ -27,6 +27,22 @@ function toDate(v: string | Date | null | undefined): Date | null {
   return isNaN(d.getTime()) ? null : d;
 }
 
+/**
+ * A date-only early-bird deadline / window end (e.g. "25 Sept") must be inclusive
+ * through the END of that day (23:59:59.999), not expire at the start of it.
+ * Date-only values arrive as midnight (from `<input type="date">` → UTC midnight,
+ * or a local-midnight Date). Explicit timestamps (with a real time) are preserved.
+ */
+function inclusiveEndOfDay(v: Date | null): Date | null {
+  if (!v) return null;
+  const isMidnightUTC = v.getUTCHours() === 0 && v.getUTCMinutes() === 0 && v.getUTCSeconds() === 0 && v.getUTCMilliseconds() === 0;
+  const isMidnightLocal = v.getHours() === 0 && v.getMinutes() === 0 && v.getSeconds() === 0 && v.getMilliseconds() === 0;
+  if (isMidnightUTC || isMidnightLocal) {
+    return new Date(v.getTime() + 24 * 3600 * 1000 - 1); // end of that same day
+  }
+  return v;
+}
+
 /** The currently active early bird window (tier first, legacy single-EB fallback). */
 export function getActiveEarlyBird(p: EarlyBirdFields, now: Date = new Date()): ActiveEarlyBird | null {
   const tiers = (p.tiers || [])
@@ -34,7 +50,7 @@ export function getActiveEarlyBird(p: EarlyBirdFields, now: Date = new Date()): 
       amount: t.amount != null ? Number(t.amount) : NaN,
       label: t.label || `Early bird ${i + 1}`,
       startAt: toDate(t.startAt),
-      endAt: toDate(t.endAt),
+      endAt: inclusiveEndOfDay(toDate(t.endAt)),
     }))
     .filter((t) => !isNaN(t.amount) && t.amount > 0);
 
@@ -49,7 +65,7 @@ export function getActiveEarlyBird(p: EarlyBirdFields, now: Date = new Date()): 
   }
 
   const eb = p.earlyBirdAmount != null ? Number(p.earlyBirdAmount) : null;
-  const deadline = toDate(p.earlyBirdDeadline);
+  const deadline = inclusiveEndOfDay(toDate(p.earlyBirdDeadline));
   if (eb != null && deadline && now.getTime() <= deadline.getTime()) {
     return { amount: eb, label: null, startAt: null, endAt: deadline, deadline };
   }
@@ -121,7 +137,7 @@ export function resolvePayableTotal(
   const locked = p.lockedAmount != null && p.lockedAmount !== "" ? Number(p.lockedAmount) : null;
   const paid = Number(p.amountPaid ?? 0);
   const base = locked ?? getEffectiveAmount(p, now);
-  const ebDeadline = toDate(p.lockedEarlyBirdDeadline);
+  const ebDeadline = inclusiveEndOfDay(toDate(p.lockedEarlyBirdDeadline));
 
   if (
     locked != null &&

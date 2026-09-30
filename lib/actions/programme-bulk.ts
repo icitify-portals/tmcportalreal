@@ -71,6 +71,16 @@ export async function createBulkRegistration(data: {
     data.paymasterEmail = data.paymasterEmail.trim().toLowerCase();
     if (data.paymasterPhone) data.paymasterPhone = data.paymasterPhone.trim();
 
+    // Validate attendees up-front and use ONE consistent set for charging AND registering.
+    // (Previously incomplete rows were charged but silently skipped on insert → "10 paid, 8 reflected".)
+    const validAttendees = data.attendees.filter((a) => a.name?.trim() && a.email?.trim());
+    if (validAttendees.length === 0)
+        return { success: false, error: "Add at least one attendee with a name and email" };
+    if (validAttendees.length < data.attendees.length) {
+        const missing = data.attendees.length - validAttendees.length;
+        return { success: false, error: `${missing} attendee(s) are missing a name or email. Please fill them in before paying — every paid seat must have a registered person.` };
+    }
+
     // Validate programme
     const [prog] = await db.select().from(programmes).where(eq(programmes.id, data.programmeId)).limit(1);
     if (!prog) return { success: false, error: "Programme not found" };
@@ -91,7 +101,7 @@ export async function createBulkRegistration(data: {
     const bulkAppliedEb = getActiveEarlyBird(bulkEbFields);
     const bulkLockedEbDeadline = bulkAppliedEb && bulkAppliedEb.amount < Number(prog.amount || 0) ? bulkAppliedEb.deadline : null;
 
-    const totalAmount = effectivePerAttendee * data.attendees.length;
+    const totalAmount = effectivePerAttendee * validAttendees.length;
     const groupId = uuidv4();
 
     await db.insert(bulkRegistrationGroups).values({
@@ -101,7 +111,7 @@ export async function createBulkRegistration(data: {
         paymasterName: data.paymasterName,
         paymasterEmail: data.paymasterEmail,
         paymasterPhone: data.paymasterPhone || null,
-        attendeeCount: data.attendees.length,
+        attendeeCount: validAttendees.length,
         amountPerAttendee: effectivePerAttendee.toFixed(2) as any,
         totalAmount: totalAmount.toFixed(2) as any,
         currency: "NGN",
@@ -111,8 +121,7 @@ export async function createBulkRegistration(data: {
 
     // Create a registration per attendee (no pay yet — payment happens at group level)
     const registrationIds: string[] = [];
-    for (const a of data.attendees) {
-        if (!a.name?.trim() || !a.email?.trim()) continue;
+    for (const a of validAttendees) {
         const regId = uuidv4();
         const token = genToken();
         await db.insert(programmeRegistrations).values({

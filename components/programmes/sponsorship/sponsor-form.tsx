@@ -7,9 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { createSponsorshipPool, initializeSponsorshipPayment } from "@/lib/actions/programme-sponsorship";
+import { getEffectiveAmount } from "@/lib/pricing";
 import { Loader2, HeartHandshake, Copy } from "lucide-react";
 
-interface ProgrammeLite { id: string; title: string; amount: any; paymentRequired: boolean; status: string; organizationName?: string }
+interface ProgrammeLite { id: string; title: string; amount: any; earlyBirdAmount?: any; earlyBirdDeadline?: any; tiers?: any[]; paymentRequired: boolean; status: string; organizationName?: string }
 
 export function SponsorshipForm({ programmes }: { programmes: ProgrammeLite[] }) {
     const [programmeId, setProgrammeId] = useState("");
@@ -63,9 +64,12 @@ export function SponsorshipForm({ programmes }: { programmes: ProgrammeLite[] })
                             <Label>Programme</Label>
                             <select value={programmeId} onChange={(e) => setProgrammeId(e.target.value)} className="w-full border rounded-md h-9 px-3 text-sm">
                                 <option value="">Select programme…</option>
-                                {eligible.map(p => (
-                                    <option key={p.id} value={p.id}>{p.title} — ₦{Number(p.amount || 0).toLocaleString()}</option>
-                                ))}
+                        {eligible.map(p => {
+                            const effective = getEffectiveAmount({ amount: p.amount, earlyBirdAmount: p.earlyBirdAmount, earlyBirdDeadline: p.earlyBirdDeadline, tiers: p.tiers });
+                            return (
+                                <option key={p.id} value={p.id}>{p.title} — ₦{Number(effective || 0).toLocaleString()}{effective < Number(p.amount || 0) ? " (early bird)" : ""}</option>
+                            );
+                        })}
                             </select>
                             <p className="text-xs text-muted-foreground mt-1">Only paid, approved programmes can be sponsored. Price follows the active early bird window.</p>
                         </div>

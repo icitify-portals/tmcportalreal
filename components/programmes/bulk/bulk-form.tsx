@@ -10,10 +10,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { createBulkRegistration, initializeBulkPayment } from "@/lib/actions/programme-bulk";
+import { getEffectiveAmount } from "@/lib/pricing";
 import { countries } from "@/lib/countries";
 import { Loader2, Plus, Trash2, Copy } from "lucide-react";
 
-interface ProgrammeLite { id: string; title: string; amount: any; earlyBirdAmount: any; earlyBirdDeadline: any; paymentRequired: boolean; status: string; organizationName?: string }
+interface ProgrammeLite { id: string; title: string; amount: any; earlyBirdAmount: any; earlyBirdDeadline: any; tiers?: any[]; paymentRequired: boolean; status: string; organizationName?: string }
 
 export function BulkRegistrationForm({ programmes: preselectedProgrammes }: { programmes?: ProgrammeLite[] }) {
     const router = useRouter();
@@ -95,9 +96,12 @@ export function BulkRegistrationForm({ programmes: preselectedProgrammes }: { pr
                     <Label>Programme</Label>
                     <select value={programmeId} onChange={(e) => setProgrammeId(e.target.value)} className="w-full border rounded-md h-9 px-3 text-sm">
                         <option value="">Select programme…</option>
-                        {programmes.filter(p => p.status === "APPROVED" && p.paymentRequired).map(p => (
-                            <option key={p.id} value={p.id}>{p.title} — ₦{Number(p.amount || 0).toLocaleString()}</option>
-                        ))}
+                            {programmes.filter(p => p.status === "APPROVED" && p.paymentRequired).map(p => {
+                                const effective = getEffectiveAmount({ amount: p.amount, earlyBirdAmount: p.earlyBirdAmount, earlyBirdDeadline: p.earlyBirdDeadline, tiers: p.tiers });
+                                return (
+                                    <option key={p.id} value={p.id}>{p.title} — ₦{Number(effective || 0).toLocaleString()}{effective < Number(p.amount || 0) ? " (early bird)" : ""}</option>
+                                );
+                            })}
                     </select>
                     <p className="text-xs text-muted-foreground mt-1">Only programmes requiring payment can use bulk registration.</p>
                 </div>
