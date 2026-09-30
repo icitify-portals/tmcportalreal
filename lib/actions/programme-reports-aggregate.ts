@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import {
   programmes,
   programmeReports,
+  programmeRegistrations,
   organizations,
   offices,
   users,
@@ -58,6 +59,8 @@ export interface ByLevel {
   level: string;
   count: number;
   completed: number;
+  attendees: number;
+  spent: number;
 }
 
 export interface RollupDetail {
@@ -302,12 +305,16 @@ export async function getProgrammeReportRollup(params: RollupParams) {
   const byLevelMap = new Map<string, ByLevel>();
   for (const d of details) {
     const lvl = d.level || "UNKNOWN";
-    if (!byLevelMap.has(lvl)) byLevelMap.set(lvl, { level: lvl, count: 0, completed: 0 });
+    if (!byLevelMap.has(lvl)) byLevelMap.set(lvl, { level: lvl, count: 0, completed: 0, attendees: 0, spent: 0 });
     const l = byLevelMap.get(lvl)!;
     l.count++;
     if (d.status === "COMPLETED") l.completed++;
+    if (d.report) {
+      l.attendees += d.report.attendeesMale + d.report.attendeesFemale;
+      l.spent += Number(d.report.amountSpent || 0);
+    }
   }
-  const byLevel = Array.from(byLevelMap.values());
+  const byLevel = Array.from(byLevelMap.values()).sort((a, b) => b.count - a.count);
 
   // For national cockpit: aggregate by organization (jurisdiction) as well
   const byOrgMap = new Map<string, { orgId: string; orgName: string; level: string; count: number; completed: number; attendees: number; spent: number }>();
@@ -349,4 +356,65 @@ export async function getAvailableYears(organizationId?: string) {
 
 export async function getOfficesForOrg(organizationId: string) {
   return db.select({ id: offices.id, name: offices.name }).from(offices).where(eq(offices.organizationId, organizationId));
+}
+
+/**
+ * Registration analytics across organizational levels (Branch / LGA / State / National)
+ * for the given jurisdiction scope + period. Groups registrations by the programme's level.
+ */
+export async function getRegistrationAnalyticsByLevel(params: RollupParams) {
+  const session = await getServerSession();
+  if (!session?.user?.id) throw new Error("Unauthorized");
+
+  const isSuperAdmin = (session.user as any).isSuperAdmin as boolean;
+  let baseOrgId = params.organizationId ?? (await resolveCallerOrgId());
+  if (!baseOrgId) {
+    const nat = await db.select({ id: organizations.id }).from(organizations).where(eq(organizations.level, "NATIONAL")).limit(1);
+    baseOrgId = nat[0]?.id ?? null;
+  }
+  if (!baseOrgId) throw new Error("No organization context");
+
+  let effectiveRoot = baseOrgId;
+  if (params.targetOrganizationId) {
+    effectiveRoot = params.targetOrganizationId;
+    if (!isSuperAdmin) {
+      const allowed = await getHierarchyIds(baseOrgId);
+      if (!allowed.includes(effectiveRoot)) throw new Error("Forbidden: jurisdiction");
+    }
+  }
+  const hierarchyIds = await getHierarchyIds(effectiveRoot);
+  const { start, end } = getPeriodDateRange(params.scope, params.year, params.quarter, params.month);
+
+  const rows = await db
+    .select({
+      level: programmes.level,
+      status: programmeRegistrations.status,
+    })
+    .from(programmeRegistrations)
+    .innerJoin(programmes, eq(programmeRegistrations.programmeId, programmes.id))
+    .where(and(
+      inArray(programmes.organizationId, hierarchyIds),
+      gte(programmes.startDate, start),
+      lte(programmes.startDate, end),
+    ));
+
+  const byLevelMap = new Map<string, { level: string; total: number; paid: number; attended: number }>();
+  const byStatusMap = new Map<string, number>();
+  for (const r of rows) {
+    const lvl = (r.level as string) || "UNKNOWN";
+    if (!byLevelMap.has(lvl)) byLevelMap.set(lvl, { level: lvl, total: 0, paid: 0, attended: 0 });
+    const l = byLevelMap.get(lvl)!;
+    l.total++;
+    if (r.status === "PAID" || r.status === "ATTENDED" || r.status === "REGISTERED") l.paid++;
+    if (r.status === "ATTENDED") l.attended++;
+    const st = (r.status as string) || "UNKNOWN";
+    byStatusMap.set(st, (byStatusMap.get(st) || 0) + 1);
+  }
+
+  const byLevel = Array.from(byLevelMap.values()).sort((a, b) => b.total - a.total);
+  const byStatus = Array.from(byStatusMap.entries()).map(([status, count]) => ({ status, count }));
+  const totalRegistrations = rows.length;
+  const totalAttended = byLevel.reduce((s, l) => s + l.attended, 0);
+
+  return { totalRegistrations, totalAttended, byLevel, byStatus };
 }

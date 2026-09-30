@@ -5,6 +5,7 @@ import { redirect } from "next/navigation"
 import { getAdminProgrammes, approveProgrammeState, approveProgrammeNational } from "@/lib/actions/programmes"
 import { getMockJurisdiction } from "@/lib/mock-jurisdiction"
 import { CreateProgrammeDialog } from "@/components/admin/programmes/create-programme-dialog"
+import { QuickProgrammeDialog } from "@/components/admin/programmes/quick-programme-dialog"
 import { SubmitReportDialog } from "@/components/admin/programmes/submit-report-dialog"
 import { ReviewActions } from "@/components/admin/programmes/review-actions"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -287,6 +288,16 @@ export default async function ProgrammesPage() {
                             userOfficialId={userOfficialId}
                             userOfficeId={userOfficeId}
                             userLevel={userOfficial[0]?.positionLevel || session.user.officialLevel}
+                        />
+                        <QuickProgrammeDialog
+                            type="REPETITIVE"
+                            organizationId={organizationId || ""}
+                            triggerLabel="Repetitive Programme"
+                        />
+                        <QuickProgrammeDialog
+                            type="SPECIAL"
+                            organizationId={organizationId || ""}
+                            triggerLabel="Special Programme"
                         />
                     </div>
                 </div>

@@ -4,6 +4,7 @@ import { getServerSession } from "@/lib/session";
 import { redirect } from "next/navigation";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { getProgrammeReportRollup } from "@/lib/actions/programme-reports-aggregate";
+import { getRegistrationAnalyticsByLevel } from "@/lib/actions/programme-reports-aggregate";
 import { getProgrammeGradesLive } from "@/lib/actions/programme-grading";
 import { ReportFilters } from "@/components/admin/programmes/reports/report-filters";
 import { RollupStats } from "@/components/admin/programmes/reports/rollup-stats";
@@ -11,6 +12,7 @@ import { ReportsCharts } from "@/components/admin/programmes/reports/reports-cha
 import { ReportsTable } from "@/components/admin/programmes/reports/reports-table";
 import { ReportExport } from "@/components/admin/programmes/reports/report-export";
 import { LevelGrading } from "@/components/admin/programmes/reports/level-grading";
+import { RegistrationAnalytics } from "@/components/admin/programmes/reports/registration-analytics";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getPeriodDateRange } from "@/lib/report-period";
 import { db } from "@/lib/db";
@@ -108,6 +110,18 @@ export default async function ProgrammeReportsPage({
     return null;
   });
 
+  const registrationAnalytics = await getRegistrationAnalyticsByLevel({
+    scope,
+    year,
+    quarter: scope === "quarterly" ? quarter : undefined,
+    month: scope === "monthly" ? month : undefined,
+    targetOrganizationId: targetOrgId,
+    officeId,
+  }).catch((e) => {
+    console.error("registration analytics error", e);
+    return null;
+  });
+
   const { start, end, label } = getPeriodDateRange(scope, year, quarter, month);
 
   return (
@@ -143,6 +157,7 @@ export default async function ProgrammeReportsPage({
           <Tabs defaultValue="overview" className="space-y-4">
             <TabsList>
               <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="registrations">Registrations by Level</TabsTrigger>
               <TabsTrigger value="grading">Grading — Programme & General Performance</TabsTrigger>
             </TabsList>
             <TabsContent value="overview" className="space-y-4">
@@ -160,6 +175,13 @@ export default async function ProgrammeReportsPage({
               <p className="text-xs text-muted-foreground">Each row shows office & reporting officer (organizingOfficial). National can switch jurisdiction to view any level’s submissions.</p>
               <ReportsTable details={rollup.details} />
             </div>
+            </TabsContent>
+            <TabsContent value="registrations" className="space-y-4">
+              {registrationAnalytics ? (
+                <RegistrationAnalytics data={registrationAnalytics} />
+              ) : (
+                <div className="text-sm text-muted-foreground">Registration analytics unavailable for this period.</div>
+              )}
             </TabsContent>
             <TabsContent value="grading" className="space-y-4">
               {grading ? <LevelGrading data={grading} /> : <div className="text-sm text-muted-foreground">Grading unavailable for this period.</div>}

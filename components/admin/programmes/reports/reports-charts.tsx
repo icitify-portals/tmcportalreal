@@ -61,16 +61,30 @@ export function ReportsCharts({ byPeriod, byOffice, byLevel, byOrganization }: {
 
       <Card>
         <CardHeader><CardTitle className="text-sm">By Org Level</CardTitle></CardHeader>
-        <CardContent className="h-72 flex items-center justify-center">
+        <CardContent>
           {byLevel.length === 0 ? <span className="text-muted-foreground text-sm">No data</span> : (
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={byLevel} dataKey="count" nameKey="level" cx="50%" cy="50%" outerRadius={90} label={(props: any) => `${props.level}: ${props.count}`}>
-                  {byLevel.map((_: any, i: number) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+            <>
+              <div className="h-56 flex items-center justify-center">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={byLevel} dataKey="count" nameKey="level" cx="50%" cy="50%" outerRadius={75} label={(props: any) => `${props.level}: ${props.count}`}>
+                      {byLevel.map((_: any, i: number) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="space-y-1 mt-2">
+                {byLevel.map((l: any) => (
+                  <div key={l.level} className="flex items-center justify-between text-xs border-t pt-1">
+                    <span className="font-medium">{l.level}</span>
+                    <span className="text-muted-foreground">
+                      {l.count} programmes • {l.completed} completed • {l.attendees} attendees • ₦{Number(l.spent).toLocaleString()} spent
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
