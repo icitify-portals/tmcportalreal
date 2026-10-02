@@ -1,0 +1,5 @@
+- External service clients (Resend, S3Client) are instantiated once at module scope using environment variables with safe fallbacks so callers never handle configuration.
+- Every outbound action (email send, upload) records its outcome to the database or logs with a consistent `{ success, error }` return shape so failures are auditable.
+- Email templates are exported as functions returning `{ subject, html, text? }` objects, keeping message content declarative and reusable across the codebase.
+- Storage paths are constructed by concatenating a caller-supplied `category` folder with a timestamped, sanitized filename to avoid collisions and injection.
+- Queues are defined as named `bullmq.Queue` instances with typed job data interfaces, separating producer-side payload contracts from consumer logic.

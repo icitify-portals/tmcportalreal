@@ -1,0 +1,1 @@
+Provides role-based access control and permission-checking utilities for Next-Auth sessions, with a legacy in-memory implementation and a database-backed v2 that enforces jurisdiction-scoped organization access.

@@ -1,0 +1,5 @@
+- Server-side data fetching is done directly inside component functions using Drizzle ORM queries against the schema tables, with fallback UI rendered when required records (e.g., national org) are missing.
+- Client-only interactive components are wrapped in `<ClientOnly>` to defer hydration until the browser is ready, preventing SSR/hydration mismatches.
+- Dynamic rendering is opted out per-route via `export const dynamic = 'force-dynamic'` on pages that depend on live session or database state.
+- Global styling uses Tailwind v4 CSS variables under `@theme inline` and `:root`/`.dark` blocks, with theme variants toggled by adding a `[data-color=...]` attribute on the root element.
+- Route metadata is centralized in the root layout via the `metadata` export and a separate `viewport` export rather than per-page configuration.

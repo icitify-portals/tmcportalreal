@@ -1,0 +1,4 @@
+- Environment configuration is loaded from `.env.local` (via dotenv in `drizzle.config.ts`) and consumed across all layers — pages, lib_core, and scripts — rather than per-module env files.
+- Database access is performed exclusively through the shared `lib_core` services using either Drizzle or Prisma clients; direct DB connections are avoided in route handlers.
+- Feature boundaries are organized as Next.js App Router route segments under `app/`, each delegating data and business logic to `lib_core` while reusing UI from `shared_components/ui`.
+- Ad-hoc database fixes and one-off operations are kept as top-level TypeScript/SQL scripts executed via `tsx` or `node`, keeping the runtime codebase free of maintenance-only paths.

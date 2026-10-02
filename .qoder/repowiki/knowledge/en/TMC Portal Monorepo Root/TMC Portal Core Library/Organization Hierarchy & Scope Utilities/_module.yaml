@@ -1,0 +1,11 @@
+schema_version: 1
+module_path: lib_core/org_helpers
+title: Organization Hierarchy & Scope Utilities
+scope:
+    - lib/org-helper.ts
+    - lib/org-utils.ts
+    - lib/org-helper.test.ts
+source_files: []
+depends_on: []
+related_to:
+    - path: lib_core/rbac_permissions

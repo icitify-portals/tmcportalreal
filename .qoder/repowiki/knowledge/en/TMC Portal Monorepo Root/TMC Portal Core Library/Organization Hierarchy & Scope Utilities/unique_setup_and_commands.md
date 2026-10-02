@@ -1,0 +1,1 @@
+Tests run under Vitest and require mocking `./db` because the test file imports the local `db` module path rather than the aliased `@/lib/db` used by production code.

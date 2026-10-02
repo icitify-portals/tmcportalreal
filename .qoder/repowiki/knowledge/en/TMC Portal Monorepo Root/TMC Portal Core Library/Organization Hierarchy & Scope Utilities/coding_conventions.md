@@ -1,0 +1,4 @@
+- Organization nodes are represented as discriminated union interfaces tagged by a literal `level` field (`NATIONAL`, `STATE`, `LOCAL_GOVERNMENT`, `BRANCH`).
+- Hierarchical traversal uses repeated single-row lookups by `id`/`parentId` rather than recursive CTEs, with a comment noting the max depth of four makes this acceptable.
+- Scope resolution follows a fixed priority chain: super-admin (global) → official profile → explicit role org → roles array → null fallback.
+- Database reads go through Drizzle's `db.query` or `db.select().from(schema)` APIs rather than raw SQL, with explicit column projection for performance.

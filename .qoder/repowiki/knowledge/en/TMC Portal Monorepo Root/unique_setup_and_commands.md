@@ -1,0 +1,1 @@
+`npm run dev` starts the Next.js dev server with webpack; `npm run build` produces a standalone Next.js bundle; `npm run db:seed` runs Prisma seed; `npm test` invokes Vitest; `tsx workers/email-worker.ts` runs the BullMQ email worker; database migrations use both `npx drizzle-kit` (schema in `lib/db/schema.ts`, output to `./drizzle`) and Prisma migrations under `prisma/`.

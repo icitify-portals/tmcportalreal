@@ -1,0 +1,1 @@
+Next-Auth `Session` type for session guards; Drizzle ORM with `findMany`/`findFirst` and `with` relations for role/permission/organization queries; Vitest for unit tests with full `./db` mocking.

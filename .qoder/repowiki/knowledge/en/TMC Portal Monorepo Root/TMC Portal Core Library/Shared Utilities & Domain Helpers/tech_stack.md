@@ -1,0 +1,1 @@
+Web Crypto API (RSA-OAEP + AES-GCM PBKDF2 key derivation) for E2EE in `crypto.ts`; Node `crypto` HMAC-SHA256 for time-based attendance tokens; Drizzle ORM for DB queries; ioredis for BullMQ queue connections; Zod schemas for request validation; clsx + tailwind-merge for CSS class merging.

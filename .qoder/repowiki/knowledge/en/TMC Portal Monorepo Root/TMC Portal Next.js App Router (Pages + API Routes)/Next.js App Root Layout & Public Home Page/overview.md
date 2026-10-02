@@ -1,0 +1,1 @@
+Defines the Next.js App Router root layout, public home page, global theme styles, PWA manifest, service worker, and not-found handler for The TMC Portal.

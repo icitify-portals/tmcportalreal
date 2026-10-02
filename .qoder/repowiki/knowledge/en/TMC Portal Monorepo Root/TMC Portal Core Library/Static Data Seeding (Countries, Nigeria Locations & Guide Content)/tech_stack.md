@@ -1,0 +1,1 @@
+TypeScript modules exporting plain data; guide content uses `lucide-react` icon components as static values.

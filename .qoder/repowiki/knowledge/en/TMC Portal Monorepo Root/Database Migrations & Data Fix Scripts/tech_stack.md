@@ -1,0 +1,1 @@
+Node.js scripts written in TypeScript and JavaScript, connecting to MySQL via `mysql2/promise` and the project's Drizzle ORM (`drizzle-orm`) through `../lib/db`; environment variables loaded with `dotenv`; PowerShell used for production deployment (`deploy-prod.ps1`).

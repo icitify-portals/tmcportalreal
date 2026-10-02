@@ -1,0 +1,4 @@
+- Each feature area lives in its own file at the `lib/` root and is imported directly by server actions or components rather than routed through a central registry.
+- Database access goes through the shared `lib/db/index.ts` client and `lib/db/schema.ts` types, never via raw queries.
+- Session-scoped data (roles, permissions, org hierarchy) is resolved once per request and passed down to RBAC checks and org-scope helpers.
+- Background work (email sending, notifications) is enqueued via BullMQ jobs defined in `lib/queue.ts` instead of being executed inline.

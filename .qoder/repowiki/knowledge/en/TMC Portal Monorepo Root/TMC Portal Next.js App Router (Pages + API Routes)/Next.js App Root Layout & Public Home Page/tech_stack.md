@@ -1,0 +1,1 @@
+Next.js App Router with React Server Components; Tailwind CSS v4 with CSS variables for theming; Drizzle ORM for data fetching on the server; Serwist (`@serwist/next`) for service worker generation and runtime caching; lucide-react icons; shadcn/ui primitives (Card, Button, Badge, Progress, Separator); Sonner for toast notifications.

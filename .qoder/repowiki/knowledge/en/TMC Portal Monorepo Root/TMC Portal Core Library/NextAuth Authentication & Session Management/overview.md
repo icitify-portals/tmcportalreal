@@ -1,0 +1,1 @@
+Configures NextAuth v5 with Drizzle adapter and a credentials provider, enriching JWT tokens with roles, permissions, member/official profiles, and impersonation context for server-side session access.

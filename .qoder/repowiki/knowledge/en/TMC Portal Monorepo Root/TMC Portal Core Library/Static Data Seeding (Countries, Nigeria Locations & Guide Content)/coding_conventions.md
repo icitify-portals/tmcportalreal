@@ -1,0 +1,4 @@
+- Seed data is exported as top-level `const` arrays or objects at module scope rather than via functions or classes.
+- Location hierarchies are modelled as nested structures keyed by state name with each state containing an `lgas` array of `{ name, branches }` records.
+- Guide entries follow a uniform shape (`id`, `title`, `icon`, `color`, `audience`, `summary`, `sections`) so the UI can render them generically.
+- Lookup helpers in `countries.ts` use `Array.prototype.find` on the exported constant to resolve a country by code, prefix, or default.

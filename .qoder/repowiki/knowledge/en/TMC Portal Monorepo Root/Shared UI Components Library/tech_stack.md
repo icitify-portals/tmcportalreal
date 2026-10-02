@@ -1,0 +1,1 @@
+React Server Components with selective 'use client' boundaries; next-themes for theme management; shadcn/ui-style primitives in components/ui/.

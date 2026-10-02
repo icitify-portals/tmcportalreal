@@ -1,0 +1,1 @@
+Provides static seed data for the app: a country list with phone prefixes, Nigerian state/LGA/branch location hierarchies, and in-app user guide content.

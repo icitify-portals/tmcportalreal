@@ -1,0 +1,1 @@
+Provides the Next.js theme provider wrapper, a light/dark/system/green theme toggle with an orthogonal color switcher, and a backwards-compatible PageHeader alias re-exporting PublicNav.

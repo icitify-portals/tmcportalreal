@@ -1,0 +1,1 @@
+Top-level Next.js application that wires the App Router pages, shared UI components, core library, Drizzle/Prisma database schema, and migration scripts into a single multi-tenant TMC portal.

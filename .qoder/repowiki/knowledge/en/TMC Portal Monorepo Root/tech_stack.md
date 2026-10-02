@@ -1,0 +1,1 @@
+Next.js 16 with Webpack (turbopack disabled), React 19, TypeScript, Tailwind CSS v4, Radix UI primitives, NextAuth v5 beta, MySQL via `mysql2`, dual ORM layer of Drizzle ORM + Prisma, BullMQ + ioredis for background jobs, AWS S3/Wasabi for storage, Resend for email, AI SDK for Google/OpenAI, LiveKit for video, Serwist for service worker, Vitest for testing.

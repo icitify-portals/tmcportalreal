@@ -1,0 +1,1 @@
+Requires `PAYSTACK_SECRET_KEY` and `PAYSTACK_PUBLIC_KEY` environment variables to be set before any Paystack calls will succeed; amounts passed to Paystack must be multiplied by 100 (Naira → kobo) and verified responses divide by 100 back to Naira.

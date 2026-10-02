@@ -1,0 +1,1 @@
+Resend email delivery, @aws-sdk/client-s3 with Wasabi/AWS endpoint fallback, sharp for image compression to WebP, BullMQ queues over Redis, and Drizzle ORM (`emailLogs` schema) for delivery audit logging.

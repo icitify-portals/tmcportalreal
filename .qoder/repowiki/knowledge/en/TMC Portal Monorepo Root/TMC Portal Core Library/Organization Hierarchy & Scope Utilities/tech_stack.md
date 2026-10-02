@@ -1,0 +1,1 @@
+Drizzle ORM with `db.query.organizations` and `db.select().from(organizations)` against a MySQL-backed schema; NextAuth `Session` type for user-scoped resolution; Vitest for unit tests.

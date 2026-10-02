@@ -1,0 +1,1 @@
+Requires environment variables `REDIS_URL` (defaulting to `redis://localhost:6379`) for the shared Redis connection, and `ATTENDANCE_SECRET` (defaulting to `tmc-dynamic-attendance-2026`) for HMAC-based attendance token generation.

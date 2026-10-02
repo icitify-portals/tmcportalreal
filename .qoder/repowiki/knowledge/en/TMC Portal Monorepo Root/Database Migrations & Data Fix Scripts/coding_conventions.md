@@ -1,0 +1,5 @@
+- Each script is self-contained: it loads its own `.env` (via `dotenv.config` or manual file read) before importing the shared `../lib/db` module so the connection is initialized with the correct `DATABASE_URL`.
+- Database mutations use `db.execute(sql\`...\``) or `sql.raw()` from `drizzle-orm` for DDL/DML, while reads often go through Drizzle query builders or raw `mysql2/promise` connections for ad-hoc dumps.
+- Scripts follow a uniform shape: an async `main`/`runMigration`/`check` function wrapped in try/catch, logging progress via `console.log`, and terminating with `process.exit(0)` on success or `process.exit(1)` on error.
+- SQL-only migrations are stored as `.sql` files alongside their TypeScript runners, which read and split the file into statements before executing them sequentially against the database.
+- Diagnostics and verification scripts are named with a consistent prefix (`check-*`, `debug-*`, `verify-*`, `test-*`) and exit non-zero when connectivity or schema validation fails.

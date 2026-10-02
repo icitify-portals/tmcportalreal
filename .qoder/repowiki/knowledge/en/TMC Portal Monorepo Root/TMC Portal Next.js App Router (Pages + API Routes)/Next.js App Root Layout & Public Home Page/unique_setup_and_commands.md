@@ -1,0 +1,1 @@
+PWA requires static icon files at `/icons/icon-192x192.png` and `/icons/icon-512x512.png` referenced by `manifest.ts`; the service worker relies on Serwist's build-time injection of `__SW_MANIFEST` to populate `precacheEntries`.

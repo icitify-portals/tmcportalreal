@@ -1,0 +1,1 @@
+MySQL as the target database; Drizzle ORM with `drizzle-kit` for SQL-based versioned migrations; Prisma Client JS (`prisma-client-js`) with `prisma migrate` for an alternative type-safe schema layer; NextAuth-compatible account/session tables included in both schemas.

@@ -1,0 +1,4 @@
+- Feature areas are grouped as sibling directories at the app root (e.g., `auth/`, `dashboard/admin/*`, `api/auth/*`) rather than deep nesting.
+- Dynamic identifiers use Next.js bracket segments (`[id]`, `[slug]`, `[shareCode]`) consistently across both page routes and API routes.
+- Public-only UI is placed inside the `(public)` Route Group to opt out of middleware/session requirements.
+- Each domain under `api/` mirrors the corresponding feature area in `dashboard/` and public pages, keeping request handlers co-located with their business scope.

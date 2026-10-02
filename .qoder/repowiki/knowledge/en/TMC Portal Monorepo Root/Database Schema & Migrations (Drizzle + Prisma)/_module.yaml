@@ -1,0 +1,10 @@
+schema_version: 1
+module_path: database_schema
+title: Database Schema & Migrations (Drizzle + Prisma)
+scope:
+    - drizzle/
+    - prisma/
+source_files: []
+depends_on: []
+related_to:
+    - path: scripts_migrations

@@ -1,0 +1,9 @@
+schema_version: 1
+module_path: app_pages
+title: TMC Portal Next.js App Router (Pages + API Routes)
+scope:
+    - app/
+source_files: []
+depends_on: []
+related_to:
+    - path: lib_core/auth_session

@@ -6,6 +6,7 @@ import { fundraisingCampaigns, organizations, userRoles } from "@/lib/db/schema"
 import { desc, eq } from "drizzle-orm";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { CreateCampaignDialog } from "@/components/admin/finance/create-campaign-dialog";
+import { CampaignActions } from "@/components/admin/finance/campaign-actions";
 import { getServerSession } from "@/lib/session";
 import { redirect } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
@@ -83,9 +84,12 @@ export default async function CampaignsPage() {
                                         <Badge variant={campaign.status === 'ACTIVE' ? 'default' : 'secondary'}>
                                             {campaign.status}
                                         </Badge>
-                                        <Link href={`/${organizationCode}/campaigns/${campaign.slug}`} target="_blank">
-                                            <ExternalLink className="h-4 w-4 text-muted-foreground hover:text-primary" />
-                                        </Link>
+                                        <div className="flex items-center gap-1">
+                                            <Link href={`/${organizationCode}/campaigns/${campaign.slug}`} target="_blank" title="View public page">
+                                                <ExternalLink className="h-4 w-4 text-muted-foreground hover:text-primary" />
+                                            </Link>
+                                            <CampaignActions campaign={campaign} />
+                                        </div>
                                     </div>
                                     <CardTitle className="mt-2 line-clamp-1">{campaign.title}</CardTitle>
                                     <CardDescription className="line-clamp-2">

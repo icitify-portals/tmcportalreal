@@ -1,0 +1,1 @@
+Ad-hoc Node/TypeScript and SQL scripts for migrating, seeding, repairing, and verifying the MySQL database schema and data of the TMC portal application.

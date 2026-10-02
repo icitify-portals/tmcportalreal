@@ -1,0 +1,1 @@
+Provides email sending via Resend with templated messages and DB logging, S3/Wasabi file upload with image compression, and BullMQ queue definitions for async email and notification jobs.

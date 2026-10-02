@@ -1,0 +1,1 @@
+Builds a four-level organization tree (National → State → LGA → Branch) from flat records and resolves per-session organization scope for data access control.

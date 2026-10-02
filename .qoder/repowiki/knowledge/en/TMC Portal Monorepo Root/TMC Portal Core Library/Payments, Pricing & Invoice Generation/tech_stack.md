@@ -1,0 +1,1 @@
+Paystack payment API (Bearer token auth) via axios; Drizzle ORM for PostgreSQL schema access; jsPDF with jspdf-autotable for PDF generation; amounts stored as strings in DB decimals and converted to kobo (×100) for Paystack requests.

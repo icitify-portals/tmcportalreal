@@ -1,0 +1,6 @@
+- Each Drizzle migration file is named `<number>_<descriptive_slug>.sql` and contains one or more `CREATE TABLE` / `ALTER TABLE` statements separated by `--> statement-breakpoint` markers.
+- Prisma models use `@@map("snake_case_table")` to explicitly pin the generated table name, keeping Prisma naming distinct from the model identifier.
+- All primary keys are `String` with `@id @default(cuid())`, producing UUID-style identifiers across every model.
+- Audit and temporal fields follow a consistent pattern: `createdAt DateTime @default(now())` and `updatedAt DateTime @updatedAt` on mutable entities.
+- Foreign-key relationships use explicit `onDelete: Cascade` or `onDelete: SetNull` declarations rather than relying on defaults.
+- Domain enumerations are declared as Prisma `enum` types (e.g., `OrgLevel`, `MemberStatus`, `PaymentStatus`) and referenced by model fields instead of raw strings.

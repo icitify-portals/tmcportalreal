@@ -1,0 +1,1 @@
+Cross-cutting helper library providing formatting, validation, cryptography, ID generation, grading, reporting periods, audit logging, attendance tokens, and seed data for the TMC portal.

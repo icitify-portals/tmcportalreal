@@ -1,0 +1,13 @@
+schema_version: 1
+module_path: app_pages/app_root_layouts
+title: Next.js App Root Layout & Public Home Page
+scope:
+    - app/layout.tsx
+    - app/page.tsx
+    - app/globals.css
+    - app/sw.ts
+    - app/not-found.tsx
+    - app/manifest.ts
+source_files: []
+depends_on: []
+related_to: []

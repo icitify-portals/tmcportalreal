@@ -1,0 +1,1 @@
+Tests require mocking the `./db` module because they stub both the fluent `.select().from().leftJoin().where()` chain and `db.query.organizations.findFirst` / `db.query.userRoles.findMany` — running them without the mock setup will fail.

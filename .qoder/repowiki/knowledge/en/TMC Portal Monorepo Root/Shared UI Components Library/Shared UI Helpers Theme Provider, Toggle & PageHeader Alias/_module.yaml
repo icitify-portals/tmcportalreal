@@ -1,0 +1,10 @@
+schema_version: 1
+module_path: shared_components/shared_helpers
+title: 'Shared UI Helpers: Theme Provider, Toggle & PageHeader Alias'
+scope:
+    - components/PageHeader.tsx
+    - components/theme-components.tsx
+    - components/theme-provider.tsx
+source_files: []
+depends_on: []
+related_to: []

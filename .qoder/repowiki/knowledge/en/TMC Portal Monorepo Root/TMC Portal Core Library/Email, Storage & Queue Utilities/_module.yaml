@@ -1,0 +1,12 @@
+schema_version: 1
+module_path: lib_core/email_storage_queue
+title: Email, Storage & Queue Utilities
+scope:
+    - lib/email.ts
+    - lib/storage.ts
+    - lib/queue.ts
+source_files: []
+depends_on: []
+related_to:
+    - path: lib_core/payments_pricing
+    - path: lib_core/utilities

@@ -1,0 +1,1 @@
+Defines the MySQL database schema for the TMC Portal using two parallel migration systems — Drizzle migrations and Prisma schema with its own migration history.

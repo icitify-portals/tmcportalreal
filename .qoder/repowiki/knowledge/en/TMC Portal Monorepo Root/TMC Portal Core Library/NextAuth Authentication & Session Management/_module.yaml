@@ -1,0 +1,12 @@
+schema_version: 1
+module_path: lib_core/auth_session
+title: NextAuth Authentication & Session Management
+scope:
+    - lib/auth.ts
+    - lib/auth.config.ts
+    - lib/session.ts
+source_files: []
+depends_on: []
+related_to:
+    - path: app_pages
+    - path: lib_core/rbac_permissions

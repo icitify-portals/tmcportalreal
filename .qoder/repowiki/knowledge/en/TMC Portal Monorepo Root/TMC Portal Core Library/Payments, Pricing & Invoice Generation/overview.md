@@ -1,0 +1,1 @@
+Handles Paystack payment initialization/verification and record persistence, computes early-bird pricing, and renders invoices/receipts as PDFs for the TMC portal.

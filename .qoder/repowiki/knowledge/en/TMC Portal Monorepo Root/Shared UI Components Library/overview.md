@@ -1,0 +1,1 @@
+Aggregates reusable Next.js client components, a shared UI primitive kit under ui/, and cross-cutting theme/session providers consumed by feature modules throughout the app.

@@ -1,0 +1,1 @@
+NextAuth v5 with JWT session strategy, Drizzle ORM adapter (`@auth/drizzle-adapter`), bcryptjs for password hashing, and Drizzle schema tables for users/accounts/sessions/verificationTokens/members/officials/userRoles/roles/rolePermissions/permissions/organizations.

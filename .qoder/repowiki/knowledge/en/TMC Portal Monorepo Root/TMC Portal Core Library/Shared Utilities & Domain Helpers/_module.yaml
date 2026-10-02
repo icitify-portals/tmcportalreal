@@ -1,0 +1,22 @@
+schema_version: 1
+module_path: lib_core/utilities
+title: Shared Utilities & Domain Helpers
+scope:
+    - lib/utils.ts
+    - lib/crypto.ts
+    - lib/password-strength.ts
+    - lib/id-config.ts
+    - lib/id-generator.ts
+    - lib/validators.ts
+    - lib/audit.ts
+    - lib/attendance-token.ts
+    - lib/grading.ts
+    - lib/mock-jurisdiction.ts
+    - lib/report-period.ts
+    - lib/seed-planner.ts
+    - lib/redis.ts
+    - lib/utils.test.ts
+source_files: []
+depends_on: []
+related_to:
+    - path: lib_core/email_storage_queue

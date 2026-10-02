@@ -1,0 +1,1 @@
+React Server Components with `"use client"` directives; `next-themes` for theme state persistence; `lucide-react` icons; shadcn/ui `Button` and `DropdownMenu` primitives.

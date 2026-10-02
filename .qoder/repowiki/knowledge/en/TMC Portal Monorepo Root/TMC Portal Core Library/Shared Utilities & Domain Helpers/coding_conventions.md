@@ -1,0 +1,6 @@
+- Domain-specific constants (algorithms, salt/key lengths, grading weights, country/state code maps) are declared as module-level `const` at the top of their files rather than passed as parameters.
+- Database interactions use Drizzle ORM query builders (`db.query.*.findFirst/findMany`, `like`, `eq`, `and`, `gte`, `lte`) instead of raw SQL, with optional relations loaded via `with`.
+- Audit and background operations wrap side effects in try/catch blocks that log errors without rethrowing, ensuring failures do not break the calling flow.
+- Date/time ranges are constructed using `new Date(year, month, day, 0, 0, 0, 0)` for start-of-period and `new Date(year, month+1, 0, 23, 59, 59, 999)` for end-of-period to guarantee inclusive boundaries.
+- Public keys are exchanged as Base64-encoded strings and converted to/from `Uint8Array` via dedicated `arrayBufferToBase64` / `base64ToArrayBuffer` helpers before being imported into Web Crypto.
+- Server-only modules opt into Next.js Server Components semantics with a `'use server'` directive at the top of the file.

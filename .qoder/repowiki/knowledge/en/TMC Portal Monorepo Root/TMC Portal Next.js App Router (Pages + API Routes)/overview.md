@@ -1,0 +1,1 @@
+Next.js App Router application root that wires public, jurisdiction-scoped, authenticated dashboard, and REST API route segments into a single multi-tenant portal.

@@ -1,0 +1,5 @@
+- Permission checks short-circuit on a super-admin/jurisdiction-level `SYSTEM` role before evaluating explicit permissions or organization scope.
+- Authorization entry points come in pairs: an async data-fetching helper (e.g. `hasPermission`, `canAccessOrganization`) plus a synchronous session guard (e.g. `requirePermission`, `requireRole`) that throws `Unauthorized` or `Forbidden` errors.
+- Jurisdiction-scoped access is enforced by comparing the target organization's ancestor chain against the user's role organization, rather than relying on a flat level comparison.
+- Active/inactive filtering is applied consistently using `isActive` flags and optional expiry checks (`expiresAt`) when loading roles and permissions from the database.
+- Unit tests isolate RBAC logic by mocking the entire `./db` module and constructing minimal row shapes that match the Drizzle join result shape.

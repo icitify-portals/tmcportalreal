@@ -1,0 +1,1 @@
+Next.js App Router with Route Groups (`(public)`), dynamic segments (`[jurisdiction]`, `[id]`, `[slug]`, `[[...slug]]`), Server Components, Route Handlers under `api/`, NextAuth for authentication, and a custom `sw.ts` service worker for PWA support.

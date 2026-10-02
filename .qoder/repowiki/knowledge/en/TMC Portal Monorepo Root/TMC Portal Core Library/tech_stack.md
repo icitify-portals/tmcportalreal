@@ -1,0 +1,1 @@
+Next.js Server Actions, NextAuth v5 with Drizzle adapter, Drizzle ORM, BullMQ for background jobs, Resend for email, S3/Wasabi for object storage, Paystack for payments, and an AI prompt/tool layer under `lib/ai/`.

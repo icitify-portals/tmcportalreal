@@ -1,0 +1,5 @@
+- Base NextAuth configuration is split into a pure config object in `auth.config.ts` and extended in `auth.ts` via spread to keep framework-agnostic settings importable without Node-only dependencies.
+- Database queries in auth callbacks use Drizzle's `select().from(...).where(eq(...)).limit(1)` pattern with explicit column projections rather than raw selects.
+- Error signaling in the credentials provider throws a custom `CustomAuthError` subclass of `CredentialsSignin` with user-facing messages instead of returning null or generic errors.
+- Token enrichment in the `jwt` callback delegates repeated role/permission/profile loading to the shared `populateTokenData` helper to avoid duplication across login and impersonation paths.
+- Server session retrieval wraps the NextAuth `auth()` call in a try/catch that logs and returns `null`, giving callers a safe async `getServerSession()` that never throws.

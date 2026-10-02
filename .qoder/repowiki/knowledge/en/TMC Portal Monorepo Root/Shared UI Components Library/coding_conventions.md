@@ -1,0 +1,3 @@
+- Client-side interactivity is isolated via 'use client' directives on individual component files rather than whole pages.
+- Reusable visual building blocks are extracted into the components/ui/ directory and composed by feature-specific components instead of being duplicated.
+- Server-rendered pages wrap client widgets using a thin client-only wrapper (e.g., ClientOnly) to avoid hydration mismatches.

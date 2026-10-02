@@ -1,0 +1,5 @@
+- Client-only components are opt-in via the `"use client"` directive at the top of each file that uses browser APIs like `useState`, `useEffect`, or `document`.
+- Hydration safety is handled by tracking mount state with `useState`/`useEffect` and rendering a disabled placeholder or `null` before the component mounts.
+- Theme values are set through the `setTheme` function from `useTheme()`, using string literals (`light`, `dark`, `system`, `green`) rather than custom objects.
+- UI building blocks are composed from the shared `@/components/ui/*` primitives (Button, DropdownMenu) instead of raw HTML elements.
+- Backwards-compatibility aliases are implemented as single-line barrel re-exports that point consumers to the canonical component path.

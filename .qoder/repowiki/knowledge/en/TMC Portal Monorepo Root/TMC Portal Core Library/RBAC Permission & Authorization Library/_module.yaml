@@ -1,0 +1,12 @@
+schema_version: 1
+module_path: lib_core/rbac_permissions
+title: RBAC Permission & Authorization Library
+scope:
+    - lib/rbac.ts
+    - lib/rbac-v2.ts
+    - lib/rbac-v2.test.ts
+source_files: []
+depends_on: []
+related_to:
+    - path: lib_core/auth_session
+    - path: lib_core/org_helpers

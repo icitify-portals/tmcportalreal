@@ -1,0 +1,1 @@
+Drizzle migrations are tracked via `drizzle/meta/_journal.json` and applied through `drizzle-kit` against MySQL; Prisma migrations live under `prisma/migrations/<timestamp>_<slug>/migration.sql` and are driven by `prisma migrate` with a `migration_lock.toml` lockfile. The Prisma seed lives at `prisma/seed.ts`.

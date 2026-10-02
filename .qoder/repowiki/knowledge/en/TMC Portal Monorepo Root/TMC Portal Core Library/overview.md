@@ -1,0 +1,1 @@
+Shared library of cross-cutting services, utilities, and Next.js server actions that power the TMC portal's authentication, authorization, payments, email, storage, queues, and domain features.

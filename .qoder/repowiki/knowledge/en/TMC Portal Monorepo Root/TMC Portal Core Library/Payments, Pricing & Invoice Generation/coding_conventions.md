@@ -1,0 +1,5 @@
+- External API calls wrap axios invocations in try/catch blocks that return a uniform `{ success: boolean, data?: any, error?: string }` shape instead of throwing.
+- Payment records are created with `crypto.randomUUID()` as the id and default `currency` to `NGN`, with status initialized to `PENDING`.
+- On first-time payment success, side effects (campaign raised amount increment and finance transaction insertion) are gated by checking whether the existing payment was already `SUCCESS`.
+- PDF generation uses a consistent visual style: TMC green (`rgb(22,101,52)`) for headings, Helvetica font, and Naira-formatted amounts via `toLocaleString()`.
+- Early-bird pricing functions accept an optional `now: Date` parameter defaulting to `new Date()` so tests can inject a fixed point in time.

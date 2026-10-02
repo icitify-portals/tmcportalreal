@@ -1,0 +1,1 @@
+Scripts expect a `.env` file at the repository root containing `DATABASE_URL` (and optionally other DB credentials); many scripts also hardcode local MySQL defaults like `host: '127.0.0.1'`, `user: 'root'`, `database: 'tmc_portal'`. Each script is intended to be run individually from the repo root (e.g. `npx ts-node scripts/migrate_orgs.ts`), not as part of a build pipeline.

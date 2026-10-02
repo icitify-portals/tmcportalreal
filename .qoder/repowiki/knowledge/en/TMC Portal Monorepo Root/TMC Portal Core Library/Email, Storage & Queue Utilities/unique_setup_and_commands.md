@@ -1,0 +1,1 @@
+Requires `RESEND_API_KEY` for live email sending (dev mode logs to console instead); requires `WASABI_*` or `AWS_*` env vars (region, bucket, access/secret keys, optional endpoint) for cloud storage — without them uploads fall back to local `public/uploads`. Image compression can be disabled via `SKIP_IMAGE_COMPRESSION=true`.

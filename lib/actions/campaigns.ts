@@ -4,7 +4,7 @@
 import { db } from "@/lib/db"
 import { fundraisingCampaigns, payments, organizations } from "@/lib/db/schema"
 import { eq, desc, and, sql } from "drizzle-orm"
-
+import { getServerSession } from "@/lib/session"
 import { revalidatePath, revalidateTag, unstable_cache } from "next/cache"
 import { z } from "zod"
 
@@ -100,9 +100,11 @@ export async function updateCampaign(id: string, data: Partial<CampaignInput>) {
 
 export async function deleteCampaign(id: string) {
     try {
+        const session = await getServerSession()
+        if (!session?.user?.id) return { success: false, error: "Unauthorized" }
+
         await db.delete(fundraisingCampaigns).where(eq(fundraisingCampaigns.id, id))
         revalidatePath("/dashboard/admin/finance/campaigns")
-        // revalidateTag('campaigns')
         return { success: true }
     } catch (error) {
         console.error("Failed to delete campaign:", error)

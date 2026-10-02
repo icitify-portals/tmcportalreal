@@ -1,0 +1,11 @@
+schema_version: 1
+module_path: lib_core/payments_pricing
+title: Payments, Pricing & Invoice Generation
+scope:
+    - lib/payments.ts
+    - lib/pricing.ts
+    - lib/invoice-generator.ts
+source_files: []
+depends_on: []
+related_to:
+    - path: lib_core/email_storage_queue

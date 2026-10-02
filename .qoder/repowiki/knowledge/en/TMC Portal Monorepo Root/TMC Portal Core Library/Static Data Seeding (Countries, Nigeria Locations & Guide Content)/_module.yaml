@@ -1,0 +1,11 @@
+schema_version: 1
+module_path: lib_core/data_seeding
+title: Static Data Seeding (Countries, Nigeria Locations & Guide Content)
+scope:
+    - lib/countries.ts
+    - lib/location-data.ts
+    - lib/nigeria-data.ts
+    - lib/guide-data.ts
+source_files: []
+depends_on: []
+related_to: []
