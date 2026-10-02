@@ -2,10 +2,10 @@
 "use server"
 
 import { db } from "@/lib/db"
-import { fundraisingCampaigns, payments, organizations } from "@/lib/db/schema"
-import { eq, desc, and, sql } from "drizzle-orm"
+import { fundraisingCampaigns, organizations } from "@/lib/db/schema"
+import { eq, desc, and } from "drizzle-orm"
 import { getServerSession } from "@/lib/session"
-import { revalidatePath, revalidateTag, unstable_cache } from "next/cache"
+import { revalidatePath, unstable_cache } from "next/cache"
 import { z } from "zod"
 
 const CampaignSchema = z.object({
