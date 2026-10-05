@@ -101,13 +101,23 @@ export async function updateCampaign(id: string, data: Partial<CampaignInput>) {
 export async function deleteCampaign(id: string) {
     try {
         const session = await getServerSession()
-        if (!session?.user?.id) return { success: false, error: "Unauthorized" }
+        if (!session?.user?.id) {
+            console.error("[deleteCampaign] unauthorized - no session user id (session:", !!session, ")")
+            return { success: false, error: "Unauthorized" }
+        }
 
-        await db.delete(fundraisingCampaigns).where(eq(fundraisingCampaigns.id, id))
+        const result = await db.delete(fundraisingCampaigns)
+            .where(eq(fundraisingCampaigns.id, id))
+        if (result[0].affectedRows === 0) {
+            console.error("[deleteCampaign] no rows affected for id:", id)
+            return { success: false, error: "Campaign not found" }
+        }
+
         revalidatePath("/dashboard/admin/finance/campaigns")
+        console.log("[deleteCampaign] success - deleted campaign:", id, "by user:", session.user.id)
         return { success: true }
     } catch (error) {
-        console.error("Failed to delete campaign:", error)
+        console.error("[deleteCampaign] failed, id:", id, "error:", error)
         return { success: false, error: "Failed to delete campaign" }
     }
 }
