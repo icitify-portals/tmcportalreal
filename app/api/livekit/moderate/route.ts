@@ -60,7 +60,17 @@ export async function GET(request: NextRequest) {
         const client = await getLiveKitClient()
         if (!client) return NextResponse.json({ error: "LiveKit is not configured." }, { status: 500 })
 
-        const participants = await client.listParticipants(room)
+        let participants: Awaited<ReturnType<typeof client.listParticipants>> = []
+        try {
+            participants = await client.listParticipants(room)
+        } catch (e: any) {
+            // Room not created on LiveKit yet (nobody in the call) -> treat as empty, not an error
+            if (String(e?.message || e).toLowerCase().includes("does not exist")) {
+                participants = []
+            } else {
+                throw e
+            }
+        }
         return NextResponse.json({
             isModerator: true,
             participants: participants.map((participant) => ({
