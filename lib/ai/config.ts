@@ -17,7 +17,7 @@ const deepseekProvider = createOpenAI({
 // Provider Registry
 export const aiModels = {
     // Calling the provider as a function returns the correct LanguageModel type
-    gemini: google(process.env.GEMINI_MODEL || 'gemini-1.5-flash'),
+    gemini: google(process.env.GEMINI_MODEL || 'gemini-3.8-flash'),
     deepseek: deepseekProvider(process.env.DEEPSEEK_MODEL || 'deepseek-chat'),
 } as const;
 
