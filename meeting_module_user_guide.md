@@ -1,59 +1,115 @@
 # Meeting Module User Guide
 
-Welcome to the TMC Portal **Meeting Module** user guide. This module provides a robust suite of tools for scheduling, conducting, and analyzing meetings (Physical, Virtual, and Hybrid) within the portal.
+The TMC Portal **Meeting Module** lets you schedule, run, and analyze meetings — physical, virtual, or hybrid — entirely inside the portal. Virtual/hybrid meetings use the built-in LiveKit video room, and all meetings get automatic attendance tracking.
+
+**Guide links:** Admins can also open a compact version inside the app at **Dashboard → Meetings → Guide**.
 
 ---
 
-## 1. Scheduling a Meeting
+## Roles at a glance
 
-As an Administrator, you can schedule meetings for your jurisdiction. 
-
-1. **Accessing the Planner:** Navigate to your Admin Dashboard and select **Meetings**.
-2. **Creating the Event:** Click on the **Create Meeting** button.
-3. **Important Constraints:** 
-   - **No Past Dates:** The system strictly prevents scheduling a meeting with a date/time in the past. Ensure you are setting future dates.
-   - **Target Audience:** You can choose who is required to attend (e.g., all members, specific officials, or customized groups).
-   - **Format:** Choose between **Physical**, **Virtual**, or **Hybrid**. Virtual/Hybrid meetings will automatically generate secure virtual rooms.
-   - **Recurring Meetings:** You can configure a meeting to repeat regularly by selecting a **Frequency** (Weekly, Bi-Weekly, Monthly) and specifying the total number of **Occurrences** (default is 5, maximum 52). All occurrences in the series will securely share the same exact virtual meeting link for convenience!
-
-## 2. The Virtual Meeting Flow
-
-If your meeting format is Virtual or Hybrid, it utilizes the native LiveKit integration to host the meeting directly inside the TMC Portal.
-
-- **Starting the Meeting (Admins Only):** At the scheduled time, the Admin must navigate to the meeting detail page and click the green **Start Meeting** button. This transitions the meeting status from `SCHEDULED` to `ONGOING`.
-- **Joining the Room:** Once the status is `ONGOING`, a blue **Join Room** button will appear for all authorized members and admins. Clicking this will open the virtual meeting room.
-- **Recording:** Inside the room, Admins will see options to record the meeting directly to the organization's secure cloud storage.
-- **Concluding:** When the meeting is finished, the Admin must click **End Meeting** to finalize attendance and close the room. The status will update to `ENDED`.
-
-*Note on Recurring Meetings:* For recurring meetings, the public link and recording link always stay exactly the same. When participants navigate to the recurring meeting link, the system automatically routes them to the currently `ONGOING` instance, or the next upcoming instance in the series.
-
-## 3. Attendance & Punctuality Tracking
-
-The Meeting Module automatically tracks participant attendance for virtual meetings and provides manual/scan tools for physical meetings.
-
-- **Punctuality Analysis:** The system compares a member's `joinedAt` timestamp against the meeting's `scheduledAt` time.
-- **Status Badges:** 
-  - Members joining before or exactly at the start time are marked **On Time** (Green).
-  - Members joining after the start time are marked **Late** (Red) and the dashboard will calculate exactly how many minutes late they were.
-
-## 4. Submitting Meeting Reports & Minutes
-
-### For Attendees (Member Reports)
-Attendees can submit their own individual meeting reports/reflections via their Member Dashboard.
-- **Submission Window:** Reports can **only** be submitted *after* the meeting has commenced.
-- **Deadline:** The default deadline for submitting a report is **2 days after** the meeting's scheduled start time (this timeframe can be adjusted globally by super admins). Reports submitted after the deadline will be flagged as **LATE**.
-
-### For Administrators (Official Minutes)
-- **Uploading Minutes:** On the meeting detail page, Admins can upload the official meeting minutes document.
-- **Visibility:** Once uploaded, these minutes are permanently attached to the meeting record and accessible to all attendees.
-
-## 5. Reviewing Meeting Analytics
-
-By clicking into any completed meeting, Administrators have access to a full dashboard displaying:
-- Total attendees vs expected attendees.
-- A breakdown of punctuality.
-- Direct links to all submitted member reports and official minutes.
-- Cloud recordings (if the meeting was virtual and recorded).
+| Role | Page | What they can do |
+|---|---|---|
+| **Admin** | Dashboard → **Meetings** | Create/edit/delete meetings & groups, start/end/lock, record, run check-in kiosk, upload minutes, view analytics |
+| **Member** | Dashboard → **My Meetings** | Accept/decline invites, join the room, self check-in, submit reports, read minutes |
+| **Guest** | No login needed | Join a live room via the shared guest link |
 
 ---
-*For any technical issues or inquiries regarding the Meeting Module, please contact your support liaison.*
+
+## 1. Preparing: Meeting Groups (optional)
+
+Meeting Groups are reusable attendee lists that make scheduling faster and enable one-click **Instant Calls**.
+
+1. Go to **Dashboard → Meetings**.
+2. Open the **Meeting Groups** tab.
+3. Click **Create Group**, give it a name/description, and pick members from the list.
+4. Save. The group is now available when scheduling, or as a one-click **Instant Call** (starts a live room for the whole group immediately and redirects you straight into it).
+
+> Groups are scoped to your organization/jurisdiction.
+
+## 2. Scheduling a meeting (Admin)
+
+1. Go to **Dashboard → Meetings** (tab: **Scheduled Meetings**).
+2. Click **Create Meeting**.
+3. Fill in the form:
+   - **Title** and **Description**.
+   - **Date & time** — past dates are rejected.
+   - **Format** — mark **"Is Online Meeting"** to make it virtual/hybrid. Online meetings automatically get a secure virtual room + a share code.
+   - **Venue** — for physical meetings.
+   - **Attendees** — invite individual members, or pick a saved **Group**, or set a **Target Audience**.
+   - **Recurring** (optional) — set a **Frequency** (weekly/bi-weekly/monthly) and **Occurrences** (default 5, max 52). All instances share one live link; the system routes visitors to the currently ongoing (or next upcoming) instance.
+4. Click **Save**. Invited members receive an email invitation with two links (see §4).
+
+## 3. Running the meeting (Admin)
+
+Each meeting is one of three states: **SCHEDULED → ONGOING → ENDED**.
+
+- **Start** — on the meeting detail page, click the green **Start Meeting**. Participants cannot enter the room until this happens.
+- **Lock / Unlock** — lock the room to block everyone except admins/the host from joining.
+- **Join Room** — click the blue **Join Room** button to enter the video room yourself.
+- **Record to S3** — while ONGOING, click the orange **Record to S3** (it pulses while capturing). Click **Recording…** to stop. The file uploads to the org's S3 bucket after processing.
+- **End Meeting** — finalizes attendance and closes the room.
+- **Copy Live Link** — copies the guest join link to share outside the portal.
+
+> For non-online meetings, the Start button is not shown — run it physically and use the check-in kiosk (§5).
+
+## 4. Joining a meeting
+
+**Members:**
+1. Go to **Dashboard → My Meetings**.
+2. Open the invite and click **Enter Meeting Room** (or **Accept/Decline** the invite).
+3. Once an admin has started the meeting, click **Join Room** to enter the video call. For physical meetings, check in via the kiosk/QR (§5).
+
+**Guests (no account needed):**
+1. The invite email / shared link opens `/live/<code>`, or a member shares the **Copy Live Link**.
+2. Type your name and click **Join as Guest**. Guests appear in the admin's **Guest Participants** list with their join time.
+
+## 5. Attendance & punctuality (Admin)
+
+1. Open the meeting detail page.
+2. Click **Check-in Kiosk** and project it on a screen, or send the attendance link to members.
+3. Attendees scan the **QR code** (or open the link) to check themselves in.
+4. The **Attendance & Punctuality** table on the detail page shows each member's **Status**, **Joined At**, and punctuality:
+   - **On Time** (green) — joined at/before the scheduled start.
+   - **Late by X mins** (red) — joined after the start, with exact minutes.
+   - Guest joins are listed separately under **Guest Participants**.
+
+## 6. Reports & official minutes
+
+**Member reports:** after the meeting starts, attendees can submit a personal report/reflection from the meeting page. The default deadline is **2 days after** the scheduled start; late submissions are flagged **LATE**.
+
+**Official minutes (Admin):** on the meeting detail page, the **Upload Minutes** card lets admins upload the official minutes document. Once uploaded, it is attached to the meeting for all attendees.
+
+## 7. Meeting Notes & Action Items
+
+Open **Meeting Notes** (from the meeting page) for a OneNote-style workspace:
+- Take notes in **sections** — they **auto-save**.
+- Click **AI Summary** to have the AI assistant extract decisions + action items into clean HTML (requires the AI integration to be enabled).
+- Use the **Action Items** section to assign tasks, set due dates, and track status (pending → completed).
+- See **version history** of older versions of your notes.
+- **Share** notes with attendees.
+
+## 8. Sharing recordings (Admin)
+
+1. On the meeting detail page, open the **Recording & Playback** card.
+2. Click **Generate Secure Playback Link** once the recording has finished uploading.
+3. A share code + link are generated. Share the link; viewers enter the code to get a temporary, expiring playback URL streamed securely from S3.
+
+## 9. Analytics (Admin)
+
+On any meeting, click **Analytics** for:
+- Total attendees vs. expected.
+- Punctuality breakdown.
+- Links to all submitted member reports and official minutes.
+- Guest participant stats and cloud recordings (if recorded).
+
+---
+
+## Troubleshooting
+
+- **"Can't join the room"** — the meeting must be **ONGOING** (an admin must click **Start Meeting**). Locked rooms only admit admins/host.
+- **"Recording not available yet"** — recordings take a few minutes to process/upload after stopping; generate the playback link afterwards.
+- **AI summary fails** — the AI provider must be enabled with a valid API key (Dashboard → Settings → AI). DeepSeek requires account balance; Gemini requires a current model.
+- **Live links** — the recurring meeting link always routes to the currently ongoing (or next) instance, so the same link works every time.
+
+*For technical support, contact your portal support liaison.*
