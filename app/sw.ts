@@ -23,9 +23,11 @@ self.addEventListener("fetch", (event) => {
     const url = new URL(event.request.url);
     if (
         (event.request.method === "POST" && event.request.headers.has("next-action")) ||
-        url.pathname.includes("/dashboard/burial/new")
+        url.pathname.includes("/dashboard/burial/new") ||
+        (event.request.mode === "navigate" && url.pathname.startsWith("/programmes/"))
     ) {
-        return; // Let it fall through to network
+        // Truly bypass Serwist so these always hit the network (registration must never be served from a stale cache)
+        event.stopImmediatePropagation();
     }
 });
 
