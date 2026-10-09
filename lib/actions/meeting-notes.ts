@@ -211,3 +211,103 @@ export async function getNoteVersions(noteId: string) {
   if (!note || !(await canAccessNote(note, session.user.id, session.user.isSuperAdmin))) return [];
   return db.select().from(meetingNoteVersions).where(eq(meetingNoteVersions.noteId, noteId)).orderBy(desc(meetingNoteVersions.version));
 }
+
+function stripHtml(html: string) {
+  return html.replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function escapeHtml(value: string) {
+  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+export async function restoreNoteVersion(noteId: string, version: number) {
+  const session = await getServerSession();
+  if (!session?.user?.id) return { success: false, error: "Unauthorized" };
+  const [note] = await db.select().from(meetingNotes).where(eq(meetingNotes.id, noteId)).limit(1);
+  if (!note || !(await canAccessNote(note, session.user.id, session.user.isSuperAdmin))) {
+    return { success: false, error: "You do not have access to this note" };
+  }
+  const [snapshot] = await db.select()
+    .from(meetingNoteVersions)
+    .where(and(eq(meetingNoteVersions.noteId, noteId), eq(meetingNoteVersions.version, version)))
+    .limit(1);
+  if (!snapshot) return { success: false, error: "Version not found" };
+
+  // Snapshot the current state before overwriting, so the restore itself is reversible
+  await db.insert(meetingNoteVersions).values({
+    noteId,
+    content: note.content as any,
+    html: note.html as any,
+    version: note.version ?? 0,
+    createdBy: session.user.id,
+    createdAt: new Date(),
+  });
+
+  const html = snapshot.html || "";
+  const plainText = stripHtml(html);
+  await db.update(meetingNotes)
+    .set({
+      html: html || null,
+      content: (snapshot.content as any) ?? null,
+      plainText: plainText || null,
+      updatedBy: session.user.id,
+      version: (note.version ?? 0) + 1,
+      updatedAt: new Date(),
+    })
+    .where(eq(meetingNotes.id, noteId));
+
+  revalidatePath(`/dashboard/meetings`);
+  return { success: true, version: (note.version ?? 0) + 1, html, plainText };
+}
+
+export async function seedMeetingNotesTemplate(meetingId: string, meetingTitle?: string) {
+  const session = await getServerSession();
+  if (!session?.user?.id) return { success: false, error: "Unauthorized" };
+  const access = await getMeetingAccess(meetingId, session.user.id, session.user.isSuperAdmin);
+  if (!access.allowed) return { success: false, error: "You do not have access to this meeting" };
+
+  const [existing] = await db.select({ id: meetingNotes.id }).from(meetingNotes).where(eq(meetingNotes.meetingId, meetingId)).limit(1);
+  if (existing) return { success: true, seeded: false };
+
+  const title = escapeHtml(meetingTitle || "Meeting");
+  const seedPages = [
+    {
+      title: "Agenda",
+      section: "AGENDA" as const,
+      html: `<p><strong>${title}</strong></p><ul><li>Opening &amp; roll call</li><li>Reading of previous minutes</li><li>Main agenda topics</li><li>Motions &amp; decisions</li><li>Any other business</li></ul>`,
+      plainText: `${meetingTitle || "Meeting"}\nOpening & roll call\nReading of previous minutes\nMain agenda topics\nMotions & decisions\nAny other business`,
+    },
+    {
+      title: "Decisions",
+      section: "DECISIONS" as const,
+      html: `<p>Record each decision: what was agreed, who was involved, and when it takes effect. Tip: use <code>- [ ]</code> to start a checklist.</p>`,
+      plainText: "Record each decision: what was agreed, who was involved, and when it takes effect.",
+    },
+    {
+      title: "Action Items",
+      section: "ACTIONS" as const,
+      html: `<p>Turn outcomes into task: owner + deadline per item. Use the <strong>Action items</strong> panel above, or a checklist on this page.</p>`,
+      plainText: "Turn outcomes into task: owner + deadline per item.",
+    },
+  ];
+
+  for (const page of seedPages) {
+    await db.insert(meetingNotes).values({
+      id: crypto.randomUUID(),
+      meetingId,
+      title: page.title,
+      section: page.section,
+      content: { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "" }] }] } as any,
+      html: page.html,
+      plainText: page.plainText,
+      createdBy: session.user.id,
+      isShared: false,
+      version: 1,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+  }
+
+  revalidatePath(`/dashboard/meetings`);
+  return { success: true, seeded: true };
+}

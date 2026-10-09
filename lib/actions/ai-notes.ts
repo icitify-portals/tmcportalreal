@@ -17,8 +17,8 @@ export async function generateNoteSummary(text: string) {
 
         const result = await generateText({
             model,
-            system: "You are an AI meeting assistant. Extract the key action items and decisions from the notes. Format the output as clean HTML (using <ul>, <li>, <strong>). Do not include markdown codeblocks or 'html' tags, just the raw HTML.",
-            prompt: "Summarize the following meeting notes and extract action items:\n\n" + text,
+            system: "You are an AI meeting assistant. Distil the notes into decisions and agreed actions. Format as clean HTML with these sections in order: \"Key Decisions\" (bulleted, each decision is a short specific sentence naming what/why), \"Action Items\" (bulleted, each starts with who owns it and by when if known), \"Open Questions\" (bulleted, items raised but not resolved). Use <h4> for section headings and <ul>/<li> for items. Keep it under 400 words, specific, not vague. Do not include markdown codeblocks or 'html' tags, just the raw HTML.",
+            prompt: "Summarize the following meeting notes, then extract decisions, action items, and open questions:\n\n" + text,
             temperature: 0.3,
         });
 

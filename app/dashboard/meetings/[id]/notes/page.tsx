@@ -6,7 +6,7 @@ import { meetings, meetingAttendances, users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { NotesWorkspace } from "@/components/meeting-notes/notes-workspace";
-import { getMeetingNotes } from "@/lib/actions/meeting-notes";
+import { getMeetingNotes, seedMeetingNotesTemplate } from "@/lib/actions/meeting-notes";
 import { getMeetingActionItems } from "@/lib/actions/meeting-action-items";
 
 export default async function MeetingNotesPage({ params }: { params: Promise<{ id: string }> }) {
@@ -15,6 +15,7 @@ export default async function MeetingNotesPage({ params }: { params: Promise<{ i
   const { id } = await params;
   const [meeting] = await db.select().from(meetings).where(eq(meetings.id, id)).limit(1);
   if (!meeting) redirect("/dashboard/admin/meetings");
+  await seedMeetingNotesTemplate(id, meeting.title);
   const notes = await getMeetingNotes({ meetingId: id });
   const actionItems = await getMeetingActionItems(id);
   const attendees = await db.select({

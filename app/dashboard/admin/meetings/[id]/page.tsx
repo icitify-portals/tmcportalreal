@@ -15,6 +15,7 @@ import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { EditMeetingDialog } from "@/components/meetings/edit-meeting-dialog"
 import { DeleteMeetingButton } from "@/components/meetings/delete-meeting-button"
 import { MeetingRecordingCard } from "@/components/meetings/meeting-recording-card"
+import { StickyNote } from "lucide-react"
 
 
 interface AdminMeetingPageProps {
@@ -47,6 +48,11 @@ export default async function AdminMeetingDetailPage({ params }: AdminMeetingPag
                         </Button>
                         <Button asChild variant="outline" size="sm">
                             <Link href={`/dashboard/admin/meetings/${meeting.id}/analytics`}>Analytics</Link>
+                        </Button>
+                        <Button asChild variant="outline" size="sm">
+                            <Link href={`/dashboard/meetings/${meeting.id}/notes`}>
+                                <StickyNote className="mr-2 h-4 w-4" />Notes
+                            </Link>
                         </Button>
                         <EditMeetingDialog meeting={meeting} members={members} />
                         <DeleteMeetingButton meetingId={meeting.id} meetingTitle={meeting.title} redirect={true} />

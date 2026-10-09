@@ -15,7 +15,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { ShieldAlert, Zap, Loader2, Video, MicOff, UserX, Volume2, SkipForward } from "lucide-react";
+import { ShieldAlert, Zap, Loader2, Video, MicOff, UserX, Volume2, SkipForward, StickyNote } from "lucide-react";
 
 type UserChoices = {
     audioEnabled: boolean;
@@ -195,6 +195,10 @@ export default function VideoRoom({ roomName, meetingId }: VideoRoomProps) {
                     </div>
                 </div>
                 <div className="flex items-center space-x-2">
+                    <Button type="button" variant="outline" size="sm" onClick={() => window.open(`/dashboard/meetings/${meetingId}/notes`, "_blank", "noopener,noreferrer")}>
+                        <StickyNote className="mr-2 h-4 w-4" />
+                        Notes
+                    </Button>
                     <Switch
                         id="data-saver"
                         checked={dataSaver}

@@ -7,19 +7,21 @@ import Link from "@tiptap/extension-link";
 import Image from "@tiptap/extension-image";
 import TaskList from "@tiptap/extension-task-list";
 import TaskItem from "@tiptap/extension-task-item";
+import { Placeholder } from "@tiptap/extension-placeholder";
 import { generateNoteSummary } from "@/lib/actions/ai-notes";
 import { exportDocxAction } from "@/lib/actions/export-docx";
 import { saveAs } from "file-saver";
-// import Placeholder from "@tiptap/extension-placeholder";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
-import { upsertMeetingNote, deleteMeetingNote, toggleShareNote, searchNotes } from "@/lib/actions/meeting-notes";
-import { Save, Share2, Trash2, Download, Search, Plus, FileText, CheckSquare, StickyNote, Sparkles } from "lucide-react";
+import { upsertMeetingNote, deleteMeetingNote, toggleShareNote } from "@/lib/actions/meeting-notes";
+import { Bold, Italic, Heading2, List, ListOrdered, ListTodo, Quote, History, Share2, Trash2, Download, Search, Plus, FileText, CheckSquare, StickyNote, Sparkles } from "lucide-react";
 import jsPDF from "jspdf";
 import { ActionItemsPanel } from "@/components/meeting-notes/action-items-panel";
+import { VersionHistoryDialog } from "@/components/meeting-notes/version-history-dialog";
+import { AiSummaryDialog } from "@/components/meeting-notes/ai-summary-dialog";
 
 const SECTIONS = [
   { key: "GENERAL", label: "General", icon: StickyNote, color: "bg-gray-100" },
@@ -54,6 +56,13 @@ export function NotesWorkspace({
   const [isPending, startTransition] = useTransition();
   const saveRef = useRef<NodeJS.Timeout | null>(null);
   const [saving, setSaving] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [historySession, setHistorySession] = useState(0);
+  const [aiOpen, setAiOpen] = useState(false);
+  const [aiSession, setAiSession] = useState(0);
+  const [aiBusy, setAiBusy] = useState(false);
+  const [aiPreviewHtml, setAiPreviewHtml] = useState<string | null>(null);
+  const [aiError, setAiError] = useState<string | null>(null);
 
   const selected = notes.find((n) => n.id === selectedId) || null;
   const filtered = notes.filter((n) => n.section === section);
@@ -66,7 +75,7 @@ export function NotesWorkspace({
       Image,
       TaskList,
       TaskItem.configure({ nested: true }),
-      // Placeholder.configure({ placeholder: "Start writing notes… Type / for commands, paste images, add checklists (- [ ])" }),
+      Placeholder.configure({ placeholder: "Start writing… use - [ ] for a checklist, paste images" }),
     ],
     content: selected?.content || selected?.html || "<p></p>",
     immediatelyRender: false,
@@ -156,18 +165,73 @@ export function NotesWorkspace({
   }
 
   async function handleAI() {
-    if (!selected) return;
-    toast.info("Generating AI summary...");
-    startTransition(async () => {
-      const res = await generateNoteSummary(selected.plainText || "");
-      if (res.success && editor) {
-        // Append at the end without resetting the whole doc (keeps cursor stable)
-        editor.chain().focus("end").insertContent(res.html || "").run();
-        toast.success("Summary appended!");
-      } else {
-        toast.error("AI generation failed.");
-      }
+    const source = selected?.plainText || "";
+    if (source.length < 10) {
+      toast.error("Add more text to this page before generating a summary.");
+      return;
+    }
+    setAiBusy(true);
+    setAiPreviewHtml(null);
+    setAiError(null);
+    setAiSession((s) => s + 1);
+    setAiOpen(true);
+    const res = await generateNoteSummary(source);
+    setAiBusy(false);
+    if (res.success) {
+      setAiPreviewHtml(res.html ?? null);
+    } else {
+      setAiError(res.error || "AI generation failed.");
+    }
+  }
+
+  async function handleAiInsert(html: string) {
+    if (!editor) return;
+    editor.chain().focus("end").insertContent(html).run();
+    toast.success("Summary inserted at the end of this page");
+  }
+
+  async function handleAiSave(title: string, section: string, html: string) {
+    if (!meetingId && !programmeId) {
+      toast.error("No meeting or programme context to save this page into");
+      return;
+    }
+    const plainText = html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+    const res = await upsertMeetingNote({
+      meetingId: meetingId || null,
+      programmeId: programmeId || null,
+      title,
+      section: section as any,
+      html,
+      plainText,
+      isShared: false,
+      content: null as any,
     });
+    if (!res.success || !res.id) {
+      toast.error(res.error || "Could not save the summary page");
+      return;
+    }
+    const newNote = {
+      id: res.id,
+      title,
+      section,
+      html,
+      plainText,
+      content: null,
+      isShared: false,
+      createdBy: "",
+      updatedAt: new Date().toISOString(),
+    };
+    setNotes((current) => [newNote as any, ...current]);
+    setSection(section);
+    setSelectedId(res.id);
+    toast.success("Summary saved as a new page");
+  }
+
+  async function handleRestore(html: string, plainText: string) {
+    if (!selectedId || !editor) return;
+    setNotes((prev) => prev.map((p) => p.id === selectedId ? { ...p, html, plainText, content: null } : p));
+    editor.commands.setContent(html || "<p></p>");
+    toast.success("Page restored");
   }
 
   async function handleMeetingRecap() {
@@ -324,6 +388,7 @@ export function NotesWorkspace({
             {meetingId && <Button size="sm" variant={showActionItems ? "default" : "outline"} onClick={() => setShowActionItems((current) => !current)}><CheckSquare className="h-4 w-4 mr-1" />Action items</Button>}
             {meetingId && <Button size="sm" variant="secondary" onClick={handleMeetingRecap} disabled={isPending}><Sparkles className="h-4 w-4 mr-1 text-emerald-600" />Meeting recap</Button>}
             <Button size="sm" variant="secondary" onClick={handleAI} disabled={isPending}><Sparkles className="h-4 w-4 mr-1 text-purple-500" />Summarize</Button>
+            <Button size="sm" variant="outline" onClick={() => { setHistorySession((s) => s + 1); setHistoryOpen(true); }} disabled={!selectedId}><History className="h-4 w-4 mr-1" />History</Button>
             <Button size="sm" variant="outline" onClick={handleShare}><Share2 className="h-4 w-4 mr-1" />{selected?.isShared ? "Unshare" : "Share"}</Button>
             <Button size="sm" variant="outline" onClick={exportPDF}><Download className="h-4 w-4 mr-1" />PDF</Button>
             <Button size="sm" variant="outline" onClick={handleDocx}><FileText className="h-4 w-4 mr-1" />DOCX</Button>
@@ -331,6 +396,18 @@ export function NotesWorkspace({
           </div>
         </div>
         {showActionItems && meetingId && <ActionItemsPanel meetingId={meetingId} initialItems={initialActionItems || []} attendees={attendees || []} />}
+        {editor && (
+          <div className="flex flex-wrap items-center gap-0.5 border-b border-gray-200 bg-white px-3 py-1.5">
+            <Button type="button" size="icon" variant="ghost" className={`h-7 w-7 ${editor.isActive("bold") ? "bg-accent text-accent-foreground" : ""}`} onClick={() => editor.chain().focus().toggleBold().run()} title="Bold"><Bold className="h-4 w-4" /></Button>
+            <Button type="button" size="icon" variant="ghost" className={`h-7 w-7 ${editor.isActive("italic") ? "bg-accent text-accent-foreground" : ""}`} onClick={() => editor.chain().focus().toggleItalic().run()} title="Italic"><Italic className="h-4 w-4" /></Button>
+            <Button type="button" size="icon" variant="ghost" className={`h-7 w-7 ${editor.isActive("heading", { level: 2 }) ? "bg-accent text-accent-foreground" : ""}`} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} title="Heading"><Heading2 className="h-4 w-4" /></Button>
+            <Button type="button" size="icon" variant="ghost" className={`h-7 w-7 ${editor.isActive("bulletList") ? "bg-accent text-accent-foreground" : ""}`} onClick={() => editor.chain().focus().toggleBulletList().run()} title="Bullet list"><List className="h-4 w-4" /></Button>
+            <Button type="button" size="icon" variant="ghost" className={`h-7 w-7 ${editor.isActive("orderedList") ? "bg-accent text-accent-foreground" : ""}`} onClick={() => editor.chain().focus().toggleOrderedList().run()} title="Numbered list"><ListOrdered className="h-4 w-4" /></Button>
+            <Button type="button" size="icon" variant="ghost" className={`h-7 w-7 ${editor.isActive("taskList") ? "bg-accent text-accent-foreground" : ""}`} onClick={() => editor.chain().focus().toggleTaskList().run()} title="Checklist"><ListTodo className="h-4 w-4" /></Button>
+            <Button type="button" size="icon" variant="ghost" className={`h-7 w-7 ${editor.isActive("blockquote") ? "bg-accent text-accent-foreground" : ""}`} onClick={() => editor.chain().focus().toggleBlockquote().run()} title="Quote"><Quote className="h-4 w-4" /></Button>
+            <span className="mx-1 hidden text-xs text-muted-foreground sm:inline">Checklist: type <code>- [ ]</code> at a line start</span>
+          </div>
+        )}
         <div className="flex-1 overflow-auto p-4 bg-[#fbfbfb]">
           {editor ? <EditorContent editor={editor} className="prose prose-slate prose-headings:text-black prose-p:text-gray-900 max-w-none bg-white rounded-xl border p-4 min-h-[400px] shadow-sm focus:outline-none focus-within:ring-2 focus-within:ring-emerald-500/20" /> : null}
           <div className="mt-4 rounded-lg border bg-amber-50 p-3 text-xs">
@@ -338,6 +415,27 @@ export function NotesWorkspace({
           </div>
         </div>
       </div>
+      <VersionHistoryDialog
+        key={historySession}
+        noteId={selectedId}
+        open={historyOpen}
+        onOpenChange={setHistoryOpen}
+        onRestored={handleRestore}
+      />
+      {selected && (
+        <AiSummaryDialog
+          key={aiSession}
+          open={aiOpen}
+          onOpenChange={setAiOpen}
+          busy={aiBusy}
+          previewHtml={aiPreviewHtml}
+          error={aiError}
+          sourceTitle={selected.title || "Note"}
+          section={section}
+          onInsert={handleAiInsert}
+          onSave={handleAiSave}
+        />
+      )}
     </div>
   );
 }
