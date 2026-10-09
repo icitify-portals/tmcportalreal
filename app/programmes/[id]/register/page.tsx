@@ -197,7 +197,7 @@ function RegistrationContent() {
     const effectiveNormal = isEarlyBird ? Number(programme.earlyBirdAmount) : Number(programme.amount || 0)
 
     return (
-        <div className="max-w-2xl mx-auto py-8 px-4">
+        <div className="max-w-2xl mx-auto px-4 py-4 sm:py-8">
             <Card className="border-t-4 border-t-green-600 shadow-lg">
                 <CardHeader>
                     <div className="flex justify-between items-start gap-4">
@@ -226,7 +226,7 @@ function RegistrationContent() {
                     )}
                 </CardHeader>
                 <form onSubmit={handleSubmit}>
-                    <CardContent className="space-y-6">
+                    <CardContent className="space-y-4 sm:space-y-6">
                         {sessionStatus === 'loading' ? (
                             <div className="h-20 flex items-center justify-center bg-gray-50 rounded-lg animate-pulse">
                                 <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
@@ -464,25 +464,27 @@ function RegistrationContent() {
                             );
                         })()}
                     </CardContent>
-                    <CardFooter className="flex flex-col gap-3">
-                        <Button 
-                            type="submit" 
-                            className="w-full h-12 text-lg font-bold bg-green-700 hover:bg-green-800 shadow-md"
-                            disabled={isSubmitting}
-                        >
-                            {isSubmitting ? (
-                                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                            ) : isWaiverActive ? (
-                                <ShieldCheck className="mr-2 h-5 w-5" />
-                            ) : programme.paymentRequired && parseFloat(programme.amount || "0") > 0 ? (
-                                <CreditCard className="mr-2 h-5 w-5" />
-                            ) : (
-                                <UserPlus className="mr-2 h-5 w-5" />
-                            )}
-                            {isWaiverActive ? "Complete Registration (Free)" : 
-                             programme.paymentRequired && effectiveNormal > 0 ? `Proceed to Payment (₦${effectiveNormal}${isEarlyBird ? " Early Bird" : ""})` : 
-                             "Confirm Registration"}
-                        </Button>
+<CardFooter className="sticky bottom-0 z-10 flex flex-col gap-3 border-t border-gray-100 bg-card/95 p-4 pt-3 backdrop-blur sm:static sm:border-0 sm:bg-transparent sm:p-6">
+                        <div className="w-full pr-16 sm:pr-0">
+                            <Button
+                                type="submit"
+                                className="w-full h-12 text-lg font-bold bg-green-700 hover:bg-green-800 shadow-md"
+                                disabled={isSubmitting}
+                            >
+                                {isSubmitting ? (
+                                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                                ) : isWaiverActive ? (
+                                    <ShieldCheck className="mr-2 h-5 w-5" />
+                                ) : programme.paymentRequired && parseFloat(programme.amount || "0") > 0 ? (
+                                    <CreditCard className="mr-2 h-5 w-5" />
+                                ) : (
+                                    <UserPlus className="mr-2 h-5 w-5" />
+                                )}
+                                {isWaiverActive ? "Complete Registration (Free)" :
+                                    programme.paymentRequired && effectiveNormal > 0 ? `Proceed to Payment (₦${effectiveNormal}${isEarlyBird ? " Early Bird" : ""})` :
+                                        "Confirm Registration"}
+                            </Button>
+                        </div>
                         <p className="text-[10px] text-center text-gray-400 uppercase tracking-widest font-bold">
                             TMC Portal © {new Date().getFullYear()} • Secure Registration
                         </p>
