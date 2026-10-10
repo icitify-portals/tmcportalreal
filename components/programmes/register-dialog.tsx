@@ -191,11 +191,11 @@ export function RegisterForProgrammeDialog({
                     {triggerText || `Register ${displayAmount > 0 ? `(₦${displayAmount}${isEarlyBird ? " Early Bird" : ""})` : "Free"}`}
                 </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
-                <form onSubmit={handleRegister}>
+            <DialogContent className="sm:max-w-[550px] max-h-[90dvh] overflow-y-auto p-4 sm:p-6">
+                <form onSubmit={handleRegister} className="space-y-4">
                     <DialogHeader>
-                        <DialogTitle>Register for {programmeTitle}</DialogTitle>
-                        <DialogDescription>
+                        <DialogTitle className="text-lg sm:text-xl">Register for {programmeTitle}</DialogTitle>
+                        <DialogDescription className="text-xs sm:text-sm">
                             {session 
                                 ? `You are registering as ${session.user.name}.`
                                 : "Please provide your details to register for this event."}
@@ -258,7 +258,7 @@ export function RegisterForProgrammeDialog({
                                 <div className="space-y-1 animate-in fade-in slide-in-from-top-1">
                                     <Label htmlFor="inst-amount" className="text-xs font-bold uppercase text-green-700">Installment Amount (₦)</Label>
                                     <Input 
-                                        id="inst-amount"
+                                        id="inst-amount" 
                                         type="number" 
                                         min={minInstallmentAmount || 0}
                                         max={displayAmount} 
@@ -351,153 +351,159 @@ export function RegisterForProgrammeDialog({
                     </div>
 
                     {!session && (
-                        <div className="grid gap-4 py-4">
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="name" className="text-right text-xs font-bold uppercase text-gray-500">Name</Label>
+                        <div className="space-y-4 py-2">
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-700 border-b pb-1">Guest Information</h3>
+                            <div className="space-y-1.5">
+                                <Label htmlFor="name" className="text-xs font-semibold uppercase text-gray-600">Full Name *</Label>
                                 <Input 
                                     id="name" 
                                     value={formData.name} 
                                     onChange={(e) => setFormData({...formData, name: e.target.value})}
-                                    className="col-span-3" 
+                                    placeholder="Enter your full name"
                                     required 
                                 />
                             </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="email" className="text-right text-xs font-bold uppercase text-gray-500">Email</Label>
-                                <Input 
-                                    id="email" 
-                                    type="email"
-                                    value={formData.email} 
-                                    onChange={(e) => setFormData({...formData, email: e.target.value})}
-                                    className="col-span-3" 
-                                    required 
-                                />
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="email" className="text-xs font-semibold uppercase text-gray-600">Email Address *</Label>
+                                    <Input 
+                                        id="email" 
+                                        type="email"
+                                        value={formData.email} 
+                                        onChange={(e) => setFormData({...formData, email: e.target.value})}
+                                        placeholder="you@example.com"
+                                        required 
+                                    />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="phone" className="text-xs font-semibold uppercase text-gray-600">Phone Number</Label>
+                                    <Input 
+                                        id="phone" 
+                                        type="tel"
+                                        value={formData.phone} 
+                                        onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                                        placeholder="+234..."
+                                    />
+                                </div>
                             </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="phone" className="text-right text-xs font-bold uppercase text-gray-500">Phone</Label>
-                                <Input 
-                                    id="phone" 
-                                    value={formData.phone} 
-                                    onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                                    className="col-span-3" 
-                                />
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label className="text-right text-xs font-bold uppercase text-gray-500">Gender</Label>
+                            <div className="space-y-1.5">
+                                <Label className="text-xs font-semibold uppercase text-gray-600">Gender *</Label>
                                 <RadioGroup 
                                     defaultValue="MALE" 
-                                    className="flex gap-4 col-span-3"
+                                    value={formData.gender}
+                                    className="flex gap-6"
                                     onValueChange={(v) => setFormData({...formData, gender: v})}
                                 >
                                     <div className="flex items-center space-x-2">
                                         <RadioGroupItem value="MALE" id="male" />
-                                        <Label htmlFor="male">Male</Label>
+                                        <Label htmlFor="male" className="cursor-pointer">Male</Label>
                                     </div>
                                     <div className="flex items-center space-x-2">
                                         <RadioGroupItem value="FEMALE" id="female" />
-                                        <Label htmlFor="female">Female</Label>
+                                        <Label htmlFor="female" className="cursor-pointer">Female</Label>
                                     </div>
                                 </RadioGroup>
                             </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="address" className="text-right text-xs font-bold uppercase text-gray-500">Address</Label>
+                            <div className="space-y-1.5">
+                                <Label htmlFor="address" className="text-xs font-semibold uppercase text-gray-600">Residential Address</Label>
                                 <Textarea 
                                     id="address" 
                                     value={formData.address} 
                                     onChange={(e) => setFormData({...formData, address: e.target.value})}
-                                    className="col-span-3" 
+                                    placeholder="Enter your address"
+                                    rows={2}
                                 />
                             </div>
 
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label className="text-right text-xs font-bold uppercase text-gray-500">Country</Label>
-                                <Select 
-                                    value={formData.country} 
-                                    onValueChange={(v) => setFormData({...formData, country: v, state: "", lga: ""})}
-                                >
-                                    <SelectTrigger className="col-span-3">
-                                        <SelectValue placeholder="Select Country" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {countries.map(c => (
-                                            <SelectItem key={c.code} value={c.name}>{c.name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div className="space-y-1.5">
+                                    <Label className="text-xs font-semibold uppercase text-gray-600">Country</Label>
+                                    <Select 
+                                        value={formData.country} 
+                                        onValueChange={(v) => setFormData({...formData, country: v, state: "", lga: ""})}
+                                    >
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="Select Country" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {countries.map(c => (
+                                                <SelectItem key={c.code} value={c.name}>{c.name}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
 
-                            {formData.country === "Nigeria" ? (
-                                <>
-                                    <div className="grid grid-cols-4 items-center gap-4">
-                                        <Label className="text-right text-xs font-bold uppercase text-gray-500">State</Label>
-                                        <Select 
-                                            value={formData.state} 
-                                            onValueChange={(v) => setFormData({...formData, state: v, lga: ""})}
-                                        >
-                                            <SelectTrigger className="col-span-3">
-                                                <SelectValue placeholder="Select State" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {nigerianStatesAndLgas.map(s => (
-                                                    <SelectItem key={s.state} value={s.state}>{s.state}</SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                    <div className="grid grid-cols-4 items-center gap-4">
-                                        <Label className="text-right text-xs font-bold uppercase text-gray-500">LGA</Label>
-                                        <Select 
-                                            value={formData.lga} 
-                                            onValueChange={(v) => setFormData({...formData, lga: v})}
-                                            disabled={!formData.state}
-                                        >
-                                            <SelectTrigger className="col-span-3">
-                                                <SelectValue placeholder="Select LGA" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {selectedStateData?.lgas.map(lga => (
-                                                    <SelectItem key={lga} value={lga}>{lga}</SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                </>
-                            ) : (
-                                <>
-                                    <div className="grid grid-cols-4 items-center gap-4">
-                                        <Label htmlFor="state" className="text-right text-xs font-bold uppercase text-gray-500">State/Province</Label>
-                                        <Input 
-                                            id="state" 
-                                            value={formData.state} 
-                                            onChange={(e) => setFormData({...formData, state: e.target.value})}
-                                            className="col-span-3" 
-                                            placeholder="Enter State/Province"
-                                        />
-                                    </div>
-                                    <div className="grid grid-cols-4 items-center gap-4">
-                                        <Label htmlFor="lga" className="text-right text-xs font-bold uppercase text-gray-500">City/Local Govt</Label>
-                                        <Input 
-                                            id="lga" 
-                                            value={formData.lga} 
-                                            onChange={(e) => setFormData({...formData, lga: e.target.value})}
-                                            className="col-span-3" 
-                                            placeholder="Enter City/Local Govt"
-                                        />
-                                    </div>
-                                </>
-                            )}
+                                {formData.country === "Nigeria" ? (
+                                    <>
+                                        <div className="space-y-1.5">
+                                            <Label className="text-xs font-semibold uppercase text-gray-600">State</Label>
+                                            <Select 
+                                                value={formData.state} 
+                                                onValueChange={(v) => setFormData({...formData, state: v, lga: ""})}
+                                            >
+                                                <SelectTrigger className="w-full">
+                                                    <SelectValue placeholder="Select State" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {nigerianStatesAndLgas.map(s => (
+                                                        <SelectItem key={s.state} value={s.state}>{s.state}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <Label className="text-xs font-semibold uppercase text-gray-600">LGA</Label>
+                                            <Select 
+                                                value={formData.lga} 
+                                                onValueChange={(v) => setFormData({...formData, lga: v})}
+                                                disabled={!formData.state}
+                                            >
+                                                <SelectTrigger className="w-full">
+                                                    <SelectValue placeholder="Select LGA" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {selectedStateData?.lgas.map(lga => (
+                                                        <SelectItem key={lga} value={lga}>{lga}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="space-y-1.5">
+                                            <Label htmlFor="state" className="text-xs font-semibold uppercase text-gray-600">State/Province</Label>
+                                            <Input 
+                                                id="state" 
+                                                value={formData.state} 
+                                                onChange={(e) => setFormData({...formData, state: e.target.value})}
+                                                placeholder="State/Province"
+                                            />
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <Label htmlFor="lga" className="text-xs font-semibold uppercase text-gray-600">City/Local Govt</Label>
+                                            <Input 
+                                                id="lga" 
+                                                value={formData.lga} 
+                                                onChange={(e) => setFormData({...formData, lga: e.target.value})}
+                                                placeholder="City/Local Govt"
+                                            />
+                                        </div>
+                                    </>
+                                )}
+                            </div>
                         </div>
                     )}
 
                     {session && (
-                        <div className="py-6">
+                        <div className="py-2">
                             <p className="text-sm text-gray-600">
                                 Your membership details will be automatically linked to this registration.
                             </p>
                         </div>
                     )}
 
-                    <DialogFooter>
+                    <DialogFooter className="pt-4 border-t sticky bottom-0 bg-background/95 backdrop-blur-xs -mx-4 -mb-4 p-4 sm:-mx-6 sm:-mb-6 sm:p-6 sm:rounded-b-lg">
                         <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={isSubmitting}>
                             Cancel
                         </Button>
