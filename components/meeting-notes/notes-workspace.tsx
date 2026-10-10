@@ -68,6 +68,21 @@ export function NotesWorkspace({
   const filtered = notes.filter((n) => n.section === section);
   const searched = query ? notes.filter((n) => n.title.toLowerCase().includes(query.toLowerCase()) || (n.plainText || "").toLowerCase().includes(query.toLowerCase())) : filtered;
 
+  const currentNoteIdRef = useRef<string | null>(selectedId);
+  useEffect(() => {
+    currentNoteIdRef.current = selectedId;
+  }, [selectedId]);
+
+  const currentTitleRef = useRef(title);
+  useEffect(() => {
+    currentTitleRef.current = title;
+  }, [title]);
+
+  const currentSectionRef = useRef(section);
+  useEffect(() => {
+    currentSectionRef.current = section;
+  }, [section]);
+
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -75,12 +90,13 @@ export function NotesWorkspace({
       Image,
       TaskList,
       TaskItem.configure({ nested: true }),
-      Placeholder.configure({ placeholder: "Start writing… use - [ ] for a checklist, paste images" }),
+      Placeholder.configure({ placeholder: "Start typing your note, meeting minutes or discussion points…" }),
     ],
     content: selected?.content || selected?.html || "<p></p>",
     immediatelyRender: false,
     onUpdate: ({ editor }) => {
-      if (!selectedId) return;
+      const activeId = currentNoteIdRef.current;
+      if (!activeId) return;
       const html = editor.getHTML();
       const json = editor.getJSON();
       const plain = editor.getText();
@@ -89,34 +105,29 @@ export function NotesWorkspace({
       saveRef.current = setTimeout(() => {
         startTransition(async () => {
           const res = await upsertMeetingNote({
-            id: selectedId,
+            id: activeId,
             meetingId: meetingId || null,
             programmeId: programmeId || null,
-            title,
-            section: section as any,
+            title: currentTitleRef.current,
+            section: currentSectionRef.current as any,
             content: json as any,
             html,
             plainText: plain.slice(0, 4000),
-            isShared: selected?.isShared,
           });
           if (res.success) {
-            setNotes((prev) => prev.map((p) => p.id === selectedId ? { ...p, html, content: json, plainText: plain, title } : p));
-            toast.success("Auto-saved");
+            setNotes((prev) => prev.map((p) => p.id === activeId ? { ...p, html, content: json, plainText: plain, title: currentTitleRef.current } : p));
           }
           setSaving(false);
         });
-      }, 800);
+      }, 500);
     },
   });
 
-  // Track which note is currently loaded into the editor so autosaves
-  // (which update `notes`) never reset the editor mid-typing.
-  const loadedNoteIdRef = useRef<string | null>(null);
+  // Track which note is currently loaded into the editor
+  const loadedNoteIdRef = useRef<string | null>(initialNotes[0]?.id || null);
 
   useEffect(() => {
-    if (!editor) return;
-    // Only (re)load editor content when the selected note actually changes —
-    // never on autosave (which updates `notes` and would clobber live typing).
+    if (!editor || !selectedId) return;
     if (loadedNoteIdRef.current === selectedId) return;
     loadedNoteIdRef.current = selectedId;
     const note = notes.find((n) => n.id === selectedId);
@@ -124,25 +135,43 @@ export function NotesWorkspace({
       editor.commands.setContent((note.content as any) || note.html || "<p></p>");
       setTitle(note.title);
     }
-  }, [selectedId, editor, notes]);
+  }, [selectedId, editor]);
 
   async function createNote() {
     const newTitle = `Note ${filtered.length + 1} — ${section}`;
+    const seedContent = { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "Start writing…" }] }] };
     const res = await upsertMeetingNote({
       meetingId: meetingId || null,
       programmeId: programmeId || null,
       title: newTitle,
       section: section as any,
-      content: { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "Start writing…" }] }] } as any,
+      content: seedContent as any,
       html: "<p>Start writing…</p>",
       plainText: "Start writing…",
     });
     if (res.success && res.id) {
-      const seedContent = { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "Start writing…" }] }] };
-      const newNote = { id: res.id, title: newTitle, section, html: "<p>Start writing…</p>", content: seedContent as any, plainText: "Start writing…", isShared: false, createdBy: "", updatedAt: new Date().toISOString() };
-      setNotes((p) => [newNote, ...p]);
+      const newNote = {
+        id: res.id,
+        title: newTitle,
+        section,
+        html: "<p>Start writing…</p>",
+        content: seedContent as any,
+        plainText: "Start writing…",
+        isShared: false,
+        createdBy: "",
+        updatedAt: new Date().toISOString()
+      };
+      setNotes((p) => [newNote as any, ...p]);
+      loadedNoteIdRef.current = res.id;
       setSelectedId(res.id);
+      setTitle(newTitle);
+      if (editor) {
+        editor.commands.setContent(seedContent);
+        editor.commands.focus();
+      }
       toast.success("New page created");
+    } else {
+      toast.error(res.error || "Could not create note");
     }
   }
 

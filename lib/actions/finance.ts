@@ -5,12 +5,13 @@ import { db } from "@/lib/db"
 import {
     financeBudgets, financeBudgetItems, financeFundRequests, financeTransactions,
     budgetStatusEnum, requestStatusEnum, transactionTypeEnum,
-    users
+    users, organizations, officials, roles, userRoles
 } from "@/lib/db/schema"
 import { eq, desc, and, inArray, aliasedTable } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { getServerSession } from "@/lib/session"
+import { sendEmail, emailTemplates } from "@/lib/email"
 
 // Schemas
 const BudgetSchema = z.object({
@@ -138,17 +139,45 @@ export async function createFundRequest(data: z.infer<typeof RequestSchema>, org
 
         const validData = RequestSchema.parse(data)
 
-        await db.insert(financeFundRequests).values({
+        const [newReq] = await db.insert(financeFundRequests).values({
             organizationId,
             requesterId: session.user.id,
             title: validData.title,
             description: validData.description,
             amount: validData.amount.toString(),
             status: 'PENDING',
-        })
+        }).$returningId()
+
+        // Fetch requester and organization info for email notification
+        const org = await db.select({ name: organizations.name, level: organizations.level }).from(organizations).where(eq(organizations.id, organizationId)).limit(1)
+        const requester = await db.select({ name: users.name, email: users.email }).from(users).where(eq(users.id, session.user.id)).limit(1)
+
+        const orgName = org[0]?.name || "TMC Organization"
+        const requesterName = requester[0]?.name || "Officer"
+        const trackingUrl = `${process.env.NEXTAUTH_URL || ""}/dashboard/admin/finance/requests`
+
+        if (requester[0]?.email) {
+            const template = emailTemplates.fundRequestNotification(
+                requesterName,
+                requesterName,
+                validData.title,
+                validData.amount,
+                orgName,
+                "SUBMITTED",
+                requesterName,
+                undefined,
+                trackingUrl
+            )
+            await sendEmail({
+                to: requester[0].email,
+                subject: template.subject,
+                html: template.html,
+                text: template.text,
+            }).catch(console.error)
+        }
 
         revalidatePath("/dashboard/admin/finance/requests")
-        return { success: true }
+        return { success: true, id: newReq?.id }
     } catch (error) {
         console.error("Create Request Error:", error)
         return { success: false, error: "Failed to create request" }
@@ -178,11 +207,44 @@ export async function approveRequest(requestId: string) {
         const session = await getServerSession()
         if (!session?.user?.id) return { success: false, error: "Unauthorized" }
 
+        const [request] = await db.select().from(financeFundRequests).where(eq(financeFundRequests.id, requestId))
+        if (!request) return { success: false, error: "Request not found" }
+
         await db.update(financeFundRequests).set({
             status: 'APPROVED',
             approvedBy: session.user.id,
             approvedAt: new Date(),
         }).where(eq(financeFundRequests.id, requestId))
+
+        // Notify requester and financial secretaries
+        const requester = await db.select({ name: users.name, email: users.email }).from(users).where(eq(users.id, request.requesterId)).limit(1)
+        const approver = await db.select({ name: users.name }).from(users).where(eq(users.id, session.user.id)).limit(1)
+        const org = await db.select({ name: organizations.name }).from(organizations).where(eq(organizations.id, request.organizationId)).limit(1)
+
+        const orgName = org[0]?.name || "TMC"
+        const requesterName = requester[0]?.name || "Officer"
+        const approverName = approver[0]?.name || "Executive Leader"
+        const trackingUrl = `${process.env.NEXTAUTH_URL || ""}/dashboard/admin/finance/requests`
+
+        if (requester[0]?.email) {
+            const template = emailTemplates.fundRequestNotification(
+                requesterName,
+                requesterName,
+                request.title,
+                parseFloat(request.amount.toString()),
+                orgName,
+                "APPROVED",
+                approverName,
+                undefined,
+                trackingUrl
+            )
+            await sendEmail({
+                to: requester[0].email,
+                subject: template.subject,
+                html: template.html,
+                text: template.text,
+            }).catch(console.error)
+        }
 
         revalidatePath("/dashboard/admin/finance/requests")
         return { success: true }
@@ -191,17 +253,61 @@ export async function approveRequest(requestId: string) {
     }
 }
 
-export async function disburseRequest(requestId: string) {
+export async function rejectRequest(requestId: string, reason: string) {
     try {
         const session = await getServerSession()
         if (!session?.user?.id) return { success: false, error: "Unauthorized" }
 
-        // Fetch request first to check status (safe to use select here)
+        const [request] = await db.select().from(financeFundRequests).where(eq(financeFundRequests.id, requestId))
+        if (!request) return { success: false, error: "Request not found" }
+
+        await db.update(financeFundRequests).set({
+            status: 'REJECTED',
+            rejectionReason: reason,
+        }).where(eq(financeFundRequests.id, requestId))
+
+        const requester = await db.select({ name: users.name, email: users.email }).from(users).where(eq(users.id, request.requesterId)).limit(1)
+        const user = await db.select({ name: users.name }).from(users).where(eq(users.id, session.user.id)).limit(1)
+        const org = await db.select({ name: organizations.name }).from(organizations).where(eq(organizations.id, request.organizationId)).limit(1)
+
+        if (requester[0]?.email) {
+            const template = emailTemplates.fundRequestNotification(
+                requester[0].name || "Officer",
+                requester[0].name || "Officer",
+                request.title,
+                parseFloat(request.amount.toString()),
+                org[0]?.name || "TMC",
+                "REJECTED",
+                user[0]?.name || "Administrator",
+                reason,
+                `${process.env.NEXTAUTH_URL || ""}/dashboard/admin/finance/requests`
+            )
+            await sendEmail({
+                to: requester[0].email,
+                subject: template.subject,
+                html: template.html,
+                text: template.text,
+            }).catch(console.error)
+        }
+
+        revalidatePath("/dashboard/admin/finance/requests")
+        return { success: true }
+    } catch (error) {
+        return { success: false, error: "Action failed" }
+    }
+}
+
+export async function disburseRequest(requestId: string, voucherRef?: string) {
+    try {
+        const session = await getServerSession()
+        if (!session?.user?.id) return { success: false, error: "Unauthorized" }
+
+        // Fetch request first to check status
         const [request] = await db.select().from(financeFundRequests)
             .where(eq(financeFundRequests.id, requestId));
 
         if (!request) return { success: false, error: "Request not found" }
-        if (request.status !== 'APPROVED') return { success: false, error: "Request must be approved first" }
+        if (request.status !== 'APPROVED') return { success: false, error: "Request must be approved by Executive Leader first" }
 
         // Start Transaction
         await db.transaction(async (tx) => {
@@ -216,14 +322,39 @@ export async function disburseRequest(requestId: string) {
             await tx.insert(financeTransactions).values({
                 organizationId: request.organizationId,
                 type: 'OUTFLOW',
-                amount: request.amount, // Already a string/decimal from DB query usually
-                category: 'Expense', // Could be mapped from request
-                description: `Disbursement for: ${request.title}`,
+                amount: request.amount,
+                category: 'Expense',
+                description: `Disbursement for: ${request.title}${voucherRef ? ` (Ref: ${voucherRef})` : ""}`,
                 performedBy: session.user.id,
                 relatedRequestId: request.id,
                 date: new Date(),
             })
         })
+
+        // Send Disbursement email
+        const requester = await db.select({ name: users.name, email: users.email }).from(users).where(eq(users.id, request.requesterId)).limit(1)
+        const disburser = await db.select({ name: users.name }).from(users).where(eq(users.id, session.user.id)).limit(1)
+        const org = await db.select({ name: organizations.name }).from(organizations).where(eq(organizations.id, request.organizationId)).limit(1)
+
+        if (requester[0]?.email) {
+            const template = emailTemplates.fundRequestNotification(
+                requester[0].name || "Officer",
+                requester[0].name || "Officer",
+                request.title,
+                parseFloat(request.amount.toString()),
+                org[0]?.name || "TMC",
+                "DISBURSED",
+                disburser[0]?.name || "Financial Secretary",
+                undefined,
+                `${process.env.NEXTAUTH_URL || ""}/dashboard/admin/finance/requests`
+            )
+            await sendEmail({
+                to: requester[0].email,
+                subject: template.subject,
+                html: template.html,
+                text: template.text,
+            }).catch(console.error)
+        }
 
         revalidatePath("/dashboard/admin/finance/requests")
         revalidatePath("/dashboard/admin/finance/transactions")
@@ -234,30 +365,40 @@ export async function disburseRequest(requestId: string) {
     }
 }
 
-export async function getRequests(organizationId: string) {
+export async function getRequests(organizationId?: string) {
     const requester = aliasedTable(users, "requester")
     const recommender = aliasedTable(users, "recommender")
     const approver = aliasedTable(users, "approver")
-    // const disburser = aliasedTable(users, "disburser") // Add if needed in UI
+    const disburser = aliasedTable(users, "disburser")
 
-    const results = await db.select({
+    const query = db.select({
         request: financeFundRequests,
         requester: requester,
         recommender: recommender,
         approver: approver,
+        disburser: disburser,
+        orgName: organizations.name,
+        orgLevel: organizations.level,
     })
         .from(financeFundRequests)
         .leftJoin(requester, eq(financeFundRequests.requesterId, requester.id))
         .leftJoin(recommender, eq(financeFundRequests.recommendedBy, recommender.id))
         .leftJoin(approver, eq(financeFundRequests.approvedBy, approver.id))
-        .where(eq(financeFundRequests.organizationId, organizationId))
-        .orderBy(desc(financeFundRequests.createdAt))
+        .leftJoin(disburser, eq(financeFundRequests.disbursedBy, disburser.id))
+        .leftJoin(organizations, eq(financeFundRequests.organizationId, organizations.id))
 
-    return results.map(row => ({
+    const rows = organizationId
+        ? await query.where(eq(financeFundRequests.organizationId, organizationId)).orderBy(desc(financeFundRequests.createdAt))
+        : await query.orderBy(desc(financeFundRequests.createdAt))
+
+    return rows.map(row => ({
         ...row.request,
         requester: row.requester,
         recommender: row.recommender,
-        approver: row.approver
+        approver: row.approver,
+        disburser: row.disburser,
+        organizationName: row.orgName,
+        organizationLevel: row.orgLevel,
     }))
 }
 

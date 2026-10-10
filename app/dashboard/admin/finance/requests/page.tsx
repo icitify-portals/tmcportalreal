@@ -1,135 +1,81 @@
 export const dynamic = 'force-dynamic'
-import { getRequests, recommendRequest, approveRequest, disburseRequest } from "@/lib/actions/finance"
+
+import { getRequests } from "@/lib/actions/finance"
 import { CreateRequestDialog } from "@/components/admin/finance/create-request-dialog"
+import { RequestsClientList } from "@/components/admin/finance/requests-client-list"
 import { getServerSession } from "@/lib/session"
-import { notFound } from "next/navigation"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { formatCurrency, formatDate } from "@/lib/utils"
-// import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { redirect } from "next/navigation"
+import { db } from "@/lib/db"
+import { organizations, officials, userRoles, roles } from "@/lib/db/schema"
+import { eq, and } from "drizzle-orm"
+import { DashboardLayout } from "@/components/layout/dashboard-layout"
 
-
-export default async function RequestsPage() {
+export default async function RequestsPage({
+    searchParams
+}: {
+    searchParams: Promise<{ orgId?: string }>
+}) {
     const session = await getServerSession()
-    if (!session?.user?.id) return notFound()
-    const currentUserId = session.user.id
+    if (!session?.user?.id) redirect("/login")
 
-    const organizationId = "default-org-id" // TODO: Real context
+    const sp = await searchParams
+    const isSuperAdmin = session.user.isSuperAdmin
 
-    const requests = await getRequests(organizationId) || []
+    // Resolve user's official position and organization
+    const userOfficial = await db.select({
+        id: officials.id,
+        organizationId: officials.organizationId,
+        positionLevel: officials.positionLevel,
+    })
+    .from(officials)
+    .where(eq(officials.userId, session.user.id))
+    .limit(1)
 
-    // Helper to determine badge color
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'PENDING': return 'secondary'
-            case 'RECOMMENDED': return 'outline' // Example
-            case 'APPROVED': return 'default'
-            case 'DISBURSED': return 'default' // Maybe green
-            case 'REJECTED': return 'destructive'
-            default: return 'secondary'
-        }
+    const userRolesList = await db.select({
+        organizationId: userRoles.organizationId,
+        roleCode: roles.code,
+    })
+    .from(userRoles)
+    .innerJoin(roles, eq(userRoles.roleId, roles.id))
+    .where(and(eq(userRoles.userId, session.user.id), eq(userRoles.isActive, true)))
+
+    let resolvedOrgId = userOfficial[0]?.organizationId || session.user.officialOrganizationId || userRolesList[0]?.organizationId || session.user.organizationId || ""
+
+    if (!resolvedOrgId && !isSuperAdmin) {
+        const national = await db.select({ id: organizations.id }).from(organizations).where(eq(organizations.level, "NATIONAL")).limit(1)
+        resolvedOrgId = national[0]?.id || ""
     }
 
+    const effectiveOrgId = sp.orgId || (isSuperAdmin ? "" : resolvedOrgId)
+    const requests = await getRequests(effectiveOrgId || undefined) || []
+
+    // Check approvals: Executive Leader (Amir / Waali / Wakil / Raqib / Admin)
+    const roleCodes = userRolesList.map(r => r.roleCode)
+    const canApprove = isSuperAdmin || Boolean(userOfficial[0]) || roleCodes.some(c => c.includes("ADMIN") || c.includes("AMIR") || c.includes("WAALI") || c.includes("WAKIL") || c.includes("RAQIB") || c.includes("PRESIDENT") || c.includes("CHAIRMAN"))
+    const canDisburse = isSuperAdmin || roleCodes.some(c => c.includes("FIN") || c.includes("TREASURER") || c.includes("ACCOUNTANT") || c.includes("ADMIN"))
+
     return (
-            <div className="space-y-6">
-                <div className="flex justify-between items-center">
-                    <h3 className="text-lg font-medium">Fund Requests</h3>
-                    <CreateRequestDialog organizationId={organizationId} />
+        <DashboardLayout>
+            <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h2 className="text-3xl font-bold tracking-tight text-green-950">Fund Requests</h2>
+                        <p className="text-sm text-muted-foreground">
+                            4-Stage Hierarchical Routing: Officer &rarr; Amir/Waali/Wakil/Raqib &rarr; Financial Secretary &rarr; Applicant Notification.
+                        </p>
+                    </div>
+                    <div>
+                        <CreateRequestDialog organizationId={resolvedOrgId || "default-org"} />
+                    </div>
                 </div>
 
-                <Tabs defaultValue="all" className="w-full">
-                    <TabsList>
-                        <TabsTrigger value="all">All Requests</TabsTrigger>
-                        <TabsTrigger value="pending">Pending Recommendation</TabsTrigger>
-                        <TabsTrigger value="approval">Pending Approval</TabsTrigger>
-                        <TabsTrigger value="disbursement">Pending Disbursement</TabsTrigger>
-                    </TabsList>
-
-                    {['all', 'pending', 'approval', 'disbursement'].map((tab) => (
-                        <TabsContent key={tab} value={tab} className="space-y-4 mt-4">
-                            {requests.filter(r => {
-                                if (tab === 'all') return true
-                                if (tab === 'pending') return r.status === 'PENDING'
-                                if (tab === 'approval') return r.status === 'RECOMMENDED'
-                                if (tab === 'disbursement') return r.status === 'APPROVED' // Ready for disbursement
-                                return false
-                            }).map(request => (
-                                <Card key={request.id}>
-                                    <CardHeader>
-                                        <div className="flex justify-between items-start">
-                                            <div>
-                                                <CardTitle>{request.title}</CardTitle>
-                                                <CardDescription>
-                                                    Requested by {request.requester?.name} on {formatDate(request.createdAt || new Date())}
-                                                </CardDescription>
-                                            </div>
-                                            <Badge variant={getStatusColor(request.status || 'PENDING') as any}>
-                                                {request.status}
-                                            </Badge>
-                                        </div>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <p className="text-sm text-gray-700 dark:text-gray-300 mb-4 bg-muted/50 p-3 rounded">
-                                            {request.description}
-                                        </p>
-                                        <div className="font-bold text-xl">
-                                            {formatCurrency(request.amount)}
-                                        </div>
-
-                                        {/* Workflow History */}
-                                        <div className="mt-4 text-xs text-muted-foreground space-y-1">
-                                            {request.recommendedBy && (
-                                                <div>✓ Recommended by {request.recommender?.name}</div>
-                                            )}
-                                            {request.approvedBy && (
-                                                <div>✓ Approved by {request.approver?.name}</div>
-                                            )}
-                                            {request.disbursedBy && (
-                                                <div className="text-green-600 dark:text-green-400">✓ Disbursed</div>
-                                            )}
-                                        </div>
-                                    </CardContent>
-                                    <CardFooter className="flex gap-2 justify-end border-t pt-4">
-                                        {/* Recommendation Action */}
-                                        {request.status === 'PENDING' && (
-                                            <form action={async () => {
-                                                "use server"
-                                                await recommendRequest(request.id)
-                                            }}>
-                                                <Button size="sm" variant="outline">Recommend (Finance)</Button>
-                                            </form>
-                                        )}
-
-                                        {/* Approval Action */}
-                                        {request.status === 'RECOMMENDED' && (
-                                            <form action={async () => {
-                                                "use server"
-                                                await approveRequest(request.id)
-                                            }}>
-                                                <Button size="sm">Approve (Head)</Button>
-                                            </form>
-                                        )}
-
-                                        {/* Disbursement Action */}
-                                        {request.status === 'APPROVED' && (
-                                            <form action={async () => {
-                                                "use server"
-                                                await disburseRequest(request.id)
-                                            }}>
-                                                <Button size="sm" variant="default" className="bg-green-600 hover:bg-green-700">
-                                                    Disburse Funds
-                                                </Button>
-                                            </form>
-                                        )}
-                                    </CardFooter>
-                                </Card>
-                            ))}
-                        </TabsContent>
-                    ))}
-                </Tabs>
+                <RequestsClientList
+                    requests={requests as any}
+                    canApprove={canApprove}
+                    canDisburse={canDisburse}
+                />
             </div>
+        </DashboardLayout>
     )
 }
 

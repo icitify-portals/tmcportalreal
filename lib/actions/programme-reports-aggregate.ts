@@ -153,10 +153,31 @@ export async function getProgrammeReportRollup(params: RollupParams) {
   // For non-superAdmin, scope is hierarchy of baseOrgId; for superAdmin with target, already set.
   // If params.targetOrganizationId not set and not superAdmin, we expand to hierarchy.
   // If superAdmin and no target, expand to hierarchy of baseOrgId (national -> all). That gives national cockpit.
-  const hierarchyIds = await getHierarchyIds(effectiveRoot);
-
-  // If filtering to a specific office, keep hierarchyIds but add office filter later.
   const { start, end } = getPeriodDateRange(params.scope, params.year, params.quarter, params.month);
+  const hierarchyIds = await getHierarchyIds(effectiveRoot);
+  if (!hierarchyIds || hierarchyIds.length === 0) {
+    return {
+      summary: {
+        totalProgrammes: 0,
+        completed: 0,
+        pending: 0,
+        approved: 0,
+        rejected: 0,
+        totalAttendees: 0,
+        totalMale: 0,
+        totalFemale: 0,
+        totalSpent: 0,
+        totalBudget: 0,
+        avgAttendance: 0,
+      },
+      byPeriod: [],
+      byOffice: [],
+      byLevel: [],
+      byOrganization: [],
+      details: [],
+      meta: { hierarchyIds: [], start, end, effectiveRoot },
+    };
+  }
 
   // Build where conditions
   const whereClauses: any[] = [
@@ -383,6 +404,9 @@ export async function getRegistrationAnalyticsByLevel(params: RollupParams) {
     }
   }
   const hierarchyIds = await getHierarchyIds(effectiveRoot);
+  if (!hierarchyIds || hierarchyIds.length === 0) {
+    return { totalRegistrations: 0, totalAttended: 0, byLevel: [], byStatus: [] };
+  }
   const { start, end } = getPeriodDateRange(params.scope, params.year, params.quarter, params.month);
 
   const rows = await db

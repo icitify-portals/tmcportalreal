@@ -487,5 +487,136 @@ export const emailTemplates = {
       The Muslim Congress
     `,
   }),
+  fundRequestNotification: (
+    recipientName: string,
+    requesterName: string,
+    title: string,
+    amount: number,
+    levelName: string,
+    stage: "SUBMITTED" | "APPROVED" | "DISBURSED" | "REJECTED",
+    actorName?: string,
+    rejectionReason?: string,
+    trackingUrl?: string
+  ) => {
+    const stageTitles = {
+      SUBMITTED: "New Fund Request Submitted",
+      APPROVED: "Fund Request Approved by Executive Leader",
+      DISBURSED: "Fund Request Disbursed & Closed Out",
+      REJECTED: "Fund Request Rejected",
+    };
+    const stageBadges = {
+      SUBMITTED: "background-color: #fef3c7; color: #92400e; border: 1px solid #fcd34d;",
+      APPROVED: "background-color: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe;",
+      DISBURSED: "background-color: #dcfce7; color: #166534; border: 1px solid #bbf7d0;",
+      REJECTED: "background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca;",
+    };
+    return {
+      subject: `[${levelName.toUpperCase()}] ${stageTitles[stage]}: ${title}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 12px;">
+          <div style="text-align: center; margin-bottom: 20px;">
+            <span style="display: inline-block; padding: 4px 12px; border-radius: 9999px; font-size: 11px; font-weight: bold; text-transform: uppercase; ${stageBadges[stage]}">
+              [${levelName}] ${stage}
+            </span>
+            <h2 style="color: #111827; margin: 12px 0 4px 0;">${stageTitles[stage]}</h2>
+            <p style="color: #6b7280; font-size: 14px; margin: 0;">The Muslim Congress — Financial Workflow</p>
+          </div>
+
+          <p>Dear ${recipientName},</p>
+          <p>Here is an update regarding the fund request:</p>
+
+          <div style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin: 16px 0;">
+            <p style="margin: 4px 0; font-size: 14px;"><strong>Title:</strong> ${title}</p>
+            <p style="margin: 4px 0; font-size: 14px;"><strong>Amount:</strong> ₦${amount.toLocaleString()}</p>
+            <p style="margin: 4px 0; font-size: 14px;"><strong>Jurisdiction / Level:</strong> ${levelName}</p>
+            <p style="margin: 4px 0; font-size: 14px;"><strong>Requested By:</strong> ${requesterName}</p>
+            ${actorName ? `<p style="margin: 4px 0; font-size: 14px;"><strong>Action Performed By:</strong> ${actorName}</p>` : ""}
+            ${rejectionReason ? `<p style="margin: 4px 0; font-size: 14px; color: #dc2626;"><strong>Reason:</strong> ${rejectionReason}</p>` : ""}
+          </div>
+
+          <div style="margin: 20px 0; font-size: 13px; color: #4b5563;">
+            <p style="font-weight: bold; margin-bottom: 6px;">Routing Chain:</p>
+            <ol style="padding-left: 20px; line-height: 1.6;">
+              <li style="${stage !== 'SUBMITTED' ? 'color: #166534; font-weight: 600;' : 'color: #d97706; font-weight: 600;'}">1. Officer Request & Submission</li>
+              <li style="${stage === 'APPROVED' || stage === 'DISBURSED' ? 'color: #166534; font-weight: 600;' : ''}">2. Amir / Waali / Wakil / Raqib Executive Approval</li>
+              <li style="${stage === 'DISBURSED' ? 'color: #166534; font-weight: 600;' : ''}">3. Financial Secretary Disbursement & Payment Voucher</li>
+              <li style="${stage === 'DISBURSED' ? 'color: #166534; font-weight: 600;' : ''}">4. Applicant Notification & Final Closeout</li>
+            </ol>
+          </div>
+
+          ${trackingUrl ? `
+          <div style="text-align: center; margin: 28px 0;">
+            <a href="${trackingUrl}" style="background-color: #166534; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+              Track Fund Request
+            </a>
+          </div>` : ""}
+
+          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;">
+          <p style="text-align: center; color: #9ca3af; font-size: 11px;">© ${new Date().getFullYear()} The Muslim Congress. All rights reserved.</p>
+        </div>
+      `,
+      text: `
+        [${levelName.toUpperCase()}] ${stageTitles[stage]}: ${title}
+        Amount: ₦${amount.toLocaleString()}
+        Requested By: ${requesterName}
+        ${actorName ? `Action By: ${actorName}` : ""}
+        ${rejectionReason ? `Reason: ${rejectionReason}` : ""}
+        Track Request: ${trackingUrl || process.env.NEXTAUTH_URL}
+      `,
+    };
+  },
+  programmeInvitationWithHostCadre: (
+    name: string,
+    programmeTitle: string,
+    hostCadre: string,
+    hostName: string,
+    date: string,
+    venue: string,
+    format: string,
+    targetAudience: string,
+    detailsUrl: string
+  ) => ({
+    subject: `[${hostCadre.toUpperCase()} - ${hostName}] Invitation: ${programmeTitle}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 12px;">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <span style="display: inline-block; padding: 4px 12px; border-radius: 9999px; font-size: 11px; font-weight: bold; text-transform: uppercase; background-color: #dcfce7; color: #166534; border: 1px solid #bbf7d0;">
+            Organised by: ${hostName} (${hostCadre})
+          </span>
+          <h2 style="color: #111827; margin: 12px 0 4px 0;">${programmeTitle}</h2>
+          <p style="color: #6b7280; font-size: 14px; margin: 0;">The Muslim Congress Programme Invitation</p>
+        </div>
+
+        <p>Dear ${name},</p>
+        <p>You are cordially invited to participate in the following programme:</p>
+
+        <div style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin: 16px 0;">
+          <p style="margin: 4px 0; font-size: 14px;"><strong>🏛️ Host Jurisdiction:</strong> ${hostName} (${hostCadre})</p>
+          <p style="margin: 4px 0; font-size: 14px;"><strong>📅 Date & Time:</strong> ${date}</p>
+          <p style="margin: 4px 0; font-size: 14px;"><strong>📍 Venue:</strong> ${venue}</p>
+          <p style="margin: 4px 0; font-size: 14px;"><strong>📡 Format:</strong> ${format}</p>
+          <p style="margin: 4px 0; font-size: 14px;"><strong>👥 Target Audience:</strong> ${targetAudience}</p>
+        </div>
+
+        <div style="text-align: center; margin: 28px 0;">
+          <a href="${detailsUrl}" style="background-color: #166534; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+            View Programme Details & Register
+          </a>
+        </div>
+
+        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;">
+        <p style="text-align: center; color: #9ca3af; font-size: 11px;">© ${new Date().getFullYear()} The Muslim Congress. All rights reserved.</p>
+      </div>
+    `,
+    text: `
+      [${hostCadre.toUpperCase()} - ${hostName}] Invitation: ${programmeTitle}
+      Date: ${date}
+      Venue: ${venue}
+      Format: ${format}
+      Target Audience: ${targetAudience}
+      Register: ${detailsUrl}
+    `,
+  }),
 }
+
 

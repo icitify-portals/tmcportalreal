@@ -97,7 +97,7 @@ export async function getNote(id: string) {
   return row;
 }
 
-export async function upsertMeetingNote(data: z.infer<typeof NoteSchema> & { id?: string }) {
+export async function upsertMeetingNote(data: z.infer<typeof NoteSchema> & { id?: string; createSnapshot?: boolean }) {
   const session = await getServerSession();
   if (!session?.user?.id) return { success: false, error: "Unauthorized" };
   const parsed = NoteSchema.parse(data);
@@ -108,16 +108,20 @@ export async function upsertMeetingNote(data: z.infer<typeof NoteSchema> & { id?
     if (!(await canAccessNote(existing, session.user.id, session.user.isSuperAdmin))) {
       return { success: false, error: "You do not have access to this note" };
     }
-    // version snapshot
-    await db.insert(meetingNoteVersions).values({
-      noteId: existing.id,
-      content: existing.content as any,
-      html: existing.html as any,
-      version: existing.version ?? 1,
-      createdBy: session.user.id,
-      createdAt: new Date(),
-    });
-    const [updated] = await db
+    
+    // Only take a version snapshot if explicitly requested (e.g. milestone or manual snapshot)
+    if (data.createSnapshot) {
+      await db.insert(meetingNoteVersions).values({
+        noteId: existing.id,
+        content: existing.content as any,
+        html: existing.html as any,
+        version: existing.version ?? 1,
+        createdBy: session.user.id,
+        createdAt: new Date(),
+      });
+    }
+
+    await db
       .update(meetingNotes)
       .set({
         title: parsed.title,
@@ -127,11 +131,11 @@ export async function upsertMeetingNote(data: z.infer<typeof NoteSchema> & { id?
         plainText: parsed.plainText || null,
         isShared: parsed.isShared ?? existing.isShared,
         updatedBy: session.user.id,
-        version: (existing.version ?? 1) + 1,
+        version: data.createSnapshot ? (existing.version ?? 1) + 1 : existing.version ?? 1,
         updatedAt: new Date(),
       })
       .where(eq(meetingNotes.id, data.id));
-    revalidatePath(`/dashboard/meetings`);
+
     return { success: true, id: data.id };
   } else {
     if (parsed.meetingId) {
@@ -154,7 +158,6 @@ export async function upsertMeetingNote(data: z.infer<typeof NoteSchema> & { id?
       createdAt: new Date(),
       updatedAt: new Date(),
     });
-    revalidatePath(`/dashboard/meetings`);
     return { success: true, id };
   }
 }

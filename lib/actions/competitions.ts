@@ -14,6 +14,8 @@ export interface CompetitionField {
     required: boolean
     placeholder?: string
     options?: string[] // For select fields
+    correctAnswer?: string // For auto-scored questions
+    points?: number // Points for this question
     validation?: { min?: number; max?: number; pattern?: string }
 }
 
@@ -132,39 +134,68 @@ export async function getActiveCompetitions() {
     }))
 }
 
-// ─── Public: Submit Application ─────────────────────────────────────────────────
+// ─── Public: Submit Application & Auto-Grade ────────────────────────────────────────────
 export async function submitCompetitionApplication(competitionId: string, data: Record<string, unknown>) {
-    // Optional: get session if user is logged in
     let userId: string | null = null
     try {
         const session = await getServerSession()
         userId = session?.user?.id || null
     } catch {
-        // Public form, user may not be logged in
+        // Public form
     }
 
-    // Verify competition is active
     const [competition] = await db.select().from(competitions).where(
         and(eq(competitions.id, competitionId), eq(competitions.status, "ACTIVE"))
     )
     if (!competition) return { success: false, error: "Competition is no longer accepting applications" }
 
-    // Check if registration deadline has passed
     if (new Date() > new Date(competition.endDate)) {
         return { success: false, error: "Registration deadline has passed" }
+    }
+
+    const fields = (competition.fields as CompetitionField[]) || []
+    let totalPossible = 0
+    let earnedScore = 0
+    let hasQuestions = false
+
+    for (const f of fields) {
+        if (f.correctAnswer !== undefined && f.correctAnswer !== "") {
+            hasQuestions = true
+            const pts = f.points || 10
+            totalPossible += pts
+            const userAns = String(data[f.id] || "").trim().toLowerCase()
+            const correctAns = String(f.correctAnswer || "").trim().toLowerCase()
+            if (userAns === correctAns) {
+                earnedScore += pts
+            }
+        }
+    }
+
+    const percentage = totalPossible > 0 ? Math.round((earnedScore / totalPossible) * 100) : null
+    const enrichedData = {
+        ...data,
+        _score: hasQuestions ? earnedScore : undefined,
+        _totalPoints: hasQuestions ? totalPossible : undefined,
+        _percentage: percentage !== null ? percentage : undefined,
     }
 
     const now = new Date()
     const [result] = await db.insert(competitionSubmissions).values({
         competitionId,
         userId,
-        data,
-        status: "SUBMITTED",
+        data: enrichedData,
+        status: hasQuestions ? `SCORED (${earnedScore}/${totalPossible})` : "SUBMITTED",
         submittedAt: now,
         updatedAt: now,
     }).$returningId()
 
-    return { success: true, submissionId: result.id }
+    return {
+        success: true,
+        submissionId: result.id,
+        score: hasQuestions ? earnedScore : undefined,
+        totalPoints: hasQuestions ? totalPossible : undefined,
+        percentage: percentage !== null ? percentage : undefined,
+    }
 }
 
 // ─── Admin: Get Submissions ─────────────────────────────────────────────────────

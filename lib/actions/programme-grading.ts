@@ -123,7 +123,15 @@ export async function getProgrammeGradesLive(params: {
 
   // Resolve hierarchy like rollup but directly query programmes+reports for grading accuracy
   const baseRollup = await getProgrammeReportRollup(params);
-  const hierarchyIds = (baseRollup as any).meta.hierarchyIds as string[];
+  const hierarchyIds = (baseRollup as any)?.meta?.hierarchyIds as string[] | undefined;
+  if (!hierarchyIds || hierarchyIds.length === 0) {
+    return {
+      graded: [],
+      byOrganization: [],
+      byLevel: [],
+      overall: { avgScore: 0, grade: scoreToGrade(0), total: 0 },
+    };
+  }
 
   const filters: any[] = [
     inArray(programmes.organizationId, hierarchyIds),

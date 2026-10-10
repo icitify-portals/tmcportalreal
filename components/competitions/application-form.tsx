@@ -21,8 +21,9 @@ interface Props {
 export function CompetitionApplicationForm({ competitionId, fields }: Props) {
     const [formData, setFormData] = useState<Record<string, string>>({})
     const [submitting, setSubmitting] = useState(false)
-    const [success, setSuccess] = useState(false)
     const [error, setError] = useState("")
+    const [success, setSuccess] = useState(false)
+    const [scoreInfo, setScoreInfo] = useState<{ score?: number; totalPoints?: number; percentage?: number } | null>(null)
 
     const handleChange = (fieldId: string, value: string) => {
         setFormData(prev => ({ ...prev, [fieldId]: value }))
@@ -45,6 +46,11 @@ export function CompetitionApplicationForm({ competitionId, fields }: Props) {
         try {
             const result = await submitCompetitionApplication(competitionId, formData)
             if (result.success) {
+                setScoreInfo({
+                    score: result.score,
+                    totalPoints: result.totalPoints,
+                    percentage: result.percentage,
+                })
                 setSuccess(true)
             } else {
                 setError(result.error || "Failed to submit application.")
@@ -58,12 +64,22 @@ export function CompetitionApplicationForm({ competitionId, fields }: Props) {
 
     if (success) {
         return (
-            <div className="text-center py-10">
-                <CheckCircle2 className="h-16 w-16 mx-auto text-green-500 mb-4" />
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">Application Submitted!</h3>
-                <p className="text-gray-500 max-w-md mx-auto">
-                    Your application has been received successfully. You will be contacted
-                    if further information is needed. Jazakumullahu Khyran!
+            <div className="text-center py-10 space-y-4">
+                <CheckCircle2 className="h-16 w-16 mx-auto text-green-500 mb-2" />
+                <h3 className="text-2xl font-bold text-gray-900">Application Submitted!</h3>
+                {scoreInfo?.percentage !== undefined ? (
+                    <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-6 max-w-sm mx-auto shadow-sm">
+                        <span className="text-xs uppercase font-bold text-emerald-800 tracking-wider">Your Score</span>
+                        <div className="text-4xl font-extrabold text-emerald-950 my-1">
+                            {scoreInfo.score} / {scoreInfo.totalPoints}
+                        </div>
+                        <div className="text-sm font-semibold text-emerald-700">
+                            {scoreInfo.percentage}% Grade
+                        </div>
+                    </div>
+                ) : null}
+                <p className="text-gray-500 max-w-md mx-auto text-sm">
+                    Your answers and application details have been recorded successfully. Jazakumullahu Khayran!
                 </p>
             </div>
         )

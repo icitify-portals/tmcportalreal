@@ -36,6 +36,8 @@ const getStatusColor = (status: string) => {
     }
 }
 
+import { ProgrammesClientGrid } from "@/components/admin/programmes/programmes-client-grid"
+
 async function ProgrammeList({ 
     type, 
     orgId,
@@ -53,125 +55,15 @@ async function ProgrammeList({
 }) {
     const programmes = await getAdminProgrammes(orgId, type) || []
 
-    if (programmes.length === 0) {
-        return (
-            <div className="p-8 text-center text-muted-foreground border rounded-md border-dashed">
-                No programmes found.
-            </div>
-        )
-    }
-
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {programmes.map((p) => (
-                <div key={p.id} className="bg-[#031408] border border-green-800/30 shadow-xl rounded-2xl overflow-hidden hover:border-green-700/50 transition-all flex flex-col justify-between">
-                    <div>
-                        <div className="pb-3 bg-[#0c2413]/40 border-b border-green-800/20 p-5 flex justify-between items-start">
-                            <div className="space-y-1">
-                                <h3 className="text-xl font-bold text-white tracking-tight">{p.title}</h3>
-                                <div className="text-green-300 font-medium text-sm mt-1">
-                                    <ClientDate date={p.startDate} formatString="PPP" /> @ {p.venue}
-                                </div>
-                                {p.organization && (
-                                    <div className="text-emerald-400/80 font-semibold text-xs uppercase tracking-wider mt-0.5">
-                                        {p.organization.name}
-                                    </div>
-                                )}
-                                {p.office && (
-                                    <Badge variant="outline" className="mt-1 border-emerald-800 text-emerald-300 bg-emerald-950/60">
-                                        {p.office.name}
-                                    </Badge>
-                                )}
-                            </div>
-                            <div className="flex items-center gap-2">
-                                {p.isLateSubmission && (
-                                    <Badge variant="destructive" className="animate-pulse">LATE</Badge>
-                                )}
-                                <Badge className={`${getStatusColor(p.status || "")} text-white shadow-sm font-bold`}>
-                                    {p.status?.replace('_', ' ')}
-                                </Badge>
-                                <ProgrammeActions 
-                                    programme={p} 
-                                    canEdit={isSuperAdmin || userLevel === 'NATIONAL' || userLevel === 'STATE' || p.organizingOfficialId === userOfficialId} 
-                                />
-                            </div>
-                        </div>
-                        <div className="p-5 space-y-4 bg-[#031408]">
-                            <p className="text-sm text-green-50/90 font-normal leading-relaxed">{p.description}</p>
-                            
-                            {p.status === 'REJECTED' && p.rejectionReason && (
-                                <Alert variant="destructive" className="bg-red-950/40 border-red-900/60 text-red-100">
-                                    <XCircle className="h-4 w-4 text-red-400" />
-                                    <AlertTitle className="text-red-300 text-xs font-bold uppercase tracking-wider">Rejection Reason</AlertTitle>
-                                    <AlertDescription className="text-red-200 text-sm font-medium">
-                                        {p.rejectionReason}
-                                    </AlertDescription>
-                                </Alert>
-                            )}
-
-                            <div className="flex justify-between items-center text-sm font-semibold text-green-200/80 pt-2">
-                                <span>Target: {p.targetAudience}</span>
-                                {p.paymentRequired ? (
-                                    <ClientCurrency amount={p.amount || 0} className="text-emerald-400 font-bold" />
-                                ) : (
-                                    <span className="text-emerald-400 font-bold">Free</span>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="p-5 bg-[#0c2413]/20 border-t border-green-800/10 flex flex-wrap gap-2 justify-between items-center mt-auto">
-                        {/* Approval Actions */}
-                        {type === 'TO_APPROVE' && (
-                            <ReviewActions programmeId={p.id} status={p.status || ""} hasCertificate={p.hasCertificate ?? false} />
-                        )}
-
-                        {/* Reporting & Registration Actions */}
-                        {type === 'MY_PROGRAMMES' && (p.status === 'APPROVED' || p.status === 'COMPLETED') && (
-                            <div className="flex flex-wrap items-center gap-2 w-full justify-between">
-                                <div className="flex flex-wrap items-center gap-2">
-                                    <Button variant="outline" size="sm" asChild className="bg-green-950/60 hover:bg-green-900/80 border border-green-800/40 text-green-300 font-semibold px-3 py-1.5 text-xs rounded-lg transition-colors">
-                                        <a href={`/dashboard/admin/programmes/${p.id}/registrations`}>
-                                            <UserCheck className="w-4 h-4 mr-2" />
-                                            Registrations
-                                        </a>
-                                    </Button>
-                                    <Button variant="outline" size="sm" asChild className="bg-green-950/60 hover:bg-green-900/80 border border-green-800/40 text-green-300 font-semibold px-3 py-1.5 text-xs rounded-lg transition-colors">
-                                        <a href={`/dashboard/admin/programmes/${p.id}/analytics`}>
-                                            <BarChart3 className="w-4 h-4 mr-2" />
-                                            Analytics
-                                        </a>
-                                    </Button>
-                                    <Button variant="outline" size="sm" asChild className="bg-green-950/60 hover:bg-green-900/80 border border-green-800/40 text-green-300 font-semibold px-3 py-1.5 text-xs rounded-lg transition-colors">
-                                        <a href={`/dashboard/programmes/${p.id}/group`}>
-                                            <MessageSquare className="w-4 h-4 mr-2" />
-                                            Lounge
-                                        </a>
-                                    </Button>
-                                    <Button variant="outline" size="sm" asChild className="bg-green-950/60 hover:bg-green-900/80 border border-green-800/40 text-green-300 font-semibold px-3 py-1.5 text-xs rounded-lg transition-colors">
-                                        <a href={`/dashboard/admin/programmes/${p.id}/notes`}>
-                                            <FileText className="w-4 h-4 mr-2" />
-                                            Notes
-                                        </a>
-                                    </Button>
-                                    {(p as any).meeting && (
-                                        <Button variant="outline" size="sm" asChild className="bg-emerald-900 hover:bg-emerald-800 border border-emerald-700 text-emerald-100 font-bold px-3 py-1.5 text-xs rounded-lg transition-colors shadow-[0_0_10px_rgba(16,185,129,0.2)]">
-                                            <a href={`/dashboard/admin/meetings/${(p as any).meeting.id}`}>
-                                                <Video className="w-4 h-4 mr-2" />
-                                                Virtual Room
-                                            </a>
-                                        </Button>
-                                    )}
-                                </div>
-                                {(p.status === 'COMPLETED' || new Date(p.startDate) < new Date()) && (
-                                    <SubmitReportDialog programmeId={p.id} programmeTitle={p.title} />
-                                )}
-                            </div>
-                        )}
-                    </div>
-                </div>
-            ))}
-        </div>
+        <ProgrammesClientGrid
+            programmes={programmes}
+            type={type}
+            currentUserId={currentUserId}
+            isSuperAdmin={isSuperAdmin}
+            userLevel={userLevel}
+            userOfficialId={userOfficialId}
+        />
     )
 }
 
