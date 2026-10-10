@@ -185,7 +185,7 @@ export async function verifyTogetherPayment(data: { registrationId: string; grou
     const paidAlready = parseFloat(regDetails.amountPaid || "0");
     const ownShareCharged = Math.max(0, ownTotal - paidAlready);
 
-    const regDone = ((regDetails as any).paymentReference || "").includes(data.reference);
+    const regDone = ((regDetails as any).paymentReference || "").includes(`${data.reference}:verified`) || (regDetails.status === "PAID" && parseFloat(regDetails.amountPaid || "0") >= ownTotal);
 
     let group: any = null;
     if (data.groupId) {

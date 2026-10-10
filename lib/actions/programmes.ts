@@ -1469,32 +1469,56 @@ export async function initializeProgrammeRegistrationPayment(registrationId: str
 
 export async function verifyProgrammeRegistrationPayment(registrationId: string, reference: string) {
     try {
-        const response = await verifyPayment(reference)
+        const cleanRef = reference.replace(/:verified$/, "").trim()
+        const regDetails = await getRegistrationDetails(registrationId)
+        if (!regDetails) return { success: false, error: "Registration not found" }
+
+        const locked2 = (regDetails as any).lockedAmount ? parseFloat((regDetails as any).lockedAmount) : null;
+        const { total: totalAmount } = resolvePayableTotal({
+            amount: regDetails.programme.amount,
+            earlyBirdAmount: (regDetails.programme as any).earlyBirdAmount,
+            earlyBirdDeadline: (regDetails.programme as any).earlyBirdDeadline,
+            tiers: (regDetails.programme as any).tiers,
+            lockedAmount: locked2,
+            lockedEarlyBirdDeadline: (regDetails as any).lockedEarlyBirdDeadline,
+            amountPaid: regDetails.amountPaid,
+        });
+        const paidAlready = parseFloat(regDetails.amountPaid || "0")
+
+        // If already fully paid or marked verified with this reference, avoid duplicate accounting
+        if (
+            (regDetails.status === 'PAID' && paidAlready >= totalAmount) ||
+            ((regDetails as any).paymentReference || "").includes(`${cleanRef}:verified`)
+        ) {
+            return { success: true, alreadyVerified: true }
+        }
+
+        const response = await verifyPayment(cleanRef)
         if (response.success && response.data?.status === "success") {
-            const regDetails = await getRegistrationDetails(registrationId)
-            if (!regDetails) return { success: false, error: "Registration not found" }
+            // Check if this payment was a TOGETHER_CHECKOUT
+            if (response.data.metadata?.type === "TOGETHER_CHECKOUT") {
+                const { verifyTogetherPayment } = await import("@/lib/actions/programme-together")
+                return await verifyTogetherPayment({
+                    registrationId,
+                    groupId: response.data.metadata.bulkGroupId,
+                    poolId: response.data.metadata.sponsorshipPoolId,
+                    reference: cleanRef
+                })
+            }
 
-            const locked2 = (regDetails as any).lockedAmount ? parseFloat((regDetails as any).lockedAmount) : null;
-            const { total: totalAmount } = resolvePayableTotal({
-                amount: regDetails.programme.amount,
-                earlyBirdAmount: (regDetails.programme as any).earlyBirdAmount,
-                earlyBirdDeadline: (regDetails.programme as any).earlyBirdDeadline,
-                tiers: (regDetails.programme as any).tiers,
-                lockedAmount: locked2,
-                lockedEarlyBirdDeadline: (regDetails as any).lockedEarlyBirdDeadline,
-                amountPaid: regDetails.amountPaid,
-            });
-            const paidAlready = parseFloat(regDetails.amountPaid || "0")
-            const justPaidAmount = parseFloat(response.data?.amount?.toString() || "0")
+            // Determine actual paid amount for this single registration
+            const totalTxAmount = parseFloat(response.data?.amount?.toString() || "0")
+            const metadataAmount = response.data.metadata?.currentPayAmount ? parseFloat(response.data.metadata.currentPayAmount.toString()) : null
+            const justPaidAmount = metadataAmount && metadataAmount > 0 ? metadataAmount : Math.min(Math.max(0, totalAmount - paidAlready), totalTxAmount)
 
-            const newPaidAmount = paidAlready + justPaidAmount
+            const newPaidAmount = Math.min(totalAmount, paidAlready + justPaidAmount)
             const newStatus = newPaidAmount >= totalAmount ? 'PAID' : 'PARTIALLY_PAID'
 
             await db.update(programmeRegistrations)
                 .set({ 
                     status: newStatus,
-                    amountPaid: newPaidAmount.toString(),
-                    paymentReference: `${reference}:verified`
+                    amountPaid: newPaidAmount.toFixed(2),
+                    paymentReference: `${cleanRef}:verified`
                 })
                 .where(eq(programmeRegistrations.id, registrationId))
             
@@ -1509,18 +1533,18 @@ export async function verifyProgrammeRegistrationPayment(registrationId: string,
                 if (performerId) {
                     // Prevent duplicates
                     const [existingTx] = await db.select().from(financeTransactions)
-                        .where(eq(financeTransactions.metadata, reference)).limit(1);
+                        .where(like(financeTransactions.description, `%${cleanRef}%`)).limit(1);
 
                     if (!existingTx) {
                         await db.insert(financeTransactions).values({
                             organizationId: regDetails.programme.organizationId,
                             type: 'INFLOW',
-                            amount: justPaidAmount.toString(),
+                            amount: justPaidAmount.toFixed(2),
                             category: 'PROGRAMME_REGISTRATION',
-                            description: `Registration payment for programme: ${regDetails.programme.title} (${reference})`,
+                            description: `Registration payment for programme: ${regDetails.programme.title} (${cleanRef})`,
                             performedBy: performerId,
                             date: new Date(),
-                            metadata: reference
+                            metadata: cleanRef
                         });
                     }
                 }
@@ -1932,15 +1956,8 @@ export async function syncAllProgrammePayments(programmeId: string) {
         for (const reg of pending) {
             if (!reg.paymentReference) continue
 
-            const verification = await verifyPayment(reg.paymentReference)
-            if (verification.success && verification.data?.status === "success") {
-                await db.update(programmeRegistrations)
-                    .set({ 
-                        status: 'PAID',
-                        amountPaid: verification.data?.amount?.toString() || "0"
-                    })
-                    .where(eq(programmeRegistrations.id, reg.id))
-                
+            const res = await verifyProgrammeRegistrationPayment(reg.id, reg.paymentReference)
+            if (res.success) {
                 successCount++
             }
         }
