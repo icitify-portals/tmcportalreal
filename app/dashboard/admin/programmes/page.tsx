@@ -6,6 +6,8 @@ import { getAdminProgrammes, approveProgrammeState, approveProgrammeNational } f
 import { getMockJurisdiction } from "@/lib/mock-jurisdiction"
 import { CreateProgrammeDialog } from "@/components/admin/programmes/create-programme-dialog"
 import { QuickProgrammeDialog } from "@/components/admin/programmes/quick-programme-dialog"
+import { RepetitiveProgrammeDialog } from "@/components/admin/programmes/forms/repetitive-programme-dialog"
+import { SpecialProgrammeDialog } from "@/components/admin/programmes/forms/special-programme-dialog"
 import { SubmitReportDialog } from "@/components/admin/programmes/submit-report-dialog"
 import { ReviewActions } from "@/components/admin/programmes/review-actions"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -174,22 +176,19 @@ export default async function ProgrammesPage() {
                                 triggerLabel="Record Past Activity"
                             />
                         )}
-                        <CreateProgrammeDialog 
-                            organizationId={organizationId || ""} 
-                            isSuperAdmin={isSuperAdmin}
+                        <RepetitiveProgrammeDialog
+                            organizationId={organizationId || ""}
                             userOfficialId={userOfficialId}
                             userOfficeId={userOfficeId}
                             userLevel={userOfficial[0]?.positionLevel || session.user.officialLevel}
+                            triggerLabel="+ Repetitive Programme"
                         />
-                        <QuickProgrammeDialog
-                            type="REPETITIVE"
+                        <SpecialProgrammeDialog
                             organizationId={organizationId || ""}
-                            triggerLabel="Repetitive Programme"
-                        />
-                        <QuickProgrammeDialog
-                            type="SPECIAL"
-                            organizationId={organizationId || ""}
-                            triggerLabel="Special Programme"
+                            userOfficialId={userOfficialId}
+                            userOfficeId={userOfficeId}
+                            userLevel={userOfficial[0]?.positionLevel || session.user.officialLevel}
+                            triggerLabel="+ Special Programme"
                         />
                     </div>
                 </div>

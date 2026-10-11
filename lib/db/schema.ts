@@ -1230,6 +1230,7 @@ export const programmeReports = mysqlTable("programme_reports", {
     topic: text("topic"),
 
     images: json("images"), // Array of image URLs
+    metadata: json("metadata"), // Structured NADMIN report details: demographics, activities, KPIs, resolutions, financials, recommendations
 
     submittedBy: varchar("submittedBy", { length: 255 }).notNull().references(() => users.id),
     submittedAt: timestamp("submittedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),

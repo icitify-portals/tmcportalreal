@@ -316,6 +316,7 @@ const ReportSchema = z.object({
     lecturers: z.string().optional(),
     topic: z.string().optional(),
     images: z.array(z.string().url()).optional(),
+    metadata: z.any().optional(), // Structured NADMIN reporting data (demographics, KPIs, resolutions, financials, recommendations)
 })
 
 const RegistrationSchema = z.object({
@@ -1625,6 +1626,7 @@ export async function submitProgrammeReport(programmeId: string, data: z.infer<t
             lecturers: validData.lecturers || null,
             topic: validData.topic || null,
             images: validData.images || null,
+            metadata: validData.metadata || null,
             submittedBy: session.user.id,
         })
 
