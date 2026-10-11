@@ -339,9 +339,27 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
         const session = await getServerSession()
         if (!session?.user?.id) return { success: false, error: "Unauthorized" }
 
-        // Fetch creator's organization to determine flow
-        const [org] = await db.select().from(organizations).where(eq(organizations.id, organizationId))
-        if (!org) return { success: false, error: "Organization not found" }
+        let effectiveOrgId = organizationId;
+        if (!effectiveOrgId) {
+            // Fallback to user official or primary org
+            const userOfficial = await db.select({ organizationId: officials.organizationId })
+                .from(officials).where(eq(officials.userId, session.user.id)).limit(1);
+            effectiveOrgId = userOfficial[0]?.organizationId || session.user.officialOrganizationId || session.user.organizationId || "";
+        }
+
+        let [org] = effectiveOrgId ? await db.select().from(organizations).where(eq(organizations.id, effectiveOrgId)) : [null as any];
+        
+        if (!org) {
+            // Secondary fallback: lookup National org if super admin or fallback needed
+            const [nationalOrg] = await db.select().from(organizations).where(eq(organizations.level, 'NATIONAL')).limit(1);
+            if (nationalOrg) {
+                org = nationalOrg;
+                effectiveOrgId = nationalOrg.id;
+            }
+        }
+
+        if (!org) return { success: false, error: "Organization not found. Please verify your assigned jurisdiction." }
+        organizationId = effectiveOrgId;
 
         // Hierarchical Permission Check
         if (!session.user.isSuperAdmin) {
@@ -751,6 +769,7 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
                 const orgOfficials = await db.select({ userId: officials.userId }).from(officials).where(eq(officials.organizationId, organizationId))
                 notifyUserIds = orgOfficials.map(o => o.userId)
             }
+            notifyUserIds = notifyUserIds.filter(Boolean)
 
             if (notifyUserIds.length > 0) {
                 const levelLabel = org.level ? org.level.replace(/_/g, " ") : "GENERAL";

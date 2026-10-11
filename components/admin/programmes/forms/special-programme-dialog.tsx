@@ -151,10 +151,12 @@ export function SpecialProgrammeDialog({
         setOpen(false);
         form.reset();
       } else {
+        console.error("Special programme creation rejected:", result.error);
         toast.error(result.error || "Failed to create special programme");
       }
     } catch (e: any) {
-      toast.error(e.message || "An unexpected error occurred");
+      console.error("Special programme submit exception:", e);
+      toast.error(e?.message || "An unexpected error occurred while saving the programme");
     } finally {
       setIsSubmitting(false);
     }
