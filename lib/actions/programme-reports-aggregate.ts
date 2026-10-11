@@ -146,7 +146,9 @@ export async function getProgrammeReportRollup(params: RollupParams) {
     // for non-superAdmin, verify hierarchy access
     if (!isSuperAdmin) {
       const allowed = await getHierarchyIds(baseOrgId);
-      if (!allowed.includes(effectiveRoot)) throw new Error("Forbidden: jurisdiction");
+      if (!allowed.includes(effectiveRoot)) {
+        effectiveRoot = baseOrgId;
+      }
     }
   }
 
@@ -400,7 +402,9 @@ export async function getRegistrationAnalyticsByLevel(params: RollupParams) {
     effectiveRoot = params.targetOrganizationId;
     if (!isSuperAdmin) {
       const allowed = await getHierarchyIds(baseOrgId);
-      if (!allowed.includes(effectiveRoot)) throw new Error("Forbidden: jurisdiction");
+      if (!allowed.includes(effectiveRoot)) {
+        effectiveRoot = baseOrgId;
+      }
     }
   }
   const hierarchyIds = await getHierarchyIds(effectiveRoot);

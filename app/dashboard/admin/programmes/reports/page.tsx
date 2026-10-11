@@ -30,9 +30,10 @@ export default async function ProgrammeReportsPage({
 
   const sp = await searchParams;
   const scope = (sp.scope as ReportScope) ?? "monthly";
-  const year = sp.year ? parseInt(sp.year) : new Date().getFullYear();
-  const quarter = sp.quarter ? parseInt(sp.quarter) : undefined;
-  const month = sp.month ? parseInt(sp.month) : undefined;
+  const now = new Date();
+  const year = sp.year ? parseInt(sp.year) : now.getFullYear();
+  const quarter = sp.quarter ? parseInt(sp.quarter) : (scope === "quarterly" ? Math.floor(now.getMonth() / 3) + 1 : undefined);
+  const month = sp.month ? parseInt(sp.month) : (scope === "monthly" ? now.getMonth() + 1 : undefined);
   const officeId = sp.officeId || undefined;
   const targetOrgId = sp.targetOrgId || undefined;
 

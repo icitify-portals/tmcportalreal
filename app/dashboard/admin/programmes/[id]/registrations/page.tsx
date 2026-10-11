@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Download, Printer, UserCheck, ShieldCheck, QrCode, Monitor, Layout, MessageSquare } from "lucide-react"
+import { Download, Printer, UserCheck, ShieldCheck, QrCode, Monitor, Layout, MessageSquare, BarChart3 } from "lucide-react"
 import Link from "next/link"
 import { format } from "date-fns"
 import { ClientDate } from "@/components/ui/client-date"
@@ -110,6 +110,12 @@ async function RegistrationsHeader({ programmeId, programmeTitle }: { programmeI
     return (
         <div className="flex items-center gap-2">
             <ExportRegistrationsCSV data={registrations} programmeTitle={programmeTitle} />
+            <Button variant="outline" className="h-9 border-emerald-600 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 font-semibold shadow-sm" asChild>
+                <Link href={`/dashboard/admin/programmes/${programmeId}/analytics`}>
+                    <BarChart3 className="mr-2 h-4 w-4 text-emerald-700" />
+                    Level Analytics
+                </Link>
+            </Button>
             <Button variant="outline" className="h-9 border-green-200 text-green-700 hover:bg-green-50" asChild>
                 <Link href={`/dashboard/admin/programmes/${programmeId}/verify`}>
                     <QrCode className="mr-2 h-4 w-4" />

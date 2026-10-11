@@ -8,8 +8,11 @@ import { gradeColor } from "@/lib/grading";
 import { format } from "date-fns";
 
 export function LevelGrading({ data }: { data: any }) {
-  if (!data) return <div className="text-sm text-muted-foreground">No grading data</div>;
-  const { graded, byOrganization, byLevel, overall } = data;
+  if (!data) return <div className="text-sm text-muted-foreground p-6 text-center border rounded-lg">No grading data available for this period.</div>;
+  const graded = data.graded || [];
+  const byOrganization = data.byOrganization || [];
+  const byLevel = data.byLevel || [];
+  const overall = data.overall || { avgScore: 0, grade: "—", total: 0 };
 
   return (
     <div className="space-y-6">
@@ -19,11 +22,11 @@ export function LevelGrading({ data }: { data: any }) {
           <CardTitle className="text-sm">General Performance (Overall)</CardTitle>
         </CardHeader>
         <CardContent className="flex items-center gap-4">
-          <div className={`h-16 w-16 rounded-xl grid place-items-center text-white font-extrabold text-2xl ${gradeColor(overall.grade)}`}>{overall.grade}</div>
+          <div className={`h-16 w-16 rounded-xl grid place-items-center text-white font-extrabold text-2xl ${gradeColor(overall.grade || "—")}`}>{overall.grade || "—"}</div>
           <div>
-            <div className="text-2xl font-bold">{overall.avgScore}/100</div>
-            <div className="text-xs text-muted-foreground">{overall.total} programmes graded • weighted by completion/punctuality/attendance/budget/quality</div>
-            <Progress value={overall.avgScore} className="h-2 mt-2 w-48" />
+            <div className="text-2xl font-bold">{overall.avgScore ?? 0}/100</div>
+            <div className="text-xs text-muted-foreground">{overall.total ?? 0} programmes graded • weighted by completion/punctuality/attendance/budget/quality</div>
+            <Progress value={overall.avgScore ?? 0} className="h-2 mt-2 w-48" />
           </div>
         </CardContent>
       </Card>

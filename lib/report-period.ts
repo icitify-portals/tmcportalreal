@@ -29,13 +29,14 @@ export function getPeriodDateRange(
   quarter?: number,
   month?: number
 ): { start: Date; end: Date; label: string } {
-  if (scope === "monthly" && month) {
-    const start = new Date(year, month - 1, 1, 0, 0, 0, 0);
-    const end = new Date(year, month, 0, 23, 59, 59, 999);
-    return { start, end, label: `${year}-${String(month).padStart(2, "0")}` };
+  if (scope === "monthly") {
+    const m = month || (new Date().getMonth() + 1);
+    const start = new Date(year, m - 1, 1, 0, 0, 0, 0);
+    const end = new Date(year, m, 0, 23, 59, 59, 999);
+    return { start, end, label: `${year}-${String(m).padStart(2, "0")}` };
   }
-  if (scope === "quarterly" && quarter) {
-    const q = quarter as number;
+  if (scope === "quarterly") {
+    const q = (quarter || (Math.floor(new Date().getMonth() / 3) + 1)) as number;
     const startMonth = (q - 1) * 3;
     const start = new Date(year, startMonth, 1, 0, 0, 0, 0);
     const end = new Date(year, startMonth + 3, 0, 23, 59, 59, 999);

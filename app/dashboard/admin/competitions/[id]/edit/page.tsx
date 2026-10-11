@@ -254,6 +254,42 @@ export default function EditCompetitionPage() {
                                             />
                                         </div>
                                     )}
+                                    <div className="sm:col-span-12 flex flex-wrap items-center gap-3 pt-1 border-t border-gray-100 text-xs">
+                                        <label className="flex items-center gap-1.5 font-medium text-emerald-800">
+                                            <input
+                                                type="checkbox"
+                                                checked={field.correctAnswer !== undefined && field.correctAnswer !== ""}
+                                                onChange={e => updateField(idx, { 
+                                                    correctAnswer: e.target.checked ? (field.options?.[0] || "Correct Answer") : undefined,
+                                                    points: e.target.checked ? (field.points || 10) : undefined
+                                                })}
+                                                className="rounded text-emerald-600"
+                                            />
+                                            Auto-score Question
+                                        </label>
+                                        {(field.correctAnswer !== undefined && field.correctAnswer !== "") && (
+                                            <div className="flex flex-wrap items-center gap-2 flex-1">
+                                                <input
+                                                    type="text"
+                                                    value={field.correctAnswer || ""}
+                                                    onChange={e => updateField(idx, { correctAnswer: e.target.value })}
+                                                    placeholder="Expected answer (e.g. Option A or exact keyword)"
+                                                    className="flex-1 min-w-[180px] rounded border border-emerald-300 bg-emerald-50/50 px-2.5 py-1 text-xs focus:border-emerald-600 outline-none text-emerald-950 font-medium"
+                                                />
+                                                <div className="flex items-center gap-1">
+                                                    <span className="text-gray-500 text-[11px]">Points:</span>
+                                                    <input
+                                                        type="number"
+                                                        value={field.points || 10}
+                                                        onChange={e => updateField(idx, { points: Number(e.target.value) })}
+                                                        min={1}
+                                                        max={100}
+                                                        className="w-16 rounded border border-gray-300 px-2 py-1 text-xs text-center font-bold"
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                                 <button
                                     type="button"

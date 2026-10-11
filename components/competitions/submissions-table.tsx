@@ -76,10 +76,37 @@ export function SubmissionsTable({ submissions, fields, competitionTitle }: Prop
         URL.revokeObjectURL(url)
     }
 
+    const topWinners = sorted.filter(s => (s.data as Record<string, any>)?._percentage !== undefined).slice(0, 3)
+
     return (
-        <div className="bg-white rounded-xl border overflow-hidden shadow-sm">
-            {/* Toolbar */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 border-b bg-muted/20">
+        <div className="space-y-4">
+            {topWinners.length > 0 && (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {topWinners.map((w, i) => {
+                        const d = w.data as Record<string, any>
+                        const medal = i === 0 ? "🥇 Winner / 1st Place" : i === 1 ? "🥈 2nd Place" : "🥉 3rd Place"
+                        const bg = i === 0 ? "bg-amber-50 border-amber-300" : i === 1 ? "bg-slate-50 border-slate-300" : "bg-orange-50 border-orange-200"
+                        const candidateName = fields[0] ? String(d[fields[0].id] || "Candidate") : "Candidate"
+                        return (
+                            <div key={w.id} className={`p-4 rounded-xl border ${bg} shadow-sm flex flex-col justify-between`}>
+                                <div className="space-y-1">
+                                    <span className="text-xs font-extrabold uppercase tracking-wider text-muted-foreground">{medal}</span>
+                                    <h4 className="font-bold text-gray-900 text-base line-clamp-1">{candidateName}</h4>
+                                    {fields[1] && <p className="text-xs text-gray-500 line-clamp-1">{String(d[fields[1].id] || "")}</p>}
+                                </div>
+                                <div className="mt-3 pt-2 border-t border-black/5 flex items-baseline justify-between">
+                                    <span className="text-xs text-muted-foreground">Score: <b className="text-emerald-700">{d._score}/{d._totalPoints}</b></span>
+                                    <span className="text-sm font-extrabold text-emerald-800">{d._percentage}%</span>
+                                </div>
+                            </div>
+                        )
+                    })}
+                </div>
+            )}
+
+            <div className="bg-white rounded-xl border overflow-hidden shadow-sm">
+                {/* Toolbar */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 border-b bg-muted/20">
                 <div className="relative flex-1 max-w-sm">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <input
@@ -198,6 +225,7 @@ export function SubmissionsTable({ submissions, fields, competitionTitle }: Prop
                     </div>
                 </div>
             )}
+        </div>
         </div>
     )
 }

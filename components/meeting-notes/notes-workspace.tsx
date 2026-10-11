@@ -100,10 +100,10 @@ export function NotesWorkspace({
       const html = editor.getHTML();
       const json = editor.getJSON();
       const plain = editor.getText();
-      setSaving(true);
       if (saveRef.current) clearTimeout(saveRef.current);
-      saveRef.current = setTimeout(() => {
-        startTransition(async () => {
+      saveRef.current = setTimeout(async () => {
+        try {
+          setSaving(true);
           const res = await upsertMeetingNote({
             id: activeId,
             meetingId: meetingId || null,
@@ -117,9 +117,12 @@ export function NotesWorkspace({
           if (res.success) {
             setNotes((prev) => prev.map((p) => p.id === activeId ? { ...p, html, content: json, plainText: plain, title: currentTitleRef.current } : p));
           }
+        } catch (err) {
+          console.error("Auto-save note failed:", err);
+        } finally {
           setSaving(false);
-        });
-      }, 500);
+        }
+      }, 1200);
     },
   });
 

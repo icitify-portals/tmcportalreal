@@ -18,7 +18,7 @@ import { initializePayment, verifyPayment } from "@/lib/payments"
 import { createPaystackSubaccount } from "@/lib/payments"
 import { sendEmail, emailTemplates } from "@/lib/email"
 import crypto from "crypto"
-import { RRule } from "rrule"
+import { RRule, rrulestr } from "rrule"
 import { getEffectiveAmount, isEarlyBirdActive, getActiveEarlyBird, resolvePayableTotal } from "@/lib/pricing"
 import { validateEarlyBirdTiers, getEarlyBirdTiersForProgrammes, getEarlyBirdTiers } from "@/lib/actions/programme-early-bird"
 
@@ -589,14 +589,20 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
             if (validData.frequency === 'ONCE') break;
 
             if (validData.frequency === 'MONTHLY' && validData.recurrenceType === 'BY_DAY_OF_WEEK' && validData.weekDay !== null && validData.weekDay !== undefined) {
-                // "Every Nth weekday of the month" e.g. first Saturday -> FREQ=MONTHLY;BYDAY=SA;BYSETPOS=1
+                // "Every Nth weekday of the month" e.g. first Sunday -> FREQ=MONTHLY;BYDAY=SU;BYSETPOS=1
                 try {
-                const weekdays = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
-                const weekday = weekdays[validData.weekDay] || 'SU';
-                // weekOrdinal 1-4 = first..fourth; 5 (legacy) and -1 both mean "last"
-                const ordNum = validData.weekOrdinal ?? 1;
-                const ordinal = (ordNum === 5 || ordNum === -1) ? "-1" : ordNum.toString();
-                const rule = RRule.fromString(`FREQ=MONTHLY;BYDAY=${weekday};BYSETPOS=${ordinal}`);
+                    const weekdays = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
+                    const weekday = weekdays[validData.weekDay] || 'SU';
+                    // weekOrdinal 1-4 = first..fourth; 5 (legacy) and -1 both mean "last"
+                    const ordNum = validData.weekOrdinal ?? 1;
+                    const ordinal = (ordNum === 5 || ordNum === -1) ? "-1" : ordNum.toString();
+                    
+                    // Parse rule anchored at the beginning of the start date with the original time of day preserved
+                    const rule = rrulestr(`RRULE:FREQ=MONTHLY;BYDAY=${weekday};BYSETPOS=${ordinal}`, {
+                        dtstart: new Date(currentDate)
+                    });
+                    
+                    // Query occurrences strictly after the first instance up to the end of the target planning year
                     const occurrences = rule.between(new Date(currentDate.getTime() + 1000), targetYearEnd, true);
 
                     for (const occDate of occurrences) {
@@ -634,10 +640,11 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
             if (validData.frequency === 'CUSTOM' && validData.rruleString) {
                 // If it's custom, we generate all instances upfront using RRule
                 try {
-                    const rule = RRule.fromString(validData.rruleString);
-                    // Generate dates from the start date (inclusive) to the end of the year
-                    // Note: between() is exclusive for start by default unless inc=true, 
-                    // but we want to start from the *next* occurrence since we already added the first one manually.
+                    const cleanRuleString = validData.rruleString.startsWith("RRULE:") ? validData.rruleString : `RRULE:${validData.rruleString}`;
+                    const rule = rrulestr(cleanRuleString, {
+                        dtstart: new Date(currentDate)
+                    });
+                    // Generate dates strictly after the initial instance to target year end
                     const occurrences = rule.between(new Date(currentDate.getTime() + 1000), targetYearEnd, true);
                     
                     for (const occDate of occurrences) {
@@ -761,14 +768,31 @@ export async function createProgramme(data: z.infer<typeof ProgrammeSchema>, org
                 
                 // Send Emails
                 const inviteesInfo = await db.select({ name: users.name, email: users.email }).from(users).where(inArray(users.id, notifyUserIds))
+                const formattedDate = new Date(validData.startDate).toLocaleDateString(undefined, {
+                    weekday: 'short',
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                })
+                const detailsUrl = `${process.env.NEXTAUTH_URL || 'https://tmc.org.ng'}/dashboard/member/programmes`
+
                 Promise.all(inviteesInfo.map(user => {
                     if (!user.email) return Promise.resolve();
+                    const emailContent = emailTemplates.programmeInvitationWithHostCadre(
+                        user.name || 'Respected Member',
+                        validData.title,
+                        levelLabel,
+                        org.name || 'The Muslim Congress',
+                        formattedDate,
+                        validData.venue || "TBD",
+                        validData.format || "PHYSICAL",
+                        validData.targetAudience || "MEMBERS",
+                        detailsUrl
+                    )
                     return sendEmail({
                         to: user.email,
-                        subject: `[${levelLabel}] New Programme: ${validData.title} — ${org.name}`,
-                        html: `Hello ${user.name || 'Member'},<br/><br/>A new programme <b>${validData.title}</b> organized by <b>${orgLabel}</b> has been scheduled for ${new Date(validData.startDate).toLocaleDateString()}.<br/>Venue: ${validData.venue || "TBD"}<br/><br/>Please log in to your dashboard to view more details.`,
-                        text: `A new programme ${validData.title} organized by ${orgLabel} has been scheduled for ${new Date(validData.startDate).toLocaleDateString()}`,
-                        template: "general_notification"
+                        ...emailContent,
+                        template: "programme_invitation"
                     })
                 })).catch(err => console.error("Error sending programme emails:", err))
             }

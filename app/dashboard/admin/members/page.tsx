@@ -18,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { locationData } from "@/lib/location-data"
 import { Pagination } from "@/components/admin/shared/pagination"
 import { ExportCSV } from "@/components/admin/shared/export-csv"
+import { MemberSearchFilters } from "@/components/admin/members/member-search-filters"
 import { Suspense } from "react"
 
 
@@ -109,69 +110,12 @@ export default async function MembersPage(props: {
 
         <Card className="bg-green-50/50 border-green-100">
           <CardContent className="pt-6">
-            <form className="grid grid-cols-1 md:grid-cols-5 gap-4">
-              <div className="space-y-2">
-                <Label className="text-xs">Search</Label>
-                <Input
-                  name="search"
-                  placeholder="Name or email..."
-                  defaultValue={searchQuery}
-                  className="bg-white"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-xs">State</Label>
-                <Select name="state" defaultValue={stateFilter || "all"}>
-                  <SelectTrigger className="bg-white">
-                    <SelectValue placeholder="All States" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All States</SelectItem>
-                    {Object.keys(locationData).map(s => (
-                      <SelectItem key={s} value={s}>{s}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-xs">LGA</Label>
-                <Select name="lga" defaultValue={lgaFilter || "all"} disabled={!stateFilter || stateFilter === "all"}>
-                  <SelectTrigger className="bg-white">
-                    <SelectValue placeholder="All LGAs" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All LGAs</SelectItem>
-                    {stateFilter && stateFilter !== "all" && (locationData as any)[stateFilter]?.lgas.map((l: any) => (
-                      <SelectItem key={l.name} value={l.name}>{l.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-xs">Branch Keyword</Label>
-                <Input
-                  name="branch"
-                  placeholder="Filter branch..."
-                  defaultValue={branchFilter}
-                  className="bg-white"
-                />
-              </div>
-
-              <div className="flex items-end gap-2">
-                <Button type="submit" className="flex-1 bg-green-700 hover:bg-green-800 text-white">
-                  <Search className="mr-2 h-4 w-4" />
-                  Filter
-                </Button>
-                {(stateFilter || lgaFilter || branchFilter || searchQuery) && (
-                  <Link href="/dashboard/admin/members">
-                    <Button variant="outline" type="button">Reset</Button>
-                  </Link>
-                )}
-              </div>
-            </form>
+            <MemberSearchFilters
+              initialSearch={searchQuery}
+              initialState={stateFilter}
+              initialLga={lgaFilter}
+              initialBranch={branchFilter}
+            />
           </CardContent>
         </Card>
 
