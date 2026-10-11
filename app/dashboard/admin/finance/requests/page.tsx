@@ -8,7 +8,6 @@ import { redirect } from "next/navigation"
 import { db } from "@/lib/db"
 import { organizations, officials, userRoles, roles } from "@/lib/db/schema"
 import { eq, and } from "drizzle-orm"
-import { DashboardLayout } from "@/components/layout/dashboard-layout"
 
 export default async function RequestsPage({
     searchParams
@@ -55,27 +54,25 @@ export default async function RequestsPage({
     const canDisburse = isSuperAdmin || roleCodes.some(c => c.includes("FIN") || c.includes("TREASURER") || c.includes("ACCOUNTANT") || c.includes("ADMIN"))
 
     return (
-        <DashboardLayout>
-            <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div>
-                        <h2 className="text-3xl font-bold tracking-tight text-green-950">Fund Requests</h2>
-                        <p className="text-sm text-muted-foreground">
-                            4-Stage Hierarchical Routing: Officer &rarr; Amir/Waali/Wakil/Raqib &rarr; Financial Secretary &rarr; Applicant Notification.
-                        </p>
-                    </div>
-                    <div>
-                        <CreateRequestDialog organizationId={resolvedOrgId || "default-org"} />
-                    </div>
+        <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h2 className="text-3xl font-bold tracking-tight text-green-950">Fund Requests</h2>
+                    <p className="text-sm text-muted-foreground">
+                        4-Stage Hierarchical Routing: Officer &rarr; Amir/Waali/Wakil/Raqib &rarr; Financial Secretary &rarr; Applicant Notification.
+                    </p>
                 </div>
-
-                <RequestsClientList
-                    requests={requests as any}
-                    canApprove={canApprove}
-                    canDisburse={canDisburse}
-                />
+                <div>
+                    <CreateRequestDialog organizationId={resolvedOrgId || "default-org"} />
+                </div>
             </div>
-        </DashboardLayout>
+
+            <RequestsClientList
+                requests={requests as any}
+                canApprove={canApprove}
+                canDisburse={canDisburse}
+            />
+        </div>
     )
 }
 

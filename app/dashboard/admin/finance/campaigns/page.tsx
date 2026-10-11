@@ -4,7 +4,6 @@ import { fundraisingCampaigns, organizations, userRoles } from "@/lib/db/schema"
 import { desc, eq } from "drizzle-orm";
 import { getServerSession } from "@/lib/session";
 import { redirect } from "next/navigation";
-import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { CampaignsClientView } from "@/components/admin/finance/campaigns-client-view";
 
 export default async function CampaignsPage() {
@@ -30,15 +29,13 @@ export default async function CampaignsPage() {
     });
 
     return (
-        <DashboardLayout>
-            <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
-                <CampaignsClientView
-                    campaigns={campaigns as any}
-                    organizationId={organizationId || ""}
-                    organizationCode={organizationCode || "national"}
-                />
-            </div>
-        </DashboardLayout>
+        <div className="space-y-6">
+            <CampaignsClientView
+                campaigns={campaigns as any}
+                organizationId={organizationId || ""}
+                organizationCode={organizationCode || "national"}
+            />
+        </div>
     );
 }
 

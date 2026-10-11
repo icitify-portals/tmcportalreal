@@ -14,12 +14,12 @@ export function FinanceNav({ organizationId }: FinanceNavProps) {
 
     const items = [
         {
-            title: "Home",
-            href: "/",
+            title: "Overview",
+            href: "/dashboard/admin/finance",
         },
         {
-            title: "Dashboard",
-            href: "/dashboard",
+            title: "Campaigns",
+            href: "/dashboard/admin/finance/campaigns",
         },
         {
             title: "Budgets",
