@@ -170,14 +170,14 @@ export function SpecialProgrammeDialog({
           {triggerLabel}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white border-slate-200">
         <DialogHeader>
-          <div className="flex items-center gap-1.5 text-emerald-800 text-xs font-semibold uppercase">
-            <Sparkles className="h-3.5 w-3.5" />
+          <div className="flex items-center gap-1.5 text-emerald-800 text-xs font-bold uppercase tracking-wider">
+            <Sparkles className="h-3.5 w-3.5 text-emerald-700" />
             Flagship Event & Camping Builder
           </div>
-          <DialogTitle className="text-xl">Create Special Programme</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-xl font-extrabold text-slate-950">Create Special Programme</DialogTitle>
+          <DialogDescription className="text-xs font-medium text-slate-700">
             Dedicated workflow for flagship conferences, National Islamic Training Programme (NITP), Camps, and Seminars with multi-day schedules, fee registration, and committee planning.
           </DialogDescription>
         </DialogHeader>
@@ -185,16 +185,16 @@ export function SpecialProgrammeDialog({
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid grid-cols-3 bg-muted/60 p-1">
-                <TabsTrigger value="general" className="text-xs">
+              <TabsList className="grid grid-cols-3 bg-emerald-50/90 border border-emerald-200 p-1 rounded-xl">
+                <TabsTrigger value="general" className="text-xs font-bold text-slate-700 data-[state=active]:bg-emerald-700 data-[state=active]:text-white">
                   <Calendar className="h-3.5 w-3.5 mr-1" />
                   1. Event Details
                 </TabsTrigger>
-                <TabsTrigger value="financials" className="text-xs">
+                <TabsTrigger value="financials" className="text-xs font-bold text-slate-700 data-[state=active]:bg-emerald-700 data-[state=active]:text-white">
                   <DollarSign className="h-3.5 w-3.5 mr-1" />
                   2. Fees & Budget
                 </TabsTrigger>
-                <TabsTrigger value="logistics" className="text-xs">
+                <TabsTrigger value="logistics" className="text-xs font-bold text-slate-700 data-[state=active]:bg-emerald-700 data-[state=active]:text-white">
                   <Layers className="h-3.5 w-3.5 mr-1" />
                   3. Logistics & Certificates
                 </TabsTrigger>
@@ -207,9 +207,9 @@ export function SpecialProgrammeDialog({
                   name="title"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-semibold text-xs">Event Title / Theme</FormLabel>
+                      <FormLabel className="font-bold text-xs text-slate-950">Event Title / Theme</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g. 33rd National Islamic Training Programme (NITP)" {...field} />
+                        <Input placeholder="e.g. 33rd National Islamic Training Programme (NITP)" {...field} className="border-slate-300 font-medium text-slate-950 placeholder:text-slate-400 bg-white" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -221,9 +221,9 @@ export function SpecialProgrammeDialog({
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-semibold text-xs">Description & Scope</FormLabel>
+                      <FormLabel className="font-bold text-xs text-slate-950">Description & Scope</FormLabel>
                       <FormControl>
-                        <Textarea rows={3} placeholder="Comprehensive description of the flagship event..." {...field} />
+                        <Textarea rows={3} placeholder="Comprehensive description of the flagship event..." {...field} className="border-slate-300 font-medium text-slate-950 placeholder:text-slate-400 bg-white" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -236,9 +236,9 @@ export function SpecialProgrammeDialog({
                     name="startDate"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-xs font-semibold">Start Date</FormLabel>
+                        <FormLabel className="text-xs font-bold text-slate-950">Start Date</FormLabel>
                         <FormControl>
-                          <Input type="date" {...field} />
+                          <Input type="date" {...field} className="border-slate-300 font-semibold text-slate-950 bg-white" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -249,9 +249,9 @@ export function SpecialProgrammeDialog({
                     name="endDate"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-xs font-semibold">End Date</FormLabel>
+                        <FormLabel className="text-xs font-bold text-slate-950">End Date</FormLabel>
                         <FormControl>
-                          <Input type="date" {...field} />
+                          <Input type="date" {...field} className="border-slate-300 font-semibold text-slate-950 bg-white" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -265,9 +265,9 @@ export function SpecialProgrammeDialog({
                     name="venue"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-xs font-semibold">Venue / Camp Ground</FormLabel>
+                        <FormLabel className="text-xs font-bold text-slate-950">Venue / Camp Ground</FormLabel>
                         <FormControl>
-                          <Input placeholder="Location or facility" {...field} />
+                          <Input placeholder="Location or facility" {...field} className="border-slate-300 font-medium text-slate-950 placeholder:text-slate-400 bg-white" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -278,16 +278,16 @@ export function SpecialProgrammeDialog({
                     name="targetAudience"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-xs font-semibold">Target Audience</FormLabel>
+                        <FormLabel className="text-xs font-bold text-slate-950">Target Audience</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
-                            <SelectTrigger>
+                            <SelectTrigger className="border-slate-300 font-semibold text-slate-950 bg-white">
                               <SelectValue placeholder="Audience" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
                             {["PUBLIC", "MEMBERS", "BROTHERS", "SISTERS", "CHILDREN", "YOUTH", "ELDERS"].map((aud) => (
-                              <SelectItem key={aud} value={aud}>
+                              <SelectItem key={aud} value={aud} className="font-medium text-slate-950">
                                 {aud}
                               </SelectItem>
                             ))}
@@ -307,20 +307,20 @@ export function SpecialProgrammeDialog({
                   name="budget"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-xs font-semibold">Approved Programme Budget (₦)</FormLabel>
+                      <FormLabel className="text-xs font-bold text-slate-950">Approved Programme Budget (₦)</FormLabel>
                       <FormControl>
-                        <Input type="number" min="0" placeholder="0.00" {...field} />
+                        <Input type="number" min="0" placeholder="0.00" {...field} className="border-slate-300 font-semibold text-slate-950 bg-white" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                <div className="p-3 bg-slate-50 border rounded-lg space-y-3">
+                <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-3 shadow-sm">
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="text-xs font-bold text-slate-900">Delegate Registration Fee</div>
-                      <div className="text-[11px] text-muted-foreground">Does this programme require delegates to pay a registration fee?</div>
+                      <div className="text-xs font-bold text-slate-950">Delegate Registration Fee</div>
+                      <div className="text-[11px] font-medium text-slate-600">Does this programme require delegates to pay a registration fee?</div>
                     </div>
                     <FormField
                       control={form.control}
@@ -336,15 +336,15 @@ export function SpecialProgrammeDialog({
                   </div>
 
                   {paymentRequired && (
-                    <div className="space-y-3 pt-2 border-t">
+                    <div className="space-y-3 pt-3 border-t border-slate-200">
                       <FormField
                         control={form.control}
                         name="amount"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-xs font-semibold">Standard Registration Fee (₦)</FormLabel>
+                            <FormLabel className="text-xs font-bold text-slate-950">Standard Registration Fee (₦)</FormLabel>
                             <FormControl>
-                              <Input type="number" min="0" placeholder="e.g. 15000" {...field} />
+                              <Input type="number" min="0" placeholder="e.g. 15000" {...field} className="border-slate-300 font-bold text-slate-950 bg-white" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -357,9 +357,9 @@ export function SpecialProgrammeDialog({
                           name="earlyBirdAmount"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel className="text-xs">Early Bird Fee (₦)</FormLabel>
+                              <FormLabel className="text-xs font-bold text-slate-950">Early Bird Fee (₦)</FormLabel>
                               <FormControl>
-                                <Input type="number" min="0" placeholder="Optional discount" {...field} />
+                                <Input type="number" min="0" placeholder="Optional discount" {...field} className="border-slate-300 font-semibold text-slate-950 bg-white" />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -370,9 +370,9 @@ export function SpecialProgrammeDialog({
                           name="earlyBirdDeadline"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel className="text-xs">Early Bird Deadline</FormLabel>
+                              <FormLabel className="text-xs font-bold text-slate-950">Early Bird Deadline</FormLabel>
                               <FormControl>
-                                <Input type="date" {...field} />
+                                <Input type="date" {...field} className="border-slate-300 font-semibold text-slate-950 bg-white" />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -381,7 +381,7 @@ export function SpecialProgrammeDialog({
                       </div>
 
                       <div className="flex items-center justify-between pt-2">
-                        <div className="text-xs">Allow Installment Payments?</div>
+                        <div className="text-xs font-bold text-slate-950">Allow Installment Payments?</div>
                         <FormField
                           control={form.control}
                           name="allowInstallments"
@@ -401,9 +401,9 @@ export function SpecialProgrammeDialog({
                           name="minInstallmentAmount"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel className="text-xs">Minimum First Installment (₦)</FormLabel>
+                              <FormLabel className="text-xs font-bold text-slate-950">Minimum First Installment (₦)</FormLabel>
                               <FormControl>
-                                <Input type="number" min="0" placeholder="e.g. 5000" {...field} />
+                                <Input type="number" min="0" placeholder="e.g. 5000" {...field} className="border-slate-300 font-semibold text-slate-950 bg-white" />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -422,9 +422,9 @@ export function SpecialProgrammeDialog({
                   name="committee"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-xs font-semibold">Planning Committee Members</FormLabel>
+                      <FormLabel className="text-xs font-bold text-slate-950">Planning Committee Members</FormLabel>
                       <FormControl>
-                        <Textarea rows={2} placeholder="Names, roles, and contacts of deployed officers..." {...field} />
+                        <Textarea rows={2} placeholder="Names, roles, and contacts of deployed officers..." {...field} className="border-slate-300 font-medium text-slate-950 placeholder:text-slate-400 bg-white" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -436,22 +436,22 @@ export function SpecialProgrammeDialog({
                   name="objectives"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-xs font-semibold">Specific Event Milestones & Objectives</FormLabel>
+                      <FormLabel className="text-xs font-bold text-slate-950">Specific Event Milestones & Objectives</FormLabel>
                       <FormControl>
-                        <Textarea rows={2} placeholder="Target attendance, key deliverables..." {...field} />
+                        <Textarea rows={2} placeholder="Target attendance, key deliverables..." {...field} className="border-slate-300 font-medium text-slate-950 placeholder:text-slate-400 bg-white" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                <div className="p-3 bg-emerald-50/70 border border-emerald-200 rounded-lg flex items-center justify-between">
+                <div className="p-3.5 bg-emerald-50/80 border border-emerald-300 rounded-xl flex items-center justify-between shadow-sm">
                   <div>
-                    <div className="text-xs font-bold text-emerald-900 flex items-center gap-1.5">
-                      <Award className="h-3.5 w-3.5" />
+                    <div className="text-xs font-extrabold text-emerald-950 flex items-center gap-1.5 uppercase tracking-wide">
+                      <Award className="h-4 w-4 text-emerald-700" />
                       Issue Digital Certificates of Participation
                     </div>
-                    <div className="text-[11px] text-emerald-700">Allow registered attendees to download certified slips upon completion.</div>
+                    <div className="text-[11px] font-medium text-slate-700 mt-0.5">Allow registered attendees to download certified slips upon completion.</div>
                   </div>
                   <FormField
                     control={form.control}
@@ -469,10 +469,10 @@ export function SpecialProgrammeDialog({
             </Tabs>
 
             <DialogFooter className="pt-2">
-              <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+              <Button type="button" variant="outline" className="border-slate-300 text-slate-800 font-semibold hover:bg-slate-100" onClick={() => setOpen(false)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting} className="bg-emerald-700 hover:bg-emerald-800 text-white">
+              <Button type="submit" disabled={isSubmitting} className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold">
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Create Special Programme
               </Button>

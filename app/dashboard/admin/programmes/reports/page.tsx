@@ -130,10 +130,10 @@ export default async function ProgrammeReportsPage({
       <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           <div>
-            <h2 className="text-3xl font-bold tracking-tight text-green-950">Programme Reports — {label}</h2>
-            <p className="text-sm text-muted-foreground">
-              Cumulative submitted reports for <b>{baseOrg?.name ?? "—"}</b> and its jurisdictions • {start.toLocaleDateString()} → {end.toLocaleDateString()}
-              {targetOrgId ? ` • Filtered: ${jurisdictions.find((j) => j.id === targetOrgId)?.name ?? targetOrgId}` : ""} • Scope: {scope} • National cockpit shows drill-down by jurisdiction & office.
+            <h2 className="text-3xl font-extrabold tracking-tight text-emerald-950">Programme Reports — {label}</h2>
+            <p className="text-sm font-medium text-slate-700 mt-1">
+              Cumulative submitted reports for <b className="text-slate-900">{baseOrg?.name ?? "—"}</b> and its jurisdictions • <span className="text-emerald-900 font-semibold">{start.toLocaleDateString()} → {end.toLocaleDateString()}</span>
+              {targetOrgId ? ` • Filtered: ${jurisdictions.find((j) => j.id === targetOrgId)?.name ?? targetOrgId}` : ""} • Scope: <span className="uppercase text-emerald-800 font-semibold">{scope}</span> • National cockpit shows drill-down by jurisdiction & office.
             </p>
           </div>
           {rollup && <ReportExport summary={rollup.summary} details={rollup.details} metaLabel={label} />}
@@ -153,27 +153,27 @@ export default async function ProgrammeReportsPage({
         />
 
         {!rollup ? (
-          <div className="p-8 text-center border rounded-xl border-dashed">Failed to load reports. Ensure you have programmes in this period.</div>
+          <div className="p-8 text-center border rounded-xl border-dashed bg-white text-slate-700 font-medium">Failed to load reports. Ensure you have programmes in this period.</div>
         ) : (
           <Tabs defaultValue="overview" className="space-y-4">
-            <TabsList>
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="registrations">Registrations by Level</TabsTrigger>
-              <TabsTrigger value="grading">Grading — Programme & General Performance</TabsTrigger>
+            <TabsList className="bg-emerald-50/80 border border-emerald-200/80 p-1 rounded-xl">
+              <TabsTrigger value="overview" className="font-semibold text-slate-700 data-[state=active]:bg-emerald-700 data-[state=active]:text-white data-[state=active]:shadow-sm">Overview</TabsTrigger>
+              <TabsTrigger value="registrations" className="font-semibold text-slate-700 data-[state=active]:bg-emerald-700 data-[state=active]:text-white data-[state=active]:shadow-sm">Registrations by Level</TabsTrigger>
+              <TabsTrigger value="grading" className="font-semibold text-slate-700 data-[state=active]:bg-emerald-700 data-[state=active]:text-white data-[state=active]:shadow-sm">Grading — Performance</TabsTrigger>
             </TabsList>
             <TabsContent value="overview" className="space-y-4">
             <RollupStats summary={rollup.summary} />
 
             {/* Guidance for officers */}
-            <div className="rounded-xl border border-emerald-800/20 bg-emerald-50/60 p-3 text-xs leading-relaxed">
-              <b>How it works:</b> National admin sees every jurisdiction (branch → LGA → State → National) aggregated at a click; office filter shows each national officer’s submissions (State executives filtered at state, etc.). Monthly → specific month, Quarterly → grouped by month within quarter, Annual/YTD → full-year trend. Use CSV/PDF or Share link. Attendees & spend come from <code>programme_reports</code> submitted after each event.
+            <div className="rounded-xl border border-emerald-300 bg-emerald-50/80 p-4 text-xs leading-relaxed text-slate-800 shadow-sm">
+              <b className="text-emerald-950 font-bold">How it works:</b> National admin sees every jurisdiction (branch → LGA → State → National) aggregated at a click; office filter shows each national officer’s submissions (State executives filtered at state, etc.). Monthly → specific month, Quarterly → grouped by month within quarter, Annual/YTD → full-year trend. Use CSV/PDF or Share link. Attendees & spend come from <code className="bg-emerald-100 text-emerald-900 font-semibold px-1 py-0.5 rounded">programme_reports</code> submitted after each event.
             </div>
 
             <ReportsCharts byPeriod={rollup.byPeriod} byOffice={rollup.byOffice} byLevel={rollup.byLevel} byOrganization={rollup.byOrganization} />
 
             <div className="space-y-2">
-              <h3 className="font-semibold text-sm">Detailed Programme Reports ({rollup.details.length})</h3>
-              <p className="text-xs text-muted-foreground">Each row shows office & reporting officer (organizingOfficial). National can switch jurisdiction to view any level’s submissions.</p>
+              <h3 className="font-bold text-base text-slate-950">Detailed Programme Reports ({rollup.details.length})</h3>
+              <p className="text-xs font-medium text-slate-600">Each row shows office & reporting officer (organizingOfficial). National can switch jurisdiction to view any level’s submissions.</p>
               <ReportsTable details={rollup.details} />
             </div>
             </TabsContent>
@@ -181,11 +181,11 @@ export default async function ProgrammeReportsPage({
               {registrationAnalytics ? (
                 <RegistrationAnalytics data={registrationAnalytics} />
               ) : (
-                <div className="text-sm text-muted-foreground">Registration analytics unavailable for this period.</div>
+                <div className="text-sm font-medium text-slate-700 bg-white p-4 rounded-xl border border-slate-200">Registration analytics unavailable for this period.</div>
               )}
             </TabsContent>
             <TabsContent value="grading" className="space-y-4">
-              {grading ? <LevelGrading data={grading} /> : <div className="text-sm text-muted-foreground">Grading unavailable for this period.</div>}
+              {grading ? <LevelGrading data={grading} /> : <div className="text-sm font-medium text-slate-700 bg-white p-4 rounded-xl border border-slate-200">Grading unavailable for this period.</div>}
             </TabsContent>
           </Tabs>
         )}

@@ -316,10 +316,10 @@ export function CreateProgrammeDialog({
                 </Button>
             </DialogTrigger>
             {mounted && (
-                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white border-slate-200">
                 <DialogHeader>
-                    <DialogTitle>Create New Programme</DialogTitle>
-                    <DialogDescription>
+                    <DialogTitle className="text-xl font-extrabold text-slate-950">Create New Programme</DialogTitle>
+                    <DialogDescription className="text-xs font-medium text-slate-700">
                         Fill in the details for the new programme. It will proceed to approval workflow.
                     </DialogDescription>
                 </DialogHeader>
@@ -331,12 +331,13 @@ export function CreateProgrammeDialog({
                             name="title"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Title</FormLabel>
+                                    <FormLabel className="font-bold text-xs text-slate-950">Title</FormLabel>
                                     <FormControl>
                                         <Input
                                             placeholder="Programme Title"
                                             {...field}
                                             value={field.value || ''}
+                                            className="border-slate-300 font-medium text-slate-950 placeholder:text-slate-400 bg-white"
                                         />
                                     </FormControl>
                                     <FormMessage />
@@ -349,16 +350,16 @@ export function CreateProgrammeDialog({
                             name="description"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Description</FormLabel>
+                                    <FormLabel className="font-bold text-xs text-slate-950">Description</FormLabel>
                                     <FormControl>
-                                        <Textarea placeholder="Describe the programme..." {...field} value={field.value || ''} />
+                                        <Textarea placeholder="Describe the programme..." {...field} value={field.value || ''} className="border-slate-300 font-medium text-slate-950 placeholder:text-slate-400 bg-white" />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
                         />
 
-                        <div className="flex items-center space-x-2 border p-4 rounded-md bg-blue-50/50">
+                        <div className="flex items-center space-x-2 border border-blue-200 p-4 rounded-xl bg-blue-50/70 shadow-sm">
                              <FormField
                                  control={form.control}
                                  name="isRecurringAdmin"
@@ -371,10 +372,10 @@ export function CreateProgrammeDialog({
                                              />
                                          </FormControl>
                                          <div className="space-y-1 leading-none">
-                                             <FormLabel className="text-blue-900 font-bold">
+                                             <FormLabel className="text-blue-950 font-bold text-sm cursor-pointer">
                                                  Is this a repetitive/administrative programme? (e.g., Adhkar, Teskiyyah, Meetings)
                                              </FormLabel>
-                                             <FormDescription className="text-[10px]">If checked, this programme will be auto-approved immediately.</FormDescription>
+                                             <FormDescription className="text-xs font-medium text-blue-800">If checked, this programme will be auto-approved immediately.</FormDescription>
                                          </div>
                                      </FormItem>
                                  )}
@@ -402,15 +403,15 @@ export function CreateProgrammeDialog({
                              )}
                          />
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <FormField
                                 control={form.control}
                                 name="venue"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Venue</FormLabel>
+                                        <FormLabel className="font-bold text-xs text-slate-950">Venue</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="Full Address / Location" {...field} value={field.value || ''} />
+                                            <Input placeholder="Full Address / Location" {...field} value={field.value || ''} className="border-slate-300 font-medium text-slate-950 placeholder:text-slate-400 bg-white" />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -423,16 +424,16 @@ export function CreateProgrammeDialog({
                                     name="organizationId"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Jurisdiction / Organization</FormLabel>
+                                            <FormLabel className="font-bold text-xs text-slate-950">Jurisdiction / Organization</FormLabel>
                                             <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!isSuperAdmin}>
                                                 <FormControl>
-                                                    <SelectTrigger>
+                                                    <SelectTrigger className="border-slate-300 font-semibold text-slate-950 bg-white">
                                                         <SelectValue placeholder="Select organization" />
                                                     </SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent>
                                                     {organizationsList.map(org => (
-                                                        <SelectItem key={org.id} value={org.id}>{org.name} ({org.level})</SelectItem>
+                                                        <SelectItem key={org.id} value={org.id} className="font-medium text-slate-950">{org.name} ({org.level})</SelectItem>
                                                     ))}
                                                 </SelectContent>
                                             </Select>
@@ -534,13 +535,13 @@ export function CreateProgrammeDialog({
                                     )
                                     return (
                                         <FormItem>
-                                            <FormLabel>Organizing Office (Department)</FormLabel>
+                                            <FormLabel className="font-bold text-xs text-slate-950">Organizing Office (Department)</FormLabel>
                                             <div className="space-y-1">
                                                 {!isNationalAdmin ? (
                                                     <Input 
                                                         disabled 
                                                         value={offices.find(o => o.id === field.value)?.name || "Default Office"} 
-                                                        className="bg-muted"
+                                                        className="bg-slate-100 font-semibold text-slate-900 border-slate-300"
                                                     />
                                                 ) : (
                                                     <>
@@ -552,7 +553,7 @@ export function CreateProgrammeDialog({
                                                         />
                                                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                                                             <FormControl>
-                                                                <SelectTrigger>
+                                                                <SelectTrigger className="border-slate-300 font-semibold text-slate-950 bg-white">
                                                                     <SelectValue placeholder="Select office" />
                                                                 </SelectTrigger>
                                                             </FormControl>
@@ -581,13 +582,13 @@ export function CreateProgrammeDialog({
                                     )
                                     return (
                                         <FormItem>
-                                            <FormLabel>Organizing Officer (Person)</FormLabel>
+                                            <FormLabel className="font-bold text-xs text-slate-950">Organizing Officer (Person)</FormLabel>
                                             <div className="space-y-1">
                                                 {!isNationalAdmin ? (
                                                     <Input 
                                                         disabled 
                                                         value={officials.find(o => o.id === field.value)?.name || "Assigned Official"} 
-                                                        className="bg-muted"
+                                                        className="bg-slate-100 font-semibold text-slate-900 border-slate-300"
                                                     />
                                                 ) : (
                                                     <>
@@ -599,7 +600,7 @@ export function CreateProgrammeDialog({
                                                         />
                                                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                                                             <FormControl>
-                                                                <SelectTrigger>
+                                                                <SelectTrigger className="border-slate-300 font-semibold text-slate-950 bg-white">
                                                                     <SelectValue placeholder="Select official" />
                                                                 </SelectTrigger>
                                                             </FormControl>
@@ -624,10 +625,10 @@ export function CreateProgrammeDialog({
                                 name="targetAudience"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Target Audience</FormLabel>
+                                        <FormLabel className="font-bold text-xs text-slate-950">Target Audience</FormLabel>
                                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                                             <FormControl>
-                                                <SelectTrigger>
+                                                <SelectTrigger className="border-slate-300 font-semibold text-slate-950 bg-white">
                                                     <SelectValue placeholder="Select audience" />
                                                 </SelectTrigger>
                                             </FormControl>
@@ -647,10 +648,10 @@ export function CreateProgrammeDialog({
                                 name="format"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Format</FormLabel>
+                                        <FormLabel className="font-bold text-xs text-slate-950">Format</FormLabel>
                                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                                             <FormControl>
-                                                <SelectTrigger>
+                                                <SelectTrigger className="border-slate-300 font-semibold text-slate-950 bg-white">
                                                     <SelectValue placeholder="Select format" />
                                                 </SelectTrigger>
                                             </FormControl>
@@ -670,10 +671,10 @@ export function CreateProgrammeDialog({
                                 name="frequency"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Frequency (Occurrence)</FormLabel>
+                                        <FormLabel className="font-bold text-xs text-slate-950">Frequency (Occurrence)</FormLabel>
                                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                                             <FormControl>
-                                                <SelectTrigger>
+                                                <SelectTrigger className="border-slate-300 font-semibold text-slate-950 bg-white">
                                                     <SelectValue placeholder="Select frequency" />
                                                 </SelectTrigger>
                                             </FormControl>
@@ -694,7 +695,7 @@ export function CreateProgrammeDialog({
                             name="rruleString"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Recurrence Rule (RRULE)</FormLabel>
+                                    <FormLabel className="font-bold text-xs text-slate-950">Recurrence Rule (RRULE)</FormLabel>
                                     <FormControl>
                                         <Input placeholder="e.g. FREQ=MONTHLY;BYDAY=1SU  (first Sunday of every month)" {...field} />
                                     </FormControl>
@@ -712,10 +713,10 @@ export function CreateProgrammeDialog({
                         name="recurrenceType"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Recurrence Basis</FormLabel>
+                                <FormLabel className="font-bold text-xs text-slate-950">Recurrence Basis</FormLabel>
                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                                     <FormControl>
-                                        <SelectTrigger>
+                                        <SelectTrigger className="border-slate-300 font-semibold text-slate-950 bg-white">
                                             <SelectValue placeholder="Select recurrence basis" />
                                         </SelectTrigger>
                                     </FormControl>
@@ -737,13 +738,13 @@ export function CreateProgrammeDialog({
                             name="weekDay"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Weekday</FormLabel>
+                                    <FormLabel className="font-bold text-xs text-slate-950">Weekday</FormLabel>
                                     <Select
                                         onValueChange={(val) => field.onChange(Number(val))}
                                         value={field.value === null || field.value === undefined ? "0" : String(field.value)}
                                     >
                                         <FormControl>
-                                            <SelectTrigger>
+                                            <SelectTrigger className="border-slate-300 font-semibold text-slate-950 bg-white">
                                                 <SelectValue placeholder="Select weekday" />
                                             </SelectTrigger>
                                         </FormControl>
@@ -766,13 +767,13 @@ export function CreateProgrammeDialog({
                             name="weekOrdinal"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Occurrence</FormLabel>
+                                    <FormLabel className="font-bold text-xs text-slate-950">Occurrence</FormLabel>
                                     <Select
                                         onValueChange={(val) => field.onChange(Number(val))}
                                         value={field.value === null || field.value === undefined ? "1" : String(field.value)}
                                     >
                                         <FormControl>
-                                            <SelectTrigger>
+                                            <SelectTrigger className="border-slate-300 font-semibold text-slate-950 bg-white">
                                                 <SelectValue placeholder="Select occurrence" />
                                             </SelectTrigger>
                                         </FormControl>
@@ -797,9 +798,9 @@ export function CreateProgrammeDialog({
                                 name="meetingUrl"
                                 render={({ field }) => (
                                     <FormItem className="animate-in fade-in slide-in-from-top-2">
-                                        <FormLabel>Virtual Meeting Link (e.g. Zoom/Google Meet)</FormLabel>
+                                        <FormLabel className="font-bold text-xs text-slate-950">Virtual Meeting Link (e.g. Zoom/Google Meet)</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="https://zoom.us/j/..." {...field} value={field.value || ''} />
+                                            <Input className="border-slate-300 font-medium text-slate-950 bg-white" placeholder="https://zoom.us/j/..." {...field} value={field.value || ''} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -813,9 +814,9 @@ export function CreateProgrammeDialog({
                                 name="budget"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Estimated Budget (NGN)</FormLabel>
+                                        <FormLabel className="font-bold text-xs text-slate-950">Estimated Budget (NGN)</FormLabel>
                                         <FormControl>
-                                            <Input type="number" min="0" step="0.01" placeholder="0.00" {...field} value={field.value || ''} />
+                                            <Input className="border-slate-300 font-semibold text-slate-950 bg-white" type="number" min="0" step="0.01" placeholder="0.00" {...field} value={field.value || ''} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -827,9 +828,9 @@ export function CreateProgrammeDialog({
                                 name="committee"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Organizing Committee</FormLabel>
+                                        <FormLabel className="font-bold text-xs text-slate-950">Organizing Committee</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="e.g. Planning Committee" {...field} value={field.value || ''} />
+                                            <Input className="border-slate-300 font-medium text-slate-950 bg-white" placeholder="e.g. Planning Committee" {...field} value={field.value || ''} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -842,7 +843,7 @@ export function CreateProgrammeDialog({
                             name="objectives"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Key Objectives</FormLabel>
+                                    <FormLabel className="font-bold text-xs text-slate-950">Key Objectives</FormLabel>
                                     <FormControl>
                                         <Textarea placeholder="What are the goals of this programme?" {...field} value={field.value || ''} />
                                     </FormControl>
@@ -857,7 +858,7 @@ export function CreateProgrammeDialog({
                                 name="startDate"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Start Date</FormLabel>
+                                        <FormLabel className="font-bold text-xs text-slate-950">Start Date</FormLabel>
                                         <FormControl>
                                             <Input type="date" {...field} value={field.value || ''} />
                                         </FormControl>
@@ -871,7 +872,7 @@ export function CreateProgrammeDialog({
                                 name="endDate"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>End Date (Optional)</FormLabel>
+                                        <FormLabel className="font-bold text-xs text-slate-950">End Date (Optional)</FormLabel>
                                         <FormControl>
                                             <Input type="date" {...field} value={field.value || ''} />
                                         </FormControl>
@@ -885,9 +886,9 @@ export function CreateProgrammeDialog({
                                 name="time"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Time</FormLabel>
+                                        <FormLabel className="font-bold text-xs text-slate-950">Time</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="e.g 10:00 AM" {...field} value={field.value || ''} />
+                                            <Input className="border-slate-300 font-semibold text-slate-950 bg-white" placeholder="e.g 10:00 AM" {...field} value={field.value || ''} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -895,7 +896,7 @@ export function CreateProgrammeDialog({
                             />
                         </div>
 
-                        <div className="flex items-center space-x-2 border p-4 rounded-md bg-green-50/50">
+                        <div className="flex items-center space-x-2 border border-emerald-300 p-4 rounded-xl bg-emerald-50/80 shadow-sm">
                             <FormField
                                 control={form.control}
                                 name="hasCertificate"
@@ -908,17 +909,17 @@ export function CreateProgrammeDialog({
                                             />
                                         </FormControl>
                                         <div className="space-y-1 leading-none">
-                                            <FormLabel className="text-green-900 font-bold">
+                                            <FormLabel className="text-emerald-950 font-bold">
                                                 Issue Certificates for this Programme?
                                             </FormLabel>
-                                            <FormDescription className="text-[10px]">If enabled, attended participants will be able to download certificates.</FormDescription>
+                                            <FormDescription className="text-xs font-medium text-slate-600">If enabled, attended participants will be able to download certificates.</FormDescription>
                                         </div>
                                     </FormItem>
                                 )}
                             />
                         </div>
 
-                        <div className="border p-4 rounded-md space-y-4">
+                        <div className="border border-slate-200 p-4 rounded-xl space-y-4 bg-slate-50/60 shadow-sm">
                             <FormField
                                 control={form.control}
                                 name="paymentRequired"
@@ -931,7 +932,7 @@ export function CreateProgrammeDialog({
                                             />
                                         </FormControl>
                                         <div className="space-y-1 leading-none">
-                                            <FormLabel>Payment Required?</FormLabel>
+                                            <FormLabel className="font-bold text-xs text-slate-950">Payment Required?</FormLabel>
                                         </div>
                                     </FormItem>
                                 )}
@@ -945,7 +946,7 @@ export function CreateProgrammeDialog({
                                         name="amount"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Normal Amount (NGN)</FormLabel>
+                                                <FormLabel className="font-bold text-xs text-slate-950">Normal Amount (NGN)</FormLabel>
                                                 <FormControl>
                                                     <Input type="number" min="0" step="0.01" {...field} value={field.value || ''} />
                                                 </FormControl>
@@ -958,11 +959,11 @@ export function CreateProgrammeDialog({
                                         name="earlyBirdAmount"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Early Bird Amount (NGN)</FormLabel>
+                                                <FormLabel className="font-bold text-xs text-slate-950">Early Bird Amount (NGN)</FormLabel>
                                                 <FormControl>
                                                     <Input type="number" min="0" step="0.01" placeholder="15000" {...field} value={field.value || ''} />
                                                 </FormControl>
-                                                <FormDescription className="text-[10px]">Optional reduced price</FormDescription>
+                                                <FormDescription className="text-xs font-medium text-slate-600">Optional reduced price</FormDescription>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
@@ -974,11 +975,11 @@ export function CreateProgrammeDialog({
                                         name="earlyBirdDeadline"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Early Bird Deadline</FormLabel>
+                                                <FormLabel className="font-bold text-xs text-slate-950">Early Bird Deadline</FormLabel>
                                                 <FormControl>
                                                     <Input type="date" {...field} value={field.value || ''} />
                                                 </FormControl>
-                                                <FormDescription className="text-[10px]">Till 30 Sep 2026 → normal after</FormDescription>
+                                                <FormDescription className="text-xs font-medium text-slate-600">Till 30 Sep 2026 → normal after</FormDescription>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
@@ -996,7 +997,7 @@ export function CreateProgrammeDialog({
                                                     />
                                                 </FormControl>
                                                 <div className="space-y-1 leading-none">
-                                                    <FormLabel>Allow Installments</FormLabel>
+                                                    <FormLabel className="font-bold text-xs text-slate-950">Allow Installments</FormLabel>
                                                 </div>
                                             </FormItem>
                                         )}
@@ -1008,7 +1009,7 @@ export function CreateProgrammeDialog({
                                             name="minInstallmentAmount"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel>Min Installment (NGN)</FormLabel>
+                                                    <FormLabel className="font-bold text-xs text-slate-950">Min Installment (NGN)</FormLabel>
                                                     <FormControl>
                                                         <Input type="number" min="0" step="0.01" {...field} value={field.value || ''} />
                                                     </FormControl>
@@ -1041,11 +1042,11 @@ export function CreateProgrammeDialog({
                             control={form.control}
                             name="paymentRouting"
                             render={({ field }) => (
-                                <FormItem className="border border-emerald-800/40 p-4 rounded-md bg-emerald-950/20">
-                                    <FormLabel className="text-emerald-100 font-bold text-xs uppercase tracking-wider">Payment Destination</FormLabel>
+                                <FormItem className="border border-emerald-300 p-4 rounded-xl bg-emerald-50/70 shadow-sm">
+                                    <FormLabel className="text-emerald-950 font-bold text-xs uppercase tracking-wider">Payment Destination</FormLabel>
                                     <Select onValueChange={field.onChange} value={field.value || 'ORG_DEFAULT'}>
                                         <FormControl>
-                                            <SelectTrigger>
+                                            <SelectTrigger className="border-slate-300 font-semibold text-slate-950 bg-white">
                                                 <SelectValue placeholder="Where should fees be paid?" />
                                             </SelectTrigger>
                                         </FormControl>
@@ -1054,7 +1055,7 @@ export function CreateProgrammeDialog({
                                             <SelectItem value="CUSTOM">Another bank account (this programme only)</SelectItem>
                                         </SelectContent>
                                     </Select>
-                                    <FormDescription className="text-[10px] text-emerald-100/60">Optionally route this programme's fees to a dedicated account instead of the main account.</FormDescription>
+                                    <FormDescription className="text-xs font-medium text-emerald-900">Optionally route this programme's fees to a dedicated account instead of the main account.</FormDescription>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -1068,14 +1069,14 @@ export function CreateProgrammeDialog({
                                         name="progBankName"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Bank</FormLabel>
+                                                <FormLabel className="font-bold text-xs text-slate-950">Bank</FormLabel>
                                                 <Select onValueChange={(val) => {
                                                     const [code, name] = val.split('||')
                                                     form.setValue('progBankCode', code || '')
                                                     form.setValue('progBankName', name || '')
                                                 }} value={form.watch('progBankCode') ? `${form.watch('progBankCode')}||${form.watch('progBankName')}` : undefined}>
                                                     <FormControl>
-                                                        <SelectTrigger>
+                                                        <SelectTrigger className="border-slate-300 font-semibold text-slate-950 bg-white">
                                                             <SelectValue placeholder="Select bank (e.g. Albarakah MFB)" />
                                                         </SelectTrigger>
                                                     </FormControl>
@@ -1094,9 +1095,9 @@ export function CreateProgrammeDialog({
                                         name="progBankAccountNumber"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Account Number</FormLabel>
+                                                <FormLabel className="font-bold text-xs text-slate-950">Account Number</FormLabel>
                                                 <FormControl>
-                                                    <Input inputMode="numeric" placeholder="e.g. 0123456789" {...field} value={field.value || ''} />
+                                                    <Input className="border-slate-300 font-bold text-slate-950 bg-white" inputMode="numeric" placeholder="e.g. 0123456789" {...field} value={field.value || ''} />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
@@ -1108,16 +1109,16 @@ export function CreateProgrammeDialog({
                                     name="progBankAccountName"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Account Name / Display Label (optional)</FormLabel>
+                                            <FormLabel className="font-bold text-xs text-slate-950">Account Name / Display Label (optional)</FormLabel>
                                             <FormControl>
                                                 <Input placeholder="e.g. TMC National — Training Programme" {...field} value={field.value || ''} />
                                             </FormControl>
-                                            <FormDescription className="text-[10px]">Used as the subaccount label in Paystack. Actual account name is resolved by Paystack.</FormDescription>
+                                            <FormDescription className="text-xs font-medium text-slate-600">Used as the subaccount label in Paystack. Actual account name is resolved by Paystack.</FormDescription>
                                             <FormMessage />
                                         </FormItem>
                                     )}
                                 />
-                                <p className="text-[10px] text-muted-foreground">Saving creates a Paystack subaccount for this programme. All registration fees for this programme pay into it; every other programme continues using the main account.</p>
+                                <p className="text-xs font-medium text-slate-600 text-muted-foreground">Saving creates a Paystack subaccount for this programme. All registration fees for this programme pay into it; every other programme continues using the main account.</p>
                             </div>
                         )}
 
@@ -1125,12 +1126,12 @@ export function CreateProgrammeDialog({
                             control={form.control}
                             name="attendanceWindow"
                             render={({ field }) => (
-                                <FormItem className="border border-emerald-800/40 p-4 rounded-md bg-emerald-950/20">
-                                    <FormLabel className="text-emerald-100 font-bold text-xs uppercase tracking-wider">Attendance Window (Hours before start)</FormLabel>
+                                <FormItem className="border border-emerald-300 p-4 rounded-xl bg-emerald-50/70 shadow-sm">
+                                    <FormLabel className="text-emerald-950 font-bold text-xs uppercase tracking-wider">Attendance Window (Hours before start)</FormLabel>
                                     <FormControl>
                                         <Input type="number" min="0" max="48" placeholder="3" {...field} value={field.value || ''} />
                                     </FormControl>
-                                    <FormDescription className="text-[10px] text-emerald-100/60">Determine how many hours before the programme starts that scanning should be enabled.</FormDescription>
+                                    <FormDescription className="text-xs font-medium text-emerald-900">Determine how many hours before the programme starts that scanning should be enabled.</FormDescription>
                                     <FormMessage />
                                 </FormItem>
                             )}

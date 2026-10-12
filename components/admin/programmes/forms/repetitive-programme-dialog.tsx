@@ -149,14 +149,14 @@ export function RepetitiveProgrammeDialog({
           {triggerLabel}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto bg-white border-slate-200">
         <DialogHeader>
-          <div className="flex items-center gap-1.5 text-teal-800 text-xs font-semibold uppercase">
-            <Repeat className="h-3.5 w-3.5" />
+          <div className="flex items-center gap-1.5 text-emerald-800 text-xs font-bold uppercase tracking-wider">
+            <Repeat className="h-3.5 w-3.5 text-emerald-700" />
             Recurring & Administrative Schedule
           </div>
-          <DialogTitle className="text-xl">Schedule Repetitive Programme</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-xl font-extrabold text-slate-950">Schedule Repetitive Programme</DialogTitle>
+          <DialogDescription className="text-xs font-medium text-slate-700">
             Dedicated workflow for routine administrative programmes, Adhkar, and meetings holding periodically (e.g. 1st Sunday of every month) without ticketing or camping fees.
           </DialogDescription>
         </DialogHeader>
@@ -168,9 +168,9 @@ export function RepetitiveProgrammeDialog({
               name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="font-semibold text-xs">Programme Title</FormLabel>
+                  <FormLabel className="font-bold text-xs text-slate-950">Programme Title</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g. State Monthly Adhkar / Branch Usrah" {...field} />
+                    <Input placeholder="e.g. State Monthly Adhkar / Branch Usrah" {...field} className="border-slate-300 font-medium text-slate-950 placeholder:text-slate-400 bg-white" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -182,9 +182,9 @@ export function RepetitiveProgrammeDialog({
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="font-semibold text-xs">Brief Description / Objective</FormLabel>
+                  <FormLabel className="font-bold text-xs text-slate-950">Brief Description / Objective</FormLabel>
                   <FormControl>
-                    <Textarea rows={2} placeholder="Brief details about the recurring activity..." {...field} />
+                    <Textarea rows={2} placeholder="Brief details about the recurring activity..." {...field} className="border-slate-300 font-medium text-slate-950 placeholder:text-slate-400 bg-white" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -197,9 +197,9 @@ export function RepetitiveProgrammeDialog({
                 name="venue"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs font-semibold">Venue / Location</FormLabel>
+                    <FormLabel className="text-xs font-bold text-slate-950">Venue / Location</FormLabel>
                     <FormControl>
-                      <Input placeholder="Physical center or hall" {...field} />
+                      <Input placeholder="Physical center or hall" {...field} className="border-slate-300 font-medium text-slate-950 placeholder:text-slate-400 bg-white" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -210,17 +210,17 @@ export function RepetitiveProgrammeDialog({
                 name="format"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs font-semibold">Format</FormLabel>
+                    <FormLabel className="text-xs font-bold text-slate-950">Format</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="border-slate-300 font-semibold text-slate-950 bg-white">
                           <SelectValue placeholder="Select format" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="PHYSICAL">Physical Only</SelectItem>
-                        <SelectItem value="VIRTUAL">Virtual (Online)</SelectItem>
-                        <SelectItem value="HYBRID">Hybrid</SelectItem>
+                        <SelectItem value="PHYSICAL" className="font-medium text-slate-950">Physical Only</SelectItem>
+                        <SelectItem value="VIRTUAL" className="font-medium text-slate-950">Virtual (Online)</SelectItem>
+                        <SelectItem value="HYBRID" className="font-medium text-slate-950">Hybrid</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -235,9 +235,9 @@ export function RepetitiveProgrammeDialog({
                 name="startDate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs font-semibold">First Occurrence Date</FormLabel>
+                    <FormLabel className="text-xs font-bold text-slate-950">First Occurrence Date</FormLabel>
                     <FormControl>
-                      <Input type="date" {...field} />
+                      <Input type="date" {...field} className="border-slate-300 font-semibold text-slate-950 bg-white" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -248,9 +248,9 @@ export function RepetitiveProgrammeDialog({
                 name="time"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs font-semibold">Commencement Time</FormLabel>
+                    <FormLabel className="text-xs font-bold text-slate-950">Commencement Time</FormLabel>
                     <FormControl>
-                      <Input type="time" {...field} />
+                      <Input type="time" {...field} className="border-slate-300 font-semibold text-slate-950 bg-white" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -259,9 +259,9 @@ export function RepetitiveProgrammeDialog({
             </div>
 
             {/* Recurrence Engine Configuration */}
-            <div className="bg-teal-50/70 border border-teal-200 rounded-lg p-3.5 space-y-3">
-              <div className="text-xs font-bold text-teal-900 flex items-center gap-1.5">
-                <Calendar className="h-3.5 w-3.5" />
+            <div className="bg-emerald-50/70 border border-emerald-300 rounded-xl p-4 space-y-3 shadow-sm">
+              <div className="text-xs font-extrabold text-emerald-950 flex items-center gap-1.5 uppercase tracking-wide">
+                <Calendar className="h-3.5 w-3.5 text-emerald-700" />
                 Dating & Calendar Recurrence (Google Calendar Style)
               </div>
 
@@ -271,18 +271,18 @@ export function RepetitiveProgrammeDialog({
                   name="frequency"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-xs">Frequency</FormLabel>
+                      <FormLabel className="text-xs font-bold text-slate-950">Frequency</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
-                          <SelectTrigger className="bg-white">
+                          <SelectTrigger className="bg-white border-slate-300 font-semibold text-slate-950">
                             <SelectValue placeholder="Frequency" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="WEEKLY">Weekly</SelectItem>
-                          <SelectItem value="MONTHLY">Monthly</SelectItem>
-                          <SelectItem value="QUARTERLY">Quarterly</SelectItem>
-                          <SelectItem value="CUSTOM">Custom (RRULE)</SelectItem>
+                          <SelectItem value="WEEKLY" className="font-medium text-slate-950">Weekly</SelectItem>
+                          <SelectItem value="MONTHLY" className="font-medium text-slate-950">Monthly</SelectItem>
+                          <SelectItem value="QUARTERLY" className="font-medium text-slate-950">Quarterly</SelectItem>
+                          <SelectItem value="CUSTOM" className="font-medium text-slate-950">Custom (RRULE)</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -295,16 +295,16 @@ export function RepetitiveProgrammeDialog({
                   name="recurrenceType"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-xs">Recurrence Basis</FormLabel>
+                      <FormLabel className="text-xs font-bold text-slate-950">Recurrence Basis</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
-                          <SelectTrigger className="bg-white">
+                          <SelectTrigger className="bg-white border-slate-300 font-semibold text-slate-950">
                             <SelectValue placeholder="Recurrence basis" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="BY_DAY_OF_WEEK">Nth Weekday (e.g. 1st Sunday)</SelectItem>
-                          <SelectItem value="BY_DATE">Exact Calendar Day (e.g. Every 5th)</SelectItem>
+                          <SelectItem value="BY_DAY_OF_WEEK" className="font-medium text-slate-950">Nth Weekday (e.g. 1st Sunday)</SelectItem>
+                          <SelectItem value="BY_DATE" className="font-medium text-slate-950">Exact Calendar Day (e.g. Every 5th)</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -320,19 +320,19 @@ export function RepetitiveProgrammeDialog({
                     name="weekOrdinal"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-xs">Occurrence</FormLabel>
+                        <FormLabel className="text-xs font-bold text-slate-950">Occurrence</FormLabel>
                         <Select
                           onValueChange={(val) => field.onChange(Number(val))}
                           defaultValue={String(field.value)}
                         >
                           <FormControl>
-                            <SelectTrigger className="bg-white">
+                            <SelectTrigger className="bg-white border-slate-300 font-semibold text-slate-950">
                               <SelectValue placeholder="Occurrence" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
                             {ORDINALS.map((o) => (
-                              <SelectItem key={o.value} value={String(o.value)}>
+                              <SelectItem key={o.value} value={String(o.value)} className="font-medium text-slate-950">
                                 {o.label}
                               </SelectItem>
                             ))}
@@ -348,19 +348,19 @@ export function RepetitiveProgrammeDialog({
                     name="weekDay"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-xs">Day of Week</FormLabel>
+                        <FormLabel className="text-xs font-bold text-slate-950">Day of Week</FormLabel>
                         <Select
                           onValueChange={(val) => field.onChange(Number(val))}
                           defaultValue={String(field.value)}
                         >
                           <FormControl>
-                            <SelectTrigger className="bg-white">
+                            <SelectTrigger className="bg-white border-slate-300 font-semibold text-slate-950">
                               <SelectValue placeholder="Day" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
                             {WEEKDAYS.map((day, idx) => (
-                              <SelectItem key={idx} value={String(idx)}>
+                              <SelectItem key={idx} value={String(idx)} className="font-medium text-slate-950">
                                 {day}
                               </SelectItem>
                             ))}
@@ -375,10 +375,10 @@ export function RepetitiveProgrammeDialog({
             </div>
 
             <DialogFooter className="pt-2">
-              <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+              <Button type="button" variant="outline" className="border-slate-300 text-slate-800 font-semibold hover:bg-slate-100" onClick={() => setOpen(false)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting} className="bg-teal-700 hover:bg-teal-800 text-white">
+              <Button type="submit" disabled={isSubmitting} className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold">
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Schedule All Yearly Instances
               </Button>

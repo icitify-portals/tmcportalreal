@@ -7,51 +7,51 @@ const COLORS = ["#0a7a3a", "#0ea5e9", "#f59e0b", "#8b5cf6", "#ef4444", "#10b981"
 export function ReportsCharts({ byPeriod, byOffice, byLevel, byOrganization }: { byPeriod: any[]; byOffice: any[]; byLevel: any[]; byOrganization: any[] }) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      <Card>
-        <CardHeader><CardTitle className="text-sm">Programmes & Attendees by Period</CardTitle></CardHeader>
+      <Card className="border-slate-200 shadow-sm bg-white">
+        <CardHeader><CardTitle className="text-sm font-bold text-slate-900">Programmes & Attendees by Period</CardTitle></CardHeader>
         <CardContent className="h-72">
-          {byPeriod.length === 0 ? <div className="h-full grid place-items-center text-muted-foreground text-sm">No data for period</div> : (
+          {byPeriod.length === 0 ? <div className="h-full grid place-items-center text-slate-500 font-medium text-sm">No data for period</div> : (
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={byPeriod}>
-                <XAxis dataKey="period" tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 11 }} />
+                <XAxis dataKey="period" tick={{ fontSize: 11, fill: "#334155" }} />
+                <YAxis tick={{ fontSize: 11, fill: "#334155" }} />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="count" name="Programmes" fill="#0a7a3a" radius={[6,6,0,0]} />
+                <Bar dataKey="count" name="Programmes" fill="#047857" radius={[6,6,0,0]} />
                 <Bar dataKey="completed" name="Completed" fill="#10b981" />
-                <Bar dataKey="attendees" name="Attendees" fill="#0ea5e9" />
+                <Bar dataKey="attendees" name="Attendees" fill="#0284c7" />
               </BarChart>
             </ResponsiveContainer>
           )}
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader><CardTitle className="text-sm">Spend Trend (₦)</CardTitle></CardHeader>
+      <Card className="border-slate-200 shadow-sm bg-white">
+        <CardHeader><CardTitle className="text-sm font-bold text-slate-900">Spend Trend (₦)</CardTitle></CardHeader>
         <CardContent className="h-72">
-          {byPeriod.length === 0 ? <div className="h-full grid place-items-center text-muted-foreground text-sm">No data</div> : (
+          {byPeriod.length === 0 ? <div className="h-full grid place-items-center text-slate-500 font-medium text-sm">No data</div> : (
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={byPeriod}>
-                <XAxis dataKey="period" tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 11 }} />
+                <XAxis dataKey="period" tick={{ fontSize: 11, fill: "#334155" }} />
+                <YAxis tick={{ fontSize: 11, fill: "#334155" }} />
                 <Tooltip formatter={(v: any) => `₦${Number(v).toLocaleString()}`} />
-                <Bar dataKey="spent" name="Spent" fill="#f59e0b" radius={[6,6,0,0]} />
+                <Bar dataKey="spent" name="Spent" fill="#d97706" radius={[6,6,0,0]} />
               </BarChart>
             </ResponsiveContainer>
           )}
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader><CardTitle className="text-sm">By Office (includes submitted reports)</CardTitle></CardHeader>
+      <Card className="border-slate-200 shadow-sm bg-white">
+        <CardHeader><CardTitle className="text-sm font-bold text-slate-900">By Office (includes submitted reports)</CardTitle></CardHeader>
         <CardContent className="h-72">
-          {byOffice.length === 0 ? <div className="h-full grid place-items-center text-muted-foreground text-sm">No office data</div> : (
+          {byOffice.length === 0 ? <div className="h-full grid place-items-center text-slate-500 font-medium text-sm">No office data</div> : (
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={byOffice.slice(0, 8)} layout="vertical">
-                <XAxis type="number" tick={{ fontSize: 11 }} />
-                <YAxis dataKey="officeName" type="category" width={120} tick={{ fontSize: 11 }} />
+                <XAxis type="number" tick={{ fontSize: 11, fill: "#334155" }} />
+                <YAxis dataKey="officeName" type="category" width={120} tick={{ fontSize: 11, fill: "#1e293b", fontWeight: 500 }} />
                 <Tooltip />
-                <Bar dataKey="count" name="Programmes" fill="#0a7a3a" />
+                <Bar dataKey="count" name="Programmes" fill="#047857" />
                 <Bar dataKey="completed" name="Completed" fill="#10b981" />
               </BarChart>
             </ResponsiveContainer>
@@ -59,10 +59,10 @@ export function ReportsCharts({ byPeriod, byOffice, byLevel, byOrganization }: {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader><CardTitle className="text-sm">By Org Level</CardTitle></CardHeader>
+      <Card className="border-slate-200 shadow-sm bg-white">
+        <CardHeader><CardTitle className="text-sm font-bold text-slate-900">By Org Level</CardTitle></CardHeader>
         <CardContent>
-          {byLevel.length === 0 ? <span className="text-muted-foreground text-sm">No data</span> : (
+          {byLevel.length === 0 ? <span className="text-slate-500 font-medium text-sm">No data</span> : (
             <>
               <div className="h-56 flex items-center justify-center">
                 <ResponsiveContainer width="100%" height="100%">
@@ -74,12 +74,12 @@ export function ReportsCharts({ byPeriod, byOffice, byLevel, byOrganization }: {
                   </PieChart>
                 </ResponsiveContainer>
               </div>
-              <div className="space-y-1 mt-2">
+              <div className="space-y-1.5 mt-2">
                 {byLevel.map((l: any) => (
-                  <div key={l.level} className="flex items-center justify-between text-xs border-t pt-1">
-                    <span className="font-medium">{l.level}</span>
-                    <span className="text-muted-foreground">
-                      {l.count} programmes • {l.completed} completed • {l.attendees} attendees • ₦{Number(l.spent).toLocaleString()} spent
+                  <div key={l.level} className="flex items-center justify-between text-xs border-t border-slate-100 pt-1.5">
+                    <span className="font-bold text-slate-900">{l.level}</span>
+                    <span className="text-slate-700 font-medium">
+                      {l.count} programmes • <span className="text-emerald-700 font-semibold">{l.completed} completed</span> • {l.attendees} attendees • ₦{Number(l.spent).toLocaleString()} spent
                     </span>
                   </div>
                 ))}
@@ -89,21 +89,21 @@ export function ReportsCharts({ byPeriod, byOffice, byLevel, byOrganization }: {
         </CardContent>
       </Card>
 
-      <Card className="lg:col-span-2">
-        <CardHeader><CardTitle className="text-sm">By Jurisdiction (drill-down: national sees all)</CardTitle></CardHeader>
+      <Card className="lg:col-span-2 border-slate-200 shadow-sm bg-white">
+        <CardHeader><CardTitle className="text-sm font-bold text-slate-900">By Jurisdiction (drill-down: national sees all)</CardTitle></CardHeader>
         <CardContent className="h-80 overflow-auto">
-          {byOrganization.length === 0 ? <div className="text-muted-foreground text-sm">No jurisdiction data</div> : (
+          {byOrganization.length === 0 ? <div className="text-slate-500 font-medium text-sm">No jurisdiction data</div> : (
             <div className="space-y-2">
               {byOrganization.slice(0, 20).map((o: any) => (
-                <div key={o.orgId} className="flex items-center justify-between border rounded-lg px-3 py-2 bg-white">
+                <div key={o.orgId} className="flex items-center justify-between border border-slate-200/80 rounded-lg px-3 py-2 bg-slate-50/50 hover:bg-slate-50 transition-colors">
                   <div>
-                    <div className="font-medium text-sm">{o.orgName} <span className="text-xs text-muted-foreground">• {o.level}</span></div>
-                    <div className="text-xs text-muted-foreground">{o.count} programmes • {o.completed} completed • {o.attendees} attendees • ₦{Number(o.spent).toLocaleString()} spent</div>
+                    <div className="font-bold text-slate-950 text-sm">{o.orgName} <span className="text-xs font-semibold text-emerald-800">• {o.level}</span></div>
+                    <div className="text-xs font-medium text-slate-700 mt-0.5">{o.count} programmes • <span className="text-emerald-700 font-semibold">{o.completed} completed</span> • {o.attendees} attendees • ₦{Number(o.spent).toLocaleString()} spent</div>
                   </div>
                   <div className="text-right">
-                    <div className="text-xs">Completion {(o.count ? (o.completed / o.count) * 100 : 0).toFixed(0)}%</div>
-                    <div className="h-2 w-24 bg-muted rounded-full overflow-hidden mt-1">
-                      <div className="h-full bg-green-600" style={{ width: `${o.count ? (o.completed / o.count) * 100 : 0}%` }} />
+                    <div className="text-xs font-bold text-slate-900">Completion {(o.count ? (o.completed / o.count) * 100 : 0).toFixed(0)}%</div>
+                    <div className="h-2 w-24 bg-slate-200 rounded-full overflow-hidden mt-1">
+                      <div className="h-full bg-emerald-600" style={{ width: `${o.count ? (o.completed / o.count) * 100 : 0}%` }} />
                     </div>
                   </div>
                 </div>

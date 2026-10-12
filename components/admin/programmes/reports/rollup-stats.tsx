@@ -14,13 +14,13 @@ export function RollupStats({ summary }: { summary: any }) {
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
       {items.map((it) => (
-        <Card key={it.label} className="border-green-800/20 bg-gradient-to-br from-white to-emerald-50/30">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">{it.label}</CardTitle>
+        <Card key={it.label} className="border-emerald-200/90 bg-white hover:border-emerald-400 shadow-sm transition-all">
+          <CardHeader className="pb-1 pt-3.5 px-3.5">
+            <CardTitle className="text-xs font-bold uppercase tracking-wider text-emerald-900">{it.label}</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{it.value}</div>
-            <div className="text-xs text-muted-foreground">{it.sub}</div>
+          <CardContent className="px-3.5 pb-3.5">
+            <div className="text-2xl font-extrabold text-slate-950">{it.value}</div>
+            <div className="text-xs font-semibold text-slate-600 mt-0.5">{it.sub}</div>
           </CardContent>
         </Card>
       ))}
