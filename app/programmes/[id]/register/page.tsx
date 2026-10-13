@@ -86,41 +86,19 @@ function RegistrationContent() {
         e.preventDefault()
         setIsSubmitting(true)
         try {
-            // Enforce minimum payment logically on frontend too — early bird aware
-            let baseAmount = effectiveNormal
-            if (formData.registrationTier && programme.pricingTiers) {
-                 const tiers: any = typeof programme.pricingTiers === 'string' ? JSON.parse(programme.pricingTiers) : programme.pricingTiers;
-                 let tierAmount = 0;
-                 if (tiers?.[formData.registrationTier]) {
-                     tierAmount = Number(tiers[formData.registrationTier]);
-                 } else if (tiers?.individuals && tiers.individuals[formData.registrationTier]) {
-                     tierAmount = Number(tiers.individuals[formData.registrationTier]);
-                 } else if (tiers?.corporate && tiers.corporate[formData.registrationTier]) {
-                     tierAmount = Number(tiers.corporate[formData.registrationTier]);
-                 }
-                 
-                 if (tierAmount > 0) baseAmount = tierAmount;
-            }
+            // Enforce minimum payment on frontend too — the server computes the locked entitlement price
+            const entitlementMeta = programme.entitlement as { kind: string; baseAmount: number; tierLabel: string | null } | undefined
+            const baseAmount = entitlementMeta && Number(entitlementMeta.baseAmount) > 0 ? Number(entitlementMeta.baseAmount) : effectiveNormal
 
-            let requiredMin = baseAmount;
-            if (programme.allowInstallments) {
-                const minInstallment = parseFloat(programme.minInstallmentAmount || "0");
-                // If a tier is selected and minInstallment is higher than tier's baseAmount, allow down to baseAmount.
-                // Usually minInstallment applies globally, but it shouldn't exceed the tier's price.
-                if (minInstallment > 0 && minInstallment < baseAmount) {
-                    requiredMin = minInstallment;
-                }
-            }
-            
             const userAmount = formData.amountPaid ? parseFloat(formData.amountPaid) : baseAmount;
             
-            if (programme.paymentRequired && userAmount < requiredMin) {
-                toast.error(`Minimum payment for this tier/installment is ₦${requiredMin}`);
+            if (programme.paymentRequired && userAmount < baseAmount) {
+                toast.error(`Minimum payment is ₦${baseAmount.toLocaleString()}${entitlementMeta?.tierLabel ? ` (${entitlementMeta.tierLabel})` : ""}. You may pay more.`);
                 setIsSubmitting(false);
                 return;
             }
 
-            const submissionData = { ...formData, amountPaid: userAmount };
+            const submissionData = { ...formData, amountPaid: userAmount, registrationTier: entitlementMeta?.tierLabel || "" };
 
             const result = await registerForProgramme(programmeId, submissionData, waiverCode || undefined)
 
@@ -195,6 +173,8 @@ function RegistrationContent() {
     const isWaiverActive = waiverCode && programme.waiverCode && waiverCode === programme.waiverCode
     const isEarlyBird = programme?.earlyBirdAmount && programme?.earlyBirdDeadline && new Date() <= new Date(programme.earlyBirdDeadline)
     const effectiveNormal = isEarlyBird ? Number(programme.earlyBirdAmount) : Number(programme.amount || 0)
+    const entitlementMeta = programme.entitlement as { kind: string; baseAmount: number; tierLabel: string | null } | undefined
+    const resolvedBase = entitlementMeta && Number(entitlementMeta.baseAmount) > 0 ? Number(entitlementMeta.baseAmount) : effectiveNormal
 
     return (
         <div className="max-w-2xl mx-auto px-4 py-4 sm:py-8">
@@ -374,53 +354,27 @@ function RegistrationContent() {
                         )}
                         
                         {(() => {
-                            const pricingTiers = programme?.pricingTiers ? (typeof programme.pricingTiers === 'string' ? JSON.parse(programme.pricingTiers) : programme.pricingTiers) : null;
-                            let baseAmount = effectiveNormal;
-                            if (pricingTiers && formData.registrationTier) {
-                                if (pricingTiers?.[formData.registrationTier]) {
-                                    baseAmount = Number(pricingTiers[formData.registrationTier]);
-                                } else if (pricingTiers?.individuals?.[formData.registrationTier]) {
-                                    baseAmount = Number(pricingTiers.individuals[formData.registrationTier]);
-                                } else if (pricingTiers?.corporate?.[formData.registrationTier]) {
-                                    baseAmount = Number(pricingTiers.corporate[formData.registrationTier]);
-                                }
-                            }
+                            const entitlement = entitlementMeta
+                            const baseAmount = resolvedBase
 
-                            let requiredMin = baseAmount;
-                            if (programme?.allowInstallments) {
-                                const minInst = parseFloat(programme?.minInstallmentAmount || "0");
-                                if (minInst > 0 && minInst < baseAmount) {
-                                    requiredMin = minInst;
-                                }
-                            }
+                            const categoryInfo = entitlement ? ({
+                                "member-tier": { label: entitlement.tierLabel || "Member Category", note: "Your price is locked to your membership category." },
+                                "guest": { label: entitlement.tierLabel || "Guest (Non-Member)", note: entitlement.tierLabel ? "Minimum fee for guests. You may pay more." : "Tiered pricing is reserved for registered members — the standard fee applies." },
+                                "member-standard": null as null
+                            } as Record<string, { label: string; note: string } | null>)[entitlement.kind] : null
 
                             return (
                                 <>
-                                    {pricingTiers && Object.keys(pricingTiers).length > 0 && (
+                                    {entitlement && categoryInfo && (
                                         <div className="space-y-2 pt-4 border-t">
-                                            <Label className="text-xs font-bold uppercase text-gray-500">Registration Tier / Category</Label>
-                                            <Select 
-                                                value={formData.registrationTier} 
-                                                onValueChange={(v) => {
-                                                    setFormData({...formData, registrationTier: v === "none" ? "" : v})
-                                                }}
-                                            >
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Select Registration Tier" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="none">Standard (₦{programme?.amount || "0"})</SelectItem>
-                                                    {Object.keys(pricingTiers).filter(k => k !== 'individuals' && k !== 'corporate').map(k => (
-                                                        <SelectItem key={k} value={k}>{k} - ₦{pricingTiers[k]}</SelectItem>
-                                                    ))}
-                                                    {pricingTiers.individuals && Object.keys(pricingTiers.individuals).map(k => (
-                                                        <SelectItem key={k} value={k}>{k} - ₦{pricingTiers.individuals[k]}</SelectItem>
-                                                    ))}
-                                                    {pricingTiers.corporate && Object.keys(pricingTiers.corporate).map(k => (
-                                                        <SelectItem key={k} value={k}>{k} - ₦{pricingTiers.corporate[k]}</SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
+                                            <Label className="text-xs font-bold uppercase text-gray-500">Your Registration Category</Label>
+                                            <div className="rounded-lg border border-green-200 bg-green-50/40 p-3 flex items-center justify-between gap-2">
+                                                <div>
+                                                    <p className="text-sm font-bold text-green-900">{categoryInfo.label}</p>
+                                                    <p className="text-[11px] text-green-700">{categoryInfo.note}</p>
+                                                </div>
+                                                <p className="text-base font-extrabold text-green-800 whitespace-nowrap">₦{baseAmount.toLocaleString()}</p>
+                                            </div>
                                         </div>
                                     )}
 
@@ -429,19 +383,19 @@ function RegistrationContent() {
                                             <Label className="text-xs font-bold uppercase text-gray-500">Amount to Pay (₦)</Label>
                                             <Input 
                                                 type="number"
-                                                min={requiredMin}
+                                                min={baseAmount}
                                                 step="0.01"
-                                                placeholder={`Minimum: ₦${requiredMin}`}
+                                                placeholder={`Minimum: ₦${baseAmount}`}
                                                 value={formData.amountPaid}
                                                 onChange={(e) => setFormData({...formData, amountPaid: e.target.value})}
                                                 required
                                                 className="border-green-300 focus-visible:ring-green-500 bg-green-50/20"
                                             />
-                                            <p className="text-[10px] text-gray-500 font-medium">You must pay at least <strong className="text-black">₦{requiredMin}</strong>. {programme.allowInstallments ? "Installments are allowed." : "You are free to pay more."}</p>
+                                            <p className="text-[10px] text-gray-500 font-medium">The minimum at registration is <strong className="text-black">₦{baseAmount.toLocaleString()}</strong> for your category. You are free to pay more.</p>
                                         </div>
                                     )}
                                     
-                                    {!isWaiverActive && programme.paymentRequired && requiredMin > 0 && session && (
+                                    {!isWaiverActive && programme.paymentRequired && baseAmount > 0 && session && (
                                         <div className="p-4 border rounded-lg bg-emerald-50/30 space-y-3 mt-4">
                                             <Label className="text-xs font-bold uppercase tracking-wider text-emerald-800 block">Payment Method</Label>
                                             <RadioGroup 
@@ -481,7 +435,7 @@ function RegistrationContent() {
                                     <UserPlus className="mr-2 h-5 w-5" />
                                 )}
                                 {isWaiverActive ? "Complete Registration (Free)" :
-                                    programme.paymentRequired && effectiveNormal > 0 ? `Proceed to Payment (₦${effectiveNormal}${isEarlyBird ? " Early Bird" : ""})` :
+                                    programme.paymentRequired && resolvedBase > 0 ? `Proceed to Payment (₦${resolvedBase.toLocaleString()}${entitlementMeta?.tierLabel ? ` • ${entitlementMeta.tierLabel}` : isEarlyBird ? " Early Bird" : ""})` :
                                         "Confirm Registration"}
                             </Button>
                         </div>

@@ -17,6 +17,7 @@ import { members } from "@/lib/db/schema"
 import { initializePayment, verifyPayment } from "@/lib/payments"
 import { createPaystackSubaccount } from "@/lib/payments"
 import { sendEmail, emailTemplates } from "@/lib/email"
+import { resolveEntitlement } from "@/lib/programme-tiers"
 import crypto from "crypto"
 import { RRule, rrulestr } from "rrule"
 import { getEffectiveAmount, isEarlyBirdActive, getActiveEarlyBird, resolvePayableTotal } from "@/lib/pricing"
@@ -1139,6 +1140,27 @@ export async function getAdminProgrammes(organizationId: string, type: 'MY_PROGR
 
 // --- Registration ---
 
+async function getEntitlementForProgramme(programme: any, session: Awaited<ReturnType<typeof getServerSession>> | null) {
+    let hasActiveMemberRecord = false
+    const sessionUserId = (session?.user as any)?.id
+    if (sessionUserId) {
+        const [existingMember] = await db.select({ id: members.id })
+            .from(members)
+            .where(eq(members.userId, sessionUserId))
+            .limit(1)
+        hasActiveMemberRecord = !!existingMember
+    }
+    return resolveEntitlement({
+        pricingTiers: programme.pricingTiers,
+        amount: programme.amount,
+        earlyBirdAmount: (programme as any).earlyBirdAmount,
+        earlyBirdDeadline: (programme as any).earlyBirdDeadline,
+        signedIn: !!session,
+        officialLevel: (session?.user as any)?.officialLevel,
+        hasActiveMemberRecord
+    })
+}
+
 export async function registerForProgramme(programmeId: string, data?: z.infer<typeof RegistrationSchema>, waiverCode?: string) {
     const session = await getServerSession()
     
@@ -1227,25 +1249,36 @@ export async function registerForProgramme(programmeId: string, data?: z.infer<t
             }
         }
 
-        // New Registration Logic — early bird aware (phased tiers first, legacy single-EB fallback)
+        // New Registration Logic — early bird aware + entitlement-gated tier pricing
         const regTiers = await getEarlyBirdTiers(programme.id)
         const ebFields = { amount: programme.amount, earlyBirdAmount: (programme as any).earlyBirdAmount, earlyBirdDeadline: (programme as any).earlyBirdDeadline, tiers: regTiers }
         const effectiveBaseRaw = getEffectiveAmount(ebFields);
-        let baseAmount = effectiveBaseRaw;
-        
-        if (data?.registrationTier && programme.pricingTiers) {
-             const tiers: any = typeof programme.pricingTiers === 'string' ? JSON.parse(programme.pricingTiers as string) : programme.pricingTiers;
-             let tierAmount = 0;
-             if (tiers?.individuals && tiers.individuals[data.registrationTier]) tierAmount = Number(tiers.individuals[data.registrationTier]);
-             else if (tiers?.corporate && tiers.corporate[data.registrationTier]) tierAmount = Number(tiers.corporate[data.registrationTier]);
-             else if (tiers && tiers[data.registrationTier]) tierAmount = Number(tiers[data.registrationTier]);
-             
-             if (tierAmount > 0) baseAmount = tierAmount;
+
+        // Determine who the user is and lock their applicable price tier (entitlement check).
+        const entitlement = await getEntitlementForProgramme(programme, session)
+        let baseAmount = entitlement.baseAmount
+        const tierLabel = entitlement.tierLabel
+
+        // Enforce entitlement — users cannot self-select a cheaper tier than the one assigned to them.
+        const requestedTier = data?.registrationTier || null
+        if (requestedTier) {
+            if (entitlement.kind === 'guest') {
+                if (!entitlement.tierLabel) {
+                    return { success: false, error: "Tiered pricing is reserved for registered members. The standard fee applies to guests." }
+                }
+                if (requestedTier !== entitlement.tierLabel) {
+                    return { success: false, error: `Guests are assigned the minimum (${entitlement.tierLabel}) fee of ₦${entitlement.baseAmount}. You may pay more if you wish.` }
+                }
+            } else if (entitlement.kind === 'member-standard') {
+                return { success: false, error: "Tiered pricing does not apply to your membership level. The standard fee applies." }
+            } else if (entitlement.tierLabel && requestedTier !== entitlement.tierLabel) {
+                return { success: false, error: `Your tier is locked to ${entitlement.tierLabel} (₦${entitlement.baseAmount}). Contact the admin if your level is incorrect.` }
+            }
         }
 
         let userAmount = data?.amountPaid ? parseFloat(data.amountPaid.toString()) : baseAmount;
         if (programme.paymentRequired && userAmount < baseAmount) {
-             return { success: false, error: `Minimum payment for this tier is ${baseAmount}` }
+             return { success: false, error: tierLabel ? `Minimum payment for ${tierLabel} is ₦${baseAmount} (you may pay more)` : `Minimum payment is ₦${baseAmount} (you may pay more)` }
         }
 
         let initialStatus: any = programme.paymentRequired && userAmount > 0 ? 'PENDING_PAYMENT' : 'REGISTERED'
@@ -1266,13 +1299,13 @@ export async function registerForProgramme(programmeId: string, data?: z.infer<t
             status: initialStatus,
             paymentReference: paymentRef,
             checkInTime: checkInTime,
-            registrationTier: data?.registrationTier || null,
+            registrationTier: tierLabel || data?.registrationTier || null,
             amountPaid: (initialStatus === 'PAID' || initialStatus === 'ATTENDED') ? userAmount.toString() : "0.00",
             lockedAmount: baseAmount.toString(),
             // Remember which EB window the locked price came from (null when normal/category price).
             // Used to enforce "complete part-payment before the EB window ends".
             lockedEarlyBirdDeadline: (() => {
-                if (data?.registrationTier && programme.pricingTiers) return null
+                if (tierLabel && programme.pricingTiers) return null
                 const applied = getActiveEarlyBird(ebFields)
                 if (!applied) return null
                 // Only a real discount counts as EB (locked price below normal fee)
@@ -2400,11 +2433,16 @@ export async function getProgrammeDetailsAction(id: string) {
             earlyBirdAmount: programmes.earlyBirdAmount,
             earlyBirdDeadline: programmes.earlyBirdDeadline,
             paymentRequired: programmes.paymentRequired,
-            waiverCode: programmes.waiverCode
+            waiverCode: programmes.waiverCode,
+            pricingTiers: programmes.pricingTiers,
+            allowInstallments: programmes.allowInstallments,
+            minInstallmentAmount: programmes.minInstallmentAmount
         }).from(programmes).where(eq(programmes.id, id)).limit(1)
         
         if (!programme) return { success: false, error: "Programme not found" }
-        return { success: true, programme }
+        const session = await getServerSession()
+        const entitlement = await getEntitlementForProgramme(programme, session)
+        return { success: true, programme: { ...programme, entitlement } }
     } catch (error: any) {
         return { success: false, error: error.message }
     }
