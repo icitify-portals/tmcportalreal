@@ -1183,11 +1183,19 @@ async function getEntitlementForProgramme(programme: any, session: Awaited<Retur
             .limit(1)
         hasActiveMemberRecord = !!existingMember
     }
-    return resolveEntitlement({
-        pricingTiers: programme.pricingTiers,
+    // The uniform standard fee must honor phased early-bird windows (not just the
+    // legacy single early-bird fields), otherwise users get locked to the normal
+    // fee while an EB window is still open (e.g. NITP First EB ₦15,000 till Oct 15).
+    const regTiers = await getEarlyBirdTiers(programme.id)
+    const effectiveStandard = getEffectiveAmount({
         amount: programme.amount,
         earlyBirdAmount: (programme as any).earlyBirdAmount,
         earlyBirdDeadline: (programme as any).earlyBirdDeadline,
+        tiers: regTiers,
+    })
+    return resolveEntitlement({
+        pricingTiers: programme.pricingTiers,
+        amount: effectiveStandard,
         signedIn: !!session,
         officialLevel: (session?.user as any)?.officialLevel,
         hasActiveMemberRecord
