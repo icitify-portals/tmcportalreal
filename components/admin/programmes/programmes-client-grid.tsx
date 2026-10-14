@@ -38,7 +38,7 @@ export function ProgrammesClientGrid({
   userOfficialId,
 }: {
   programmes: any[];
-  type: "MY_PROGRAMMES" | "TO_APPROVE";
+  type: "MY_PROGRAMMES" | "TO_APPROVE" | "ALL_APPROVED";
   currentUserId: string;
   isSuperAdmin: boolean;
   userLevel: string;

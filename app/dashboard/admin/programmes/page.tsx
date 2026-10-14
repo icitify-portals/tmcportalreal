@@ -48,7 +48,7 @@ async function ProgrammeList({
     userLevel,
     userOfficialId
 }: { 
-    type: 'MY_PROGRAMMES' | 'TO_APPROVE', 
+    type: 'MY_PROGRAMMES' | 'TO_APPROVE' | 'ALL_APPROVED', 
     orgId: string,
     currentUserId: string,
     isSuperAdmin: boolean,
@@ -193,9 +193,10 @@ export default async function ProgrammesPage() {
                     </div>
                 </div>
 
-                <Tabs defaultValue="my-programmes" className="space-y-4">
+<Tabs defaultValue="my-programmes" className="space-y-4">
                     <TabsList>
                         <TabsTrigger value="my-programmes">My Programmes</TabsTrigger>
+                        <TabsTrigger value="all-approved">All Approved</TabsTrigger>
                         {canApprove && <TabsTrigger value="approvals">Approvals Required</TabsTrigger>}
                     </TabsList>
 
@@ -211,12 +212,25 @@ export default async function ProgrammesPage() {
                             />
                         </Suspense>
                     </TabsContent>
- 
+
+                    <TabsContent value="all-approved" className="space-y-4">
+                        <Suspense fallback={<div>Loading...</div>}>
+                            <ProgrammeList 
+                                type="ALL_APPROVED" 
+                                orgId={organizationId || ""} 
+                                currentUserId={session!.user.id}
+                                isSuperAdmin={isSuperAdmin}
+                                userLevel={userLevel}
+                                userOfficialId={userOfficialId || ""}
+                            />
+                        </Suspense>
+                    </TabsContent>
+  
                     <TabsContent value="approvals" className="space-y-4">
                         <Suspense fallback={<div>Loading...</div>}>
                             <ProgrammeList 
                                 type="TO_APPROVE" 
-                                orgId={organizationId || ""} 
+                                orgId={organizationId || ""}
                                 currentUserId={session!.user.id}
                                 isSuperAdmin={isSuperAdmin}
                                 userLevel={userLevel}

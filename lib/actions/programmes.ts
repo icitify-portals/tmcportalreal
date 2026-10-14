@@ -1043,8 +1043,8 @@ export async function getProgrammes(filters?: { level?: string, state?: string, 
     return results.map(r => ({ ...r.programme, organization: r.organization, meeting: r.meeting, tiers: tiersByProgramme[r.programme.id] || [] }))
 }
 
-// For Admin Dashboard (My Programmes + Approvals)
-export async function getAdminProgrammes(organizationId: string, type: 'MY_PROGRAMMES' | 'TO_APPROVE') {
+// For Admin Dashboard (My Programmes + Approvals + All Approved)
+export async function getAdminProgrammes(organizationId: string, type: 'MY_PROGRAMMES' | 'TO_APPROVE' | 'ALL_APPROVED') {
     const creator = aliasedTable(users, "creator")
     const org = aliasedTable(organizations, "org")
     const office = aliasedTable(offices, "office")
@@ -1069,6 +1069,36 @@ export async function getAdminProgrammes(organizationId: string, type: 'MY_PROGR
             .leftJoin(officialUser, eq(official.userId, officialUser.id))
             .leftJoin(meetings, eq(programmes.id, meetings.programmeId))
             .where(eq(programmes.organizationId, organizationId))
+            .orderBy(desc(programmes.createdAt))
+
+        return results.map(r => ({ 
+            ...r.programme, 
+            creator: r.creator, 
+            organization: r.org,
+            office: r.office,
+            official: r.official ? { ...r.official, user: r.officialUser } : null,
+            meeting: r.meeting
+        }))
+    }
+
+    if (type === 'ALL_APPROVED') {
+        const results = await db.select({
+            programme: programmes,
+            creator: creator,
+            office: office,
+            official: official,
+            officialUser: officialUser,
+            meeting: meetings,
+            org: org
+        })
+            .from(programmes)
+            .leftJoin(org, eq(programmes.organizationId, org.id))
+            .leftJoin(creator, eq(programmes.createdBy, creator.id))
+            .leftJoin(office, eq(programmes.organizingOfficeId, office.id))
+            .leftJoin(official, eq(programmes.organizingOfficialId, official.id))
+            .leftJoin(officialUser, eq(official.userId, officialUser.id))
+            .leftJoin(meetings, eq(programmes.id, meetings.programmeId))
+            .where(eq(programmes.status, 'APPROVED'))
             .orderBy(desc(programmes.createdAt))
 
         return results.map(r => ({ 
