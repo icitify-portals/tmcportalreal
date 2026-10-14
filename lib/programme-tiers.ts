@@ -34,6 +34,19 @@ const norm = (label: string): string =>
         .replace(/\s+/g, " ")
         .trim()
 
+// Corporate / chapter / organization block registrations are never auto-assigned
+// to an individual — they are selected manually via the corporate picker.
+export const isCorporateLabel = (label: string): boolean => norm(label).includes("corporate")
+
+// The "non member" tier is reserved for guests and must never match a member.
+export const isNonMemberLabel = (label: string): boolean => norm(label).startsWith("non")
+
+export function getCorporateTiers(pricingTiers: unknown): { label: string; amount: number }[] {
+    return Object.entries(flattenPricingTiers(pricingTiers))
+        .filter(([label]) => isCorporateLabel(label))
+        .map(([label, amount]) => ({ label, amount }))
+}
+
 export interface EntitlementInput {
     pricingTiers: unknown
     amount: number | string | null
@@ -53,9 +66,12 @@ export interface Entitlement {
 const OFFICIAL_KEYWORDS: Record<string, string[]> = {
     NATIONAL: ["national", "nec"],
     STATE: ["state"],
-    LOCAL_GOVERNMENT: ["lga", "local", "government"],
+    LOCAL_GOVERNMENT: ["lga", "local government", "local", "government"],
     BRANCH: ["branch"],
 }
+
+// Ordered preference when falling back to a general individual membership tier.
+const MEMBER_KEYWORDS = ["ordinary", "general member", "delegate", "general", "member"]
 
 const containsAny = (candidate: string, words: string[]) =>
     words.some((w) => candidate.includes(w))
@@ -72,28 +88,27 @@ export function resolveEntitlement(input: EntitlementInput): Entitlement {
     const earlyBirdAmount = Number(input.earlyBirdAmount ?? 0)
     const standard = isEarlyBird && earlyBirdAmount > 0 ? earlyBirdAmount : amount
 
-    const pickLabel = (predicate: (n: string) => boolean): string | null => {
-        const match = tierEntries.find(([label]) => predicate(norm(label)))
-        return match ? match[0] : null
-    }
-
     if (input.signedIn) {
+        // Individual tiers only — corporate blocks and the guest "non member" tier are excluded.
+        const eligible = tierEntries.filter(([label]) => !isCorporateLabel(label) && !isNonMemberLabel(label))
+
         const level = (input.officialLevel || "").toUpperCase()
         if (level && OFFICIAL_KEYWORDS[level]) {
-            const label = pickLabel((n) => containsAny(n, OFFICIAL_KEYWORDS[level]))
-            if (label) return { kind: "member-tier", baseAmount: tiers[label], tierLabel: label }
+            const match = eligible.find(([label]) => containsAny(norm(label), OFFICIAL_KEYWORDS[level]))
+            if (match) return { kind: "member-tier", baseAmount: match[1], tierLabel: match[0] }
         }
-        if (input.hasActiveMemberRecord) {
-            const label = pickLabel((n) => n.includes("ordinary"))
-            if (label) return { kind: "member-tier", baseAmount: tiers[label], tierLabel: label }
+
+        if (input.hasActiveMemberRecord || level) {
+            const memberTier = MEMBER_KEYWORDS
+                .map((kw) => eligible.find(([label]) => norm(label).includes(kw)))
+                .find((m) => m) as [string, number] | undefined
+            if (memberTier) return { kind: "member-tier", baseAmount: memberTier[1], tierLabel: memberTier[0] }
         }
+
         return { kind: "member-standard", baseAmount: standard, tierLabel: null }
     }
 
-    const nonMember = tierEntries.find(([label]) => {
-        const n = norm(label)
-        return n.includes("non member") || n.startsWith("non")
-    })
+    const nonMember = tierEntries.find(([label]) => isNonMemberLabel(label) && !isCorporateLabel(label))
     if (nonMember) return { kind: "guest", baseAmount: nonMember[1], tierLabel: nonMember[0] }
     return { kind: "guest", baseAmount: standard, tierLabel: null }
 }

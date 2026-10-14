@@ -17,7 +17,7 @@ import { members } from "@/lib/db/schema"
 import { initializePayment, verifyPayment } from "@/lib/payments"
 import { createPaystackSubaccount } from "@/lib/payments"
 import { sendEmail, emailTemplates } from "@/lib/email"
-import { resolveEntitlement } from "@/lib/programme-tiers"
+import { resolveEntitlement, getCorporateTiers } from "@/lib/programme-tiers"
 import crypto from "crypto"
 import { RRule, rrulestr } from "rrule"
 import { getEffectiveAmount, isEarlyBirdActive, getActiveEarlyBird, resolvePayableTotal } from "@/lib/pricing"
@@ -1257,11 +1257,23 @@ export async function registerForProgramme(programmeId: string, data?: z.infer<t
         // Determine who the user is and lock their applicable price tier (entitlement check).
         const entitlement = await getEntitlementForProgramme(programme, session)
         let baseAmount = entitlement.baseAmount
-        const tierLabel = entitlement.tierLabel
+        let tierLabel = entitlement.tierLabel
 
-        // Enforce entitlement — users cannot self-select a cheaper tier than the one assigned to them.
+        // A manually selected CORPORATE / chapter tier overrides the individual entitlement,
+        // but never below the user's own required category fee.
         const requestedTier = data?.registrationTier || null
-        if (requestedTier) {
+        const selectedCorporate = requestedTier
+            ? getCorporateTiers(programme.pricingTiers).find(t => t.label === requestedTier)
+            : undefined
+
+        if (selectedCorporate) {
+            if (selectedCorporate.amount < entitlement.baseAmount) {
+                return { success: false, error: `The corporate tier must be at least your category fee of ₦${entitlement.baseAmount}.` }
+            }
+            baseAmount = selectedCorporate.amount
+            tierLabel = selectedCorporate.label
+        } else if (requestedTier) {
+            // Enforce entitlement — users cannot self-select a cheaper tier than the one assigned to them.
             if (entitlement.kind === 'guest') {
                 if (!entitlement.tierLabel) {
                     return { success: false, error: "Tiered pricing is reserved for registered members. The standard fee applies to guests." }

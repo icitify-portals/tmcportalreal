@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Textarea } from "@/components/ui/textarea"
 import { registerForProgramme, initializeProgrammeRegistrationPayment, getProgrammeDetailsAction } from "@/lib/actions/programmes"
+import { getCorporateTiers } from "@/lib/programme-tiers"
 import { payWithWalletBalance } from "@/lib/actions/wallet"
 import { toast } from "sonner"
 import { Loader2, UserPlus, CreditCard, ShieldCheck, CheckCircle2, AlertCircle } from "lucide-react"
@@ -37,6 +38,7 @@ function RegistrationContent() {
     const [isLoading, setIsLoading] = useState(true)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [paymentMethod, setPaymentMethod] = useState<"PAYSTACK" | "WALLET">("PAYSTACK")
+    const [corporateTier, setCorporateTier] = useState("")
     
     const [formData, setFormData] = useState({
         name: "",
@@ -88,17 +90,21 @@ function RegistrationContent() {
         try {
             // Enforce minimum payment on frontend too — the server computes the locked entitlement price
             const entitlementMeta = programme.entitlement as { kind: string; baseAmount: number; tierLabel: string | null } | undefined
-            const baseAmount = entitlementMeta && Number(entitlementMeta.baseAmount) > 0 ? Number(entitlementMeta.baseAmount) : effectiveNormal
+            const corpTiers = programme.pricingTiers ? getCorporateTiers(programme.pricingTiers) : []
+            const selectedCorporate = corpTiers.find((t) => t.label === corporateTier)
+            const baseAmount = selectedCorporate
+                ? selectedCorporate.amount
+                : entitlementMeta && Number(entitlementMeta.baseAmount) > 0 ? Number(entitlementMeta.baseAmount) : effectiveNormal
 
             const userAmount = formData.amountPaid ? parseFloat(formData.amountPaid) : baseAmount;
             
             if (programme.paymentRequired && userAmount < baseAmount) {
-                toast.error(`Minimum payment is ₦${baseAmount.toLocaleString()}${entitlementMeta?.tierLabel ? ` (${entitlementMeta.tierLabel})` : ""}. You may pay more.`);
+                toast.error(`Minimum payment is ₦${baseAmount.toLocaleString()}. You may pay more.`);
                 setIsSubmitting(false);
                 return;
             }
 
-            const submissionData = { ...formData, amountPaid: userAmount, registrationTier: entitlementMeta?.tierLabel || "" };
+            const submissionData = { ...formData, amountPaid: userAmount, registrationTier: selectedCorporate ? selectedCorporate.label : entitlementMeta?.tierLabel || "" };
 
             const result = await registerForProgramme(programmeId, submissionData, waiverCode || undefined)
 
@@ -175,6 +181,9 @@ function RegistrationContent() {
     const effectiveNormal = isEarlyBird ? Number(programme.earlyBirdAmount) : Number(programme.amount || 0)
     const entitlementMeta = programme.entitlement as { kind: string; baseAmount: number; tierLabel: string | null } | undefined
     const resolvedBase = entitlementMeta && Number(entitlementMeta.baseAmount) > 0 ? Number(entitlementMeta.baseAmount) : effectiveNormal
+    const corporateTiers = programme.pricingTiers ? getCorporateTiers(programme.pricingTiers) : []
+    const selectedCorporate = corporateTiers.find((t) => t.label === corporateTier)
+    const displayBase = selectedCorporate ? selectedCorporate.amount : resolvedBase
 
     return (
         <div className="max-w-2xl mx-auto px-4 py-4 sm:py-8">
@@ -355,7 +364,7 @@ function RegistrationContent() {
                         
                         {(() => {
                             const entitlement = entitlementMeta
-                            const baseAmount = resolvedBase
+                            const baseAmount = displayBase
 
                             const categoryInfo = entitlement ? ({
                                 "member-tier": { label: entitlement.tierLabel || "Member Category", note: "Your price is locked to your membership category." },
@@ -365,7 +374,7 @@ function RegistrationContent() {
 
                             return (
                                 <>
-                                    {entitlement && categoryInfo && (
+                                    {entitlement && categoryInfo && !selectedCorporate && (
                                         <div className="space-y-2 pt-4 border-t">
                                             <Label className="text-xs font-bold uppercase text-gray-500">Your Registration Category</Label>
                                             <div className="rounded-lg border border-green-200 bg-green-50/40 p-3 flex items-center justify-between gap-2">
@@ -375,6 +384,27 @@ function RegistrationContent() {
                                                 </div>
                                                 <p className="text-base font-extrabold text-green-800 whitespace-nowrap">₦{baseAmount.toLocaleString()}</p>
                                             </div>
+                                        </div>
+                                    )}
+
+                                    {!isWaiverActive && programme?.paymentRequired && corporateTiers.length > 0 && (
+                                        <div className="space-y-2 pt-4 border-t">
+                                            <Label className="text-xs font-bold uppercase text-gray-500">Corporate / Chapter Registration (Optional)</Label>
+                                            <Select
+                                                value={corporateTier || "none"}
+                                                onValueChange={(v) => setCorporateTier(v === "none" ? "" : v)}
+                                            >
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Register as an individual (my category)" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="none">Individual — my category ({entitlementMeta?.tierLabel ? `${entitlementMeta.tierLabel} ` : ""}₦{resolvedBase.toLocaleString()})</SelectItem>
+                                                    {corporateTiers.map((t) => (
+                                                        <SelectItem key={t.label} value={t.label}>{t.label} — ₦{t.amount.toLocaleString()}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            <p className="text-[10px] text-gray-500 font-medium">Use this only if you are registering on behalf of a chapter, branch, LGA or state chapter.</p>
                                         </div>
                                     )}
 
@@ -391,7 +421,7 @@ function RegistrationContent() {
                                                 required
                                                 className="border-green-300 focus-visible:ring-green-500 bg-green-50/20"
                                             />
-                                            <p className="text-[10px] text-gray-500 font-medium">The minimum at registration is <strong className="text-black">₦{baseAmount.toLocaleString()}</strong> for your category. You are free to pay more.</p>
+                                            <p className="text-[10px] text-gray-500 font-medium">The minimum at registration is <strong className="text-black">₦{baseAmount.toLocaleString()}</strong>{selectedCorporate ? ` (${selectedCorporate.label})` : " for your category"}. You are free to pay more.</p>
                                         </div>
                                     )}
                                     
@@ -435,7 +465,7 @@ function RegistrationContent() {
                                     <UserPlus className="mr-2 h-5 w-5" />
                                 )}
                                 {isWaiverActive ? "Complete Registration (Free)" :
-                                    programme.paymentRequired && resolvedBase > 0 ? `Proceed to Payment (₦${resolvedBase.toLocaleString()}${entitlementMeta?.tierLabel ? ` • ${entitlementMeta.tierLabel}` : isEarlyBird ? " Early Bird" : ""})` :
+                                    programme.paymentRequired && displayBase > 0 ? `Proceed to Payment (₦${displayBase.toLocaleString()}${selectedCorporate ? ` • ${selectedCorporate.label}` : entitlementMeta?.tierLabel ? ` • ${entitlementMeta.tierLabel}` : isEarlyBird ? " Early Bird" : ""})` :
                                         "Confirm Registration"}
                             </Button>
                         </div>
