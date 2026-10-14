@@ -330,7 +330,10 @@ const RegistrationSchema = z.object({
     state: z.string().optional(),
     lga: z.string().optional(),
     registrationTier: z.string().optional(),
-    amountPaid: z.coerce.number().optional()
+    amountPaid: z.coerce.number().optional(),
+    isCorporateRegistration: z.boolean().optional(),
+    corporateEntityName: z.string().optional(),
+    delegationSize: z.coerce.number().optional(),
 })
 
 // --- Programme Management ---
@@ -1324,6 +1327,10 @@ export async function registerForProgramme(programmeId: string, data?: z.infer<t
                 if (applied.amount >= Number(programme.amount || 0)) return null
                 return applied.deadline
             })(),
+            // Corporate / entity registration fields
+            isCorporateRegistration: data?.isCorporateRegistration || false,
+            corporateEntityName: data?.corporateEntityName || null,
+            delegationSize: data?.delegationSize ? parseInt(data.delegationSize.toString()) : 1,
         }
 
         if (session?.user) {

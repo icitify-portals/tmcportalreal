@@ -1131,6 +1131,11 @@ export const programmeRegistrations = mysqlTable("programme_registrations", {
     // Blind sponsorship pool seat (claimed via sponsor code, names unknown upfront)
     sponsorPoolId: varchar("sponsorPoolId", { length: 255 }).references(() => programmeSponsorshipPools.id, { onDelete: "set null" }),
 
+    // Corporate / entity registration (state/LGA/branch chapter pays once)
+    isCorporateRegistration: boolean("is_corporate_registration").default(false),
+    corporateEntityName: varchar("corporate_entity_name", { length: 255 }),
+    delegationSize: int("delegation_size").default(1),
+
     registeredAt: timestamp("registeredAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
 });
 
