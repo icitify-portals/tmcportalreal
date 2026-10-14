@@ -1,6 +1,6 @@
 import { db } from "@/lib/db"
-import { programmes, programmeRegistrations, members, users } from "@/lib/db/schema"
-import { eq } from "drizzle-orm"
+import { programmes, programmeRegistrations, members, users, programmeSponsorshipPools } from "@/lib/db/schema"
+import { eq, desc } from "drizzle-orm"
 import { notFound } from "next/navigation"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { ProgrammeAnalyticsView } from "@/components/admin/programmes/programme-analytics-view"
@@ -29,6 +29,10 @@ export default async function ProgrammeAnalyticsPage({ params }: { params: Promi
     .from(programmeRegistrations)
     .where(eq(programmeRegistrations.programmeId, id))
 
+    const sponsorshipPools = await db.select().from(programmeSponsorshipPools)
+        .where(eq(programmeSponsorshipPools.programmeId, id))
+        .orderBy(desc(programmeSponsorshipPools.createdAt))
+
     return (
         <DashboardLayout>
             <div className="space-y-6 max-w-7xl mx-auto p-4 md:p-8">
@@ -36,6 +40,7 @@ export default async function ProgrammeAnalyticsPage({ params }: { params: Promi
                     programmeTitle={programme.title}
                     programmeStartDate={programme.startDate}
                     registrations={registrations as any}
+                    sponsorshipPools={sponsorshipPools as any}
                 />
             </div>
         </DashboardLayout>

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, TrendingUp, Clock, DollarSign, MapPin, Building, ShieldCheck, Download, Search, X } from "lucide-react";
+import { Users, TrendingUp, Clock, DollarSign, MapPin, Building, ShieldCheck, Download, Search, X, HeartHandshake } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -32,10 +32,12 @@ export function ProgrammeAnalyticsView({
   programmeTitle,
   programmeStartDate,
   registrations,
+  sponsorshipPools = [],
 }: {
   programmeTitle: string;
   programmeStartDate: string | Date;
   registrations: RegistrationStat[];
+  sponsorshipPools?: any[];
 }) {
   const [query, setQuery] = useState("");
 
@@ -216,6 +218,7 @@ export function ProgrammeAnalyticsView({
           <TabsTrigger value="lgas">LGA Breakdown ({summary.lgasList.length})</TabsTrigger>
           <TabsTrigger value="branches">Branch Breakdown ({summary.branchesList.length})</TabsTrigger>
           <TabsTrigger value="modes">Registration Channels</TabsTrigger>
+          <TabsTrigger value="sponsorship">Sponsorship Pools ({sponsorshipPools.length})</TabsTrigger>
         </TabsList>
 
         {/* States Tab */}
@@ -326,6 +329,76 @@ export function ProgrammeAnalyticsView({
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        {/* Sponsorship Tab */}
+        <TabsContent value="sponsorship" className="space-y-4">
+          {sponsorshipPools.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-xl">
+              No sponsorship pools created for this programme.
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {sponsorshipPools.map((pool: any) => {
+                const seatsLeft = Math.max(0, (pool.seatCount || 0) - (pool.seatsClaimed || 0));
+                const isPaid = pool.status === "PAID";
+                const claimers = registrations.filter((r: RegistrationStat) => r.sponsorPoolId === pool.id);
+                return (
+                  <Card key={pool.id} className="shadow-sm">
+                    <CardHeader className="pb-2">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-emerald-100 rounded-lg"><HeartHandshake className="h-5 w-5 text-emerald-700" /></div>
+                          <div>
+                            <CardTitle className="text-lg font-bold">{pool.sponsorName || "Anonymous Sponsor"}</CardTitle>
+                            <CardDescription className="text-xs">Code: <code className="font-mono text-emerald-700">{pool.sponsorCode}</code> &bull; {pool.seatCount} seats &bull; {pool.seatsClaimed || 0} claimed &bull; {seatsLeft} left</CardDescription>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={isPaid ? "default" : "secondary"}>{pool.status}</Badge>
+                          {pool.sponsorEmail && <span className="text-xs text-muted-foreground">{pool.sponsorEmail}</span>}
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      {claimers.length === 0 ? (
+                        <p className="text-sm text-muted-foreground py-4">No claims yet for this pool.</p>
+                      ) : (
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="border-b text-left text-muted-foreground">
+                                <th className="pb-2">Name</th>
+                                <th className="pb-2">Email</th>
+                                <th className="pb-2">State</th>
+                                <th className="pb-2">LGA</th>
+                                <th className="pb-2">Branch</th>
+                                <th className="pb-2">Phone</th>
+                                <th className="pb-2">Claimed At</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {claimers.map((c: RegistrationStat) => (
+                                <tr key={c.id} className="border-b">
+                                  <td className="py-2 font-medium">{c.name}</td>
+                                  <td className="py-2">{c.email}</td>
+                                  <td className="py-2">{c.state || "-"}</td>
+                                  <td className="py-2">{c.lga || "-"}</td>
+                                  <td className="py-2">{c.branch || "-"}</td>
+                                  <td className="py-2">{c.phone || "-"}</td>
+                                  <td className="py-2 text-muted-foreground">{c.checkInTime ? new Date(c.checkInTime).toLocaleString() : "-"}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
         </TabsContent>
       </Tabs>
     </div>
