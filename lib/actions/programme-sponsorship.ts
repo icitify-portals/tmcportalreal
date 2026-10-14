@@ -24,8 +24,9 @@ function genSponsorCode(): string {
 }
 
 /**
- * Philanthropist/sponsor pays for N unnamed seats upfront.
- * Members later self-register against the pool with the sponsor code (first-come).
+ * Philanthropist/sponsor pays for N seats upfront.
+ * If beneficiaries array is provided, creates named registrations immediately.
+ * Otherwise creates an unnamed pool (claim via code, first-come).
  */
 export async function createSponsorshipPool(data: {
     programmeId: string;
@@ -34,6 +35,16 @@ export async function createSponsorshipPool(data: {
     sponsorPhone?: string;
     seatCount: number;
     notes?: string;
+    beneficiaries?: Array<{
+        name: string;
+        email: string;
+        phone?: string;
+        gender?: string;
+        state?: string;
+        lga?: string;
+        branch?: string;
+        memberId?: string;
+    }>;
 }) {
     const session = await getServerSession();
 
@@ -103,6 +114,49 @@ export async function createSponsorshipPool(data: {
         sponsorCode,
         notes: data.notes?.trim() || null,
     } as any);
+
+    // If beneficiaries provided, create named registrations immediately
+    if (data.beneficiaries && data.beneficiaries.length > 0) {
+        const validBeneficiaries = data.beneficiaries.filter((b: any) => b.name?.trim() && b.email?.trim());
+        if (validBeneficiaries.length > seatCount) {
+            return { success: false, error: `Beneficiaries (${validBeneficiaries.length}) exceed seat count (${seatCount})` };
+        }
+        for (const b of validBeneficiaries) {
+            // Check for duplicate email in this programme
+            const [existing] = await db.select({ id: programmeRegistrations.id })
+                .from(programmeRegistrations)
+                .where(and(eq(programmeRegistrations.programmeId, data.programmeId), eq(programmeRegistrations.email, b.email.trim())))
+                .limit(1);
+            if (existing) continue; // skip duplicates silently
+
+            await db.insert(programmeRegistrations).values({
+                id: uuidv4(),
+                programmeId: data.programmeId,
+                userId: null,
+                memberId: b.memberId || null,
+                name: b.name.trim(),
+                email: b.email.trim(),
+                phone: b.phone || null,
+                gender: b.gender || null,
+                address: null,
+                status: "PENDING_PAYMENT" as any,
+                paymentStatus: "PENDING" as any,
+                country: "Nigeria",
+                state: b.state || null,
+                lga: b.lga || null,
+                branch: b.branch || null,
+                registrationTier: null,
+                amountPaid: perSeat.toFixed(2) as any,
+                lockedAmount: perSeat.toFixed(2) as any,
+                sponsorPoolId: poolId,
+                registeredAt: new Date(),
+            } as any);
+        }
+        // Update pool seatsClaimed
+        await db.update(programmeSponsorshipPools)
+            .set({ seatsClaimed: validBeneficiaries.length })
+            .where(eq(programmeSponsorshipPools.id, poolId));
+    }
 
     revalidatePath("/dashboard/programmes/sponsorship");
     return { success: true, poolId, perSeat, totalAmount: perSeat * seatCount, sponsorCode };
