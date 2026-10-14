@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { initializeSponsorshipPayment } from "@/lib/actions/programme-sponsorship";
-import { Loader2, Copy, HeartHandshake } from "lucide-react";
+import { Loader2, Copy, HeartHandshake, Eye } from "lucide-react";
+import Link from "next/link";
 
 export function SponsorPoolCard({ pool, programmeTitle }: { pool: any; programmeTitle?: string }) {
     const [pending, startTransition] = useTransition();
@@ -32,11 +33,14 @@ export function SponsorPoolCard({ pool, programmeTitle }: { pool: any; programme
             <CardContent className="text-sm space-y-2">
                 <p>{pool.seatCount} seats · {pool.seatsClaimed || 0} claimed · {seatsLeft} left · ₦{Number(pool.totalAmount || 0).toLocaleString()} total</p>
                 {pool.status === "PAID" ? (
-                    <div className="flex items-center gap-2 rounded-md bg-emerald-50 border border-emerald-200 p-2">
+                    <div className="flex flex-wrap items-center gap-2">
                         <span className="font-mono font-bold tracking-widest">{pool.sponsorCode}</span>
                         <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(pool.sponsorCode); toast.success("Sponsor code copied — share it with beneficiaries"); }}>
                             <Copy className="h-3 w-3 mr-1" /> Copy code
                         </Button>
+                        <Link href={`/dashboard/programmes/sponsorship/${pool.id}`} className="text-emerald-700 hover:underline text-sm flex items-center gap-1">
+                            <Eye className="h-3.5 w-3.5" /> View claimers
+                        </Link>
                     </div>
                 ) : pool.status === "PENDING" ? (
                     <Button onClick={handlePay} disabled={pending} className="w-full bg-amber-600 hover:bg-amber-700">
