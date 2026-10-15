@@ -1604,6 +1604,15 @@ export async function initializeProgrammeRegistrationPayment(registrationId: str
 export async function verifyProgrammeRegistrationPayment(registrationId: string, reference: string) {
     try {
         const cleanRef = reference.replace(/:verified$/, "").trim()
+        if (!cleanRef) return { success: false, error: "Invalid payment reference" }
+
+        // Check if this reference has ALREADY been recorded in financeTransactions (idempotency guard)
+        const [existingTx] = await db.select({ id: financeTransactions.id }).from(financeTransactions)
+            .where(or(
+                eq(financeTransactions.metadata, cleanRef),
+                like(financeTransactions.description, `%${cleanRef}%`)
+            )).limit(1);
+
         const regDetails = await getRegistrationDetails(registrationId)
         if (!regDetails) return { success: false, error: "Registration not found" }
 
@@ -1619,9 +1628,10 @@ export async function verifyProgrammeRegistrationPayment(registrationId: string,
         });
         const paidAlready = parseFloat(regDetails.amountPaid || "0")
 
-        // If already fully paid or marked verified with this reference, avoid duplicate accounting
+        // If this exact transaction reference was already recorded OR registration is already verified with this ref
         if (
-            (regDetails.status === 'PAID' && paidAlready >= totalAmount) ||
+            existingTx ||
+            (regDetails.status === 'PAID' && paidAlready >= totalAmount && ((regDetails as any).paymentReference || "").includes(`${cleanRef}:verified`)) ||
             ((regDetails as any).paymentReference || "").includes(`${cleanRef}:verified`)
         ) {
             return { success: true, alreadyVerified: true }
@@ -1645,14 +1655,24 @@ export async function verifyProgrammeRegistrationPayment(registrationId: string,
             const metadataAmount = response.data.metadata?.currentPayAmount ? parseFloat(response.data.metadata.currentPayAmount.toString()) : null
             const justPaidAmount = metadataAmount && metadataAmount > 0 ? metadataAmount : Math.min(Math.max(0, totalAmount - paidAlready), totalTxAmount)
 
-            const newPaidAmount = Math.min(totalAmount, paidAlready + justPaidAmount)
+            const effectiveTarget = Math.max(totalAmount, justPaidAmount)
+            const newPaidAmount = Math.min(effectiveTarget, paidAlready + justPaidAmount)
             const newStatus = newPaidAmount >= totalAmount ? 'PAID' : 'PARTIALLY_PAID'
+
+            const existingRefs = ((regDetails as any).paymentReference || "")
+                .split(",")
+                .map((r: string) => r.trim())
+                .filter(Boolean)
+            if (!existingRefs.includes(`${cleanRef}:verified`)) {
+                existingRefs.push(`${cleanRef}:verified`)
+            }
+            const updatedRefs = existingRefs.join(",")
 
             await db.update(programmeRegistrations)
                 .set({ 
                     status: newStatus,
                     amountPaid: newPaidAmount.toFixed(2),
-                    paymentReference: `${cleanRef}:verified`
+                    paymentReference: updatedRefs
                 })
                 .where(eq(programmeRegistrations.id, registrationId))
             
@@ -1666,10 +1686,13 @@ export async function verifyProgrammeRegistrationPayment(registrationId: string,
 
                 if (performerId) {
                     // Prevent duplicates
-                    const [existingTx] = await db.select().from(financeTransactions)
-                        .where(like(financeTransactions.description, `%${cleanRef}%`)).limit(1);
+                    const [txCheck] = await db.select({ id: financeTransactions.id }).from(financeTransactions)
+                        .where(or(
+                            eq(financeTransactions.metadata, cleanRef),
+                            like(financeTransactions.description, `%${cleanRef}%`)
+                        )).limit(1);
 
-                    if (!existingTx) {
+                    if (!txCheck) {
                         await db.insert(financeTransactions).values({
                             organizationId: regDetails.programme.organizationId,
                             type: 'INFLOW',
