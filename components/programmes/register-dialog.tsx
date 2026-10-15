@@ -84,7 +84,8 @@ export function RegisterForProgrammeDialog({
         address: "",
         country: "Nigeria",
         state: "",
-        lga: ""
+        lga: "",
+        branch: ""
     })
 
     const selectedStateData = nigerianStatesAndLgas.find(s => s.state === formData.state)
@@ -169,7 +170,13 @@ export function RegisterForProgrammeDialog({
                     setOpen(false)
                 }
             } else if (result.registrationId) {
-                toast.info("You are already registered. Opening your access slip...")
+                if (result.status === 'PARTIALLY_PAID') {
+                    toast.info("Active partial payment found. Opening payment slip to complete balance...")
+                } else if (result.status === 'PENDING_PAYMENT') {
+                    toast.info("Incomplete registration found. Opening payment slip to pay...")
+                } else {
+                    toast.info("You are already registered. Opening your access slip...")
+                }
                 setOpen(false)
                 window.open(`/programmes/registrations/${result.registrationId}/slip`, '_blank')
             } else {
@@ -491,6 +498,15 @@ export function RegisterForProgrammeDialog({
                                         </div>
                                     </>
                                 )}
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label htmlFor="branch" className="text-xs font-semibold uppercase text-gray-600">Branch / Centre (Optional)</Label>
+                                <Input 
+                                    id="branch" 
+                                    value={formData.branch} 
+                                    onChange={(e) => setFormData({...formData, branch: e.target.value})}
+                                    placeholder="e.g. Somolu, Bodija, Alimosho Central"
+                                />
                             </div>
                         </div>
                     )}

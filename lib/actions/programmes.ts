@@ -329,6 +329,7 @@ const RegistrationSchema = z.object({
     country: z.string().optional(),
     state: z.string().optional(),
     lga: z.string().optional(),
+    branch: z.string().optional(),
     registrationTier: z.string().optional(),
     amountPaid: z.coerce.number().optional(),
     isCorporateRegistration: z.boolean().optional(),
@@ -1257,25 +1258,29 @@ export async function registerForProgramme(programmeId: string, data?: z.infer<t
                 return { success: true, registrationId: existingReg.id, isWaiver: true }
             }
 
-            // If it's a paid programme and they haven't paid yet
+            // If it's a paid programme and they haven't paid yet or partially paid
             if (programme.paymentRequired && parseFloat(programme.amount || "0") > 0) {
                  // Update details if provided
-                 if (data && !session?.user) {
+                 if (data) {
                      const validData = RegistrationSchema.parse(data)
                      await db.update(programmeRegistrations).set({
-                         name: validData.name,
-                         phone: validData.phone,
-                         gender: validData.gender,
-                         address: validData.address,
+                         name: validData.name || undefined,
+                         phone: validData.phone || undefined,
+                         gender: validData.gender || undefined,
+                         address: validData.address || undefined,
                          country: validData.country || "Nigeria",
-                         state: validData.state,
-                         lga: validData.lga,
+                         state: validData.state || undefined,
+                         lga: validData.lga || undefined,
+                         branch: validData.branch || undefined,
                      }).where(eq(programmeRegistrations.id, existingReg.id))
                  }
                  
+                 const isPartial = existingReg.status === 'PARTIALLY_PAID'
                  return { 
                     success: false, 
-                    error: "Incomplete registration found. Redirecting to payment slip...",
+                    error: isPartial 
+                        ? "You have an active partial payment. Redirecting to payment slip to complete your balance..."
+                        : "Incomplete registration found. Redirecting to payment slip...",
                     registrationId: existingReg.id,
                     status: existingReg.status
                 }
@@ -1380,6 +1385,8 @@ export async function registerForProgramme(programmeId: string, data?: z.infer<t
                 orgName: organizations.name,
                 orgState: organizations.state,
                 orgCity: organizations.city,
+                orgLevel: organizations.level,
+                orgParentId: organizations.parentId,
                 userPhone: users.phone,
                 userCountry: users.country
             })
@@ -1389,19 +1396,59 @@ export async function registerForProgramme(programmeId: string, data?: z.infer<t
             .where(eq(members.userId, session.user.id))
             .limit(1)
             
+            let resolvedBranch = data?.branch?.trim() || null
+            let resolvedLga = data?.lga?.trim() || null
+            let resolvedState = data?.state?.trim() || null
+
+            if (memberData) {
+                if (memberData.orgLevel === 'BRANCH') {
+                    if (!resolvedBranch) resolvedBranch = memberData.orgName || null
+                    if (!resolvedLga) resolvedLga = memberData.orgCity || null
+                    if (!resolvedState) resolvedState = memberData.orgState || null
+
+                    // If LGA or State missing on Branch org record, look up parent
+                    if ((!resolvedLga || !resolvedState) && memberData.orgParentId) {
+                        const [parentOrg] = await db.select({ name: organizations.name, city: organizations.city, state: organizations.state, parentId: organizations.parentId })
+                            .from(organizations).where(eq(organizations.id, memberData.orgParentId)).limit(1)
+                        if (parentOrg) {
+                            if (!resolvedLga) resolvedLga = parentOrg.name || parentOrg.city || null
+                            if (!resolvedState) {
+                                if (parentOrg.parentId) {
+                                    const [grandParent] = await db.select({ name: organizations.name }).from(organizations).where(eq(organizations.id, parentOrg.parentId)).limit(1)
+                                    resolvedState = grandParent?.name || parentOrg.state || null
+                                } else {
+                                    resolvedState = parentOrg.state || null
+                                }
+                            }
+                        }
+                    }
+                } else if (memberData.orgLevel === 'LOCAL_GOVERNMENT') {
+                    if (!resolvedLga) resolvedLga = memberData.orgName || memberData.orgCity || null
+                    if (!resolvedState && memberData.orgParentId) {
+                        const [parentOrg] = await db.select({ name: organizations.name, state: organizations.state })
+                            .from(organizations).where(eq(organizations.id, memberData.orgParentId)).limit(1)
+                        resolvedState = parentOrg?.name || parentOrg?.state || memberData.orgState || null
+                    } else if (!resolvedState) {
+                        resolvedState = memberData.orgState || null
+                    }
+                } else if (memberData.orgLevel === 'STATE') {
+                    if (!resolvedState) resolvedState = memberData.orgName || memberData.orgState || null
+                }
+            }
+
             registrationData = {
                 ...registrationData,
                 userId: session.user.id,
                 memberId: memberData?.id || null,
-                name: session.user.name || "Unknown",
-                email: session.user.email || "Unknown",
-                phone: memberData?.userPhone || session.user.phone || null,
-                gender: (memberData?.gender as any) || 'MALE',
-                address: memberData?.address || null,
-                country: memberData?.userCountry || "Nigeria",
-                state: memberData?.orgState || null,
-                lga: memberData?.orgCity || null,
-                branch: memberData?.orgName || null
+                name: data?.name?.trim() || session.user.name || "Unknown",
+                email: data?.email?.trim() || session.user.email || "Unknown",
+                phone: data?.phone?.trim() || memberData?.userPhone || session.user.phone || null,
+                gender: (data?.gender as any) || (memberData?.gender as any) || 'MALE',
+                address: data?.address?.trim() || memberData?.address || null,
+                country: data?.country?.trim() || memberData?.userCountry || "Nigeria",
+                state: resolvedState,
+                lga: resolvedLga,
+                branch: resolvedBranch
             }
         } else if (data) {
             // Guest registration
@@ -1414,9 +1461,9 @@ export async function registerForProgramme(programmeId: string, data?: z.infer<t
                 gender: validData.gender,
                 address: validData.address,
                 country: validData.country || "Nigeria",
-                state: validData.state,
-                lga: validData.lga,
-                branch: null // Guests don't have branches
+                state: validData.state || null,
+                lga: validData.lga || null,
+                branch: validData.branch || null
             }
         } else {
             return { success: false, error: "Registration data required for guests" }
@@ -1460,31 +1507,83 @@ export async function getProgrammeRegistrations(programmeId: string) {
         const session = await getServerSession()
         if (!session?.user?.id) return []
 
+        const [programme] = await db.select({
+            id: programmes.id,
+            paymentRequired: programmes.paymentRequired,
+            amount: programmes.amount,
+        }).from(programmes).where(eq(programmes.id, programmeId)).limit(1)
+
         const checkInGatekeeper = aliasedTable(users, "checkInGatekeeper")
         const checkOutGatekeeper = aliasedTable(users, "checkOutGatekeeper")
+        const memberOrg = aliasedTable(organizations, "memberOrg")
+        const parentLgaOrg = aliasedTable(organizations, "parentLgaOrg")
+        const parentStateOrg = aliasedTable(organizations, "parentStateOrg")
+
+        const isPaidProgramme = programme?.paymentRequired && parseFloat(programme?.amount || "0") > 0
+
+        let whereCondition: any = eq(programmeRegistrations.programmeId, programmeId)
+        if (isPaidProgramme) {
+            whereCondition = and(
+                eq(programmeRegistrations.programmeId, programmeId),
+                or(
+                    sql`CAST(${programmeRegistrations.amountPaid} AS DECIMAL(10,2)) > 0`,
+                    inArray(programmeRegistrations.status, ['PAID', 'PARTIALLY_PAID', 'ATTENDED']),
+                    eq(programmeRegistrations.checkInWaiver, true),
+                    eq(programmeRegistrations.paymentReference, 'ADMIN_OFFLINE_BYPASS')
+                )
+            )
+        }
 
         const results = await db.select({
             registration: programmeRegistrations,
             user: users,
             member: members,
+            memberOrg: memberOrg,
+            parentLgaOrg: parentLgaOrg,
+            parentStateOrg: parentStateOrg,
             checkInBy: checkInGatekeeper.name,
             checkOutBy: checkOutGatekeeper.name,
         })
             .from(programmeRegistrations)
             .leftJoin(users, eq(programmeRegistrations.userId, users.id))
             .leftJoin(members, eq(programmeRegistrations.memberId, members.id))
+            .leftJoin(memberOrg, eq(members.organizationId, memberOrg.id))
+            .leftJoin(parentLgaOrg, eq(memberOrg.parentId, parentLgaOrg.id))
+            .leftJoin(parentStateOrg, eq(parentLgaOrg.parentId, parentStateOrg.id))
             .leftJoin(checkInGatekeeper, eq(programmeRegistrations.checkInBy, checkInGatekeeper.id))
             .leftJoin(checkOutGatekeeper, eq(programmeRegistrations.checkOutBy, checkOutGatekeeper.id))
-            .where(eq(programmeRegistrations.programmeId, programmeId))
+            .where(whereCondition)
             .orderBy(desc(programmeRegistrations.registeredAt))
 
-        return results.map(r => ({
-            ...r.registration,
-            user: r.user,
-            member: r.member,
-            checkInBy: r.checkInBy || r.registration.checkInBy,
-            checkOutBy: r.checkOutBy || r.registration.checkOutBy
-        }))
+        return results.map(r => {
+            let resolvedBranch = r.registration.branch || ""
+            let resolvedLga = r.registration.lga || ""
+            let resolvedState = r.registration.state || ""
+
+            if (r.memberOrg) {
+                if (r.memberOrg.level === 'BRANCH') {
+                    if (!resolvedBranch) resolvedBranch = r.memberOrg.name || ""
+                    if (!resolvedLga) resolvedLga = r.memberOrg.city || r.parentLgaOrg?.name || ""
+                    if (!resolvedState) resolvedState = r.memberOrg.state || r.parentStateOrg?.name || r.parentLgaOrg?.state || ""
+                } else if (r.memberOrg.level === 'LOCAL_GOVERNMENT') {
+                    if (!resolvedLga) resolvedLga = r.memberOrg.name || r.memberOrg.city || ""
+                    if (!resolvedState) resolvedState = r.memberOrg.state || r.parentLgaOrg?.name || ""
+                } else if (r.memberOrg.level === 'STATE') {
+                    if (!resolvedState) resolvedState = r.memberOrg.name || r.memberOrg.state || ""
+                }
+            }
+
+            return {
+                ...r.registration,
+                branch: resolvedBranch,
+                lga: resolvedLga,
+                state: resolvedState,
+                user: r.user,
+                member: r.member,
+                checkInBy: r.checkInBy || r.registration.checkInBy,
+                checkOutBy: r.checkOutBy || r.registration.checkOutBy
+            }
+        })
     } catch (error) {
         console.error("Fetch Registrations Error:", error)
         return []
@@ -2472,6 +2571,50 @@ export async function bulkAdminEnrollAction(programmeId: string, participants: a
                 continue
             }
 
+            let memberBranch: string | null = null
+            let memberLga: string | null = null
+            let memberState: string | null = null
+            if (memberId) {
+                const [mOrg] = await db.select({
+                    name: organizations.name,
+                    city: organizations.city,
+                    state: organizations.state,
+                    level: organizations.level,
+                    parentId: organizations.parentId
+                })
+                .from(members)
+                .innerJoin(organizations, eq(members.organizationId, organizations.id))
+                .where(eq(members.id, memberId))
+                .limit(1)
+
+                if (mOrg) {
+                    if (mOrg.level === 'BRANCH') {
+                        memberBranch = mOrg.name
+                        memberLga = mOrg.city
+                        memberState = mOrg.state
+                        if ((!memberLga || !memberState) && mOrg.parentId) {
+                            const [pOrg] = await db.select({ name: organizations.name, city: organizations.city, state: organizations.state, parentId: organizations.parentId }).from(organizations).where(eq(organizations.id, mOrg.parentId)).limit(1)
+                            if (pOrg) {
+                                if (!memberLga) memberLga = pOrg.name || pOrg.city
+                                if (!memberState) {
+                                    if (pOrg.parentId) {
+                                        const [gp] = await db.select({ name: organizations.name }).from(organizations).where(eq(organizations.id, pOrg.parentId)).limit(1)
+                                        memberState = gp?.name || pOrg.state
+                                    } else {
+                                        memberState = pOrg.state
+                                    }
+                                }
+                            }
+                        }
+                    } else if (mOrg.level === 'LOCAL_GOVERNMENT') {
+                        memberLga = mOrg.name
+                        memberState = mOrg.state
+                    } else if (mOrg.level === 'STATE') {
+                        memberState = mOrg.name
+                    }
+                }
+            }
+
             // Create new registration
             await db.insert(programmeRegistrations).values({
                 id: uuidv4(),
@@ -2482,6 +2625,9 @@ export async function bulkAdminEnrollAction(programmeId: string, participants: a
                 email: p.email,
                 phone: p.phone || null,
                 gender: p.gender || 'MALE',
+                state: memberState,
+                lga: memberLga,
+                branch: memberBranch,
                 status: 'ATTENDED',
                 amountPaid: programme.amount || "0.00",
                 paymentReference: 'ADMIN_OFFLINE_BYPASS',
@@ -2522,7 +2668,23 @@ export async function getProgrammeDetailsAction(id: string) {
         if (!programme) return { success: false, error: "Programme not found" }
         const session = await getServerSession()
         const entitlement = await getEntitlementForProgramme(programme, session)
-        return { success: true, programme: { ...programme, entitlement } }
+        
+        let existingRegistration: any = null
+        if (session?.user?.id) {
+            const [reg] = await db.select({
+                id: programmeRegistrations.id,
+                status: programmeRegistrations.status,
+                amountPaid: programmeRegistrations.amountPaid,
+                lockedAmount: programmeRegistrations.lockedAmount,
+                checkInWaiver: programmeRegistrations.checkInWaiver,
+            }).from(programmeRegistrations).where(and(
+                eq(programmeRegistrations.programmeId, id),
+                eq(programmeRegistrations.userId, session.user.id)
+            )).limit(1)
+            existingRegistration = reg || null
+        }
+        
+        return { success: true, programme: { ...programme, entitlement }, existingRegistration }
     } catch (error: any) {
         return { success: false, error: error.message }
     }

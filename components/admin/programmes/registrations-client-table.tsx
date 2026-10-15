@@ -212,6 +212,11 @@ export function RegistrationsClientTable({
                                     <div className="flex flex-col">
                                         <span className="font-bold text-gray-900 text-sm">{reg.name}</span>
                                         <span className="text-[10px] text-gray-500 font-medium">{reg.email}</span>
+                                        {(reg.branch || reg.lga || reg.state) && (
+                                            <span className="text-[10px] text-emerald-800 font-medium mt-0.5">
+                                                📍 {[reg.branch, reg.lga, reg.state].filter(Boolean).join(" • ")}
+                                            </span>
+                                        )}
                                     </div>
                                 </TableCell>
                                 <TableCell className="py-4 text-black font-medium text-sm">{reg.phone || 'N/A'}</TableCell>

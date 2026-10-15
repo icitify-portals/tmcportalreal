@@ -1,6 +1,6 @@
 import { db } from "@/lib/db"
 import { programmes, programmeRegistrations, members, users, programmeSponsorshipPools } from "@/lib/db/schema"
-import { eq, desc } from "drizzle-orm"
+import { eq, desc, and, or, sql, inArray } from "drizzle-orm"
 import { notFound } from "next/navigation"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { ProgrammeAnalyticsView } from "@/components/admin/programmes/programme-analytics-view"
@@ -10,6 +10,20 @@ export default async function ProgrammeAnalyticsPage({ params }: { params: Promi
     
     const [programme] = await db.select().from(programmes).where(eq(programmes.id, id)).limit(1)
     if (!programme) return notFound()
+
+    const isPaidProgramme = programme.paymentRequired && parseFloat(programme.amount || "0") > 0
+    let whereCondition: any = eq(programmeRegistrations.programmeId, id)
+    if (isPaidProgramme) {
+        whereCondition = and(
+            eq(programmeRegistrations.programmeId, id),
+            or(
+                sql`CAST(${programmeRegistrations.amountPaid} AS DECIMAL(10,2)) > 0`,
+                inArray(programmeRegistrations.status, ['PAID', 'PARTIALLY_PAID', 'ATTENDED']),
+                eq(programmeRegistrations.checkInWaiver, true),
+                eq(programmeRegistrations.paymentReference, 'ADMIN_OFFLINE_BYPASS')
+            )
+        )
+    }
 
     const registrations = await db.select({
         id: programmeRegistrations.id,
@@ -27,7 +41,7 @@ export default async function ProgrammeAnalyticsPage({ params }: { params: Promi
         sponsorPoolId: programmeRegistrations.sponsorPoolId,
     })
     .from(programmeRegistrations)
-    .where(eq(programmeRegistrations.programmeId, id))
+    .where(whereCondition)
 
     const sponsorshipPools = await db.select().from(programmeSponsorshipPools)
         .where(eq(programmeSponsorshipPools.programmeId, id))

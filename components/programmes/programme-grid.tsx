@@ -161,6 +161,29 @@ export async function ProgrammeGrid({ level, state, organizationId, organization
                                             </>
                                         )
                                     }
+
+                                    const totalDue = reg.lockedAmount ? parseFloat(reg.lockedAmount) : pricedAmount;
+                                    const paidAmount = parseFloat(reg.amountPaid || "0");
+                                    const balance = Math.max(0, totalDue - paidAmount);
+                                    const isPartiallyPaid = reg.status === 'PARTIALLY_PAID' || (isPaid && balance > 0 && reg.status !== 'PAID' && reg.status !== 'ATTENDED' && !reg.checkInWaiver);
+
+                                    if (isPartiallyPaid) {
+                                        return (
+                                            <div className="flex w-full gap-2 flex-col">
+                                                <Button className="w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold shadow-sm" asChild>
+                                                    <Link href={`/programmes/registrations/${reg.id}/slip`}>
+                                                        <CreditCard className="mr-2 h-4 w-4" />
+                                                        Pay Balance (₦{balance.toLocaleString()})
+                                                    </Link>
+                                                </Button>
+                                                <div className="flex justify-between items-center text-[11px] text-amber-800 bg-amber-50 px-2.5 py-1 rounded border border-amber-200">
+                                                    <span>Part-paid: ₦{paidAmount.toLocaleString()}</span>
+                                                    <span className="font-bold">Bal: ₦{balance.toLocaleString()}</span>
+                                                </div>
+                                            </div>
+                                        )
+                                    }
+
                                     return (
                                         <div className="flex w-full gap-2 flex-col">
                                             <Button className="w-full" variant="outline" disabled>

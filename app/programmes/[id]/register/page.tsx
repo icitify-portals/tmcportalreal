@@ -39,6 +39,7 @@ function RegistrationContent() {
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [paymentMethod, setPaymentMethod] = useState<"PAYSTACK" | "WALLET">("PAYSTACK")
     const [corporateTier, setCorporateTier] = useState("")
+    const [existingReg, setExistingReg] = useState<any>(null)
     
     const [formData, setFormData] = useState({
         name: "",
@@ -49,6 +50,7 @@ function RegistrationContent() {
         country: "Nigeria",
         state: "",
         lga: "",
+        branch: "",
         registrationTier: "",
         amountPaid: ""
     })
@@ -59,6 +61,9 @@ function RegistrationContent() {
                 const result = await getProgrammeDetailsAction(programmeId)
                 if (result.success) {
                     setProgramme(result.programme)
+                    if ((result as any).existingRegistration) {
+                        setExistingReg((result as any).existingRegistration)
+                    }
                 } else {
                     toast.error("Programme not found")
                 }
@@ -137,7 +142,9 @@ function RegistrationContent() {
                     router.push(`/dashboard/member/programmes`)
                 }
             } else if (result.registrationId) {
-                if (result.status === 'PARTIALLY_PAID' || result.status === 'PENDING_PAYMENT') {
+                if (result.status === 'PARTIALLY_PAID') {
+                    toast.info(result.error || "Active partial payment found. Redirecting to payment slip to complete balance...")
+                } else if (result.status === 'PENDING_PAYMENT') {
                     toast.info(result.error || "Incomplete registration found. Redirecting to payment slip...")
                 } else {
                     toast.info(result.error || "You are already registered.")
@@ -216,6 +223,57 @@ function RegistrationContent() {
                 </CardHeader>
                 <form onSubmit={handleSubmit}>
                     <CardContent className="space-y-4 sm:space-y-6">
+                        {(() => {
+                            if (!existingReg) return null;
+                            const totalDue = existingReg.lockedAmount ? parseFloat(existingReg.lockedAmount) : resolvedBase;
+                            const paidAmount = parseFloat(existingReg.amountPaid || "0");
+                            const balance = Math.max(0, totalDue - paidAmount);
+                            const isPartial = existingReg.status === 'PARTIALLY_PAID' || (programme?.paymentRequired && balance > 0 && existingReg.status !== 'PAID' && existingReg.status !== 'ATTENDED' && !existingReg.checkInWaiver);
+
+                            if (isPartial) {
+                                return (
+                                    <div className="bg-amber-50 border border-amber-300 rounded-lg p-4 space-y-2">
+                                        <div className="flex items-center gap-2">
+                                            <CreditCard className="h-5 w-5 text-amber-600 shrink-0" />
+                                            <span className="font-bold text-amber-900 text-sm">Active Partial Payment Found</span>
+                                        </div>
+                                        <p className="text-xs text-amber-800">
+                                            You have already paid <strong>₦${paidAmount.toLocaleString()}</strong>. Your remaining balance is <strong>₦${balance.toLocaleString()}</strong>.
+                                        </p>
+                                        <div className="pt-1">
+                                            <Button size="sm" type="button" className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs" asChild>
+                                                <a href={`/programmes/registrations/${existingReg.id}/slip`}>
+                                                    <CreditCard className="mr-1.5 h-3.5 w-3.5" /> Complete Payment (Pay Balance ₦${balance.toLocaleString()})
+                                                </a>
+                                            </Button>
+                                        </div>
+                                    </div>
+                                );
+                            }
+
+                            if (existingReg.status === 'PAID' || existingReg.status === 'ATTENDED' || existingReg.checkInWaiver) {
+                                return (
+                                    <div className="bg-emerald-50 border border-emerald-300 rounded-lg p-4 space-y-2">
+                                        <div className="flex items-center gap-2">
+                                            <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
+                                            <span className="font-bold text-emerald-900 text-sm">Already Fully Registered</span>
+                                        </div>
+                                        <p className="text-xs text-emerald-800">
+                                            Your registration and payment for this programme are complete.
+                                        </p>
+                                        <div className="pt-1">
+                                            <Button size="sm" type="button" variant="outline" className="border-emerald-600 text-emerald-800 hover:bg-emerald-100 font-bold text-xs" asChild>
+                                                <a href={`/programmes/registrations/${existingReg.id}/slip`}>
+                                                    View Registration Slip
+                                                </a>
+                                            </Button>
+                                        </div>
+                                    </div>
+                                );
+                            }
+
+                            return null;
+                        })()}
                         {sessionStatus === 'loading' ? (
                             <div className="h-20 flex items-center justify-center bg-gray-50 rounded-lg animate-pulse">
                                 <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
@@ -341,22 +399,33 @@ function RegistrationContent() {
                                 </div>
 
                                 {formData.country === "Nigeria" && (
-                                    <div className="space-y-2">
-                                        <Label className="text-xs font-bold uppercase text-gray-500">LGA</Label>
-                                        <Select 
-                                            value={formData.lga} 
-                                            onValueChange={(v) => setFormData({...formData, lga: v})}
-                                            disabled={!formData.state}
-                                        >
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Select LGA" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {selectedStateData?.lgas.map(lga => (
-                                                    <SelectItem key={lga} value={lga}>{lga}</SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <Label className="text-xs font-bold uppercase text-gray-500">LGA</Label>
+                                            <Select 
+                                                value={formData.lga} 
+                                                onValueChange={(v) => setFormData({...formData, lga: v})}
+                                                disabled={!formData.state}
+                                            >
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select LGA" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {selectedStateData?.lgas.map(lga => (
+                                                        <SelectItem key={lga} value={lga}>{lga}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="branch" className="text-xs font-bold uppercase text-gray-500">Branch / Centre (Optional)</Label>
+                                            <Input 
+                                                id="branch" 
+                                                value={formData.branch} 
+                                                onChange={(e) => setFormData({...formData, branch: e.target.value})}
+                                                placeholder="e.g. Somolu, Bodija, Alimosho Central"
+                                            />
+                                        </div>
                                     </div>
                                 )}
                             </div>
