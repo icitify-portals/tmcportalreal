@@ -473,7 +473,7 @@ function RegistrationContent() {
                                                     ))}
                                                 </SelectContent>
                                             </Select>
-                                            <p className="text-[10px] text-gray-500 font-medium">Use this only if you are registering on behalf of a chapter, branch, LGA or state chapter.</p>
+                                            <p className="text-[10px] text-gray-500 font-medium">Use this only if you are registering on behalf of a chapter, branch, LGA or state chapter. For a full entity registration (chapter name + delegation size), use the <a className="text-green-700 font-bold underline" href={`/programmes/${programmeId}/corporate-register`}>corporate registration page</a>.</p>
                                         </div>
                                     )}
 
