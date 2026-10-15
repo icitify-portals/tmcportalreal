@@ -7,6 +7,7 @@ import { format } from "date-fns"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { getActiveEarlyBird, formatTierWindows } from "@/lib/pricing"
+import { getCorporateTiers } from "@/lib/programme-tiers"
 
 export async function ProgrammeGrid({ level, state, organizationId, organizationCode, query }: { level?: string, state?: string, organizationId?: string, organizationCode?: string, query?: string }) {
     const programmes = await getProgrammes({ status: 'APPROVED', level, state, organizationId, organizationCode, query }) || []
@@ -36,6 +37,7 @@ export async function ProgrammeGrid({ level, state, organizationId, organization
                 const tierWindows = tiers.length > 0 ? formatTierWindows(tiers) : [];
                 // Tier price wins when a window is active, else legacy single-EB, else normal
                 const pricedAmount = activeTier ? activeTier.amount : effectiveAmount;
+                const hasCorporateTiers = getCorporateTiers((p as any).pricingTiers).length > 0;
 
                 return (
                     <Card key={p.id} className="flex flex-col h-full hover:shadow-md transition-shadow relative overflow-hidden">
@@ -78,9 +80,12 @@ export async function ProgrammeGrid({ level, state, organizationId, organization
                             </p>
                             {p.paymentRequired && (
                                 <div className="text-[11px] space-y-1">
+                                    <div><Link href={`/programmes/${p.id}/register`} className="text-emerald-700 underline font-semibold">Register now →</Link></div>
+                                    {hasCorporateTiers && <div><Link href={`/programmes/${p.id}/corporate-register`} className="text-emerald-700 underline">Corporate / chapter registration →</Link></div>}
                                     <div><Link href="/dashboard/programmes/bulk" className="text-emerald-700 underline">Register multiple people at once →</Link></div>
                                     <div><Link href="/dashboard/programmes/sponsorship" className="text-emerald-700 underline">Sponsor seats for others →</Link></div>
                                     <div><Link href="/programmes/pay-for-others" className="text-emerald-700 underline">Pay for others, no account needed →</Link></div>
+                                    <div><Link href="/programmes/sponsored/claim" className="text-emerald-700 underline">Claim a sponsored seat →</Link></div>
                                 </div>
                             )}
 
