@@ -54,10 +54,10 @@ async function main() {
         { id: 'b60f1148-edfc-4a13-8f30-750499402e46', code: 'SP-BC4567FD', ref: 'T174312316371867' },
     ];
     for (const p of paidPools) {
-        const [poolRows] = await conn.query(`SELECT id, amountPerSeat, status FROM programme_sponsorship_pools WHERE id = ?`, [p.id]);
+        const [poolRows] = await conn.query(`SELECT id, amountPerSeat, sponsorship_status FROM programme_sponsorship_pools WHERE id = ?`, [p.id]);
         if (poolRows.length > 0) {
             await conn.query(
-                `UPDATE programme_sponsorship_pools SET status = 'PAID', paymentRef = ?, updatedAt = NOW() WHERE id = ?`,
+                `UPDATE programme_sponsorship_pools SET sponsorship_status = 'PAID', paymentRef = ?, updatedAt = NOW() WHERE id = ?`,
                 [p.ref, p.id]
             );
             await conn.query(
@@ -82,7 +82,7 @@ async function main() {
         const [bgRows] = await conn.query(`SELECT id, amountPerAttendee, paymentRef FROM bulk_registration_groups WHERE id = ?`, [bgId]);
         if (bgRows.length > 0) {
             const bg = bgRows[0];
-            await conn.query(`UPDATE bulk_registration_groups SET status = 'PAID', updatedAt = NOW() WHERE id = ?`, [bgId]);
+            await conn.query(`UPDATE bulk_registration_groups SET bulk_status = 'PAID', updatedAt = NOW() WHERE id = ?`, [bgId]);
             await conn.query(
                 `UPDATE programme_registrations SET status = 'PAID', amountPaid = ?, paymentReference = ? WHERE bulkGroupId = ?`,
                 [bg.amountPerAttendee, bg.paymentRef, bgId]
