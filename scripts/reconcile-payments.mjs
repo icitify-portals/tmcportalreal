@@ -1,5 +1,4 @@
 import mysql from 'mysql2/promise';
-import crypto from 'crypto';
 
 async function main() {
     const conn = await mysql.createConnection(process.env.DATABASE_URL);
@@ -13,11 +12,10 @@ async function main() {
     );
 
     if (existingJimoh.length === 0) {
-        const securityHash = crypto.randomBytes(6).toString('hex').toUpperCase();
         await conn.query(
             `INSERT INTO programme_registrations 
-            (id, programmeId, memberId, userId, name, email, phone, gender, country, state, lga, branch, status, paymentReference, securityHash, amountPaid, lockedAmount, registeredAt, updatedAt)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PAID', ?, ?, '20000.00', '15000.00', '2026-09-03 11:55:03', NOW())`,
+            (id, programmeId, memberId, userId, name, email, phone, gender, country, state, lga, branch, status, paymentReference, amountPaid, lockedAmount, registeredAt)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PAID', ?, '20000.00', '15000.00', '2026-09-03 11:55:03')`,
             [
                 jimohRegId,
                 activeProgrammeId,
@@ -31,8 +29,7 @@ async function main() {
                 'FCT',
                 'Kuje',
                 'Kuje',
-                'T927716822847289',
-                securityHash
+                'T927716822847289'
             ]
         );
         console.log('Inserted Jimoh Morufudeen Ademola registration:', jimohRegId);
@@ -41,7 +38,7 @@ async function main() {
             `UPDATE programme_registrations 
              SET status = 'PAID', amountPaid = '20000.00', paymentReference = 'T927716822847289',
                  memberId = 'ba780ae6-bc74-49bf-9635-548dd53a9ade', userId = 'eca8db52-9def-4521-9193-2b1f970e6b32',
-                 state = 'FCT', lga = 'Kuje', branch = 'Kuje', updatedAt = NOW()
+                 state = 'FCT', lga = 'Kuje', branch = 'Kuje'
              WHERE id = ?`,
             [existingJimoh[0].id]
         );
@@ -64,7 +61,7 @@ async function main() {
                 [p.ref, p.id]
             );
             await conn.query(
-                `UPDATE programme_registrations SET status = 'PAID', amountPaid = ?, paymentReference = ?, updatedAt = NOW() WHERE sponsorPoolId = ?`,
+                `UPDATE programme_registrations SET status = 'PAID', amountPaid = ?, paymentReference = ? WHERE sponsorPoolId = ?`,
                 [poolRows[0].amountPerSeat, p.ref, p.id]
             );
             console.log(`Synced pool ${p.code} (${p.id}) -> PAID`);
@@ -82,16 +79,15 @@ async function main() {
         'fa5c4581-2090-4a83-ad2b-ef66494126fe',
     ];
     for (const bgId of paidBulkIds) {
-        const [bgRows] = await conn.query(`SELECT id, totalAmount, totalSeats, paymentRef FROM programme_bulk_groups WHERE id = ?`, [bgId]);
+        const [bgRows] = await conn.query(`SELECT id, amountPerAttendee, paymentRef FROM bulk_registration_groups WHERE id = ?`, [bgId]);
         if (bgRows.length > 0) {
             const bg = bgRows[0];
-            const perSeat = (parseFloat(bg.totalAmount || '0') / Math.max(1, bg.totalSeats)).toFixed(2);
-            await conn.query(`UPDATE programme_bulk_groups SET status = 'PAID', updatedAt = NOW() WHERE id = ?`, [bgId]);
+            await conn.query(`UPDATE bulk_registration_groups SET status = 'PAID', updatedAt = NOW() WHERE id = ?`, [bgId]);
             await conn.query(
-                `UPDATE programme_registrations SET status = 'PAID', amountPaid = ?, paymentReference = ?, updatedAt = NOW() WHERE bulkGroupId = ?`,
-                [perSeat, bg.paymentRef, bgId]
+                `UPDATE programme_registrations SET status = 'PAID', amountPaid = ?, paymentReference = ? WHERE bulkGroupId = ?`,
+                [bg.amountPerAttendee, bg.paymentRef, bgId]
             );
-            console.log(`Synced bulk group ${bgId} -> PAID (₦${perSeat}/seat)`);
+            console.log(`Synced bulk group ${bgId} -> PAID (₦${bg.amountPerAttendee}/seat)`);
         }
     }
 
@@ -120,7 +116,7 @@ async function main() {
             const locked = parseFloat(rows[0].lockedAmount || '15000');
             const newStatus = reg.amount >= locked ? 'PAID' : 'PARTIALLY_PAID';
             await conn.query(
-                `UPDATE programme_registrations SET status = ?, amountPaid = ?, paymentReference = ?, updatedAt = NOW() WHERE id = ?`,
+                `UPDATE programme_registrations SET status = ?, amountPaid = ?, paymentReference = ? WHERE id = ?`,
                 [newStatus, reg.amount.toFixed(2), reg.ref, reg.id]
             );
             console.log(`Synced individual registration ${reg.id} -> ${newStatus} (₦${reg.amount})`);
