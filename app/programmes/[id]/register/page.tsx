@@ -220,6 +220,19 @@ function RegistrationContent() {
                             <p className="text-xs text-amber-700">Normal ₦{Number(programme.amount).toLocaleString()} from {new Date(new Date(programme.earlyBirdDeadline).getTime()+24*60*60*1000).toLocaleDateString()}.</p>
                         </div>
                     )}
+                    {programme?.paymentRequired && !isWaiverActive && (
+                        <div className="mt-3 p-3 bg-emerald-50/70 border border-emerald-200 rounded-lg flex flex-wrap items-center justify-between gap-2">
+                            <p className="text-xs text-emerald-900 font-medium">
+                                Have a sponsor code (e.g. <code className="font-mono font-bold">SP-XXXXXXXX</code>)?
+                            </p>
+                            <a
+                                href="/programmes/sponsored/claim"
+                                className="text-xs font-bold text-emerald-800 underline hover:text-emerald-950 whitespace-nowrap"
+                            >
+                                Claim your sponsored seat here →
+                            </a>
+                        </div>
+                    )}
                 </CardHeader>
                 <form onSubmit={handleSubmit}>
                     <CardContent className="space-y-4 sm:space-y-6">

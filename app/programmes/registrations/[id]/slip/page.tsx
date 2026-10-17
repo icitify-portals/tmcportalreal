@@ -158,6 +158,16 @@ export default async function AccessSlipPage({ params }: { params: Promise<{ id:
                                 />
                                 <VerifyPaymentStatusButton registrationId={registration.id} reference={registration.paymentReference || undefined} />
                                 <RefreshButton />
+                                {paidAmount === 0 && (
+                                    <div className="pt-2 border-t border-gray-200">
+                                        <a
+                                            href="/programmes/sponsored/claim"
+                                            className="text-xs font-bold text-emerald-700 hover:text-emerald-900 underline"
+                                        >
+                                            Have a sponsor code (SP-XXXXXXXX)? Claim your sponsored seat →
+                                        </a>
+                                    </div>
+                                )}
                             </div>
                             <div className="hidden print:block text-red-600 font-black text-4xl border-4 border-red-600 p-4 rotate-12 opacity-50">
                                 INVALID - PAYMENT PENDING

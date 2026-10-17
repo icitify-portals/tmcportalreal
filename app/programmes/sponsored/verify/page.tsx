@@ -56,7 +56,7 @@ export default async function PublicVerifySponsoredPage({
                                 <p>
                                     {pool.seatCount} seats sponsored · {pool.seatsClaimed || 0} claimed so far.
                                     Share the code below with beneficiaries — they claim at{" "}
-                                    <Link href="/programmes/sponsored/claim" className="text-emerald-700 underline">the sponsored claim page</Link>.
+                                    <Link href={code ? `/programmes/sponsored/claim?code=${encodeURIComponent(code)}` : "/programmes/sponsored/claim"} className="text-emerald-700 underline">the sponsored claim page</Link>.
                                 </p>
                                 {code && (
                                     <div className="flex items-center gap-2 rounded-md bg-emerald-50 border border-emerald-200 p-3">
@@ -67,7 +67,7 @@ export default async function PublicVerifySponsoredPage({
                         )}
                         <div className="flex gap-2">
                             <Button asChild variant="outline"><Link href="/programmes/pay-for-others">Back</Link></Button>
-                            <Button asChild><Link href="/programmes/sponsored/claim">Open claim page</Link></Button>
+                            <Button asChild><Link href={code ? `/programmes/sponsored/claim?code=${encodeURIComponent(code)}` : "/programmes/sponsored/claim"}>Open claim page</Link></Button>
                         </div>
                     </CardContent>
                 </Card>

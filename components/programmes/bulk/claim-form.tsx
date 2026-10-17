@@ -28,6 +28,7 @@ export function ClaimForm({ token, registration, programme }: { token: string; r
         country: registration.country || "Nigeria",
         state: registration.state || "",
         lga: registration.lga || "",
+        branch: registration.branch || "",
     });
     const isNigeria = data.country === "Nigeria";
     const selectedStateData = nigerianStatesAndLgas.find(s => s.state === data.state);
@@ -117,9 +118,13 @@ export function ClaimForm({ token, registration, programme }: { token: string; r
                                 <Input value={data.lga} onChange={(e) => setData({ ...data, lga: e.target.value })} placeholder="Enter city/LGA" />
                             </div>
                         )}
+                        <div>
+                            <Label>Branch / Centre</Label>
+                            <Input value={data.branch} onChange={(e) => setData({ ...data, branch: e.target.value })} placeholder="Enter branch or centre" />
+                        </div>
                     </div>
                     <div><Label>Address (optional)</Label><Textarea value={data.address} onChange={(e) => setData({ ...data, address: e.target.value })} rows={2} /></div>
-                    <div><Label>Membership ID (optional — links this seat to your TMC membership)</Label><Input value={data.memberId} onChange={(e) => setData({ ...data, memberId: e.target.value })} placeholder="e.g. TMC/2024/001" /></div>
+                    <div><Label>Membership ID (optional — links this seat to your TMC membership)</Label><Input value={data.memberId} onChange={(e) => setData({ ...data, memberId: e.target.value })} placeholder="e.g. TMC/01/01/0001" /></div>
                     <Button type="submit" disabled={pending} className="w-full bg-emerald-700 hover:bg-emerald-800">
                         {pending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CheckCircle className="h-4 w-4 mr-2" />}
                         Confirm my seat

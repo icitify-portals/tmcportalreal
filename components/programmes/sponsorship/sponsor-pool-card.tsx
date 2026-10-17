@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useTransition } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { initializeSponsorshipPayment } from "@/lib/actions/programme-sponsorship";
-import { Loader2, Copy, HeartHandshake, Eye } from "lucide-react";
+import { Loader2, Copy, HeartHandshake, Eye, Link2, TicketCheck } from "lucide-react";
 import Link from "next/link";
 
 export function SponsorPoolCard({ pool, programmeTitle }: { pool: any; programmeTitle?: string }) {
@@ -22,6 +22,13 @@ export function SponsorPoolCard({ pool, programmeTitle }: { pool: any; programme
         });
     }
 
+    function copyClaimLink() {
+        const origin = typeof window !== "undefined" ? window.location.origin : "https://tmcng.net";
+        const url = `${origin}/programmes/sponsored/claim?code=${encodeURIComponent(pool.sponsorCode)}`;
+        navigator.clipboard.writeText(url);
+        toast.success("Direct claim link copied! Share this link with beneficiaries.");
+    }
+
     return (
         <Card>
             <CardHeader className="pb-2">
@@ -34,12 +41,22 @@ export function SponsorPoolCard({ pool, programmeTitle }: { pool: any; programme
                 <p>{pool.seatCount} seats · {pool.seatsClaimed || 0} claimed · {seatsLeft} left · ₦{Number(pool.totalAmount || 0).toLocaleString()} total</p>
                 {pool.status === "PAID" ? (
                     <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-mono font-bold tracking-widest">{pool.sponsorCode}</span>
+                        <span className="font-mono font-bold tracking-widest bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded border border-emerald-200">{pool.sponsorCode}</span>
                         <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(pool.sponsorCode); toast.success("Sponsor code copied — share it with beneficiaries"); }}>
                             <Copy className="h-3 w-3 mr-1" /> Copy code
                         </Button>
-                        <Link href={`/dashboard/programmes/sponsorship/${pool.id}`} className="text-emerald-700 hover:underline text-sm flex items-center gap-1">
-                            <Eye className="h-3.5 w-3.5" /> View claimers
+                        <Button size="sm" variant="outline" onClick={copyClaimLink}>
+                            <Link2 className="h-3 w-3 mr-1" /> Copy claim link
+                        </Button>
+                        {seatsLeft > 0 && (
+                            <Button size="sm" asChild className="bg-emerald-700 hover:bg-emerald-800">
+                                <Link href={`/programmes/sponsored/claim?code=${encodeURIComponent(pool.sponsorCode)}`}>
+                                    <TicketCheck className="h-3.5 w-3.5 mr-1" /> Claim / Assign seat
+                                </Link>
+                            </Button>
+                        )}
+                        <Link href={`/dashboard/programmes/sponsorship/${pool.id}`} className="text-emerald-700 hover:underline text-sm flex items-center gap-1 ml-1">
+                            <Eye className="h-3.5 w-3.5" /> View claimers ({pool.seatsClaimed || 0})
                         </Link>
                     </div>
                 ) : pool.status === "PENDING" ? (

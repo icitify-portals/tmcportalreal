@@ -18,6 +18,7 @@ import { getEffectiveAmount, getActiveEarlyBird } from "@/lib/pricing";
 import { getEarlyBirdTiers } from "@/lib/actions/programme-early-bird";
 import { initializePayment, verifyPayment, guestCreationCapHit } from "@/lib/payments";
 import { sendEmail, emailTemplates } from "@/lib/email";
+import { resolveMemberForRegistration } from "@/lib/actions/programme-sponsorship";
 
 function genToken(): string {
     return crypto.randomBytes(24).toString("base64url");
@@ -124,19 +125,21 @@ export async function createBulkRegistration(data: {
     for (const a of validAttendees) {
         const regId = uuidv4();
         const token = genToken();
+        const resolved = await resolveMemberForRegistration(a.memberId, null, a.email.trim());
         await db.insert(programmeRegistrations).values({
             id: regId,
             programmeId: data.programmeId,
-            memberId: a.memberId?.trim() || null,
+            userId: resolved.userId,
+            memberId: resolved.memberUuid,
             name: a.name.trim(),
-            email: a.email.trim(),
+            email: a.email.trim().toLowerCase(),
             phone: a.phone?.trim() || null,
             gender: a.gender?.trim() || null,
             address: a.address?.trim() || null,
             country: a.country?.trim() || "Nigeria",
-            state: a.state?.trim() || null,
-            lga: a.lga?.trim() || null,
-            branch: a.branch?.trim() || null,
+            state: a.state?.trim() || resolved.state || null,
+            lga: a.lga?.trim() || resolved.lga || null,
+            branch: a.branch?.trim() || resolved.branch || null,
             status: prog.paymentRequired ? "PENDING_PAYMENT" : "REGISTERED",
             amountPaid: (prog.paymentRequired ? "0.00" : effectivePerAttendee.toFixed(2)) as any,
             paymentStatus: (prog.paymentRequired ? "PENDING" : "SUCCESS") as any,
@@ -149,7 +152,9 @@ export async function createBulkRegistration(data: {
         registrationIds.push(regId);
     }
 
-    revalidatePath(`/programmes/registrations/${data.programmeId}/bulk`);
+    try {
+        revalidatePath(`/programmes/registrations/${data.programmeId}/bulk`);
+    } catch {}
     return {
         success: true,
         groupId,
@@ -204,6 +209,14 @@ export async function verifyBulkPayment(groupId: string, reference: string) {
     const [group] = await db.select().from(bulkRegistrationGroups).where(eq(bulkRegistrationGroups.id, groupId)).limit(1);
     if (!group) return { success: false, error: "Group not found" };
 
+    if (group.status === "PAID") {
+        await db.update(programmeRegistrations).set({
+            status: "PAID" as any,
+            amountPaid: group.amountPerAttendee as any,
+        } as any).where(eq(programmeRegistrations.bulkGroupId, groupId));
+        return { success: true, alreadyPaid: true };
+    }
+
     // Insert payment record
     const [pay] = await db.insert(payments).values({
         id: uuidv4(),
@@ -220,6 +233,7 @@ export async function verifyBulkPayment(groupId: string, reference: string) {
 
     await db.update(bulkRegistrationGroups).set({
         status: "PAID" as any,
+        paymentRef: reference,
         paymentId: pay.id,
     } as any).where(eq(bulkRegistrationGroups.id, groupId));
 
@@ -256,7 +270,9 @@ export async function verifyBulkPayment(groupId: string, reference: string) {
     // Notify every attendee with their personal claim link (awaited; helper never throws)
     await emailBulkClaimLinks(groupId);
 
-    revalidatePath(`/dashboard/programmes/bulk`);
+    try {
+        revalidatePath(`/dashboard/programmes/bulk`);
+    } catch {}
     return { success: true };
 }
 
@@ -275,6 +291,7 @@ export async function claimBulkSeat(data: {
     country?: string;
     state?: string;
     lga?: string;
+    branch?: string;
 }) {
     if (!data.token) return { success: false, error: "Invalid link" };
 
@@ -284,22 +301,28 @@ export async function claimBulkSeat(data: {
 
     // Link the claim to the logged-in member account when available (fixes "Guest" display)
     const session = await getServerSession();
+    const resolved = await resolveMemberForRegistration(
+        data.memberId,
+        reg.userId || session?.user?.id || null,
+        data.email?.trim() || reg.email
+    );
 
     await db.update(programmeRegistrations).set({
-        userId: reg.userId || session?.user?.id || null,
-        memberId: data.memberId?.trim() || reg.memberId,
+        userId: reg.userId || resolved.userId || session?.user?.id || null,
+        memberId: resolved.memberUuid || reg.memberId || null,
         name: data.name?.trim() || reg.name,
         email: data.email?.trim() || reg.email,
         phone: data.phone?.trim() || reg.phone,
         gender: data.gender?.trim() || reg.gender,
         address: data.address?.trim() || reg.address,
         country: data.country?.trim() || reg.country,
-        state: data.state?.trim() || reg.state,
-        lga: data.lga?.trim() || reg.lga,
+        state: data.state?.trim() || reg.state || resolved.state || null,
+        lga: data.lga?.trim() || reg.lga || resolved.lga || null,
+        branch: data.branch?.trim() || reg.branch || resolved.branch || null,
         bulkClaimedAt: new Date(),
     } as any).where(eq(programmeRegistrations.id, reg.id));
 
-    return { success: true, programmeId: reg.programmeId, name: reg.name };
+    return { success: true, programmeId: reg.programmeId, name: reg.name, registrationId: reg.id };
 }
 
 /**
@@ -347,6 +370,7 @@ export async function updateBulkAttendee(data: {
     country?: string;
     state?: string;
     lga?: string;
+    branch?: string;
 }) {
     const session = await getServerSession();
 
@@ -365,21 +389,26 @@ export async function updateBulkAttendee(data: {
         return { success: false, error: "Only the paymaster can edit this seat" };
     }
 
+    const resolved = await resolveMemberForRegistration(data.memberId, reg.userId || null, data.email.trim());
+
     await db.update(programmeRegistrations).set({
-        userId: reg.userId || session?.user?.id || null,
-        memberId: data.memberId?.trim() || reg.memberId,
+        userId: reg.userId || resolved.userId || null,
+        memberId: resolved.memberUuid || reg.memberId || null,
         name: data.name.trim(),
-        email: data.email.trim(),
+        email: data.email.trim().toLowerCase(),
         phone: data.phone?.trim() || null,
         gender: data.gender?.trim() || reg.gender,
         address: data.address?.trim() || null,
         country: data.country?.trim() || reg.country,
-        state: data.state?.trim() || reg.state,
-        lga: data.lga?.trim() || reg.lga,
+        state: data.state?.trim() || reg.state || resolved.state || null,
+        lga: data.lga?.trim() || reg.lga || resolved.lga || null,
+        branch: data.branch?.trim() || reg.branch || resolved.branch || null,
         bulkClaimedAt: reg.bulkClaimedAt || new Date(),
     } as any).where(eq(programmeRegistrations.id, reg.id));
 
-    revalidatePath("/dashboard/programmes/bulk");
+    try {
+        revalidatePath("/dashboard/programmes/bulk");
+    } catch {}
     return { success: true };
 }
 
@@ -389,10 +418,17 @@ export async function updateBulkAttendee(data: {
  */
 export async function getBulkGroupForManager(groupId: string, email: string) {
     if (!groupId || !email?.trim()) return { success: false as const, error: "Group and email are required" };
-    const [group] = await db.select().from(bulkRegistrationGroups).where(eq(bulkRegistrationGroups.id, groupId)).limit(1);
+    let [group] = await db.select().from(bulkRegistrationGroups).where(eq(bulkRegistrationGroups.id, groupId)).limit(1);
     if (!group) return { success: false as const, error: "Group not found" };
     if ((group.paymasterEmail || "").toLowerCase() !== email.trim().toLowerCase()) {
         return { success: false as const, error: "Email does not match this group's paymaster" };
+    }
+    if (group.status === "PENDING" && group.paymentRef) {
+        const verifyRes = await verifyBulkPayment(group.id, group.paymentRef);
+        if (verifyRes.success) {
+            const [updated] = await db.select().from(bulkRegistrationGroups).where(eq(bulkRegistrationGroups.id, group.id)).limit(1);
+            if (updated) group = updated;
+        }
     }
     const [prog] = await db.select().from(programmes).where(eq(programmes.id, group.programmeId)).limit(1);
     const attendees = await listBulkAttendees(groupId);
@@ -431,8 +467,18 @@ export async function listBulkAttendees(groupId: string) {
  * Public: get bulk info from a claim token (used by attendee claim page).
  */
 export async function getBulkSeatByToken(token: string) {
-    const [reg] = await db.select().from(programmeRegistrations).where(eq(programmeRegistrations.bulkClaimToken, token)).limit(1);
+    let [reg] = await db.select().from(programmeRegistrations).where(eq(programmeRegistrations.bulkClaimToken, token)).limit(1);
     if (!reg) return null;
+    if (reg.bulkGroupId) {
+        const [group] = await db.select().from(bulkRegistrationGroups).where(eq(bulkRegistrationGroups.id, reg.bulkGroupId)).limit(1);
+        if (group && group.status === "PENDING" && group.paymentRef) {
+            const verifyRes = await verifyBulkPayment(group.id, group.paymentRef);
+            if (verifyRes.success) {
+                const [updatedReg] = await db.select().from(programmeRegistrations).where(eq(programmeRegistrations.id, reg.id)).limit(1);
+                if (updatedReg) reg = updatedReg;
+            }
+        }
+    }
     const [prog] = await db.select().from(programmes).where(eq(programmes.id, reg.programmeId)).limit(1);
     return { registration: reg, programme: prog };
 }

@@ -307,7 +307,11 @@ export async function verifyTogetherPayment(data: { registrationId: string; grou
             paidAt: new Date(),
         } as any).$returningId();
 
-        await db.update(programmeSponsorshipPools).set({ status: "PAID" as any, paymentId: pay.id } as any).where(eq(programmeSponsorshipPools.id, pool.id));
+        await db.update(programmeSponsorshipPools).set({ status: "PAID" as any, paymentRef: data.reference, paymentId: pay.id } as any).where(eq(programmeSponsorshipPools.id, pool.id));
+        await db.update(programmeRegistrations).set({
+            status: "PAID" as any,
+            amountPaid: pool.amountPerSeat as any,
+        } as any).where(eq(programmeRegistrations.sponsorPoolId, pool.id));
 
         if (performerId) {
             await db.insert(financeTransactions).values({
@@ -324,9 +328,11 @@ export async function verifyTogetherPayment(data: { registrationId: string; grou
         }
     }
 
-    revalidatePath(`/programmes/registrations/${data.registrationId}/slip`);
-    revalidatePath("/dashboard/programmes/sponsorship");
-    revalidatePath("/dashboard/programmes/bulk");
+    try {
+        revalidatePath(`/programmes/registrations/${data.registrationId}/slip`);
+        revalidatePath("/dashboard/programmes/sponsorship");
+        revalidatePath("/dashboard/programmes/bulk");
+    } catch {}
 
     // Notify attendees / sponsor (awaited; helpers never throw).
     // Only for sides completed in this call — already-paid sides were notified before.

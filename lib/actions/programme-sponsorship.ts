@@ -6,10 +6,13 @@ import {
     programmeRegistrations,
     programmeSponsorshipPools,
     users,
+    members,
+    organizations,
     payments,
     financeTransactions,
 } from "@/lib/db/schema";
-import { and, eq, desc, asc } from "drizzle-orm";
+import { and, eq, or, desc, asc, sql } from "drizzle-orm";
+import { alias } from "drizzle-orm/mysql-core";
 import { revalidatePath } from "next/cache";
 import { getServerSession } from "@/lib/session";
 import { v4 as uuidv4 } from "uuid";
@@ -21,6 +24,141 @@ import { sendEmail, emailTemplates } from "@/lib/email";
 
 function genSponsorCode(): string {
     return "SP-" + crypto.randomBytes(4).toString("hex").toUpperCase();
+}
+
+function normalizeSponsorCode(raw: string): string {
+    const cleaned = (raw || "").trim().toUpperCase().replace(/\s+/g, "");
+    if (/^SP[0-9A-F]{8}$/.test(cleaned)) {
+        return `SP-${cleaned.slice(2)}`;
+    }
+    return cleaned;
+}
+
+/**
+ * Resolves a human-readable Membership ID (e.g. TMC/01/05/0012) or UUID, userId, or email
+ * to a valid `members.id` UUID plus state/lga/branch hierarchy so FK constraints never fail.
+ */
+export async function resolveMemberForRegistration(
+    inputMemberId?: string | null,
+    userId?: string | null,
+    email?: string | null
+): Promise<{
+    memberUuid: string | null;
+    userId: string | null;
+    state: string | null;
+    lga: string | null;
+    branch: string | null;
+}> {
+    try {
+        const parentOrg = alias(organizations, "parent_org");
+        const grandParentOrg = alias(organizations, "grandparent_org");
+
+        const trimmedMemberInput = (inputMemberId || "").trim();
+        let targetUserId = userId || null;
+
+        if (!targetUserId && email?.trim()) {
+            const [u] = await db
+                .select({ id: users.id })
+                .from(users)
+                .where(eq(users.email, email.trim().toLowerCase()))
+                .limit(1);
+            if (u) targetUserId = u.id;
+        }
+
+        let memberRow: any = null;
+
+        if (trimmedMemberInput) {
+            const [byCodeOrId] = await db
+                .select({
+                    id: members.id,
+                    userId: members.userId,
+                    metadata: members.metadata,
+                    orgName: organizations.name,
+                    orgLevel: organizations.level,
+                    orgState: organizations.state,
+                    orgCity: organizations.city,
+                    parentName: parentOrg.name,
+                    parentLevel: parentOrg.level,
+                    parentState: parentOrg.state,
+                    grandParentName: grandParentOrg.name,
+                    grandParentLevel: grandParentOrg.level,
+                })
+                .from(members)
+                .leftJoin(organizations, eq(members.organizationId, organizations.id))
+                .leftJoin(parentOrg, eq(organizations.parentId, parentOrg.id))
+                .leftJoin(grandParentOrg, eq(parentOrg.parentId, grandParentOrg.id))
+                .where(
+                    or(
+                        eq(members.id, trimmedMemberInput),
+                        eq(members.memberId, trimmedMemberInput)
+                    )
+                )
+                .limit(1);
+            if (byCodeOrId) memberRow = byCodeOrId;
+        }
+
+        if (!memberRow && targetUserId) {
+            const [byUser] = await db
+                .select({
+                    id: members.id,
+                    userId: members.userId,
+                    metadata: members.metadata,
+                    orgName: organizations.name,
+                    orgLevel: organizations.level,
+                    orgState: organizations.state,
+                    orgCity: organizations.city,
+                    parentName: parentOrg.name,
+                    parentLevel: parentOrg.level,
+                    parentState: parentOrg.state,
+                    grandParentName: grandParentOrg.name,
+                    grandParentLevel: grandParentOrg.level,
+                })
+                .from(members)
+                .leftJoin(organizations, eq(members.organizationId, organizations.id))
+                .leftJoin(parentOrg, eq(organizations.parentId, parentOrg.id))
+                .leftJoin(grandParentOrg, eq(parentOrg.parentId, grandParentOrg.id))
+                .where(eq(members.userId, targetUserId))
+                .limit(1);
+            if (byUser) memberRow = byUser;
+        }
+
+        if (!memberRow) {
+            return {
+                memberUuid: null,
+                userId: targetUserId,
+                state: null,
+                lga: null,
+                branch: null,
+            };
+        }
+
+        const meta = (memberRow.metadata || {}) as Record<string, any>;
+        let state = (meta.state as string) || null;
+        let lga = (meta.lga as string) || null;
+        let branch = (meta.branch as string) || null;
+
+        if (memberRow.orgLevel === "BRANCH") {
+            branch = branch || memberRow.orgName || null;
+            lga = lga || (memberRow.parentLevel === "LOCAL_GOVERNMENT" ? memberRow.parentName : memberRow.orgCity) || null;
+            state = state || (memberRow.grandParentLevel === "STATE" ? memberRow.grandParentName : memberRow.parentState || memberRow.orgState) || null;
+        } else if (memberRow.orgLevel === "LOCAL_GOVERNMENT") {
+            lga = lga || memberRow.orgName || null;
+            state = state || (memberRow.parentLevel === "STATE" ? memberRow.parentName : memberRow.orgState) || null;
+        } else if (memberRow.orgLevel === "STATE") {
+            state = state || memberRow.orgName || null;
+        }
+
+        return {
+            memberUuid: memberRow.id,
+            userId: targetUserId || memberRow.userId || null,
+            state,
+            lga,
+            branch,
+        };
+    } catch (err) {
+        console.error("resolveMemberForRegistration error:", err);
+        return { memberUuid: null, userId: userId || null, state: null, lga: null, branch: null };
+    }
 }
 
 /**
@@ -117,44 +255,41 @@ export async function createSponsorshipPool(data: {
 
     // If beneficiaries provided, create named registrations immediately
     if (data.beneficiaries && data.beneficiaries.length > 0) {
-        const validBeneficiaries = data.beneficiaries.filter((b: any) => b.name?.trim() && b.email?.trim());
+        const validBeneficiaries = data.beneficiaries.filter((b: any) => b.name?.trim());
         if (validBeneficiaries.length > seatCount) {
             return { success: false, error: `Beneficiaries (${validBeneficiaries.length}) exceed seat count (${seatCount})` };
         }
+        let createdCount = 0;
         for (const b of validBeneficiaries) {
-            // Check for duplicate email in this programme
-            const [existing] = await db.select({ id: programmeRegistrations.id })
-                .from(programmeRegistrations)
-                .where(and(eq(programmeRegistrations.programmeId, data.programmeId), eq(programmeRegistrations.email, b.email.trim())))
-                .limit(1);
-            if (existing) continue; // skip duplicates silently
+            const bEmail = (b.email?.trim() || data.sponsorEmail).toLowerCase();
+            const resolved = await resolveMemberForRegistration(b.memberId, null, bEmail);
 
             await db.insert(programmeRegistrations).values({
                 id: uuidv4(),
                 programmeId: data.programmeId,
-                userId: null,
-                memberId: b.memberId || null,
+                userId: resolved.userId,
+                memberId: resolved.memberUuid,
                 name: b.name.trim(),
-                email: b.email.trim(),
-                phone: b.phone || null,
+                email: bEmail,
+                phone: b.phone?.trim() || null,
                 gender: b.gender || null,
                 address: null,
                 status: "PENDING_PAYMENT" as any,
-                paymentStatus: "PENDING" as any,
                 country: "Nigeria",
-                state: b.state || null,
-                lga: b.lga || null,
-                branch: b.branch || null,
+                state: b.state?.trim() || resolved.state || null,
+                lga: b.lga?.trim() || resolved.lga || null,
+                branch: b.branch?.trim() || resolved.branch || null,
                 registrationTier: null,
-                amountPaid: perSeat.toFixed(2) as any,
+                amountPaid: "0.00" as any,
                 lockedAmount: perSeat.toFixed(2) as any,
                 sponsorPoolId: poolId,
                 registeredAt: new Date(),
             } as any);
+            createdCount++;
         }
         // Update pool seatsClaimed
         await db.update(programmeSponsorshipPools)
-            .set({ seatsClaimed: validBeneficiaries.length })
+            .set({ seatsClaimed: createdCount })
             .where(eq(programmeSponsorshipPools.id, poolId));
     }
 
@@ -197,7 +332,14 @@ export async function verifySponsorshipPayment(poolId: string, reference: string
     const amount = Number((res.data as any)?.amount ?? 0);
     const [pool] = await db.select().from(programmeSponsorshipPools).where(eq(programmeSponsorshipPools.id, poolId)).limit(1);
     if (!pool) return { success: false, error: "Sponsorship not found" };
-    if (pool.status === "PAID") return { success: true, alreadyPaid: true };
+    if (pool.status === "PAID") {
+        // Ensure any pre-created beneficiary registrations are also marked PAID
+        await db.update(programmeRegistrations).set({
+            status: "PAID" as any,
+            amountPaid: pool.amountPerSeat as any,
+        } as any).where(eq(programmeRegistrations.sponsorPoolId, poolId));
+        return { success: true, alreadyPaid: true, sponsorCode: pool.sponsorCode };
+    }
 
     const [pay] = await db.insert(payments).values({
         id: uuidv4(),
@@ -214,8 +356,15 @@ export async function verifySponsorshipPayment(poolId: string, reference: string
 
     await db.update(programmeSponsorshipPools).set({
         status: "PAID" as any,
+        paymentRef: reference,
         paymentId: pay.id,
     } as any).where(eq(programmeSponsorshipPools.id, poolId));
+
+    // Activate any pre-created named beneficiary rows in this sponsorship pool
+    await db.update(programmeRegistrations).set({
+        status: "PAID" as any,
+        amountPaid: pool.amountPerSeat as any,
+    } as any).where(eq(programmeRegistrations.sponsorPoolId, poolId));
 
     if (pool.programmeId) {
         const [prog] = await db.select({ orgId: programmes.organizationId }).from(programmes).where(eq(programmes.id, pool.programmeId)).limit(1);
@@ -243,7 +392,11 @@ export async function verifySponsorshipPayment(poolId: string, reference: string
     // Notify the sponsor with their code (awaited; helper never throws)
     await emailSponsorCode(poolId);
 
-    revalidatePath("/dashboard/programmes/sponsorship");
+    try {
+        revalidatePath("/dashboard/programmes/sponsorship");
+    } catch {
+        // Ignore revalidatePath errors when called during Server Component render
+    }
     return { success: true, sponsorCode: pool.sponsorCode };
 }
 
@@ -271,11 +424,22 @@ export async function emailSponsorCode(poolId: string) {
     }
 }
 
-/** Public: look up a pool by sponsor code (claim page). */export async function getSponsorshipPoolByCode(code: string) {
-    const normalized = (code || "").trim().toUpperCase();
+/** Public: look up a pool by sponsor code (claim page). Self-heals if paymentRef succeeded on Paystack. */
+export async function getSponsorshipPoolByCode(code: string) {
+    const normalized = normalizeSponsorCode(code);
     if (!normalized) return null;
-    const [pool] = await db.select().from(programmeSponsorshipPools).where(eq(programmeSponsorshipPools.sponsorCode, normalized)).limit(1);
+    let [pool] = await db.select().from(programmeSponsorshipPools).where(eq(programmeSponsorshipPools.sponsorCode, normalized)).limit(1);
     if (!pool) return null;
+
+    // Self-healing: if pool is still marked PENDING but has a paymentRef, attempt Paystack verification
+    if (pool.status === "PENDING" && pool.paymentRef) {
+        const verifyRes = await verifySponsorshipPayment(pool.id, pool.paymentRef);
+        if (verifyRes.success) {
+            const [updated] = await db.select().from(programmeSponsorshipPools).where(eq(programmeSponsorshipPools.id, pool.id)).limit(1);
+            if (updated) pool = updated;
+        }
+    }
+
     const [prog] = await db.select().from(programmes).where(eq(programmes.id, pool.programmeId)).limit(1);
     return {
         pool,
@@ -284,14 +448,43 @@ export async function emailSponsorCode(poolId: string) {
     };
 }
 
+/** Look up a sponsorship pool by ID along with its programme and claimed attendees. */
+export async function getSponsorshipPoolById(poolId: string) {
+    if (!poolId) return null;
+    let [pool] = await db.select().from(programmeSponsorshipPools).where(eq(programmeSponsorshipPools.id, poolId)).limit(1);
+    if (!pool) return null;
+
+    if (pool.status === "PENDING" && pool.paymentRef) {
+        const verifyRes = await verifySponsorshipPayment(pool.id, pool.paymentRef);
+        if (verifyRes.success) {
+            const [updated] = await db.select().from(programmeSponsorshipPools).where(eq(programmeSponsorshipPools.id, pool.id)).limit(1);
+            if (updated) pool = updated;
+        }
+    }
+
+    const [prog] = await db.select().from(programmes).where(eq(programmes.id, pool.programmeId)).limit(1);
+    const attendees = await db
+        .select()
+        .from(programmeRegistrations)
+        .where(eq(programmeRegistrations.sponsorPoolId, poolId))
+        .orderBy(desc(programmeRegistrations.registeredAt));
+
+    return {
+        pool,
+        programme: prog,
+        attendees,
+        seatsLeft: Math.max(0, pool.seatCount - (pool.seatsClaimed || 0)),
+    };
+}
+
 /**
  * Member claims one sponsored seat with the sponsor code.
- * Works for logged-in members and guests (name/email supplied).
+ * Works for logged-in members, guests, and coordinators claiming for indigent members.
  */
 export async function claimSponsoredSeat(data: {
     sponsorCode: string;
     name: string;
-    email: string;
+    email?: string;
     phone?: string;
     gender?: string;
     address?: string;
@@ -299,49 +492,116 @@ export async function claimSponsoredSeat(data: {
     country?: string;
     state?: string;
     lga?: string;
+    branch?: string;
 }) {
     const session = await getServerSession();
+    const normalizedCode = normalizeSponsorCode(data.sponsorCode);
 
-    if (!data.sponsorCode?.trim()) return { success: false, error: "Sponsor code is required" };
-    if (!data.name?.trim() || !data.email?.trim()) return { success: false, error: "Name and email are required" };
+    if (!normalizedCode) return { success: false, error: "Sponsor code is required" };
+    if (!data.name?.trim()) return { success: false, error: "Full name is required" };
+
+    // Pre-check & self-heal pool payment status outside transaction if needed
+    const [initialPool] = await db
+        .select()
+        .from(programmeSponsorshipPools)
+        .where(eq(programmeSponsorshipPools.sponsorCode, normalizedCode))
+        .limit(1);
+    if (!initialPool) return { success: false, error: "Invalid sponsor code" };
+
+    if (initialPool.status === "PENDING" && initialPool.paymentRef) {
+        await verifySponsorshipPayment(initialPool.id, initialPool.paymentRef);
+    }
+
+    const claimEmail = (data.email?.trim() || session?.user?.email || initialPool.sponsorEmail || "").toLowerCase();
+    if (!claimEmail) return { success: false, error: "Email address is required" };
+
+    // Safely resolve human-readable TMC Membership ID (e.g. TMC/01/...) to UUID `members.id`
+    const resolvedMember = await resolveMemberForRegistration(data.memberId, session?.user?.id, claimEmail);
 
     return db.transaction(async (tx) => {
-        const [pool] = await tx.select().from(programmeSponsorshipPools).where(eq(programmeSponsorshipPools.sponsorCode, data.sponsorCode.trim().toUpperCase())).limit(1);
+        const [pool] = await tx
+            .select()
+            .from(programmeSponsorshipPools)
+            .where(eq(programmeSponsorshipPools.sponsorCode, normalizedCode))
+            .limit(1);
         if (!pool) return { success: false, error: "Invalid sponsor code" };
         if (pool.status !== "PAID") return { success: false, error: "This sponsorship has not been paid for yet" };
         const seatsLeft = pool.seatCount - (pool.seatsClaimed || 0);
         if (seatsLeft <= 0) return { success: false, error: "All sponsored seats have been claimed" };
 
-        // Prevent the same email claiming twice from one pool
-        const [existing] = await tx.select({ id: programmeRegistrations.id }).from(programmeRegistrations).where(
-            and(
-                eq(programmeRegistrations.programmeId, pool.programmeId),
-                eq(programmeRegistrations.email, data.email.trim()),
-            )
-        ).limit(1);
-        if (existing) return { success: false, error: "This email is already registered for this programme" };
+        const normalizedName = data.name.trim().toLowerCase().replace(/\s+/g, " ");
 
-        const regId = uuidv4();
-        await tx.insert(programmeRegistrations).values({
-            id: regId,
-            programmeId: pool.programmeId,
-            userId: session?.user?.id || null,
-            memberId: data.memberId || null,
-            name: data.name.trim(),
-            email: data.email.trim(),
-            phone: data.phone || null,
-            gender: data.gender || null,
-            address: data.address || null,
-            country: data.country?.trim() || "Nigeria",
-            state: data.state?.trim() || null,
-            lga: data.lga?.trim() || null,
-            status: "PAID" as any,
-            paymentStatus: "SUCCESS" as any,
-            amountPaid: pool.amountPerSeat as any,
-            lockedAmount: pool.amountPerSeat as any,
-            sponsorPoolId: pool.id,
-            registeredAt: new Date(),
-        } as any);
+        // Check existing registrations for this programme and email
+        const existingRows = await tx
+            .select()
+            .from(programmeRegistrations)
+            .where(
+                and(
+                    eq(programmeRegistrations.programmeId, pool.programmeId),
+                    eq(programmeRegistrations.email, claimEmail)
+                )
+            );
+
+        // 1. Check if the exact same person is already paid/sponsored
+        const samePersonPaid = existingRows.find((r) => {
+            const rName = (r.name || "").trim().toLowerCase().replace(/\s+/g, " ");
+            const isPaid = r.status === "PAID" || r.status === "ATTENDED" || Number(r.amountPaid || 0) >= Number(pool.amountPerSeat || 0);
+            return rName === normalizedName && isPaid;
+        });
+        if (samePersonPaid) {
+            return { success: false, error: `${data.name.trim()} is already registered and paid for this programme.` };
+        }
+
+        // 2. Check if there is an unpaid PENDING_PAYMENT registration for this person (or single unpaid registration on this personal email) that should be upgraded into this sponsored seat
+        const unpaidToUpgrade = existingRows.find((r) => {
+            const rName = (r.name || "").trim().toLowerCase().replace(/\s+/g, " ");
+            const isUnpaid = r.status === "PENDING_PAYMENT" && Number(r.amountPaid || 0) === 0 && !r.sponsorPoolId && !r.bulkGroupId;
+            return isUnpaid && (rName === normalizedName || (existingRows.length === 1 && claimEmail !== pool.sponsorEmail.toLowerCase()));
+        });
+
+        let regId = uuidv4();
+
+        if (unpaidToUpgrade) {
+            regId = unpaidToUpgrade.id;
+            await tx.update(programmeRegistrations).set({
+                userId: unpaidToUpgrade.userId || resolvedMember.userId || session?.user?.id || null,
+                memberId: unpaidToUpgrade.memberId || resolvedMember.memberUuid || null,
+                name: data.name.trim(),
+                email: claimEmail,
+                phone: data.phone?.trim() || unpaidToUpgrade.phone || null,
+                gender: data.gender || unpaidToUpgrade.gender || null,
+                address: data.address?.trim() || unpaidToUpgrade.address || null,
+                country: data.country?.trim() || unpaidToUpgrade.country || "Nigeria",
+                state: data.state?.trim() || unpaidToUpgrade.state || resolvedMember.state || null,
+                lga: data.lga?.trim() || unpaidToUpgrade.lga || resolvedMember.lga || null,
+                branch: data.branch?.trim() || unpaidToUpgrade.branch || resolvedMember.branch || null,
+                status: "PAID" as any,
+                amountPaid: pool.amountPerSeat as any,
+                lockedAmount: pool.amountPerSeat as any,
+                sponsorPoolId: pool.id,
+            } as any).where(eq(programmeRegistrations.id, regId));
+        } else {
+            await tx.insert(programmeRegistrations).values({
+                id: regId,
+                programmeId: pool.programmeId,
+                userId: resolvedMember.userId || (claimEmail === session?.user?.email?.toLowerCase() ? session?.user?.id : null) || null,
+                memberId: resolvedMember.memberUuid || null,
+                name: data.name.trim(),
+                email: claimEmail,
+                phone: data.phone?.trim() || null,
+                gender: data.gender || null,
+                address: data.address?.trim() || null,
+                country: data.country?.trim() || "Nigeria",
+                state: data.state?.trim() || resolvedMember.state || null,
+                lga: data.lga?.trim() || resolvedMember.lga || resolvedMember.lga || null,
+                branch: data.branch?.trim() || resolvedMember.branch || null,
+                status: "PAID" as any,
+                amountPaid: pool.amountPerSeat as any,
+                lockedAmount: pool.amountPerSeat as any,
+                sponsorPoolId: pool.id,
+                registeredAt: new Date(),
+            } as any);
+        }
 
         await tx.update(programmeSponsorshipPools).set({
             seatsClaimed: (pool.seatsClaimed || 0) + 1,
@@ -350,7 +610,7 @@ export async function claimSponsoredSeat(data: {
         return { success: true, registrationId: regId, programmeId: pool.programmeId };
     }).catch((e) => {
         console.error("Sponsored claim failed:", e);
-        return { success: false, error: "Could not claim seat. Please try again." };
+        return { success: false, error: e?.message || "Could not claim seat. Please try again." };
     });
 }
 

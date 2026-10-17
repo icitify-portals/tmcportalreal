@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,9 +12,10 @@ import { toast } from "sonner";
 import { claimSponsoredSeat } from "@/lib/actions/programme-sponsorship";
 import { nigerianStatesAndLgas } from "@/lib/nigeria-data";
 import { countries } from "@/lib/countries";
-import { Loader2, TicketCheck } from "lucide-react";
+import { Loader2, TicketCheck, UserPlus } from "lucide-react";
 
 export function SponsoredClaimForm({ sponsorCode, programmeTitle }: { sponsorCode: string; programmeTitle?: string }) {
+    const router = useRouter();
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [phone, setPhone] = useState("");
@@ -23,20 +25,21 @@ export function SponsoredClaimForm({ sponsorCode, programmeTitle }: { sponsorCod
     const [country, setCountry] = useState("Nigeria");
     const [state, setState] = useState("");
     const [lga, setLga] = useState("");
+    const [branch, setBranch] = useState("");
     const [pending, setPending] = useState(false);
-    const [done, setDone] = useState<{ registrationId: string } | null>(null);
+    const [done, setDone] = useState<{ registrationId: string; claimedName: string } | null>(null);
     const isNigeria = country === "Nigeria";
     const selectedStateData = nigerianStatesAndLgas.find(s => s.state === state);
 
     async function handleClaim(e: React.FormEvent) {
         e.preventDefault();
-        if (!name.trim() || !email.trim()) return toast.error("Name and email are required");
+        if (!name.trim()) return toast.error("Full name is required");
         setPending(true);
         try {
             const res = await claimSponsoredSeat({
                 sponsorCode,
                 name: name.trim(),
-                email: email.trim(),
+                email: email.trim() || undefined,
                 phone: phone.trim() || undefined,
                 gender: gender || undefined,
                 address: address.trim() || undefined,
@@ -44,10 +47,12 @@ export function SponsoredClaimForm({ sponsorCode, programmeTitle }: { sponsorCod
                 country: country.trim() || undefined,
                 state: state.trim() || undefined,
                 lga: lga.trim() || undefined,
+                branch: branch.trim() || undefined,
             });
             if (res.success) {
-                setDone({ registrationId: (res as any).registrationId });
+                setDone({ registrationId: (res as any).registrationId, claimedName: name.trim() });
                 toast.success("Sponsored seat claimed!");
+                router.refresh();
             } else {
                 toast.error(res.error || "Could not claim seat");
             }
@@ -58,15 +63,28 @@ export function SponsoredClaimForm({ sponsorCode, programmeTitle }: { sponsorCod
         }
     }
 
+    function handleClaimAnother() {
+        setDone(null);
+        setName("");
+        setPhone("");
+        setMemberId("");
+    }
+
     if (done) {
         return (
             <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-6 text-center space-y-3">
                 <TicketCheck className="h-10 w-10 mx-auto text-emerald-600" />
-                <h2 className="font-bold text-lg">Seat claimed{programmeTitle ? ` for ${programmeTitle}` : ""}!</h2>
-                <p className="text-sm text-emerald-800">Your registration is fully paid by the sponsor. Open your access slip below.</p>
-                <Button asChild className="bg-emerald-700 hover:bg-emerald-800">
-                    <a href={`/programmes/registrations/${done.registrationId}/slip`} target="_blank">Open access slip</a>
-                </Button>
+                <h2 className="font-bold text-lg">Seat claimed for {done.claimedName}{programmeTitle ? ` (${programmeTitle})` : ""}!</h2>
+                <p className="text-sm text-emerald-800">This registration is fully paid by the sponsor. You can open the access slip or claim another seat with this code.</p>
+                <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                    <Button asChild className="bg-emerald-700 hover:bg-emerald-800">
+                        <a href={`/programmes/registrations/${done.registrationId}/slip`} target="_blank">Open access slip</a>
+                    </Button>
+                    <Button type="button" variant="outline" onClick={handleClaimAnother}>
+                        <UserPlus className="h-4 w-4 mr-1.5" />
+                        Claim another seat with this code
+                    </Button>
+                </div>
             </div>
         );
     }
@@ -75,20 +93,20 @@ export function SponsoredClaimForm({ sponsorCode, programmeTitle }: { sponsorCod
         <form onSubmit={handleClaim} className="space-y-4 rounded-xl border bg-white p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <Label>Full name</Label>
-                    <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Your full name" required />
+                    <Label>Full name *</Label>
+                    <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Beneficiary full name" required />
                 </div>
                 <div>
-                    <Label>Email</Label>
-                    <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" required />
+                    <Label>Email <span className="text-xs text-muted-foreground font-normal">(optional if beneficiary has none)</span></Label>
+                    <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
                 </div>
                 <div>
                     <Label>Phone (optional)</Label>
                     <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="080..." />
                 </div>
                 <div>
-                    <Label>Membership ID (optional — links this seat to your TMC membership)</Label>
-                    <Input value={memberId} onChange={(e) => setMemberId(e.target.value)} placeholder="e.g. TMC/2024/001" />
+                    <Label>Membership ID (optional — links this seat to TMC membership)</Label>
+                    <Input value={memberId} onChange={(e) => setMemberId(e.target.value)} placeholder="e.g. TMC/01/01/0001" />
                 </div>
             </div>
             <div>
@@ -153,6 +171,10 @@ export function SponsoredClaimForm({ sponsorCode, programmeTitle }: { sponsorCod
                         <Input value={lga} onChange={(e) => setLga(e.target.value)} placeholder="Enter city/LGA" />
                     </div>
                 )}
+                <div>
+                    <Label>Branch / Centre</Label>
+                    <Input value={branch} onChange={(e) => setBranch(e.target.value)} placeholder="Enter branch or centre" />
+                </div>
             </div>
             <div>
                 <Label>Address (optional)</Label>
@@ -160,7 +182,7 @@ export function SponsoredClaimForm({ sponsorCode, programmeTitle }: { sponsorCod
             </div>
             <Button type="submit" disabled={pending} className="w-full bg-emerald-700 hover:bg-emerald-800">
                 {pending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <TicketCheck className="h-4 w-4 mr-2" />}
-                Claim my sponsored seat
+                Claim sponsored seat
             </Button>
         </form>
     );
