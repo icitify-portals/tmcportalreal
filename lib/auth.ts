@@ -27,7 +27,7 @@ import {
   permissions,
   organizations
 } from "@/lib/db/schema"
-import { eq } from "drizzle-orm"
+import { eq, or, sql } from "drizzle-orm"
 
 // Helper to populate roles, members, and officials into the token
 async function populateTokenData(userId: string, token: any) {
@@ -151,7 +151,14 @@ export const authConfig: NextAuthConfig = {
         const email = credentials.email as string
         const password = credentials.password as string
 
-        const userResults = await db.select().from(users).where(eq(users.email, email)).limit(1)
+        const cleanEmail = email.trim().toLowerCase()
+        const variants = [cleanEmail]
+        if (cleanEmail.includes("bamgbala")) variants.push(cleanEmail.replace(/bamgbala/g, "bangbala"))
+        if (cleanEmail.includes("bangbala")) variants.push(cleanEmail.replace(/bangbala/g, "bamgbala"))
+
+        const userResults = await db.select().from(users)
+          .where(or(...variants.map(v => sql`LOWER(${users.email}) = ${v}`)))
+          .limit(1)
         const user = userResults[0]
 
         if (!user) {
@@ -192,6 +199,9 @@ export const authConfig: NextAuthConfig = {
           token.id = user.id
           token.country = user.country
           token = await populateTokenData(user.id, token)
+        } else if (token.id && !token.officialLevel) {
+          // Self-heal: populate official & member context if missing from an existing token
+          token = await populateTokenData(token.id as string, token)
         }
 
         if (trigger === "update" && session?.action === "impersonate" && token.isSuperAdmin) {

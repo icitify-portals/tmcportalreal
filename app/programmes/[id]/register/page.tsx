@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Textarea } from "@/components/ui/textarea"
-import { registerForProgramme, initializeProgrammeRegistrationPayment, getProgrammeDetailsAction } from "@/lib/actions/programmes"
+import { registerForProgramme, initializeProgrammeRegistrationPayment, getProgrammeDetailsAction, checkEmailEntitlementAction } from "@/lib/actions/programmes"
 import { getCorporateTiers } from "@/lib/programme-tiers"
 import { payWithWalletBalance } from "@/lib/actions/wallet"
 import { toast } from "sonner"
@@ -86,6 +86,31 @@ function RegistrationContent() {
             }))
         }
     }, [session])
+
+    const handleEmailBlur = async (emailToCheck: string) => {
+        if (!emailToCheck || !emailToCheck.includes("@")) return
+        try {
+            const res = await checkEmailEntitlementAction(programmeId, emailToCheck)
+            if (res.success && res.entitlement) {
+                setProgramme((prev: any) => prev ? ({ ...prev, entitlement: res.entitlement }) : prev)
+                if (res.existingRegistration) {
+                    setExistingReg(res.existingRegistration)
+                }
+                if (res.memberDetails) {
+                    setFormData(prev => ({
+                        ...prev,
+                        name: prev.name || res.memberDetails.name || "",
+                        phone: prev.phone || res.memberDetails.phone || "",
+                        state: prev.state || res.memberDetails.state || "",
+                        lga: prev.lga || res.memberDetails.lga || "",
+                        branch: prev.branch || res.memberDetails.branch || "",
+                    }))
+                }
+            }
+        } catch (e) {
+            console.error("Failed to check email entitlement:", e)
+        }
+    }
 
     const selectedStateData = nigerianStatesAndLgas.find(s => s.state === formData.state)
 
@@ -319,6 +344,7 @@ function RegistrationContent() {
                                             placeholder="your@email.com"
                                             value={formData.email} 
                                             onChange={(e) => setFormData({...formData, email: e.target.value})}
+                                            onBlur={(e) => handleEmailBlur(e.target.value)}
                                             required 
                                         />
                                     </div>

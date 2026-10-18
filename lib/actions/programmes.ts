@@ -1174,16 +1174,56 @@ export async function getAdminProgrammes(organizationId: string, type: 'MY_PROGR
 
 // --- Registration ---
 
-async function getEntitlementForProgramme(programme: any, session: Awaited<ReturnType<typeof getServerSession>> | null) {
+async function getEntitlementForProgramme(
+    programme: any,
+    session: Awaited<ReturnType<typeof getServerSession>> | null,
+    inputEmail?: string
+) {
     let hasActiveMemberRecord = false
-    const sessionUserId = (session?.user as any)?.id
-    if (sessionUserId) {
-        const [existingMember] = await db.select({ id: members.id })
-            .from(members)
-            .where(eq(members.userId, sessionUserId))
-            .limit(1)
-        hasActiveMemberRecord = !!existingMember
+    let officialLevel = (session?.user as any)?.officialLevel as string | undefined
+
+    let targetUserId = (session?.user as any)?.id as string | undefined
+    const emailToSearch = (inputEmail || session?.user?.email)?.trim().toLowerCase()
+
+    const emailVariants: string[] = []
+    if (emailToSearch) {
+        emailVariants.push(emailToSearch)
+        if (emailToSearch.includes("bamgbala")) {
+            emailVariants.push(emailToSearch.replace(/bamgbala/g, "bangbala"))
+        } else if (emailToSearch.includes("bangbala")) {
+            emailVariants.push(emailToSearch.replace(/bangbala/g, "bamgbala"))
+        }
     }
+
+    if (!targetUserId && emailVariants.length > 0) {
+        const [matchedUser] = await db.select({ id: users.id })
+            .from(users)
+            .where(or(...emailVariants.map(e => sql`LOWER(${users.email}) = ${e}`)))
+            .limit(1)
+
+        if (matchedUser) {
+            targetUserId = matchedUser.id
+        }
+    }
+
+    if (targetUserId) {
+        const [existingMember] = await db.select({ id: members.id, status: members.status })
+            .from(members)
+            .where(eq(members.userId, targetUserId))
+            .limit(1)
+        if (existingMember && existingMember.status !== 'INACTIVE' && existingMember.status !== 'REJECTED') {
+            hasActiveMemberRecord = true
+        }
+
+        const [officialProfile] = await db.select({ positionLevel: officials.positionLevel, isActive: officials.isActive })
+            .from(officials)
+            .where(and(eq(officials.userId, targetUserId), eq(officials.isActive, true)))
+            .limit(1)
+        if (officialProfile) {
+            officialLevel = officialProfile.positionLevel
+        }
+    }
+
     // The uniform standard fee must honor phased early-bird windows (not just the
     // legacy single early-bird fields), otherwise users get locked to the normal
     // fee while an EB window is still open (e.g. NITP First EB ₦15,000 till Oct 15).
@@ -1197,8 +1237,8 @@ async function getEntitlementForProgramme(programme: any, session: Awaited<Retur
     return resolveEntitlement({
         pricingTiers: programme.pricingTiers,
         amount: effectiveStandard,
-        signedIn: !!session,
-        officialLevel: (session?.user as any)?.officialLevel,
+        signedIn: !!session || !!targetUserId,
+        officialLevel,
         hasActiveMemberRecord
     })
 }
@@ -1213,6 +1253,12 @@ export async function registerForProgramme(programmeId: string, data?: z.infer<t
         // Check for existing registration
         let existingReg: { id: string, status: string | null, email: string } | null = null;
         const normalizedEmail = data?.email?.trim().toLowerCase() || session?.user?.email?.trim().toLowerCase();
+        const emailVariants: string[] = []
+        if (normalizedEmail) {
+            emailVariants.push(normalizedEmail)
+            if (normalizedEmail.includes("bamgbala")) emailVariants.push(normalizedEmail.replace(/bamgbala/g, "bangbala"))
+            if (normalizedEmail.includes("bangbala")) emailVariants.push(normalizedEmail.replace(/bangbala/g, "bamgbala"))
+        }
         
         if (session?.user) {
             const results = await db.select({ id: programmeRegistrations.id, status: programmeRegistrations.status, email: programmeRegistrations.email }).from(programmeRegistrations)
@@ -1223,12 +1269,12 @@ export async function registerForProgramme(programmeId: string, data?: z.infer<t
             if (results.length > 0) existingReg = results[0]
         } 
         
-        // Secondary check by email if not found by userId or if guest
-        if (!existingReg && normalizedEmail) {
+        // Secondary check by email variants if not found by userId or if guest
+        if (!existingReg && emailVariants.length > 0) {
             const results = await db.select({ id: programmeRegistrations.id, status: programmeRegistrations.status, email: programmeRegistrations.email }).from(programmeRegistrations)
                 .where(and(
                     eq(programmeRegistrations.programmeId, programmeId),
-                    eq(programmeRegistrations.email, normalizedEmail)
+                    or(...emailVariants.map(e => sql`LOWER(${programmeRegistrations.email}) = ${e}`))
                 )).limit(1)
             if (results.length > 0) existingReg = results[0]
         }
@@ -1301,7 +1347,7 @@ export async function registerForProgramme(programmeId: string, data?: z.infer<t
         const effectiveBaseRaw = getEffectiveAmount(ebFields);
 
         // Determine who the user is and lock their applicable price tier (entitlement check).
-        const entitlement = await getEntitlementForProgramme(programme, session)
+        const entitlement = await getEntitlementForProgramme(programme, session, normalizedEmail)
         let baseAmount = entitlement.baseAmount
         let tierLabel = entitlement.tierLabel
 
@@ -1376,8 +1422,17 @@ export async function registerForProgramme(programmeId: string, data?: z.infer<t
             delegationSize: data?.delegationSize ? parseInt(data.delegationSize.toString()) : 1,
         }
 
-        if (session?.user) {
-            // Logged in user (Member or Official)
+        let effectiveUserId = (session?.user as any)?.id as string | undefined
+        if (!effectiveUserId && emailVariants.length > 0) {
+            const [matchedU] = await db.select({ id: users.id })
+                .from(users)
+                .where(or(...emailVariants.map(e => sql`LOWER(${users.email}) = ${e}`)))
+                .limit(1)
+            if (matchedU) effectiveUserId = matchedU.id
+        }
+
+        if (effectiveUserId) {
+            // Logged in user or matched registered member
             const [memberData] = await db.select({
                 id: members.id,
                 gender: members.gender,
@@ -1388,12 +1443,13 @@ export async function registerForProgramme(programmeId: string, data?: z.infer<t
                 orgLevel: organizations.level,
                 orgParentId: organizations.parentId,
                 userPhone: users.phone,
-                userCountry: users.country
+                userCountry: users.country,
+                userName: users.name
             })
             .from(members)
             .innerJoin(users, eq(members.userId, users.id))
             .innerJoin(organizations, eq(members.organizationId, organizations.id))
-            .where(eq(members.userId, session.user.id))
+            .where(eq(members.userId, effectiveUserId))
             .limit(1)
             
             let resolvedBranch = data?.branch?.trim() || null
@@ -1438,11 +1494,11 @@ export async function registerForProgramme(programmeId: string, data?: z.infer<t
 
             registrationData = {
                 ...registrationData,
-                userId: session.user.id,
+                userId: effectiveUserId,
                 memberId: memberData?.id || null,
-                name: data?.name?.trim() || session.user.name || "Unknown",
-                email: data?.email?.trim() || session.user.email || "Unknown",
-                phone: data?.phone?.trim() || memberData?.userPhone || session.user.phone || null,
+                name: data?.name?.trim() || (session?.user as any)?.name || memberData?.userName || "Unknown",
+                email: normalizedEmail,
+                phone: data?.phone?.trim() || memberData?.userPhone || (session?.user as any)?.phone || null,
                 gender: (data?.gender as any) || (memberData?.gender as any) || 'MALE',
                 address: data?.address?.trim() || memberData?.address || null,
                 country: data?.country?.trim() || memberData?.userCountry || "Nigeria",
@@ -2685,6 +2741,84 @@ export async function getProgrammeDetailsAction(id: string) {
         }
         
         return { success: true, programme: { ...programme, entitlement }, existingRegistration }
+    } catch (error: any) {
+        return { success: false, error: error.message }
+    }
+}
+
+export async function checkEmailEntitlementAction(programmeId: string, email: string) {
+    try {
+        const [programme] = await db.select({
+            id: programmes.id,
+            title: programmes.title,
+            amount: programmes.amount,
+            earlyBirdAmount: programmes.earlyBirdAmount,
+            earlyBirdDeadline: programmes.earlyBirdDeadline,
+            paymentRequired: programmes.paymentRequired,
+            waiverCode: programmes.waiverCode,
+            pricingTiers: programmes.pricingTiers,
+        }).from(programmes).where(eq(programmes.id, programmeId)).limit(1)
+
+        if (!programme) return { success: false, error: "Programme not found" }
+        const session = await getServerSession()
+        const entitlement = await getEntitlementForProgramme(programme, session, email)
+
+        const cleanEmail = email.trim().toLowerCase()
+        const variants = [cleanEmail]
+        if (cleanEmail.includes("bamgbala")) variants.push(cleanEmail.replace(/bamgbala/g, "bangbala"))
+        if (cleanEmail.includes("bangbala")) variants.push(cleanEmail.replace(/bangbala/g, "bamgbala"))
+
+        let memberDetails: any = null
+        let existingRegistration: any = null
+
+        const [matchedUser] = await db.select({
+            id: users.id,
+            name: users.name,
+            phone: users.phone,
+        }).from(users).where(or(...variants.map(e => sql`LOWER(${users.email}) = ${e}`))).limit(1)
+
+        const targetUserId = matchedUser?.id || (session?.user as any)?.id
+
+        if (targetUserId) {
+            const [memberOrg] = await db.select({
+                state: organizations.state,
+                city: organizations.city,
+                name: organizations.name,
+            })
+            .from(members)
+            .innerJoin(organizations, eq(members.organizationId, organizations.id))
+            .where(eq(members.userId, targetUserId))
+            .limit(1)
+
+            if (matchedUser || memberOrg) {
+                memberDetails = {
+                    name: matchedUser?.name || null,
+                    phone: matchedUser?.phone || null,
+                    state: memberOrg?.state || null,
+                    lga: memberOrg?.city || null,
+                    branch: memberOrg?.name || null
+                }
+            }
+        }
+
+        // Check if already registered
+        const [reg] = await db.select({
+            id: programmeRegistrations.id,
+            status: programmeRegistrations.status,
+            amountPaid: programmeRegistrations.amountPaid,
+            lockedAmount: programmeRegistrations.lockedAmount,
+            checkInWaiver: programmeRegistrations.checkInWaiver,
+        }).from(programmeRegistrations).where(and(
+            eq(programmeRegistrations.programmeId, programmeId),
+            or(
+                targetUserId ? eq(programmeRegistrations.userId, targetUserId) : sql`0=1`,
+                or(...variants.map(e => sql`LOWER(${programmeRegistrations.email}) = ${e}`))
+            )
+        )).limit(1)
+
+        if (reg) existingRegistration = reg
+
+        return { success: true, entitlement, memberDetails, existingRegistration }
     } catch (error: any) {
         return { success: false, error: error.message }
     }

@@ -39,7 +39,14 @@ const norm = (label: string): string =>
 export const isCorporateLabel = (label: string): boolean => norm(label).includes("corporate")
 
 // The "non member" tier is reserved for guests and must never match a member.
-export const isNonMemberLabel = (label: string): boolean => norm(label).startsWith("non")
+// Note: "non executive" or "non official" is a member tier, NOT a non-member/guest tier!
+export const isNonMemberLabel = (label: string): boolean => {
+    const n = norm(label)
+    if (n.includes("non executive") || n.includes("non-executive") || n.includes("non official")) {
+        return false
+    }
+    return n.includes("non member") || n.includes("non-member") || n.includes("guest") || n.includes("visitor")
+}
 
 export function getCorporateTiers(pricingTiers: unknown): { label: string; amount: number }[] {
     return Object.entries(flattenPricingTiers(pricingTiers))
@@ -64,14 +71,23 @@ export interface Entitlement {
 }
 
 const OFFICIAL_KEYWORDS: Record<string, string[]> = {
-    NATIONAL: ["national", "nec"],
-    STATE: ["state"],
-    LOCAL_GOVERNMENT: ["lga", "local government", "local", "government"],
-    BRANCH: ["branch"],
+    NATIONAL: ["national", "nec", "nat", "nac"],
+    STATE: ["state", "sec"],
+    LOCAL_GOVERNMENT: ["lga", "local government", "local", "government", "lec"],
+    BRANCH: ["branch", "bec"],
 }
 
 // Ordered preference when falling back to a general individual membership tier.
-const MEMBER_KEYWORDS = ["ordinary", "general member", "delegate", "general", "member"]
+const MEMBER_KEYWORDS = [
+    "non executive",
+    "non-executive",
+    "non official",
+    "general member",
+    "ordinary",
+    "delegate",
+    "general",
+    "member"
+]
 
 const containsAny = (candidate: string, words: string[]) =>
     words.some((w) => candidate.includes(w))
@@ -96,6 +112,15 @@ export function resolveEntitlement(input: EntitlementInput): Entitlement {
         if (level && OFFICIAL_KEYWORDS[level]) {
             const match = eligible.find(([label]) => containsAny(norm(label), OFFICIAL_KEYWORDS[level]))
             if (match) return { kind: "member-tier", baseAmount: match[1], tierLabel: match[0] }
+        }
+
+        // Generic executive/official tier for any official if level-specific tier is not found
+        if (level) {
+            const genericExec = eligible.find(([label]) => {
+                const n = norm(label)
+                return (n.includes("executive") || n.includes("official")) && !n.includes("non executive") && !n.includes("non-executive") && !n.includes("non official")
+            })
+            if (genericExec) return { kind: "member-tier", baseAmount: genericExec[1], tierLabel: genericExec[0] }
         }
 
         if (input.hasActiveMemberRecord || level) {
