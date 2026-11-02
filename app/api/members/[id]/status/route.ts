@@ -1,5 +1,5 @@
 import { db } from "@/lib/db"
-import { members, notifications, users } from "@/lib/db/schema"
+import { members, notifications, users, organizations } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
 import { requirePermission } from "@/lib/rbac-v2"
 import { generateMembershipId } from "@/lib/id-generator"
@@ -96,7 +96,53 @@ export async function PATCH(
             // Retrieve country/state from metadata or parsing address
             const meta = member.metadata as any;
             const country = meta?.country || "Nigeria"; // Fallback
-            const state = meta?.state || "Lagos"; // Fallback
+            let state = (meta?.state as string)?.trim();
+
+            if (!state && member.organizationId) {
+                const [org] = await db
+                    .select()
+                    .from(organizations)
+                    .where(eq(organizations.id, member.organizationId))
+                    .limit(1);
+
+                if (org) {
+                    if (org.level === "STATE") {
+                        state = org.name;
+                    } else if (org.state) {
+                        state = org.state;
+                    } else if (org.parentId) {
+                        const [parentOrg] = await db
+                            .select()
+                            .from(organizations)
+                            .where(eq(organizations.id, org.parentId))
+                            .limit(1);
+
+                        if (parentOrg) {
+                            if (parentOrg.level === "STATE") {
+                                state = parentOrg.name;
+                            } else if (parentOrg.state) {
+                                state = parentOrg.state;
+                            } else if (parentOrg.parentId) {
+                                const [grandParentOrg] = await db
+                                    .select()
+                                    .from(organizations)
+                                    .where(eq(organizations.id, parentOrg.parentId))
+                                    .limit(1);
+
+                                if (grandParentOrg?.level === "STATE") {
+                                    state = grandParentOrg.name;
+                                } else if (grandParentOrg?.state) {
+                                    state = grandParentOrg.state;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (!state) {
+                state = "Lagos";
+            }
 
             const newId = await generateMembershipId(country, state);
 

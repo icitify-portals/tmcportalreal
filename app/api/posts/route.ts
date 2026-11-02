@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "@/lib/session"
+import { canUserManagePosts } from "@/lib/posts-auth-server"
 import { db } from "@/lib/db"
 import { posts, organizations, users } from "@/lib/db/schema"
 import { eq, desc, and } from "drizzle-orm"
@@ -8,7 +9,8 @@ import { z } from "zod"
 const postSchema = z.object({
     title: z.string().min(1),
     content: z.string().min(1),
-    excerpt: z.string().optional(),
+    excerpt: z.string().optional().nullable(),
+    coverImage: z.string().optional().nullable(),
     type: z.enum(["NEWS", "EVENT", "ANNOUNCEMENT"]),
     isPublished: z.boolean().optional(),
     organizationId: z.string().optional(),
@@ -57,10 +59,18 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
         }
 
+        const authorized = await canUserManagePosts(session)
+        if (!authorized) {
+            return NextResponse.json(
+                { error: "Forbidden: Only National Admins or the NAIPA Office can create posts." },
+                { status: 403 }
+            )
+        }
+
         const json = await request.json()
         const body = postSchema.parse(json)
 
-        const slug = body.title.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Date.now().toString().slice(-4)
+        const slug = body.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') + '-' + Date.now().toString().slice(-4)
 
         let targetOrgId = body.organizationId
         if (!targetOrgId) {
@@ -76,7 +86,8 @@ export async function POST(request: NextRequest) {
         await db.insert(posts).values({
             title: body.title,
             content: body.content,
-            excerpt: body.excerpt,
+            excerpt: body.excerpt || null,
+            coverImage: body.coverImage || null,
             postType: body.type,
             slug: slug,
             isPublished: body.isPublished || false,
@@ -85,7 +96,7 @@ export async function POST(request: NextRequest) {
             authorId: session.user.id
         })
 
-        return NextResponse.json({ success: true })
+        return NextResponse.json({ success: true, slug })
 
     } catch (error: any) {
         console.error("Post creation error", error)

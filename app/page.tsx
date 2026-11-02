@@ -199,7 +199,7 @@ async function NationalContent() {
                   </span>
                   Latest National Updates
                 </h3>
-                <Link href="#" className="hidden sm:flex items-center text-sm font-medium text-green-600 hover:text-green-700 hover:underline">
+                <Link href="/news" className="hidden sm:flex items-center text-sm font-medium text-green-600 hover:text-green-700 hover:underline">
                   View All Posts <ArrowRight className="h-4 w-4 ml-1" />
                 </Link>
               </div>
@@ -207,7 +207,7 @@ async function NationalContent() {
                 <NewsFeed organizationId={nationalOrg.id} />
               </ClientOnly>
               <div className="mt-6 sm:hidden text-center">
-                <Link href="#" className="text-sm font-medium text-green-600 hover:underline">View All Posts &rarr;</Link>
+                <Link href="/news" className="text-sm font-medium text-green-600 hover:underline">View All Posts &rarr;</Link>
               </div>
             </section>
 

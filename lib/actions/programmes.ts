@@ -5,7 +5,8 @@ import {
     programmes, programmeRegistrations, programmeReports, programmeMaterials,
     programmeStatusEnum, registrationStatusEnum, programmeEarlyBirdTiers,
     users, organizations, offices, officials, notifications,
-    financeBudgets, financeBudgetItems, meetings, financeTransactions
+    financeBudgets, financeBudgetItems, meetings, financeTransactions,
+    roles, userRoles
 } from "@/lib/db/schema"
 import { v4 as uuidv4 } from "uuid"
 import { getYearPlannerSettings } from "@/lib/actions/settings"
@@ -1221,6 +1222,24 @@ async function getEntitlementForProgramme(
             .limit(1)
         if (officialProfile) {
             officialLevel = officialProfile.positionLevel
+        } else if (!officialLevel) {
+            // Check if user has Super Admin or National-level Admin role
+            const [adminRole] = await db.select({ roleName: roles.name })
+                .from(userRoles)
+                .innerJoin(roles, eq(userRoles.roleId, roles.id))
+                .where(and(
+                    eq(userRoles.userId, targetUserId),
+                    eq(userRoles.isActive, true),
+                    or(
+                        sql`LOWER(${roles.name}) LIKE '%super admin%'`,
+                        sql`LOWER(${roles.name}) LIKE '%national admin%'`,
+                        sql`LOWER(${roles.name}) = 'admin'`
+                    )
+                ))
+                .limit(1)
+            if (adminRole) {
+                officialLevel = 'NATIONAL'
+            }
         }
     }
 

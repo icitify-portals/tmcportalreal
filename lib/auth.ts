@@ -21,6 +21,7 @@ import {
   verificationTokens,
   members,
   officials,
+  offices,
   userRoles,
   roles,
   rolePermissions,
@@ -87,6 +88,9 @@ async function populateTokenData(userId: string, token: any) {
   token.officialId = undefined
   token.officialOrganizationId = undefined
   token.officialLevel = undefined
+  token.officialPosition = undefined
+  token.officialOfficeId = undefined
+  token.officialOfficeName = undefined
 
   // 2. Fetch Member Profile
   const memberProfileData = await db.select({
@@ -105,15 +109,19 @@ async function populateTokenData(userId: string, token: any) {
     token.memberStatus = profile.status || undefined
   }
 
-  // 3. Fetch Official Profile
+  // 3. Fetch Official Profile (including linked Office)
   const officialProfileData = await db.select({
     id: officials.id,
     organizationId: officials.organizationId,
     positionLevel: officials.positionLevel,
+    position: officials.position,
+    officeId: officials.officeId,
+    officeName: offices.name,
     state: organizations.state
   })
     .from(officials)
     .leftJoin(organizations, eq(officials.organizationId, organizations.id))
+    .leftJoin(offices, eq(officials.officeId, offices.id))
     .where(eq(officials.userId, userId))
     .limit(1)
 
@@ -122,6 +130,9 @@ async function populateTokenData(userId: string, token: any) {
     token.officialId = profile.id
     token.officialOrganizationId = profile.organizationId
     token.officialLevel = profile.positionLevel
+    token.officialPosition = profile.position || undefined
+    token.officialOfficeId = profile.officeId || undefined
+    token.officialOfficeName = profile.officeName || undefined
     token.state = profile.state || undefined
   }
 
@@ -199,7 +210,7 @@ export const authConfig: NextAuthConfig = {
           token.id = user.id
           token.country = user.country
           token = await populateTokenData(user.id, token)
-        } else if (token.id && !token.officialLevel) {
+        } else if (token.id && (!token.officialLevel || (token.officialId && !token.officialPosition))) {
           // Self-heal: populate official & member context if missing from an existing token
           token = await populateTokenData(token.id as string, token)
         }
@@ -249,6 +260,9 @@ export const authConfig: NextAuthConfig = {
           session.user.officialId = token.officialId as string | undefined
           session.user.officialOrganizationId = token.officialOrganizationId as string | undefined
           session.user.officialLevel = token.officialLevel as string | undefined
+          session.user.officialPosition = token.officialPosition as string | undefined
+          session.user.officialOfficeId = token.officialOfficeId as string | undefined
+          session.user.officialOfficeName = token.officialOfficeName as string | undefined
           session.user.country = token.country as string | undefined
           session.user.state = token.state as string | undefined
           session.user.impersonatorId = token.impersonatorId as string | undefined

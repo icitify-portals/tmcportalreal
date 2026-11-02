@@ -34,6 +34,9 @@ declare module "next-auth" {
       officialId?: string
       officialOrganizationId?: string
       officialLevel?: string
+      officialPosition?: string
+      officialOfficeId?: string
+      officialOfficeName?: string
       role?: string
       organizationId?: string
       country?: string
@@ -66,8 +69,10 @@ declare module "next-auth/jwt" {
     officialId?: string
     officialOrganizationId?: string
     officialLevel?: string
+    officialPosition?: string
+    officialOfficeId?: string
+    officialOfficeName?: string
     state?: string
     impersonatorId?: string
   }
 }
-

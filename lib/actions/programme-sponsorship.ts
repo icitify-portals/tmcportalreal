@@ -11,7 +11,7 @@ import {
     payments,
     financeTransactions,
 } from "@/lib/db/schema";
-import { and, eq, or, desc, asc, sql } from "drizzle-orm";
+import { and, eq, or, desc, asc, sql, like } from "drizzle-orm";
 import { alias } from "drizzle-orm/mysql-core";
 import { revalidatePath } from "next/cache";
 import { getServerSession } from "@/lib/session";
@@ -27,11 +27,18 @@ function genSponsorCode(): string {
 }
 
 function normalizeSponsorCode(raw: string): string {
-    const cleaned = (raw || "").trim().toUpperCase().replace(/\s+/g, "");
-    if (/^SP[0-9A-F]{8}$/.test(cleaned)) {
-        return `SP-${cleaned.slice(2)}`;
+    const rawTrimmed = (raw || "").trim().toUpperCase();
+    let cleaned = rawTrimmed.replace(/\s+/g, "");
+    if (cleaned.startsWith("SP-")) {
+        cleaned = cleaned.substring(3);
+    } else if (cleaned.startsWith("SP")) {
+        cleaned = cleaned.substring(2);
     }
-    return cleaned;
+    const hexOnly = cleaned.replace(/[^0-9A-F]/g, "");
+    if (/^[0-9A-F]{8}$/.test(hexOnly)) {
+        return `SP-${hexOnly}`;
+    }
+    return rawTrimmed;
 }
 
 /**
@@ -90,7 +97,9 @@ export async function resolveMemberForRegistration(
                 .where(
                     or(
                         eq(members.id, trimmedMemberInput),
-                        eq(members.memberId, trimmedMemberInput)
+                        eq(members.memberId, trimmedMemberInput),
+                        eq(members.memberId, trimmedMemberInput.toUpperCase().replace(/\s+/g, "")),
+                        like(members.memberId, `%${trimmedMemberInput.toUpperCase().replace(/\s+/g, "")}%`)
                     )
                 )
                 .limit(1);
@@ -427,8 +436,19 @@ export async function emailSponsorCode(poolId: string) {
 /** Public: look up a pool by sponsor code (claim page). Self-heals if paymentRef succeeded on Paystack. */
 export async function getSponsorshipPoolByCode(code: string) {
     const normalized = normalizeSponsorCode(code);
-    if (!normalized) return null;
-    let [pool] = await db.select().from(programmeSponsorshipPools).where(eq(programmeSponsorshipPools.sponsorCode, normalized)).limit(1);
+    const rawTrimmed = (code || "").trim().toUpperCase();
+    if (!normalized && !rawTrimmed) return null;
+
+    let [pool] = await db
+        .select()
+        .from(programmeSponsorshipPools)
+        .where(
+            or(
+                eq(programmeSponsorshipPools.sponsorCode, normalized),
+                eq(programmeSponsorshipPools.sponsorCode, rawTrimmed)
+            )
+        )
+        .limit(1);
     if (!pool) return null;
 
     // Self-healing: if pool is still marked PENDING but has a paymentRef, attempt Paystack verification
@@ -496,15 +516,21 @@ export async function claimSponsoredSeat(data: {
 }) {
     const session = await getServerSession();
     const normalizedCode = normalizeSponsorCode(data.sponsorCode);
+    const rawTrimmedCode = (data.sponsorCode || "").trim().toUpperCase();
 
-    if (!normalizedCode) return { success: false, error: "Sponsor code is required" };
+    if (!normalizedCode && !rawTrimmedCode) return { success: false, error: "Sponsor code is required" };
     if (!data.name?.trim()) return { success: false, error: "Full name is required" };
 
     // Pre-check & self-heal pool payment status outside transaction if needed
     const [initialPool] = await db
         .select()
         .from(programmeSponsorshipPools)
-        .where(eq(programmeSponsorshipPools.sponsorCode, normalizedCode))
+        .where(
+            or(
+                eq(programmeSponsorshipPools.sponsorCode, normalizedCode),
+                eq(programmeSponsorshipPools.sponsorCode, rawTrimmedCode)
+            )
+        )
         .limit(1);
     if (!initialPool) return { success: false, error: "Invalid sponsor code" };
 
@@ -522,7 +548,12 @@ export async function claimSponsoredSeat(data: {
         const [pool] = await tx
             .select()
             .from(programmeSponsorshipPools)
-            .where(eq(programmeSponsorshipPools.sponsorCode, normalizedCode))
+            .where(
+                or(
+                    eq(programmeSponsorshipPools.sponsorCode, normalizedCode),
+                    eq(programmeSponsorshipPools.sponsorCode, rawTrimmedCode)
+                )
+            )
             .limit(1);
         if (!pool) return { success: false, error: "Invalid sponsor code" };
         if (pool.status !== "PAID") return { success: false, error: "This sponsorship has not been paid for yet" };

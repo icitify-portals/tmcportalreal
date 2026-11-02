@@ -1,20 +1,47 @@
 "use client"
 
+import { useRef, useState } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Image from '@tiptap/extension-image'
-import { Bold, Italic, List, ListOrdered, Link as LinkIcon, Image as ImageIcon, Heading1, Heading2, Quote, Undo, Redo } from 'lucide-react'
+import {
+    Bold,
+    Italic,
+    Underline as UnderlineIcon,
+    Strikethrough,
+    List,
+    ListOrdered,
+    Link as LinkIcon,
+    Image as ImageIcon,
+    Upload,
+    Heading1,
+    Heading2,
+    Quote,
+    Undo,
+    Redo,
+    Loader2
+} from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { cn } from '@/lib/utils'
+import { toast } from 'sonner'
 
 interface RichTextEditorProps {
     content: string
     onChange: (content: string) => void
     editable?: boolean
+    uploadCategory?: string
 }
 
-export function RichTextEditor({ content, onChange, editable = true }: RichTextEditorProps) {
+export function RichTextEditor({
+    content,
+    onChange,
+    editable = true,
+    uploadCategory = "posts"
+}: RichTextEditorProps) {
+    const fileInputRef = useRef<HTMLInputElement>(null)
+    const [isUploadingImage, setIsUploadingImage] = useState(false)
+
     const editor = useEditor({
         extensions: [
             StarterKit.configure({
@@ -22,7 +49,11 @@ export function RichTextEditor({ content, onChange, editable = true }: RichTextE
                     openOnClick: false
                 }
             }),
-            Image,
+            Image.configure({
+                HTMLAttributes: {
+                    class: 'rounded-lg max-w-full h-auto my-4',
+                },
+            }),
         ],
         content: content,
         editable: editable,
@@ -31,11 +62,41 @@ export function RichTextEditor({ content, onChange, editable = true }: RichTextE
         },
         editorProps: {
             attributes: {
-                class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none min-h-[300px] p-4',
+                class: 'prose prose-sm sm:prose lg:prose-lg dark:prose-invert max-w-none focus:outline-none min-h-[300px] p-4',
             },
         },
         immediatelyRender: false,
     })
+
+    const handleImageFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file || !editor) return
+
+        setIsUploadingImage(true)
+        const formData = new FormData()
+        formData.append("file", file)
+        formData.append("category", uploadCategory)
+
+        try {
+            const res = await fetch("/api/upload", {
+                method: "POST",
+                body: formData,
+            })
+            const data = await res.json()
+            if (!res.ok || !data.url) {
+                throw new Error(data.error || "Failed to upload image")
+            }
+            editor.chain().focus().setImage({ src: data.url, alt: file.name }).run()
+            toast.success("Picture inserted into content")
+        } catch (error: any) {
+            toast.error(error.message || "Failed to upload image")
+        } finally {
+            setIsUploadingImage(false)
+            if (fileInputRef.current) {
+                fileInputRef.current.value = ""
+            }
+        }
+    }
 
     if (!editor) {
         return null
@@ -47,9 +108,17 @@ export function RichTextEditor({ content, onChange, editable = true }: RichTextE
 
     return (
         <div className="border rounded-md overflow-hidden bg-background">
+            <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageFileUpload}
+                className="hidden"
+            />
             {/* Toolbar */}
             <div className="flex flex-wrap items-center gap-1 p-2 border-b bg-muted/20">
                 <Button
+                    type="button"
                     variant="ghost"
                     size="icon"
                     onClick={() => editor.chain().focus().toggleBold().run()}
@@ -59,6 +128,7 @@ export function RichTextEditor({ content, onChange, editable = true }: RichTextE
                     <Bold className="h-4 w-4" />
                 </Button>
                 <Button
+                    type="button"
                     variant="ghost"
                     size="icon"
                     onClick={() => editor.chain().focus().toggleItalic().run()}
@@ -67,10 +137,31 @@ export function RichTextEditor({ content, onChange, editable = true }: RichTextE
                 >
                     <Italic className="h-4 w-4" />
                 </Button>
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => editor.chain().focus().toggleUnderline().run()}
+                    className={cn(editor.isActive('underline') && "bg-muted")}
+                    title="Underline"
+                >
+                    <UnderlineIcon className="h-4 w-4" />
+                </Button>
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => editor.chain().focus().toggleStrike().run()}
+                    className={cn(editor.isActive('strike') && "bg-muted")}
+                    title="Strikethrough"
+                >
+                    <Strikethrough className="h-4 w-4" />
+                </Button>
 
                 <Separator orientation="vertical" className="h-6 mx-1" />
 
                 <Button
+                    type="button"
                     variant="ghost"
                     size="icon"
                     onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
@@ -80,6 +171,7 @@ export function RichTextEditor({ content, onChange, editable = true }: RichTextE
                     <Heading1 className="h-4 w-4" />
                 </Button>
                 <Button
+                    type="button"
                     variant="ghost"
                     size="icon"
                     onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
@@ -92,6 +184,7 @@ export function RichTextEditor({ content, onChange, editable = true }: RichTextE
                 <Separator orientation="vertical" className="h-6 mx-1" />
 
                 <Button
+                    type="button"
                     variant="ghost"
                     size="icon"
                     onClick={() => editor.chain().focus().toggleBulletList().run()}
@@ -101,6 +194,7 @@ export function RichTextEditor({ content, onChange, editable = true }: RichTextE
                     <List className="h-4 w-4" />
                 </Button>
                 <Button
+                    type="button"
                     variant="ghost"
                     size="icon"
                     onClick={() => editor.chain().focus().toggleOrderedList().run()}
@@ -110,6 +204,7 @@ export function RichTextEditor({ content, onChange, editable = true }: RichTextE
                     <ListOrdered className="h-4 w-4" />
                 </Button>
                 <Button
+                    type="button"
                     variant="ghost"
                     size="icon"
                     onClick={() => editor.chain().focus().toggleBlockquote().run()}
@@ -122,6 +217,7 @@ export function RichTextEditor({ content, onChange, editable = true }: RichTextE
                 <Separator orientation="vertical" className="h-6 mx-1" />
 
                 <Button
+                    type="button"
                     variant="ghost"
                     size="icon"
                     onClick={() => {
@@ -140,12 +236,30 @@ export function RichTextEditor({ content, onChange, editable = true }: RichTextE
                         editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
                     }}
                     className={cn(editor.isActive('link') && "bg-muted")}
-                    title="Link"
+                    title="Insert Link"
                 >
                     <LinkIcon className="h-4 w-4" />
                 </Button>
 
                 <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploadingImage}
+                    className="gap-1.5 px-2 text-xs"
+                    title="Upload Picture into Content"
+                >
+                    {isUploadingImage ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                        <Upload className="h-4 w-4" />
+                    )}
+                    <span>Upload Image</span>
+                </Button>
+
+                <Button
+                    type="button"
                     variant="ghost"
                     size="icon"
                     onClick={() => {
@@ -154,7 +268,7 @@ export function RichTextEditor({ content, onChange, editable = true }: RichTextE
                             editor.chain().focus().setImage({ src: url }).run()
                         }
                     }}
-                    title="Image"
+                    title="Insert Image from URL"
                 >
                     <ImageIcon className="h-4 w-4" />
                 </Button>
@@ -162,6 +276,7 @@ export function RichTextEditor({ content, onChange, editable = true }: RichTextE
                 <div className="flex-1" />
 
                 <Button
+                    type="button"
                     variant="ghost"
                     size="icon"
                     onClick={() => editor.chain().focus().undo().run()}
@@ -171,6 +286,7 @@ export function RichTextEditor({ content, onChange, editable = true }: RichTextE
                     <Undo className="h-4 w-4" />
                 </Button>
                 <Button
+                    type="button"
                     variant="ghost"
                     size="icon"
                     onClick={() => editor.chain().focus().redo().run()}

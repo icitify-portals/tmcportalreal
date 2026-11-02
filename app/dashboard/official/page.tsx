@@ -5,12 +5,13 @@ import { requireAuth } from "@/lib/rbac"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { db } from "@/lib/db"
-import { officials, members, organizations } from "@/lib/db/schema"
+import { officials, offices, members, organizations } from "@/lib/db/schema"
 import { eq, count, sql, and } from "drizzle-orm"
 import { format } from "date-fns"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Users } from "lucide-react"
+import { Users, Newspaper, Plus } from "lucide-react"
+import { isNaipaMatcher } from "@/lib/posts-auth"
 
 import { getMockJurisdiction } from "@/lib/mock-jurisdiction"
 
@@ -58,8 +59,15 @@ export default async function OfficialDashboardPage() {
     const organizationData = officialData?.organizationId ? await db.query.organizations.findFirst({
         where: eq(organizations.id, officialData.organizationId)
     }) : null;
-    official = officialData ? { ...officialData, organization: organizationData } : null;
+    const officeData = officialData?.officeId ? await db.query.offices.findFirst({
+        where: eq(offices.id, officialData.officeId)
+    }) : null;
+    official = officialData ? { ...officialData, organization: organizationData, office: officeData } : null;
   }
+
+  const isNaipaOfficial =
+    official?.positionLevel === "NATIONAL" &&
+    (isNaipaMatcher(official?.office?.name) || isNaipaMatcher(official?.position))
 
   // Jurisdiction-aware member count
   let memberCount = 0;
@@ -98,17 +106,23 @@ export default async function OfficialDashboardPage() {
               <CardTitle>Position Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              <div className="flex justify-between">
+              <div className="flex justify-between gap-4">
                 <span className="text-muted-foreground">Position:</span>
-                <span className="font-medium">{official?.position}</span>
+                <span className="font-medium text-right">{official?.position}</span>
               </div>
-              <div className="flex justify-between">
+              {official?.office?.name && (
+                <div className="flex justify-between gap-4">
+                  <span className="text-muted-foreground">Office:</span>
+                  <span className="font-medium text-right">{official.office.name}</span>
+                </div>
+              )}
+              <div className="flex justify-between gap-4">
                 <span className="text-muted-foreground">Organization:</span>
-                <span className="font-medium">{official?.organization?.name}</span>
+                <span className="font-medium text-right">{official?.organization?.name}</span>
               </div>
-              <div className="flex justify-between">
+              <div className="flex justify-between gap-4">
                 <span className="text-muted-foreground">Term Start:</span>
-                <span className="font-medium">
+                <span className="font-medium text-right">
                   {official?.termStart ? format(new Date(official.termStart), 'PP') : "N/A"}
                 </span>
               </div>
@@ -133,8 +147,33 @@ export default async function OfficialDashboardPage() {
             </CardContent>
           </Card>
         </div>
+
+        {isNaipaOfficial && (
+          <Card className="border-green-200 dark:border-green-900 bg-green-50/40 dark:bg-green-950/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-green-800 dark:text-green-400">
+                <Newspaper className="h-5 w-5" />
+                News & Publications Management (NAIPA)
+              </CardTitle>
+              <CardDescription>
+                As the National Officer for Information and Publication Affairs (NAIPA), you can publish and manage official news, events, and announcements with pictures and rich text.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-wrap gap-3">
+              <Button asChild className="bg-green-700 hover:bg-green-800">
+                <Link href="/dashboard/admin/posts/new">
+                  <Plus className="mr-2 h-4 w-4" /> Create New Post
+                </Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link href="/dashboard/admin/posts">
+                  Manage All Posts
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </DashboardLayout>
   )
 }
-

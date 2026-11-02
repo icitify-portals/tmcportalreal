@@ -26,7 +26,7 @@ export const locationData = {
       { name: "Lagos Island", branches: ["Enuowa","Isale-Eko","Okepopo","Tokunbo"] },
       { name: "Kosofe", branches: ["Araromi","Ekore Oworo","Ifako","L & K Oworo"] },
       { name: "Lagos Mainland", branches: ["Apapa Road","Ebute Meta","Ilogbo","Iwaya","Makoko","Oko Baba"] },
-      { name: "Mushin", branches: ["Alakija","Atewolara","Ayetoro","Kekere-Owo","Megbon","Olorunishola","Papa Ajao","Wuraola"] },
+      { name: "Mushin", branches: ["Alakija","Atewolara","Ayetoro","Kekere-Owo","Megbon","Odiolowo","Olorunishola","Papa Ajao","Wuraola"] },
       { name: "Odi-Olowo", branches: ["Alakara","Ilupeju","OdiOlowo"] },
       { name: "Ojo", branches: ["Barrack","Morogbo","Okokomaiko"] },
       { name: "Oshodi / Isolo", branches: ["Ayegbesin","Ifelodun","Mulikudeen"] },

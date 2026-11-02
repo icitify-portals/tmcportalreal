@@ -68,7 +68,9 @@ export async function POST(req: Request) {
             "Treasurer": ["FINANCE_ADMIN"],
             "Financial Secretary": ["FINANCE_ADMIN"],
             "ICT Officer": ["ICT_OFFICER"],
-            "Publicity Secretary": ["CONTENT_MANAGER"]
+            "Publicity Secretary": ["CONTENT_MANAGER"],
+            "NAIPA": ["CONTENT_MANAGER"],
+            "Information and Publication": ["CONTENT_MANAGER"]
         }
 
         let targetRoleCodes: string[] = []

@@ -10,10 +10,11 @@ import { Button } from "@/components/ui/button"
 import { Menu } from "lucide-react"
 import { ImpersonationBanner } from "./impersonation-banner"
 import { ViewAsBanner } from "./view-as-banner"
+import { canManagePostsFromSession } from "@/lib/posts-auth"
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const { data: session, status } = useSession()
+  const { data: session } = useSession()
   const [mounted, setMounted] = useState(false)
   const [overrideRole, setOverrideRole] = useState<"admin" | "member" | "official" | "council" | null>(null)
   const [overrideAdminLevel, setOverrideAdminLevel] = useState<string | null>(null)
@@ -48,6 +49,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const isAdmin = session?.user?.isSuperAdmin || (session?.user?.roles && session.user.roles.some((r: any) => ["SUPER_ADMIN", "NATIONAL_ADMIN"].includes(r.code) || ["SYSTEM", "NATIONAL"].includes(r.jurisdictionLevel)));
   const isCouncil = session?.user?.roles?.some((r: any) => r.code === "COUNCIL");
   const isOfficial = !!session?.user?.officialId || (session?.user?.roles && session.user.roles.some((r: any) => ["STATE_ADMIN", "LOCAL_GOVERNMENT_ADMIN", "BRANCH_ADMIN", "OFFICIAL"].includes(r.code) || ["STATE", "LOCAL_GOVERNMENT", "BRANCH"].includes(r.jurisdictionLevel)));
+  const canManagePosts = canManagePostsFromSession(session?.user)
 
   const baseUserRole = isAdmin
     ? "admin"
@@ -106,6 +108,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             userRole={userRole} 
             isRealAdmin={isAdmin} 
             adminLevel={adminLevel} 
+            canManagePosts={canManagePosts}
             onViewModeChange={handleViewModeChange}
           />
         )}
@@ -128,6 +131,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                   userRole={userRole}
                   isRealAdmin={isAdmin}
                   adminLevel={adminLevel}
+                  canManagePosts={canManagePosts}
                   className="w-full h-full border-none"
                   onNavigate={() => setIsMobileMenuOpen(false)}
                   onViewModeChange={handleViewModeChange}
@@ -155,5 +159,3 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     </div>
   )
 }
-
-

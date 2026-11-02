@@ -1,4 +1,3 @@
-
 import React from "react";
 import Link from 'next/link';
 import { db } from "@/lib/db";
@@ -56,11 +55,16 @@ export async function NewsFeed({ organizationId }: NewsFeedProps) {
                         <CardTitle className="line-clamp-2 text-lg">{post.title}</CardTitle>
                     </CardHeader>
                     <CardContent className="flex-grow">
-                        <div className="text-sm text-muted-foreground line-clamp-3 prose prose-sm dark:prose-invert" dangerouslySetInnerHTML={{ __html: post.excerpt || post.content.substring(0, 150) + "..." }} />
+                        <div
+                            className="text-sm text-muted-foreground line-clamp-3 prose prose-sm dark:prose-invert"
+                            dangerouslySetInnerHTML={{
+                                __html: post.excerpt || post.content.replace(/<[^>]*>?/gm, "").substring(0, 150) + "..."
+                            }}
+                        />
                     </CardContent>
                     <div className="p-6 pt-0 mt-auto">
-                        <Button variant="ghost" size="sm" asChild className="p-0 h-auto font-medium text-green-600 hover:text-green-700 hover:bg-transparent p-0">
-                            <Link href={`#`} className="flex items-center gap-1">
+                        <Button variant="ghost" size="sm" asChild className="p-0 h-auto font-medium text-green-600 hover:text-green-700 hover:bg-transparent">
+                            <Link href={`/news/${post.slug}`} className="flex items-center gap-1">
                                 Read full story <ArrowRight className="h-3 w-3" />
                             </Link>
                         </Button>

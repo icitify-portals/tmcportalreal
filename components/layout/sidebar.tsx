@@ -45,6 +45,7 @@ interface SidebarProps {
   userRole: "admin" | "member" | "official" | "council"
   isRealAdmin?: boolean
   adminLevel?: string
+  canManagePosts?: boolean
   onViewModeChange?: (mode: "admin" | "member" | "official" | "council", level?: string, jurisdiction?: { state?: string; lga?: string; branch?: string }) => void
 }
 
@@ -121,6 +122,7 @@ const officialNavItems = [
   { href: "/", label: "Home", icon: Home },
   { href: "/dashboard/official", label: "Dashboard", icon: LayoutDashboard },
   { href: "/dashboard/broadcasts", label: "Broadcasts", icon: Radio },
+  { href: "/dashboard/admin/posts", label: "News & Posts (NAIPA)", icon: Newspaper, isPostsManagerOnly: true },
   { href: "/dashboard/member/profile", label: "My Profile", icon: Users },
   { href: "/dashboard/admin/programmes", label: "Programmes & Events", icon: Calendar },
   { href: "/dashboard/member/programmes", label: "My Programmes", icon: Calendar },
@@ -150,7 +152,7 @@ const councilNavItems = [
   { href: "/dashboard/guide", label: "User Guide", icon: BookOpen },
 ]
 
-export function Sidebar({ userRole, isRealAdmin, adminLevel, className, onNavigate, onViewModeChange }: SidebarProps & { className?: string; onNavigate?: () => void }) {
+export function Sidebar({ userRole, isRealAdmin, adminLevel, canManagePosts, className, onNavigate, onViewModeChange }: SidebarProps & { className?: string; onNavigate?: () => void }) {
   const pathname = usePathname()
 
   let navItems =
@@ -166,6 +168,9 @@ export function Sidebar({ userRole, isRealAdmin, adminLevel, className, onNaviga
     navItems = navItems.filter(item => {
       if ((item as any).isJurisdictionHeadOnly) {
         return !!adminLevel || isRealAdmin
+      }
+      if ((item as any).isPostsManagerOnly) {
+        return !!canManagePosts || isRealAdmin
       }
       return true
     })
@@ -324,5 +329,3 @@ export function Sidebar({ userRole, isRealAdmin, adminLevel, className, onNaviga
     </div>
   )
 }
-
-
