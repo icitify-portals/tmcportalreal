@@ -13,7 +13,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Printer, UserCheck, CheckCircle2, ShieldAlert, ShieldCheck, Award } from "lucide-react"
+import { Printer, UserCheck, CheckCircle2, ShieldAlert, ShieldCheck, Award, BarChart3, Receipt } from "lucide-react"
 import Link from "next/link"
 import { format } from "date-fns"
 import { ClientCurrency } from "@/components/ui/client-currency"
@@ -337,6 +337,21 @@ export function RegistrationsClientTable({
                         </TableRow>
                     </TableFooter>
                 </Table>
+            </div>
+
+            {/* Note clarifying Attendee Table vs Total Gateway Inflows */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 rounded-xl border border-emerald-200 bg-emerald-50/50 text-xs text-slate-800 shadow-xs">
+                <div className="flex items-center gap-2.5">
+                    <Receipt className="h-4 w-4 text-emerald-700 shrink-0" />
+                    <span>
+                        <strong className="text-emerald-950">Attendee Table Subtotal:</strong> The <strong>NGN {totals.collected.toLocaleString()}</strong> above reflects attendee seat records. Full gateway inflows including upfront <strong>Sponsorship Pools</strong> and <strong>Bulk Delegations</strong> are detailed in the Complete Financial Audit.
+                    </span>
+                </div>
+                <Button variant="outline" size="sm" asChild className="h-8 text-xs shrink-0 border-emerald-300 text-emerald-800 bg-white hover:bg-emerald-100 font-semibold shadow-xs">
+                    <Link href={`/dashboard/admin/programmes/${programmeId}/analytics`}>
+                        <BarChart3 className="h-3.5 w-3.5 mr-1.5 text-emerald-600" /> View Financial Audit
+                    </Link>
+                </Button>
             </div>
         </div>
     )

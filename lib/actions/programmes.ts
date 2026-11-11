@@ -4,13 +4,14 @@ import { db } from "@/lib/db"
 import {
     programmes, programmeRegistrations, programmeReports, programmeMaterials,
     programmeStatusEnum, registrationStatusEnum, programmeEarlyBirdTiers,
+    bulkRegistrationGroups, programmeSponsorshipPools,
     users, organizations, offices, officials, notifications,
     financeBudgets, financeBudgetItems, meetings, financeTransactions,
     roles, userRoles
 } from "@/lib/db/schema"
 import { v4 as uuidv4 } from "uuid"
 import { getYearPlannerSettings } from "@/lib/actions/settings"
-import { eq, desc, and, or, aliasedTable, inArray, sql, asc, like } from "drizzle-orm"
+import { eq, desc, and, or, aliasedTable, inArray, sql, asc, like, ne, isNull } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { getServerSession } from "@/lib/session"
@@ -2317,32 +2318,129 @@ export async function syncAllProgrammePayments(programmeId: string) {
         const session = await getServerSession()
         if (!session?.user?.id) return { success: false, error: "Unauthorized" }
 
-        // Fetch all pending registrations with a reference
+        let successCount = 0
+
+        // 1. Fetch pending registrations with a payment reference
         const pending = await db.select()
             .from(programmeRegistrations)
             .where(and(
                 eq(programmeRegistrations.programmeId, programmeId),
-                eq(programmeRegistrations.status, 'PENDING_PAYMENT'),
-                sql`${programmeRegistrations.paymentReference} IS NOT NULL`
+                sql`${programmeRegistrations.paymentReference} IS NOT NULL`,
+                or(
+                    eq(programmeRegistrations.status, 'PENDING_PAYMENT'),
+                    eq(programmeRegistrations.status, 'REGISTERED'),
+                    eq(programmeRegistrations.amountPaid, '0.00'),
+                    isNull(programmeRegistrations.amountPaid)
+                )
             ))
 
-        if (pending.length === 0) return { success: true, count: 0, message: "No pending payments to sync" }
-
-        let successCount = 0
         for (const reg of pending) {
             if (!reg.paymentReference) continue
+            // Skip bypass references
+            if (reg.paymentReference === 'ADMIN_OFFLINE_BYPASS' || reg.paymentReference.startsWith('MANUAL_')) continue
 
-            const res = await verifyProgrammeRegistrationPayment(reg.id, reg.paymentReference)
-            if (res.success) {
-                successCount++
+            try {
+                const res = await verifyProgrammeRegistrationPayment(reg.id, reg.paymentReference)
+                if (res.success && !(res as any).alreadyVerified && !(res as any).already) {
+                    successCount++
+                }
+            } catch (err) {
+                console.error(`Error verifying registration ${reg.id}:`, err)
             }
         }
 
+        // 2. Sync pending sponsorship pools
+        try {
+            const pendingPools = await db.select()
+                .from(programmeSponsorshipPools)
+                .where(and(
+                    eq(programmeSponsorshipPools.programmeId, programmeId),
+                    sql`${programmeSponsorshipPools.paymentRef} IS NOT NULL`,
+                    or(
+                        eq(programmeSponsorshipPools.status, 'PENDING' as any),
+                        isNull(programmeSponsorshipPools.status)
+                    )
+                ))
+
+            if (pendingPools.length > 0) {
+                const { verifySponsorshipPayment } = await import("@/lib/actions/programme-sponsorship")
+                for (const pool of pendingPools) {
+                    if (!pool.paymentRef) continue
+                    try {
+                        const res = await verifySponsorshipPayment(pool.id, pool.paymentRef)
+                        if (res.success && !res.alreadyPaid) {
+                            successCount++
+                        }
+                    } catch (err) {
+                        console.error(`Error syncing pool ${pool.id}:`, err)
+                    }
+                }
+            }
+        } catch (e) {
+            console.error("Pool sync query error:", e)
+        }
+
+        // 3. Sync pending bulk groups
+        try {
+            const pendingBulk = await db.select()
+                .from(bulkRegistrationGroups)
+                .where(and(
+                    eq(bulkRegistrationGroups.programmeId, programmeId),
+                    sql`${bulkRegistrationGroups.paymentRef} IS NOT NULL`,
+                    or(
+                        eq(bulkRegistrationGroups.status, 'PENDING' as any),
+                        isNull(bulkRegistrationGroups.status)
+                    )
+                ))
+
+            if (pendingBulk.length > 0) {
+                const { verifyBulkPayment } = await import("@/lib/actions/programme-bulk")
+                for (const bg of pendingBulk) {
+                    if (!bg.paymentRef) continue
+                    try {
+                        const res = await verifyBulkPayment(bg.id, bg.paymentRef)
+                        if (res.success && !res.alreadyPaid) {
+                            successCount++
+                        }
+                    } catch (err) {
+                        console.error(`Error syncing bulk group ${bg.id}:`, err)
+                    }
+                }
+            }
+        } catch (e) {
+            console.error("Bulk sync query error:", e)
+        }
+
+        // 4. Activate any beneficiary registrations under PAID pools & bulk groups
+        try {
+            const paidPools = await db.select()
+                .from(programmeSponsorshipPools)
+                .where(and(
+                    eq(programmeSponsorshipPools.programmeId, programmeId),
+                    eq(programmeSponsorshipPools.status, 'PAID' as any)
+                ))
+
+            for (const pool of paidPools) {
+                await db.update(programmeRegistrations).set({
+                    status: 'PAID' as any,
+                    amountPaid: pool.amountPerSeat as any,
+                    paymentReference: pool.paymentRef || undefined
+                } as any).where(and(
+                    eq(programmeRegistrations.sponsorPoolId, pool.id),
+                    ne(programmeRegistrations.status, 'PAID' as any),
+                    ne(programmeRegistrations.status, 'ATTENDED' as any)
+                ))
+            }
+        } catch (e) {
+            console.error("Pool beneficiary activation error:", e)
+        }
+
         revalidatePath(`/dashboard/admin/programmes/${programmeId}/registrations`)
+        revalidatePath(`/dashboard/admin/programmes/${programmeId}/analytics`)
         return { 
             success: true, 
             count: successCount, 
-            message: `Successfully synced ${successCount} out of ${pending.length} pending payments.` 
+            message: `Reconciliation complete. Successfully synced and updated ${successCount} record(s).` 
         }
     } catch (error) {
         console.error("Sync Payments Error:", error)

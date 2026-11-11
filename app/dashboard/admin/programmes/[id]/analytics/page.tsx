@@ -1,5 +1,5 @@
 import { db } from "@/lib/db"
-import { programmes, programmeRegistrations, members, users, programmeSponsorshipPools } from "@/lib/db/schema"
+import { programmes, programmeRegistrations, members, users, programmeSponsorshipPools, bulkRegistrationGroups } from "@/lib/db/schema"
 import { eq, desc, and, or, sql, inArray } from "drizzle-orm"
 import { notFound } from "next/navigation"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
@@ -36,6 +36,8 @@ export default async function ProgrammeAnalyticsPage({ params }: { params: Promi
         branch: programmeRegistrations.branch,
         status: programmeRegistrations.status,
         amountPaid: programmeRegistrations.amountPaid,
+        lockedAmount: programmeRegistrations.lockedAmount,
+        paymentReference: programmeRegistrations.paymentReference,
         checkInTime: programmeRegistrations.checkInTime,
         bulkGroupId: programmeRegistrations.bulkGroupId,
         sponsorPoolId: programmeRegistrations.sponsorPoolId,
@@ -43,18 +45,35 @@ export default async function ProgrammeAnalyticsPage({ params }: { params: Promi
     .from(programmeRegistrations)
     .where(whereCondition)
 
-    const sponsorshipPools = await db.select().from(programmeSponsorshipPools)
-        .where(eq(programmeSponsorshipPools.programmeId, id))
-        .orderBy(desc(programmeSponsorshipPools.createdAt))
+    let sponsorshipPools: any[] = []
+    try {
+        sponsorshipPools = await db.select().from(programmeSponsorshipPools)
+            .where(eq(programmeSponsorshipPools.programmeId, id))
+            .orderBy(desc(programmeSponsorshipPools.createdAt))
+    } catch (e) {
+        console.error("Sponsorship pools query error:", e)
+    }
+
+    let bulkGroups: any[] = []
+    try {
+        bulkGroups = await db.select().from(bulkRegistrationGroups)
+            .where(eq(bulkRegistrationGroups.programmeId, id))
+            .orderBy(desc(bulkRegistrationGroups.createdAt))
+    } catch (e) {
+        console.error("Bulk groups query error:", e)
+    }
 
     return (
         <DashboardLayout>
             <div className="space-y-6 max-w-7xl mx-auto p-4 md:p-8">
                 <ProgrammeAnalyticsView
+                    programmeId={programme.id}
                     programmeTitle={programme.title}
                     programmeStartDate={programme.startDate}
+                    programmeAmount={programme.amount}
                     registrations={registrations as any}
                     sponsorshipPools={sponsorshipPools as any}
+                    bulkGroups={bulkGroups as any}
                 />
             </div>
         </DashboardLayout>
