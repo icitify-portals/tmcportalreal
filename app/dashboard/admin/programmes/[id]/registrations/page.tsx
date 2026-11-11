@@ -17,7 +17,8 @@ import {
     Share2, 
     Users,
     Sparkles,
-    ExternalLink
+    ExternalLink,
+    Receipt
 } from "lucide-react"
 import Link from "next/link"
 import { ExportRegistrationsCSV } from "@/components/admin/programmes/export-csv"
@@ -25,14 +26,15 @@ import { ClearRegistrationsButton } from "@/components/admin/programmes/clear-re
 import { SyncPaymentsButton } from "@/components/admin/programmes/sync-payments-button"
 import { SendCertificatesButton } from "@/components/admin/programmes/send-certificates-button"
 import { db } from "@/lib/db"
-import { programmes, programmeMaterials } from "@/lib/db/schema"
-import { eq } from "drizzle-orm"
+import { programmes, programmeMaterials, programmeSponsorshipPools, bulkRegistrationGroups } from "@/lib/db/schema"
+import { eq, desc } from "drizzle-orm"
 import { redirect } from "next/navigation"
 
 import { RegistrationsClientTable } from "@/components/admin/programmes/registrations-client-table"
 import { AddParticipantsDialog } from "@/components/admin/programmes/add-participants-dialog"
 import { ShareProgrammeDialog } from "@/components/programmes/share-programme-dialog"
 import { ProgrammeShareTab } from "@/components/admin/programmes/programme-share-tab"
+import { ProgrammeFinanceTab } from "@/components/admin/programmes/programme-finance-tab"
 
 export const dynamic = "force-dynamic"
 
@@ -51,6 +53,24 @@ export default async function ProgrammeRegistrationsPage({ params }: { params: P
 
     const registrations = await getProgrammeRegistrations(id)
 
+    let sponsorshipPools: any[] = []
+    try {
+        sponsorshipPools = await db.select().from(programmeSponsorshipPools)
+            .where(eq(programmeSponsorshipPools.programmeId, id))
+            .orderBy(desc(programmeSponsorshipPools.createdAt))
+    } catch (e) {
+        console.error("Sponsorship pools query error:", e)
+    }
+
+    let bulkGroups: any[] = []
+    try {
+        bulkGroups = await db.select().from(bulkRegistrationGroups)
+            .where(eq(bulkRegistrationGroups.programmeId, id))
+            .orderBy(desc(bulkRegistrationGroups.createdAt))
+    } catch (e) {
+        console.error("Bulk groups query error:", e)
+    }
+
     return (
         <DashboardLayout>
             <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -65,7 +85,7 @@ export default async function ProgrammeRegistrationsPage({ params }: { params: P
                         </div>
                         <h2 className="text-3xl font-bold tracking-tight text-white">{programme.title}</h2>
                         <p className="text-gray-200">
-                            Manage attendees, share public registration links, and track programme metrics.
+                            Manage attendees, inspect complete financial collections, and share registration links.
                         </p>
                         {materials && materials.length > 0 && (
                             <div className="mt-2 flex flex-wrap gap-2">
@@ -92,6 +112,13 @@ export default async function ProgrammeRegistrationsPage({ params }: { params: P
                         >
                             <Users className="h-4 w-4 mr-2" />
                             Registrations ({registrations.length})
+                        </TabsTrigger>
+                        <TabsTrigger 
+                            value="financial-audit" 
+                            className="text-xs sm:text-sm font-semibold text-emerald-100 data-[state=active]:bg-emerald-600 data-[state=active]:text-white shadow-xs py-2 px-3.5"
+                        >
+                            <Receipt className="h-4 w-4 mr-2 text-emerald-400 data-[state=active]:text-white" />
+                            Financial Audit & Collections
                         </TabsTrigger>
                         <TabsTrigger 
                             value="shareable-link" 
@@ -143,7 +170,19 @@ export default async function ProgrammeRegistrationsPage({ params }: { params: P
                         )}
                     </TabsContent>
 
-                    {/* Tab 2: Shareable Registration Link & Publicity */}
+                    {/* Tab 2: Financial Audit & Collections */}
+                    <TabsContent value="financial-audit" className="space-y-4">
+                        <ProgrammeFinanceTab 
+                            programmeId={programme.id}
+                            programmeTitle={programme.title}
+                            programmeAmount={programme.amount}
+                            registrations={registrations}
+                            sponsorshipPools={sponsorshipPools}
+                            bulkGroups={bulkGroups}
+                        />
+                    </TabsContent>
+
+                    {/* Tab 3: Shareable Registration Link & Publicity */}
                     <TabsContent value="shareable-link" className="space-y-4">
                         <ProgrammeShareTab programme={programme} />
                     </TabsContent>
