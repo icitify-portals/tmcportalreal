@@ -5,21 +5,7 @@ import * as TabsPrimitive from "@radix-ui/react-tabs"
 
 import { cn } from "@/lib/utils"
 
-const Tabs = React.forwardRef<
-    React.ElementRef<typeof TabsPrimitive.Root>,
-    React.ComponentPropsWithoutRef<typeof TabsPrimitive.Root>
->(({ ...props }, ref) => {
-    const [mounted, setMounted] = React.useState(false)
-
-    React.useEffect(() => {
-        setMounted(true)
-    }, [])
-
-    if (!mounted) return null
-
-    return <TabsPrimitive.Root ref={ref} {...props} />
-})
-Tabs.displayName = TabsPrimitive.Root.displayName
+const Tabs = TabsPrimitive.Root
 
 const TabsList = React.forwardRef<
     React.ElementRef<typeof TabsPrimitive.List>,

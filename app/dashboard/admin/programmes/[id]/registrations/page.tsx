@@ -77,19 +77,19 @@ export default async function ProgrammeRegistrationsPage({ params }: { params: P
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
                         <div className="flex items-center gap-2 mb-1">
-                            <Link href="/dashboard/admin/programmes" className="text-sm text-green-300 hover:underline">
+                            <Link href="/dashboard/admin/programmes" className="text-sm text-emerald-600 dark:text-emerald-400 hover:underline font-medium">
                                 Programmes
                             </Link>
-                            <span className="text-gray-400">/</span>
-                            <span className="text-sm font-medium text-gray-200">Registrations</span>
+                            <span className="text-slate-400">/</span>
+                            <span className="text-sm font-medium text-slate-600 dark:text-slate-300">Registrations</span>
                         </div>
-                        <h2 className="text-3xl font-bold tracking-tight text-white">{programme.title}</h2>
-                        <p className="text-gray-200">
+                        <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">{programme.title}</h2>
+                        <p className="text-sm text-slate-600 dark:text-slate-300 mt-0.5">
                             Manage attendees, inspect complete financial collections, and share registration links.
                         </p>
                         {materials && materials.length > 0 && (
                             <div className="mt-2 flex flex-wrap gap-2">
-                                <span className="text-xs font-bold uppercase text-gray-400 self-center">Attached Documents:</span>
+                                <span className="text-xs font-bold uppercase text-slate-500 self-center">Attached Documents:</span>
                                 {materials.map((mat) => (
                                     <a key={mat.id} href={mat.url} target="_blank" className="text-xs font-semibold px-2 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded hover:bg-emerald-100 transition-colors">
                                         📥 {mat.title}
@@ -105,26 +105,26 @@ export default async function ProgrammeRegistrationsPage({ params }: { params: P
 
                 {/* Tabs for Registration Menu */}
                 <Tabs defaultValue="registrations" className="space-y-4">
-                    <TabsList className="bg-emerald-950/60 border border-emerald-800/50 p-1 rounded-xl h-auto flex flex-wrap gap-1">
+                    <TabsList className="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-1 rounded-xl h-auto flex flex-wrap gap-1 shadow-xs">
                         <TabsTrigger 
                             value="registrations" 
-                            className="text-xs sm:text-sm font-semibold text-emerald-100 data-[state=active]:bg-emerald-600 data-[state=active]:text-white shadow-xs py-2 px-3.5"
+                            className="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 data-[state=active]:bg-emerald-700 data-[state=active]:text-white shadow-xs py-2 px-3.5 rounded-lg transition-all"
                         >
                             <Users className="h-4 w-4 mr-2" />
                             Registrations ({registrations.length})
                         </TabsTrigger>
                         <TabsTrigger 
                             value="financial-audit" 
-                            className="text-xs sm:text-sm font-semibold text-emerald-100 data-[state=active]:bg-emerald-600 data-[state=active]:text-white shadow-xs py-2 px-3.5"
+                            className="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 data-[state=active]:bg-emerald-700 data-[state=active]:text-white shadow-xs py-2 px-3.5 rounded-lg transition-all"
                         >
-                            <Receipt className="h-4 w-4 mr-2 text-emerald-400 data-[state=active]:text-white" />
+                            <Receipt className="h-4 w-4 mr-2 text-emerald-600 data-[state=active]:text-white" />
                             Financial Audit & Collections
                         </TabsTrigger>
                         <TabsTrigger 
                             value="shareable-link" 
-                            className="text-xs sm:text-sm font-semibold text-emerald-100 data-[state=active]:bg-emerald-600 data-[state=active]:text-white shadow-xs py-2 px-3.5"
+                            className="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 data-[state=active]:bg-emerald-700 data-[state=active]:text-white shadow-xs py-2 px-3.5 rounded-lg transition-all"
                         >
-                            <Share2 className="h-4 w-4 mr-2 text-emerald-400 data-[state=active]:text-white" />
+                            <Share2 className="h-4 w-4 mr-2 text-emerald-600 data-[state=active]:text-white" />
                             Shareable Registration Link & Publicity
                         </TabsTrigger>
                     </TabsList>
@@ -132,18 +132,18 @@ export default async function ProgrammeRegistrationsPage({ params }: { params: P
                     {/* Tab 1: Registrations Table */}
                     <TabsContent value="registrations" className="space-y-4">
                         {/* Quick Share Banner inside Registrations view */}
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 rounded-xl border border-emerald-800/40 bg-emerald-950/40 text-emerald-200">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 rounded-xl border border-emerald-200 dark:border-emerald-800/50 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-200 shadow-xs">
                             <div className="flex items-center gap-2.5">
-                                <Share2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                                <Share2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
                                 <span className="text-xs sm:text-sm">
-                                    <strong className="text-white">Direct Registration Link:</strong> Share this specific link with invitees so they can register directly without searching.
+                                    <strong className="text-emerald-950 dark:text-white font-bold">Direct Registration Link:</strong> Share this specific link with invitees so they can register directly without searching through other programmes.
                                 </span>
                             </div>
                             <ShareProgrammeDialog
                                 programme={programme}
-                                buttonVariant="outline"
+                                buttonVariant="default"
                                 buttonSize="sm"
-                                className="h-8 text-xs font-semibold border-emerald-600 bg-emerald-800/60 hover:bg-emerald-700 text-white shrink-0 shadow-xs"
+                                className="h-8 text-xs font-semibold bg-emerald-700 hover:bg-emerald-800 text-white shrink-0 shadow-xs"
                             />
                         </div>
 

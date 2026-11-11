@@ -25,7 +25,8 @@ import {
   AlertCircle,
   RefreshCw,
   Loader2,
-  ExternalLink
+  ExternalLink,
+  Share2
 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import jsPDF from "jspdf";
@@ -33,6 +34,7 @@ import autoTable from "jspdf-autotable";
 import { syncAllProgrammePayments } from "@/lib/actions/programmes";
 import { toast } from "sonner";
 import Link from "next/link";
+import { ProgrammeShareTab } from "./programme-share-tab";
 
 export interface RegistrationStat {
   id: string;
@@ -392,6 +394,10 @@ export function ProgrammeAnalyticsView({
           <TabsTrigger value="branches">Branch Breakdown ({summary.branchesList.length})</TabsTrigger>
           <TabsTrigger value="modes">Registration Channels</TabsTrigger>
           <TabsTrigger value="sponsorship">Sponsorship Pools ({sponsorshipPools.length})</TabsTrigger>
+          <TabsTrigger value="shareable-link" className="font-bold text-slate-800 data-[state=active]:bg-emerald-700 data-[state=active]:text-white shadow-xs">
+            <Share2 className="h-4 w-4 mr-1.5 text-emerald-600 data-[state=active]:text-white" />
+            Shareable Registration Link & Publicity
+          </TabsTrigger>
         </TabsList>
 
         {/* Tab 1: Comprehensive Financial Audit */}
@@ -795,6 +801,18 @@ export function ProgrammeAnalyticsView({
               })}
             </div>
           )}
+        </TabsContent>
+
+        {/* Shareable Link Tab */}
+        <TabsContent value="shareable-link" className="space-y-4">
+          <ProgrammeShareTab 
+            programme={{ 
+              id: programmeId || "", 
+              title: programmeTitle, 
+              startDate: programmeStartDate, 
+              amount: programmeAmount 
+            }} 
+          />
         </TabsContent>
       </Tabs>
     </div>
