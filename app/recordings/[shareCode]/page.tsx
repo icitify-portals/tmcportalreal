@@ -6,7 +6,8 @@ import { getStorageSettings, getLiveKitSettings } from "@/lib/actions/settings"
 import { S3Client, ListObjectsV2Command, GetObjectCommand } from "@aws-sdk/client-s3"
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Video } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Video, Download } from "lucide-react"
 import { ClientDate } from "@/components/ui/client-date"
 
 export default async function SecureRecordingPage({ params }: { params: Promise<{ shareCode: string }> }) {
@@ -22,11 +23,11 @@ export default async function SecureRecordingPage({ params }: { params: Promise<
     const storage = await getStorageSettings()
     const livekit = await getLiveKitSettings()
 
-    const bucket = livekit.s3Bucket || storage.s3Bucket;
-    const accessKey = livekit.s3AccessKey || storage.s3AccessKey;
-    const secretKey = livekit.s3SecretKey || storage.s3SecretKey;
-    const region = livekit.s3Region || storage.s3Region || "us-east-1";
-    const endpoint = livekit.s3Endpoint || storage.s3Endpoint;
+    const bucket = livekit.s3Bucket || storage.s3Bucket || process.env.WASABI_BUCKET_NAME || process.env.AWS_BUCKET_NAME;
+    const accessKey = livekit.s3AccessKey || storage.s3AccessKey || process.env.WASABI_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID;
+    const secretKey = livekit.s3SecretKey || storage.s3SecretKey || process.env.WASABI_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY;
+    const region = livekit.s3Region || storage.s3Region || process.env.WASABI_REGION || process.env.AWS_REGION || "us-east-1";
+    const endpoint = livekit.s3Endpoint || storage.s3Endpoint || process.env.WASABI_ENDPOINT || process.env.AWS_ENDPOINT;
 
     if (!bucket || !accessKey || !secretKey) {
         return (
@@ -87,6 +88,8 @@ export default async function SecureRecordingPage({ params }: { params: Promise<
         errorMsg = "Failed to communicate with storage server."
     }
 
+    const safeFilename = `${(meeting.title || "meeting").replace(/[^a-zA-Z0-9_-]/g, "_")}-recording.mp4`
+
     return (
         <div className="min-h-screen bg-zinc-950 flex flex-col items-center p-4 sm:p-8">
             <div className="max-w-4xl w-full space-y-6">
@@ -109,7 +112,6 @@ export default async function SecureRecordingPage({ params }: { params: Promise<
                                 <video 
                                     src={presignedUrl} 
                                     controls 
-                                    controlsList="nodownload"
                                     className="w-full h-full object-contain"
                                     autoPlay
                                 />
@@ -127,8 +129,19 @@ export default async function SecureRecordingPage({ params }: { params: Promise<
                 </Card>
 
                 {presignedUrl && (
-                    <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 flex gap-4 text-sm text-zinc-400">
-                        <p><strong>Note:</strong> This secure playback link is time-sensitive and will expire in 1 hour. Do not share the direct video URL.</p>
+                    <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-zinc-400">
+                        <p><strong>Note:</strong> This secure playback link is time-sensitive and will expire in 1 hour.</p>
+                        <a 
+                            href={presignedUrl} 
+                            download={safeFilename}
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                        >
+                            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold">
+                                <Download className="h-4 w-4 mr-2" />
+                                Download Recording (.mp4)
+                            </Button>
+                        </a>
                     </div>
                 )}
             </div>

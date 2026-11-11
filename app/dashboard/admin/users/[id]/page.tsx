@@ -14,6 +14,7 @@ import { ArrowLeft, Plus, ShieldAlert, Trash2 } from "lucide-react"
 import { AssignRoleForm } from "./assign-role-form"
 import { RemoveRoleButton } from "./remove-role-button"
 import { EditMemberForm } from "@/components/admin/users/edit-member-form"
+import { EditUserForm } from "@/components/admin/users/edit-user-form"
 
 interface PageProps {
     params: Promise<{ id: string }>
@@ -89,6 +90,27 @@ export default async function UserDetailPage(props: PageProps) {
                 </div>
 
                 <div className="grid gap-6 md:grid-cols-3">
+                    {/* User Profile & Account Edit Panel */}
+                    <Card className="md:col-span-3 border-t-4 border-t-primary">
+                        <CardHeader>
+                            <CardTitle>User Account & Profile</CardTitle>
+                            <CardDescription>
+                                Update user name, email, phone, residential address, and email verification status.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <EditUserForm
+                                userId={user.id}
+                                initialData={{
+                                    name: user.name || "",
+                                    email: user.email || "",
+                                    phone: user.phone || "",
+                                    address: user.address || "",
+                                    emailVerified: user.emailVerified,
+                                }}
+                            />
+                        </CardContent>
+                    </Card>
                     {/* User Info & Stats */}
                     <Card className="md:col-span-2">
                         <CardHeader>

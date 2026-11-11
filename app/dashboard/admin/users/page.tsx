@@ -26,6 +26,7 @@ import { desc, or, ilike, eq, inArray, and, sql } from "drizzle-orm"
 import { redirect } from "next/navigation"
 import { format } from "date-fns"
 import { ImpersonateButton } from "@/components/admin/users/impersonate-button"
+import { EditUserDialog } from "@/components/admin/users/edit-user-dialog"
 import { Pagination } from "@/components/admin/shared/pagination"
 import { ExportCSV } from "@/components/admin/shared/export-csv"
 
@@ -94,6 +95,9 @@ async function UserList({ searchParams }: {
         id: users.id,
         name: users.name,
         email: users.email,
+        phone: users.phone,
+        address: users.address,
+        emailVerified: users.emailVerified,
         createdAt: users.createdAt,
     })
         .from(users)
@@ -185,6 +189,7 @@ async function UserList({ searchParams }: {
                                         {user.createdAt ? format(new Date(user.createdAt), 'PP') : "-"}
                                     </TableCell>
                                     <TableCell className="text-right flex justify-end gap-2">
+                                        <EditUserDialog user={user} />
                                         <ImpersonateButton targetUserId={user.id} isSuperAdmin={session?.user?.isSuperAdmin || false} />
                                         <Link href={`/dashboard/admin/users/${user.id}`}>
                                             <Button variant="ghost" size="sm">

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { getActiveEarlyBird, formatTierWindows } from "@/lib/pricing"
 import { getCorporateTiers } from "@/lib/programme-tiers"
+import { ShareProgrammeDialog } from "@/components/programmes/share-programme-dialog"
 
 export async function ProgrammeGrid({ level, state, organizationId, organizationCode, query }: { level?: string, state?: string, organizationId?: string, organizationCode?: string, query?: string }) {
     const programmes = await getProgrammes({ status: 'APPROVED', level, state, organizationId, organizationCode, query }) || []
@@ -66,7 +67,16 @@ export async function ProgrammeGrid({ level, state, organizationId, organization
                                         <Badge className="bg-red-600 hover:bg-red-700 text-white font-bold mb-2">CANCELLED</Badge>
                                     )}
                                 </div>
-                                <Badge variant="outline">{p.organization?.name || p.level}</Badge>
+                                <div className="flex items-center gap-1.5">
+                                    <Badge variant="outline">{p.organization?.name || p.level}</Badge>
+                                    <ShareProgrammeDialog
+                                        programme={p}
+                                        buttonVariant="ghost"
+                                        buttonSize="sm"
+                                        showLabel={false}
+                                        className="h-7 w-7 p-0 text-muted-foreground hover:text-emerald-700"
+                                    />
+                                </div>
                             </div>
                             <CardTitle className="line-clamp-2">{p.title}</CardTitle>
                             <CardDescription className="flex items-center mt-1">
@@ -80,7 +90,17 @@ export async function ProgrammeGrid({ level, state, organizationId, organization
                             </p>
                             {p.paymentRequired && (
                                 <div className="text-[11px] space-y-1">
-                                    <div><Link href={`/programmes/${p.id}/register`} className="text-emerald-700 underline font-semibold">Register now →</Link></div>
+                                    <div className="flex items-center justify-between">
+                                        <Link href={`/programmes/${p.id}/register`} className="text-emerald-700 underline font-semibold">
+                                            Register now →
+                                        </Link>
+                                        <ShareProgrammeDialog
+                                            programme={p}
+                                            buttonVariant="outline"
+                                            buttonSize="sm"
+                                            className="h-6 text-[10px] px-2 py-0 border-emerald-300 text-emerald-800 hover:bg-emerald-50"
+                                        />
+                                    </div>
                                     {hasCorporateTiers && <div><Link href={`/programmes/${p.id}/corporate-register`} className="text-emerald-700 underline">Corporate / chapter registration →</Link></div>}
                                     <div><Link href="/dashboard/programmes/bulk" className="text-emerald-700 underline">Register multiple people at once →</Link></div>
                                     <div><Link href="/dashboard/programmes/sponsorship" className="text-emerald-700 underline">Sponsor seats for others →</Link></div>
@@ -191,10 +211,19 @@ export async function ProgrammeGrid({ level, state, organizationId, organization
 
                                     return (
                                         <div className="flex w-full gap-2 flex-col">
-                                            <Button className="w-full" variant="outline" disabled>
-                                                <CheckCircle2 className="mr-2 h-4 w-4" />
-                                                Already Registered
-                                            </Button>
+                                            <div className="flex items-center gap-2">
+                                                <Button className="flex-1" variant="outline" disabled>
+                                                    <CheckCircle2 className="mr-2 h-4 w-4" />
+                                                    Already Registered
+                                                </Button>
+                                                <ShareProgrammeDialog
+                                                    programme={p}
+                                                    buttonVariant="outline"
+                                                    buttonSize="default"
+                                                    showLabel={false}
+                                                    className="h-10 w-10 p-0 shrink-0 text-muted-foreground hover:text-emerald-700"
+                                                />
+                                            </div>
                                             {(p as any).meeting?.shareCode && (
                                                 <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white" asChild>
                                                     <a href={`/live/${(p as any).meeting.shareCode}`} target="_blank">
@@ -207,16 +236,25 @@ export async function ProgrammeGrid({ level, state, organizationId, organization
                                     )
                                 }
                                 return (
-                                    <div className="w-full">
-                                        <RegisterForProgrammeDialog
-                                            programmeId={p.id}
-                                            programmeTitle={p.title}
-                                            amount={pricedAmount}
-                                            earlyBirdAmount={p.earlyBirdAmount ? parseFloat(p.earlyBirdAmount) : undefined}
-                                            earlyBirdDeadline={p.earlyBirdDeadline}
-                                            tiers={tiers}
-                                            allowInstallments={p.allowInstallments || false}
-                                            minInstallmentAmount={parseFloat(p.minInstallmentAmount || "0")}
+                                    <div className="w-full flex items-center gap-2">
+                                        <div className="flex-1">
+                                            <RegisterForProgrammeDialog
+                                                programmeId={p.id}
+                                                programmeTitle={p.title}
+                                                amount={pricedAmount}
+                                                earlyBirdAmount={p.earlyBirdAmount ? parseFloat(p.earlyBirdAmount) : undefined}
+                                                earlyBirdDeadline={p.earlyBirdDeadline}
+                                                tiers={tiers}
+                                                allowInstallments={p.allowInstallments || false}
+                                                minInstallmentAmount={parseFloat(p.minInstallmentAmount || "0")}
+                                            />
+                                        </div>
+                                        <ShareProgrammeDialog
+                                            programme={p}
+                                            buttonVariant="outline"
+                                            buttonSize="default"
+                                            showLabel={false}
+                                            className="h-10 w-10 p-0 shrink-0 text-muted-foreground hover:text-emerald-700 hover:border-emerald-500"
                                         />
                                     </div>
                                 )

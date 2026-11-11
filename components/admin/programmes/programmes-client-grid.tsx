@@ -5,12 +5,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { UserCheck, BarChart3, MessageSquare, Video, FileText, Search, X, XCircle } from "lucide-react";
+import { UserCheck, BarChart3, MessageSquare, Video, FileText, Search, X, XCircle, Share2 } from "lucide-react";
 import { ProgrammeActions } from "@/components/admin/programmes/programme-actions";
 import { ReviewActions } from "@/components/admin/programmes/review-actions";
 import { SubmitReportDialog } from "@/components/admin/programmes/submit-report-dialog";
 import { ClientDate } from "@/components/ui/client-date";
 import { ClientCurrency } from "@/components/ui/client-currency";
+import { ShareProgrammeDialog } from "@/components/programmes/share-programme-dialog";
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -38,7 +39,7 @@ export function ProgrammesClientGrid({
   userOfficialId,
 }: {
   programmes: any[];
-  type: "MY_PROGRAMMES" | "TO_APPROVE" | "ALL_APPROVED";
+  type: "ALL" | "MY_PROGRAMMES" | "TO_APPROVE" | "ALL_APPROVED";
   currentUserId: string;
   isSuperAdmin: boolean;
   userLevel: string;
@@ -173,9 +174,15 @@ export function ProgrammesClientGrid({
                 )}
 
                 {/* Reporting & Registration Actions */}
-                {type === "MY_PROGRAMMES" && (p.status === "APPROVED" || p.status === "COMPLETED") && (
+                {(type === "ALL" || type === "MY_PROGRAMMES") && (p.status === "APPROVED" || p.status === "COMPLETED") && (
                   <div className="flex flex-wrap items-center gap-2 w-full justify-between">
                     <div className="flex flex-wrap items-center gap-2">
+                      <ShareProgrammeDialog
+                        programme={p}
+                        buttonVariant="outline"
+                        buttonSize="sm"
+                        className="bg-emerald-950/60 hover:bg-emerald-900/80 border border-emerald-800/40 text-emerald-300 font-semibold px-3 py-1.5 text-xs rounded-lg transition-colors cursor-pointer"
+                      />
                       <Button
                         variant="outline"
                         size="sm"

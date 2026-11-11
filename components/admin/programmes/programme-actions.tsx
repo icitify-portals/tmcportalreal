@@ -10,7 +10,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { MoreHorizontal, Edit, Trash, Loader2, Users, Calendar, XCircle } from "lucide-react"
+import { MoreHorizontal, Edit, Trash, Loader2, Users, Calendar, XCircle, Share2 } from "lucide-react"
 import { EditProgrammeDialog } from "./edit-programme-dialog"
 import { deleteProgramme, postponeProgramme, cancelProgramme } from "@/lib/actions/programmes"
 import { toast } from "sonner"
@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
+import { ShareProgrammeDialog } from "@/components/programmes/share-programme-dialog"
 
 interface ProgrammeActionsProps {
     programme: any
@@ -45,6 +46,7 @@ export function ProgrammeActions({ programme, canEdit = true }: ProgrammeActions
     const [editOpen, setEditOpen] = useState(false)
     const [deleteOpen, setDeleteOpen] = useState(false)
     const [isDeleting, setIsDeleting] = useState(false)
+    const [shareOpen, setShareOpen] = useState(false)
 
     // Postpone state
     const [postponeOpen, setPostponeOpen] = useState(false)
@@ -94,13 +96,22 @@ export function ProgrammeActions({ programme, canEdit = true }: ProgrammeActions
         <>
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="h-8 w-8 p-0">
+                    <Button 
+                        variant="ghost" 
+                        size="sm"
+                        className="h-8 w-8 p-0 text-white hover:text-white bg-green-950/70 hover:bg-green-800/90 border border-green-700/60 rounded-md transition-all shadow-xs flex items-center justify-center cursor-pointer"
+                        title="Manage Programme Actions"
+                    >
                         <span className="sr-only">Open menu</span>
-                        <MoreHorizontal className="h-4 w-4" />
+                        <MoreHorizontal className="h-4 w-4 text-emerald-200 hover:text-white" />
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
+
+                    <DropdownMenuItem onClick={() => setShareOpen(true)}>
+                        <Share2 className="mr-2 h-4 w-4 text-emerald-600" /> Share Link
+                    </DropdownMenuItem>
                     
                     {canEdit && (
                         <DropdownMenuItem onClick={() => setEditOpen(true)}>
@@ -140,6 +151,15 @@ export function ProgrammeActions({ programme, canEdit = true }: ProgrammeActions
                 </DropdownMenuContent>
             </DropdownMenu>
 
+            {shareOpen && (
+                <ShareProgrammeDialog
+                    programme={programme}
+                    open={shareOpen}
+                    onOpenChange={setShareOpen}
+                    trigger={<span className="hidden" />}
+                />
+            )}
+
             {editOpen && (
                 <EditProgrammeDialog
                     programme={programme}
@@ -154,56 +174,58 @@ export function ProgrammeActions({ programme, canEdit = true }: ProgrammeActions
                     <DialogHeader>
                         <DialogTitle>Postpone Programme</DialogTitle>
                         <DialogDescription>
-                            Please choose a new date or mark the programme as postponed indefinitely.
+                            Change the date for this programme or postpone it indefinitely.
                         </DialogDescription>
                     </DialogHeader>
-                    <div className="space-y-4 py-2">
+                    <div className="space-y-4 py-4">
                         <div className="flex items-center space-x-2">
                             <Checkbox 
-                                id="indefinitely" 
-                                checked={postponedIndefinitely}
-                                onCheckedChange={(checked) => setPostponedIndefinitely(checked === true)}
+                                id="indefinite" 
+                                checked={postponedIndefinitely} 
+                                onCheckedChange={(checked) => setPostponedIndefinitely(!!checked)} 
                             />
-                            <label htmlFor="indefinitely" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                                Postpone Indefinitely
+                            <label htmlFor="indefinite" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                Postpone indefinitely (Date TBD)
                             </label>
                         </div>
-
+                        
                         {!postponedIndefinitely && (
                             <div className="space-y-2">
-                                <label className="text-sm font-medium">New Date</label>
+                                <label className="text-sm font-medium">New Start Date</label>
                                 <Input 
-                                    type="date"
-                                    value={newDate}
-                                    onChange={(e) => setNewDate(e.target.value)}
+                                    type="date" 
+                                    value={newDate} 
+                                    onChange={(e) => setNewDate(e.target.value)} 
                                 />
                             </div>
                         )}
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setPostponeOpen(false)} disabled={isPostponing}>
-                            Cancel
-                        </Button>
+                        <Button variant="outline" onClick={() => setPostponeOpen(false)}>Cancel</Button>
                         <Button onClick={handlePostpone} disabled={isPostponing} className="bg-orange-600 hover:bg-orange-700 text-white">
-                            {isPostponing ? <Loader2 className="h-4 w-4 animate-spin" /> : "Postpone"}
+                            {isPostponing ? "Saving..." : "Save Postponement"}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
 
+            {/* Delete Confirmation */}
             <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete the programme
-                            "{programme.title}" and remove it from the database.
+                            This will permanently delete this programme and all associated records.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={(e) => { e.preventDefault(); handleDelete(); }} disabled={isDeleting} className="bg-red-600 hover:bg-red-700">
-                            {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Delete"}
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction 
+                            onClick={handleDelete}
+                            className="bg-red-600 hover:bg-red-700 text-white"
+                            disabled={isDeleting}
+                        >
+                            {isDeleting ? "Deleting..." : "Delete"}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

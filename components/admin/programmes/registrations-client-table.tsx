@@ -22,7 +22,8 @@ import { DeleteRegistrationButton } from "@/components/admin/programmes/delete-r
 import { markAttendance, sendSelectedCertificatesAction, toggleCheckInWaiver, generateWaiverLink } from "@/lib/actions/programmes"
 import { toast } from "sonner"
 import { AddParticipantsDialog } from "./add-participants-dialog"
-import { Link as LinkIcon, Copy, UserPlus } from "lucide-react"
+import { ShareProgrammeDialog } from "@/components/programmes/share-programme-dialog"
+import { Link as LinkIcon, Copy, UserPlus, Share2 } from "lucide-react"
 
 export function RegistrationsClientTable({ 
     registrations, 
@@ -167,6 +168,16 @@ export function RegistrationsClientTable({
                             <LinkIcon className="mr-2 h-4 w-4" />
                             {isBulkLoading ? "Generating..." : "Copy Waiver Link"}
                         </Button>
+                        <ShareProgrammeDialog
+                            programme={{ 
+                                id: programmeId, 
+                                title: programmeTitle, 
+                                amount: programmeAmount 
+                            }}
+                            buttonVariant="outline"
+                            buttonSize="sm"
+                            className="border-emerald-600 text-emerald-700 hover:bg-emerald-50 font-bold h-9"
+                        />
                     </div>
                 </div>
                 <div className="text-xs text-muted-foreground font-medium">

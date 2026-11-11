@@ -48,7 +48,7 @@ async function ProgrammeList({
     userLevel,
     userOfficialId
 }: { 
-    type: 'MY_PROGRAMMES' | 'TO_APPROVE' | 'ALL_APPROVED', 
+    type: 'ALL' | 'MY_PROGRAMMES' | 'TO_APPROVE' | 'ALL_APPROVED', 
     orgId: string,
     currentUserId: string,
     isSuperAdmin: boolean,
@@ -198,7 +198,24 @@ export default async function ProgrammesPage() {
                         <TabsTrigger value="my-programmes">My Programmes</TabsTrigger>
                         <TabsTrigger value="all-approved">All Approved</TabsTrigger>
                         {canApprove && <TabsTrigger value="approvals">Approvals Required</TabsTrigger>}
+                        {(isSuperAdmin || userLevel === 'NATIONAL') && <TabsTrigger value="all-programmes">All Programmes</TabsTrigger>}
                     </TabsList>
+
+                    
+                    {(isSuperAdmin || userLevel === 'NATIONAL') && (
+                        <TabsContent value="all-programmes" className="space-y-4">
+                            <Suspense fallback={<div>Loading...</div>}>
+                                <ProgrammeList 
+                                    type="ALL" 
+                                    orgId={organizationId || ""} 
+                                    currentUserId={session!.user.id}
+                                    isSuperAdmin={isSuperAdmin}
+                                    userLevel={userLevel}
+                                    userOfficialId={userOfficialId || ""}
+                                />
+                            </Suspense>
+                        </TabsContent>
+                    )}
 
                     <TabsContent value="my-programmes" className="space-y-4">
                         <Suspense fallback={<div>Loading...</div>}>

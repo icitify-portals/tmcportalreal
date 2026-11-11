@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
-import { Copy, Video, RefreshCw, Key } from "lucide-react"
+import { Copy, Video, RefreshCw, Key, ExternalLink } from "lucide-react"
 
 export function MeetingRecordingCard({ meeting }: { meeting: any }) {
     const [generating, setGenerating] = useState(false)
@@ -57,17 +57,23 @@ export function MeetingRecordingCard({ meeting }: { meeting: any }) {
                         <div className="space-y-2">
                             <label className="text-sm font-medium">Secure Share Link</label>
                             <div className="flex gap-2">
-                                <Input value={`${window.location.origin}/recordings/${shareCode}`} readOnly />
+                                <Input value={`${typeof window !== "undefined" ? window.location.origin : ""}/recordings/${shareCode}`} readOnly />
                                 <Button onClick={handleCopyLink} variant="secondary">
                                     <Copy className="h-4 w-4" />
                                 </Button>
                             </div>
                         </div>
                         <p className="text-sm text-muted-foreground">
-                            Users visiting this link will need to enter the exact code to generate a temporary presigned URL for playback.
+                            Users visiting this link can watch the recording and download the MP4 file.
                         </p>
-                        <div className="flex items-center gap-2">
-                            <span className="text-sm font-bold bg-muted px-2 py-1 rounded">Code: {shareCode}</span>
+                        <div className="flex items-center gap-3 pt-1">
+                            <span className="text-sm font-bold bg-muted px-2.5 py-1 rounded">Code: {shareCode}</span>
+                            <a href={`/recordings/${shareCode}`} target="_blank" rel="noopener noreferrer">
+                                <Button variant="outline" size="sm" className="gap-1.5">
+                                    <ExternalLink className="h-3.5 w-3.5" />
+                                    <span>Watch / Download Video</span>
+                                </Button>
+                            </a>
                         </div>
                     </div>
                 ) : (

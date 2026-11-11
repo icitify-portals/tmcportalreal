@@ -166,6 +166,8 @@ export const authConfig: NextAuthConfig = {
         const variants = [cleanEmail]
         if (cleanEmail.includes("bamgbala")) variants.push(cleanEmail.replace(/bamgbala/g, "bangbala"))
         if (cleanEmail.includes("bangbala")) variants.push(cleanEmail.replace(/bangbala/g, "bamgbala"))
+        if (cleanEmail.includes("gasimyusuf")) variants.push(cleanEmail.replace(/gasimyusuf/g, "qasimyusuf"))
+        if (cleanEmail.includes("qasimyusuf")) variants.push(cleanEmail.replace(/qasimyusuf/g, "gasimyusuf"))
 
         const userResults = await db.select().from(users)
           .where(or(...variants.map(v => sql`LOWER(${users.email}) = ${v}`)))

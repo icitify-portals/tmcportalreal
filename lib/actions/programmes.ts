@@ -127,7 +127,21 @@ export async function selfRecordAttendance(programmeId: string, token: string) {
 
     try {
         // 1. Fetch Programme to check for static token
-        const [programme] = await db.select().from(programmes).where(eq(programmes.id, programmeId)).limit(1)
+        let [programme] = await db.select().from(programmes).where(eq(programmes.id, programmeId)).limit(1)
+        if (!programme && programmeId) {
+            const rawSlug = decodeURIComponent(programmeId).trim()
+            const searchPattern = `%${rawSlug.toLowerCase()}%`
+            const results = await db.select().from(programmes).where(
+                or(
+                    sql`LOWER(${programmes.title}) LIKE ${searchPattern}`,
+                    sql`LOWER(REPLACE(${programmes.title}, ' ', '')) LIKE ${searchPattern}`
+                )
+            ).orderBy(desc(programmes.startDate)).limit(1)
+            if (results.length > 0) {
+                programme = results[0]
+                programmeId = programme.id
+            }
+        }
         if (!programme) return { success: false, error: "Programme not found" }
 
         // 2. Verify Token (Check Dynamic then Static)
@@ -1046,12 +1060,42 @@ export async function getProgrammes(filters?: { level?: string, state?: string, 
 }
 
 // For Admin Dashboard (My Programmes + Approvals + All Approved)
-export async function getAdminProgrammes(organizationId: string, type: 'MY_PROGRAMMES' | 'TO_APPROVE' | 'ALL_APPROVED') {
+export async function getAdminProgrammes(organizationId: string, type: 'ALL' | 'MY_PROGRAMMES' | 'TO_APPROVE' | 'ALL_APPROVED') {
     const creator = aliasedTable(users, "creator")
     const org = aliasedTable(organizations, "org")
     const office = aliasedTable(offices, "office")
     const official = aliasedTable(officials, "official")
     const officialUser = aliasedTable(users, "officialUser")
+
+    
+    if (type === 'ALL') {
+        const results = await db.select({
+            programme: programmes,
+            creator: creator,
+            office: office,
+            official: official,
+            officialUser: officialUser,
+            meeting: meetings,
+            org: org
+        })
+            .from(programmes)
+            .leftJoin(org, eq(programmes.organizationId, org.id))
+            .leftJoin(creator, eq(programmes.createdBy, creator.id))
+            .leftJoin(office, eq(programmes.organizingOfficeId, office.id))
+            .leftJoin(official, eq(programmes.organizingOfficialId, official.id))
+            .leftJoin(officialUser, eq(official.userId, officialUser.id))
+            .leftJoin(meetings, eq(programmes.id, meetings.programmeId))
+            .orderBy(desc(programmes.createdAt))
+
+        return results.map(r => ({ 
+            ...r.programme, 
+            creator: r.creator, 
+            organization: r.org,
+            office: r.office,
+            official: r.official ? { ...r.official, user: r.officialUser } : null,
+            meeting: r.meeting
+        }))
+    }
 
     if (type === 'MY_PROGRAMMES') {
         const results = await db.select({
@@ -2724,7 +2768,7 @@ export async function bulkAdminEnrollAction(programmeId: string, participants: a
 
 export async function getProgrammeDetailsAction(id: string) {
     try {
-        const [programme] = await db.select({
+        let [programme] = await db.select({
             id: programmes.id,
             title: programmes.title,
             description: programmes.description,
@@ -2740,6 +2784,34 @@ export async function getProgrammeDetailsAction(id: string) {
             minInstallmentAmount: programmes.minInstallmentAmount
         }).from(programmes).where(eq(programmes.id, id)).limit(1)
         
+        if (!programme && id) {
+            const rawSlug = decodeURIComponent(id).trim()
+            const searchPattern = `%${rawSlug.toLowerCase()}%`
+            const results = await db.select({
+                id: programmes.id,
+                title: programmes.title,
+                description: programmes.description,
+                startDate: programmes.startDate,
+                endDate: programmes.endDate,
+                amount: programmes.amount,
+                earlyBirdAmount: programmes.earlyBirdAmount,
+                earlyBirdDeadline: programmes.earlyBirdDeadline,
+                paymentRequired: programmes.paymentRequired,
+                waiverCode: programmes.waiverCode,
+                pricingTiers: programmes.pricingTiers,
+                allowInstallments: programmes.allowInstallments,
+                minInstallmentAmount: programmes.minInstallmentAmount
+            }).from(programmes).where(
+                or(
+                    sql`LOWER(${programmes.title}) LIKE ${searchPattern}`,
+                    sql`LOWER(REPLACE(${programmes.title}, ' ', '')) LIKE ${searchPattern}`
+                )
+            ).orderBy(desc(programmes.startDate)).limit(1)
+            if (results.length > 0) {
+                programme = results[0]
+            }
+        }
+
         if (!programme) return { success: false, error: "Programme not found" }
         const session = await getServerSession()
         const entitlement = await getEntitlementForProgramme(programme, session)
@@ -2753,7 +2825,7 @@ export async function getProgrammeDetailsAction(id: string) {
                 lockedAmount: programmeRegistrations.lockedAmount,
                 checkInWaiver: programmeRegistrations.checkInWaiver,
             }).from(programmeRegistrations).where(and(
-                eq(programmeRegistrations.programmeId, id),
+                eq(programmeRegistrations.programmeId, programme.id),
                 eq(programmeRegistrations.userId, session.user.id)
             )).limit(1)
             existingRegistration = reg || null
@@ -2767,7 +2839,7 @@ export async function getProgrammeDetailsAction(id: string) {
 
 export async function checkEmailEntitlementAction(programmeId: string, email: string) {
     try {
-        const [programme] = await db.select({
+        let [programme] = await db.select({
             id: programmes.id,
             title: programmes.title,
             amount: programmes.amount,
@@ -2777,6 +2849,30 @@ export async function checkEmailEntitlementAction(programmeId: string, email: st
             waiverCode: programmes.waiverCode,
             pricingTiers: programmes.pricingTiers,
         }).from(programmes).where(eq(programmes.id, programmeId)).limit(1)
+
+        if (!programme && programmeId) {
+            const rawSlug = decodeURIComponent(programmeId).trim()
+            const searchPattern = `%${rawSlug.toLowerCase()}%`
+            const results = await db.select({
+                id: programmes.id,
+                title: programmes.title,
+                amount: programmes.amount,
+                earlyBirdAmount: programmes.earlyBirdAmount,
+                earlyBirdDeadline: programmes.earlyBirdDeadline,
+                paymentRequired: programmes.paymentRequired,
+                waiverCode: programmes.waiverCode,
+                pricingTiers: programmes.pricingTiers,
+            }).from(programmes).where(
+                or(
+                    sql`LOWER(${programmes.title}) LIKE ${searchPattern}`,
+                    sql`LOWER(REPLACE(${programmes.title}, ' ', '')) LIKE ${searchPattern}`
+                )
+            ).orderBy(desc(programmes.startDate)).limit(1)
+            if (results.length > 0) {
+                programme = results[0]
+                programmeId = programme.id
+            }
+        }
 
         if (!programme) return { success: false, error: "Programme not found" }
         const session = await getServerSession()
