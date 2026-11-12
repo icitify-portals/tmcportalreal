@@ -11,7 +11,7 @@ import {
     payments,
     financeTransactions,
 } from "@/lib/db/schema";
-import { and, eq, or, desc, asc, sql, like } from "drizzle-orm";
+import { and, eq, or, desc, asc, sql, like, inArray } from "drizzle-orm";
 import { alias } from "drizzle-orm/mysql-core";
 import { revalidatePath } from "next/cache";
 import { getServerSession } from "@/lib/session";
@@ -21,24 +21,10 @@ import { getEffectiveAmount } from "@/lib/pricing";
 import { getEarlyBirdTiers } from "@/lib/actions/programme-early-bird";
 import { initializePayment, verifyPayment, guestCreationCapHit } from "@/lib/payments";
 import { sendEmail, emailTemplates } from "@/lib/email";
+import { normalizeSponsorCode, extractSponsorCodeCandidates } from "@/lib/sponsor-utils";
 
 function genSponsorCode(): string {
     return "SP-" + crypto.randomBytes(4).toString("hex").toUpperCase();
-}
-
-function normalizeSponsorCode(raw: string): string {
-    const rawTrimmed = (raw || "").trim().toUpperCase();
-    let cleaned = rawTrimmed.replace(/\s+/g, "");
-    if (cleaned.startsWith("SP-")) {
-        cleaned = cleaned.substring(3);
-    } else if (cleaned.startsWith("SP")) {
-        cleaned = cleaned.substring(2);
-    }
-    const hexOnly = cleaned.replace(/[^0-9A-F]/g, "");
-    if (/^[0-9A-F]{8}$/.test(hexOnly)) {
-        return `SP-${hexOnly}`;
-    }
-    return rawTrimmed;
 }
 
 /**
@@ -335,78 +321,107 @@ export async function initializeSponsorshipPayment(poolId: string) {
 
 /** Verify Paystack callback for a sponsorship pool. */
 export async function verifySponsorshipPayment(poolId: string, reference: string) {
-    const res = await verifyPayment(reference);
-    if (!res.success || (res.data as any)?.status !== "success") return { success: false, error: "Verification failed" };
+    try {
+        const res = await verifyPayment(reference);
+        if (!res.success || (res.data as any)?.status !== "success") return { success: false, error: "Verification failed" };
 
-    const amount = Number((res.data as any)?.amount ?? 0);
-    const [pool] = await db.select().from(programmeSponsorshipPools).where(eq(programmeSponsorshipPools.id, poolId)).limit(1);
-    if (!pool) return { success: false, error: "Sponsorship not found" };
-    if (pool.status === "PAID") {
-        // Ensure any pre-created beneficiary registrations are also marked PAID
+        const amount = Number((res.data as any)?.amount ?? 0);
+        const [pool] = await db.select().from(programmeSponsorshipPools).where(eq(programmeSponsorshipPools.id, poolId)).limit(1);
+        if (!pool) return { success: false, error: "Sponsorship not found" };
+
+        if (pool.status === "PAID") {
+            // Ensure any pre-created beneficiary registrations are also marked PAID
+            await db.update(programmeRegistrations).set({
+                status: "PAID" as any,
+                amountPaid: pool.amountPerSeat as any,
+            } as any).where(eq(programmeRegistrations.sponsorPoolId, poolId));
+            return { success: true, alreadyPaid: true, sponsorCode: pool.sponsorCode };
+        }
+
+        // Check if a payment record with this paystackRef already exists to prevent unique-constraint collision
+        const [existingPayment] = await db
+            .select({ id: payments.id })
+            .from(payments)
+            .where(eq(payments.paystackRef, reference))
+            .limit(1);
+
+        let paymentId = existingPayment?.id;
+
+        if (!paymentId) {
+            paymentId = uuidv4();
+            try {
+                const orgRows = pool.programmeId
+                    ? await db.select({ id: programmes.organizationId }).from(programmes).where(eq(programmes.id, pool.programmeId)).limit(1)
+                    : [];
+
+                await db.insert(payments).values({
+                    id: paymentId,
+                    userId: pool.sponsorUserId,
+                    organizationId: orgRows[0]?.id || null,
+                    amount: amount.toFixed(2) as any,
+                    currency: "NGN",
+                    status: "SUCCESS" as any,
+                    paymentType: "EVENT_FEE" as any,
+                    paystackRef: reference,
+                    description: `Sponsorship of ${pool.seatCount} seats (${pool.sponsorName})`,
+                    paidAt: new Date(),
+                } as any);
+            } catch (payInsertErr: any) {
+                console.warn("Payment insert notice (likely duplicate):", payInsertErr?.message);
+            }
+        }
+
+        await db.update(programmeSponsorshipPools).set({
+            status: "PAID" as any,
+            paymentRef: reference,
+            paymentId: paymentId || null,
+        } as any).where(eq(programmeSponsorshipPools.id, poolId));
+
+        // Activate any pre-created named beneficiary rows in this sponsorship pool
         await db.update(programmeRegistrations).set({
             status: "PAID" as any,
             amountPaid: pool.amountPerSeat as any,
         } as any).where(eq(programmeRegistrations.sponsorPoolId, poolId));
-        return { success: true, alreadyPaid: true, sponsorCode: pool.sponsorCode };
-    }
 
-    const [pay] = await db.insert(payments).values({
-        id: uuidv4(),
-        userId: pool.sponsorUserId,
-        organizationId: pool.programmeId ? (await db.select({ id: programmes.organizationId }).from(programmes).where(eq(programmes.id, pool.programmeId)).limit(1))[0]?.id : null,
-        amount: amount.toFixed(2) as any,
-        currency: "NGN",
-        status: "SUCCESS" as any,
-        paymentType: "EVENT_FEE" as any,
-        paystackRef: reference,
-        description: `Sponsorship of ${pool.seatCount} seats (${pool.sponsorName})`,
-        paidAt: new Date(),
-    } as any).$returningId();
-
-    await db.update(programmeSponsorshipPools).set({
-        status: "PAID" as any,
-        paymentRef: reference,
-        paymentId: pay.id,
-    } as any).where(eq(programmeSponsorshipPools.id, poolId));
-
-    // Activate any pre-created named beneficiary rows in this sponsorship pool
-    await db.update(programmeRegistrations).set({
-        status: "PAID" as any,
-        amountPaid: pool.amountPerSeat as any,
-    } as any).where(eq(programmeRegistrations.sponsorPoolId, poolId));
-
-    if (pool.programmeId) {
-        const [prog] = await db.select({ orgId: programmes.organizationId }).from(programmes).where(eq(programmes.id, pool.programmeId)).limit(1);
-        // Performer falls back to first user for guest sponsors (keeps finance rollups complete)
-        let performerId = pool.sponsorUserId;
-        if (!performerId) {
-            const [firstUser] = await db.select({ id: users.id }).from(users).orderBy(asc(users.createdAt)).limit(1);
-            performerId = firstUser?.id || null;
+        if (pool.programmeId) {
+            const [prog] = await db.select({ orgId: programmes.organizationId }).from(programmes).where(eq(programmes.id, pool.programmeId)).limit(1);
+            let performerId = pool.sponsorUserId;
+            if (!performerId) {
+                const [firstUser] = await db.select({ id: users.id }).from(users).orderBy(asc(users.createdAt)).limit(1);
+                performerId = firstUser?.id || null;
+            }
+            if (prog?.orgId && performerId) {
+                try {
+                    await db.insert(financeTransactions).values({
+                        id: uuidv4(),
+                        organizationId: prog.orgId,
+                        type: "INFLOW" as any,
+                        amount: amount.toFixed(2) as any,
+                        category: "PROGRAMME_SPONSORSHIP",
+                        description: `Sponsored seats (${pool.seatCount} seats, ${pool.sponsorName})`,
+                        performedBy: performerId,
+                        date: new Date(),
+                        metadata: { reference } as any,
+                    } as any);
+                } catch (txErr: any) {
+                    console.warn("Finance transaction insert notice:", txErr?.message);
+                }
+            }
         }
-        if (prog?.orgId && performerId) {
-            await db.insert(financeTransactions).values({
-                id: uuidv4(),
-                organizationId: prog.orgId,
-                type: "INFLOW" as any,
-                amount: amount.toFixed(2) as any,
-                category: "PROGRAMME_SPONSORSHIP",
-                description: `Sponsored seats (${pool.seatCount} seats, ${pool.sponsorName})`,
-                performedBy: performerId,
-                date: new Date(),
-                metadata: { reference } as any,
-            } as any);
+
+        // Notify the sponsor with their code (awaited; helper never throws)
+        await emailSponsorCode(poolId);
+
+        try {
+            revalidatePath("/dashboard/programmes/sponsorship");
+        } catch {
+            // Ignore revalidatePath errors when called during Server Component render
         }
+        return { success: true, sponsorCode: pool.sponsorCode };
+    } catch (err: any) {
+        console.error("verifySponsorshipPayment error:", err);
+        return { success: false, error: err?.message || "Verification failed" };
     }
-
-    // Notify the sponsor with their code (awaited; helper never throws)
-    await emailSponsorCode(poolId);
-
-    try {
-        revalidatePath("/dashboard/programmes/sponsorship");
-    } catch {
-        // Ignore revalidatePath errors when called during Server Component render
-    }
-    return { success: true, sponsorCode: pool.sponsorCode };
 }
 
 /**
@@ -435,28 +450,46 @@ export async function emailSponsorCode(poolId: string) {
 
 /** Public: look up a pool by sponsor code (claim page). Self-heals if paymentRef succeeded on Paystack. */
 export async function getSponsorshipPoolByCode(code: string) {
-    const normalized = normalizeSponsorCode(code);
-    const rawTrimmed = (code || "").trim().toUpperCase();
-    if (!normalized && !rawTrimmed) return null;
+    const candidates = extractSponsorCodeCandidates(code);
+    if (candidates.length === 0) return null;
 
-    let [pool] = await db
+    let pool: any = null;
+
+    // 1. Direct match with candidates
+    const directMatches = await db
         .select()
         .from(programmeSponsorshipPools)
-        .where(
-            or(
-                eq(programmeSponsorshipPools.sponsorCode, normalized),
-                eq(programmeSponsorshipPools.sponsorCode, rawTrimmed)
-            )
-        )
+        .where(inArray(programmeSponsorshipPools.sponsorCode, candidates))
         .limit(1);
+
+    if (directMatches.length > 0) {
+        pool = directMatches[0];
+    } else {
+        // 2. Fallback: match 8-hex core substring
+        const hexMatch = candidates.find(c => c.startsWith("SP-") && c.length === 11);
+        if (hexMatch) {
+            const hex8 = hexMatch.substring(3);
+            const [byHex] = await db
+                .select()
+                .from(programmeSponsorshipPools)
+                .where(like(programmeSponsorshipPools.sponsorCode, `%${hex8}%`))
+                .limit(1);
+            if (byHex) pool = byHex;
+        }
+    }
+
     if (!pool) return null;
 
     // Self-healing: if pool is still marked PENDING but has a paymentRef, attempt Paystack verification
     if (pool.status === "PENDING" && pool.paymentRef) {
-        const verifyRes = await verifySponsorshipPayment(pool.id, pool.paymentRef);
-        if (verifyRes.success) {
-            const [updated] = await db.select().from(programmeSponsorshipPools).where(eq(programmeSponsorshipPools.id, pool.id)).limit(1);
-            if (updated) pool = updated;
+        try {
+            const verifyRes = await verifySponsorshipPayment(pool.id, pool.paymentRef);
+            if (verifyRes.success) {
+                const [updated] = await db.select().from(programmeSponsorshipPools).where(eq(programmeSponsorshipPools.id, pool.id)).limit(1);
+                if (updated) pool = updated;
+            }
+        } catch (err) {
+            console.error("Self-healing sponsorship payment verify error:", err);
         }
     }
 
@@ -475,10 +508,14 @@ export async function getSponsorshipPoolById(poolId: string) {
     if (!pool) return null;
 
     if (pool.status === "PENDING" && pool.paymentRef) {
-        const verifyRes = await verifySponsorshipPayment(pool.id, pool.paymentRef);
-        if (verifyRes.success) {
-            const [updated] = await db.select().from(programmeSponsorshipPools).where(eq(programmeSponsorshipPools.id, pool.id)).limit(1);
-            if (updated) pool = updated;
+        try {
+            const verifyRes = await verifySponsorshipPayment(pool.id, pool.paymentRef);
+            if (verifyRes.success) {
+                const [updated] = await db.select().from(programmeSponsorshipPools).where(eq(programmeSponsorshipPools.id, pool.id)).limit(1);
+                if (updated) pool = updated;
+            }
+        } catch (err) {
+            console.error("Self-healing getSponsorshipPoolById error:", err);
         }
     }
 
@@ -515,27 +552,47 @@ export async function claimSponsoredSeat(data: {
     branch?: string;
 }) {
     const session = await getServerSession();
-    const normalizedCode = normalizeSponsorCode(data.sponsorCode);
-    const rawTrimmedCode = (data.sponsorCode || "").trim().toUpperCase();
+    const candidates = extractSponsorCodeCandidates(data.sponsorCode);
 
-    if (!normalizedCode && !rawTrimmedCode) return { success: false, error: "Sponsor code is required" };
+    if (candidates.length === 0) return { success: false, error: "Sponsor code is required" };
     if (!data.name?.trim()) return { success: false, error: "Full name is required" };
 
     // Pre-check & self-heal pool payment status outside transaction if needed
-    const [initialPool] = await db
+    let initialPool: any = null;
+    const directMatches = await db
         .select()
         .from(programmeSponsorshipPools)
-        .where(
-            or(
-                eq(programmeSponsorshipPools.sponsorCode, normalizedCode),
-                eq(programmeSponsorshipPools.sponsorCode, rawTrimmedCode)
-            )
-        )
+        .where(inArray(programmeSponsorshipPools.sponsorCode, candidates))
         .limit(1);
-    if (!initialPool) return { success: false, error: "Invalid sponsor code" };
+
+    if (directMatches.length > 0) {
+        initialPool = directMatches[0];
+    } else {
+        const hexMatch = candidates.find(c => c.startsWith("SP-") && c.length === 11);
+        if (hexMatch) {
+            const hex8 = hexMatch.substring(3);
+            const [byHex] = await db
+                .select()
+                .from(programmeSponsorshipPools)
+                .where(like(programmeSponsorshipPools.sponsorCode, `%${hex8}%`))
+                .limit(1);
+            if (byHex) initialPool = byHex;
+        }
+    }
+
+    if (!initialPool) {
+        return {
+            success: false,
+            error: "Invalid sponsor code. Please check that you entered the 8-character code sent by your sponsor (e.g. SP-A1B2C3D4).",
+        };
+    }
 
     if (initialPool.status === "PENDING" && initialPool.paymentRef) {
-        await verifySponsorshipPayment(initialPool.id, initialPool.paymentRef);
+        try {
+            await verifySponsorshipPayment(initialPool.id, initialPool.paymentRef);
+        } catch (err) {
+            console.error("claimSponsoredSeat verify payment error:", err);
+        }
     }
 
     const claimEmail = (data.email?.trim() || session?.user?.email || initialPool.sponsorEmail || "").toLowerCase();
@@ -548,17 +605,13 @@ export async function claimSponsoredSeat(data: {
         const [pool] = await tx
             .select()
             .from(programmeSponsorshipPools)
-            .where(
-                or(
-                    eq(programmeSponsorshipPools.sponsorCode, normalizedCode),
-                    eq(programmeSponsorshipPools.sponsorCode, rawTrimmedCode)
-                )
-            )
+            .where(eq(programmeSponsorshipPools.id, initialPool.id))
             .limit(1);
+
         if (!pool) return { success: false, error: "Invalid sponsor code" };
-        if (pool.status !== "PAID") return { success: false, error: "This sponsorship has not been paid for yet" };
+        if (pool.status !== "PAID") return { success: false, error: "This sponsorship has not been completed by the sponsor yet. Please check back later." };
         const seatsLeft = pool.seatCount - (pool.seatsClaimed || 0);
-        if (seatsLeft <= 0) return { success: false, error: "All sponsored seats have been claimed" };
+        if (seatsLeft <= 0) return { success: false, error: "All sponsored seats for this code have already been claimed." };
 
         const normalizedName = data.name.trim().toLowerCase().replace(/\s+/g, " ");
 

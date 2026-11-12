@@ -5,10 +5,11 @@ import { getServerSession } from "@/lib/session"
 import { notFound } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { db } from "@/lib/db"
-import { organizations } from "@/lib/db/schema"
-import { eq } from "drizzle-orm"
+import { organizations, programmes, programmeRegistrations, programmeSponsorshipPools, bulkRegistrationGroups } from "@/lib/db/schema"
+import { eq, or, like, desc } from "drizzle-orm"
 import { ExportCSV } from "@/components/admin/shared/export-csv"
 import { formatCurrency } from "@/lib/utils"
+import { NitpAuditExportCard } from "@/components/admin/finance/nitp-audit-export-card"
 
 export default async function ReportsPage() {
     const session = await getServerSession()
@@ -32,7 +33,24 @@ export default async function ReportsPage() {
         }
     }
 
-    const summary = await getFinancialSummary(organizationId)
+    const [summary, [nitpProg]] = await Promise.all([
+        getFinancialSummary(organizationId),
+        db.select().from(programmes)
+            .where(or(like(programmes.title, '%NITP%'), like(programmes.title, '%National Islamic%')))
+            .limit(1),
+    ])
+
+    let nitpRegistrations: any[] = []
+    let nitpSponsorshipPools: any[] = []
+    let nitpBulkGroups: any[] = []
+
+    if (nitpProg) {
+        [nitpRegistrations, nitpSponsorshipPools, nitpBulkGroups] = await Promise.all([
+            db.select().from(programmeRegistrations).where(eq(programmeRegistrations.programmeId, nitpProg.id)).orderBy(desc(programmeRegistrations.registeredAt)),
+            db.select().from(programmeSponsorshipPools).where(eq(programmeSponsorshipPools.programmeId, nitpProg.id)).orderBy(desc(programmeSponsorshipPools.createdAt)),
+            db.select().from(bulkRegistrationGroups).where(eq(bulkRegistrationGroups.programmeId, nitpProg.id)).orderBy(desc(bulkRegistrationGroups.createdAt)),
+        ])
+    }
 
     const reportData = [
         {
@@ -80,6 +98,15 @@ export default async function ReportsPage() {
                     buttonText="Export Summary CSV"
                 />
             </div>
+
+            {nitpProg && (
+                <NitpAuditExportCard 
+                    programme={nitpProg}
+                    registrations={nitpRegistrations}
+                    sponsorshipPools={nitpSponsorshipPools}
+                    bulkGroups={nitpBulkGroups}
+                />
+            )}
 
             <div className="grid gap-6 md:grid-cols-2">
                 <Card>

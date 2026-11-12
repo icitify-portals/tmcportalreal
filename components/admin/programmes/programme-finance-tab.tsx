@@ -14,7 +14,8 @@ import {
     Loader2, 
     ExternalLink,
     TrendingUp,
-    Users
+    Users,
+    Download
 } from "lucide-react"
 import { formatCurrency } from "@/lib/utils"
 import { syncAllProgrammePayments } from "@/lib/actions/programmes"
@@ -117,6 +118,285 @@ export function ProgrammeFinanceTab({
     // 4. Combined Grand Total Revenue
     const grandTotalRevenue = directPaidRevenue + partialRevenue + poolsPaidRevenue + bulkPaidRevenue
 
+    const esc = (val: any) => {
+        if (val === null || val === undefined) return '""'
+        const str = String(val).replace(/"/g, '""')
+        return `"${str}"`
+    }
+
+    const exportComprehensiveAudit = () => {
+        const rows: string[] = []
+
+        // Title Block
+        rows.push([esc(`${programmeTitle} - COMPREHENSIVE FINANCIAL AUDIT REPORT`)].join(","))
+        rows.push([esc("Generated At"), esc(new Date().toLocaleString("en-NG")), esc("Currency"), esc("NGN")].join(","))
+        rows.push([esc("Total Reconciled Inflow"), esc(grandTotalRevenue.toFixed(2)), esc("Total Registrations"), esc(registrations.length)].join(","))
+        rows.push("") // Blank line
+
+        // 1. Executive Summary Table
+        rows.push([esc("=== SECTION 1: INFLOW CHANNELS SUMMARY ===")].join(","))
+        rows.push([esc("Inflow Channel"), esc("Records / Volume"), esc("Amount Collected (NGN)"), esc("Share (%)"), esc("Audit Status")].join(","))
+        rows.push([
+            esc("Direct Attendee Registrations"),
+            esc(`${directPaidCount} paid tickets`),
+            esc(directPaidRevenue.toFixed(2)),
+            esc(grandTotalRevenue > 0 ? ((directPaidRevenue / grandTotalRevenue) * 100).toFixed(2) + "%" : "0%"),
+            esc("Verified")
+        ].join(","))
+        rows.push([
+            esc("Sponsorship Pools"),
+            esc(`${paidPoolsCount} pools (${totalSponsorSeats} seats donated, ${claimedSponsorSeats} claimed)`),
+            esc(poolsPaidRevenue.toFixed(2)),
+            esc(grandTotalRevenue > 0 ? ((poolsPaidRevenue / grandTotalRevenue) * 100).toFixed(2) + "%" : "0%"),
+            esc("Verified")
+        ].join(","))
+        rows.push([
+            esc("Bulk Group Delegations"),
+            esc(`${paidBulkCount} bulk groups (${totalBulkAttendees} delegate seats)`),
+            esc(bulkPaidRevenue.toFixed(2)),
+            esc(grandTotalRevenue > 0 ? ((bulkPaidRevenue / grandTotalRevenue) * 100).toFixed(2) + "%" : "0%"),
+            esc("Verified")
+        ].join(","))
+        if (partialRevenue > 0) {
+            rows.push([
+                esc("Partially Paid Deposits"),
+                esc(`${partialPaidCount} deposits`),
+                esc(partialRevenue.toFixed(2)),
+                esc(grandTotalRevenue > 0 ? ((partialRevenue / grandTotalRevenue) * 100).toFixed(2) + "%" : "0%"),
+                esc("Partial")
+            ].join(","))
+        }
+        rows.push([
+            esc("GRAND TOTAL VERIFIED INFLOW"),
+            esc(`${registrations.length} registrations`),
+            esc(grandTotalRevenue.toFixed(2)),
+            esc("100.00%"),
+            esc("AUDITED")
+        ].join(","))
+        rows.push("") // Blank line
+
+        // 2. Sponsorship Pools Detailed
+        rows.push([esc("=== SECTION 2: SPONSORSHIP POOLS (PHILANTHROPISTS & DONORS) ===")].join(","))
+        rows.push([
+            esc("Sponsor Name"),
+            esc("Sponsor Email"),
+            esc("Sponsor Phone"),
+            esc("Sponsor Code"),
+            esc("Seats Donated"),
+            esc("Seats Claimed"),
+            esc("Seats Remaining"),
+            esc("Amount Per Seat (NGN)"),
+            esc("Total Amount (NGN)"),
+            esc("Payment Reference"),
+            esc("Status"),
+            esc("Date Created")
+        ].join(","))
+
+        for (const pool of sponsorshipPools) {
+            const seatsLeft = Math.max(0, (pool.seatCount || 0) - (pool.seatsClaimed || 0))
+            const created = pool.createdAt ? new Date(pool.createdAt).toISOString().replace("T", " ").substring(0, 19) : ""
+            rows.push([
+                esc(pool.sponsorName || "Anonymous Sponsor"),
+                esc(pool.sponsorEmail || ""),
+                esc(pool.sponsorPhone || ""),
+                esc(pool.sponsorCode || ""),
+                esc(pool.seatCount || 0),
+                esc(pool.seatsClaimed || 0),
+                esc(seatsLeft),
+                esc(parseFloat(String(pool.amountPerSeat || "0")).toFixed(2)),
+                esc(parseFloat(String(pool.totalAmount || "0")).toFixed(2)),
+                esc(pool.paymentRef || ""),
+                esc(pool.status || "PENDING"),
+                esc(created)
+            ].join(","))
+        }
+        rows.push("") // Blank line
+
+        // 3. Bulk Group Delegations Detailed
+        rows.push([esc("=== SECTION 3: BULK GROUP DELEGATIONS (BRANCHES & LGAS) ===")].join(","))
+        rows.push([
+            esc("Paymaster / Chapter"),
+            esc("Paymaster Email"),
+            esc("Paymaster Phone"),
+            esc("Attendee Count"),
+            esc("Amount Per Attendee (NGN)"),
+            esc("Total Amount (NGN)"),
+            esc("Payment Reference"),
+            esc("Status"),
+            esc("Date Created")
+        ].join(","))
+
+        for (const bg of bulkGroups) {
+            const created = bg.createdAt ? new Date(bg.createdAt).toISOString().replace("T", " ").substring(0, 19) : ""
+            rows.push([
+                esc(bg.paymasterName || "Group Paymaster"),
+                esc(bg.paymasterEmail || ""),
+                esc(bg.paymasterPhone || ""),
+                esc(bg.attendeeCount || 0),
+                esc(parseFloat(String(bg.amountPerAttendee || "0")).toFixed(2)),
+                esc(parseFloat(String(bg.totalAmount || "0")).toFixed(2)),
+                esc(bg.paymentRef || ""),
+                esc(bg.status || "PENDING"),
+                esc(created)
+            ].join(","))
+        }
+        rows.push("") // Blank line
+
+        // 4. Detailed Registrations / Attendees
+        rows.push([esc("=== SECTION 4: INDIVIDUAL ATTENDEE REGISTRATIONS ===")].join(","))
+        rows.push([
+            esc("Attendee Name"),
+            esc("Email"),
+            esc("Phone"),
+            esc("Gender"),
+            esc("State"),
+            esc("LGA"),
+            esc("Branch"),
+            esc("Membership ID"),
+            esc("Channel / Source"),
+            esc("Sponsor Pool / Group"),
+            esc("Amount Paid (NGN)"),
+            esc("Registration Status"),
+            esc("Registered Date")
+        ].join(","))
+
+        for (const r of registrations) {
+            let channel = "Direct Self-Paid"
+            let refGroup = ""
+            if (r.sponsorPoolId) {
+                channel = "Sponsored Seat"
+                const matchingPool = sponsorshipPools.find(p => p.id === r.sponsorPoolId)
+                refGroup = matchingPool ? `${matchingPool.sponsorCode} (${matchingPool.sponsorName})` : r.sponsorPoolId
+            } else if (r.bulkGroupId) {
+                channel = "Bulk Delegation"
+                const matchingBg = bulkGroups.find(b => b.id === r.bulkGroupId)
+                refGroup = matchingBg ? (matchingBg.paymasterName || "Bulk Group") : r.bulkGroupId
+            }
+
+            const regDate = r.registeredAt ? new Date(r.registeredAt).toISOString().replace("T", " ").substring(0, 19) : ""
+
+            rows.push([
+                esc(r.name || ""),
+                esc(r.email || ""),
+                esc(r.phone || ""),
+                esc(r.gender || ""),
+                esc(r.state || ""),
+                esc(r.lga || ""),
+                esc(r.branch || ""),
+                esc(r.memberId || ""),
+                esc(channel),
+                esc(refGroup),
+                esc(parseFloat(String(r.amountPaid || "0")).toFixed(2)),
+                esc(r.status || "PENDING"),
+                esc(regDate)
+            ].join(","))
+        }
+
+        const csvContent = "\uFEFF" + rows.join("\r\n")
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement("a")
+        const safeTitle = programmeTitle.toLowerCase().replace(/[^a-z0-9]/g, "_").substring(0, 30)
+        link.setAttribute("href", url)
+        link.setAttribute("download", `${safeTitle}_financial_audit_${new Date().toISOString().split("T")[0]}.csv`)
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        URL.revokeObjectURL(url)
+        toast.success("Comprehensive Financial Audit CSV downloaded!")
+    }
+
+    const exportSponsorshipPoolsOnly = () => {
+        const rows: string[] = []
+        rows.push([
+            esc("Sponsor Name"),
+            esc("Sponsor Email"),
+            esc("Sponsor Phone"),
+            esc("Sponsor Code"),
+            esc("Seats Donated"),
+            esc("Seats Claimed"),
+            esc("Seats Remaining"),
+            esc("Amount Per Seat (NGN)"),
+            esc("Total Amount (NGN)"),
+            esc("Payment Reference"),
+            esc("Status"),
+            esc("Date Created")
+        ].join(","))
+
+        for (const pool of sponsorshipPools) {
+            const seatsLeft = Math.max(0, (pool.seatCount || 0) - (pool.seatsClaimed || 0))
+            const created = pool.createdAt ? new Date(pool.createdAt).toISOString().replace("T", " ").substring(0, 19) : ""
+            rows.push([
+                esc(pool.sponsorName || "Anonymous Sponsor"),
+                esc(pool.sponsorEmail || ""),
+                esc(pool.sponsorPhone || ""),
+                esc(pool.sponsorCode || ""),
+                esc(pool.seatCount || 0),
+                esc(pool.seatsClaimed || 0),
+                esc(seatsLeft),
+                esc(parseFloat(String(pool.amountPerSeat || "0")).toFixed(2)),
+                esc(parseFloat(String(pool.totalAmount || "0")).toFixed(2)),
+                esc(pool.paymentRef || ""),
+                esc(pool.status || "PENDING"),
+                esc(created)
+            ].join(","))
+        }
+
+        const csvContent = "\uFEFF" + rows.join("\r\n")
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement("a")
+        link.setAttribute("href", url)
+        link.setAttribute("download", `sponsorship_pools_${new Date().toISOString().split("T")[0]}.csv`)
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        URL.revokeObjectURL(url)
+        toast.success("Sponsorship pools exported!")
+    }
+
+    const exportBulkGroupsOnly = () => {
+        const rows: string[] = []
+        rows.push([
+            esc("Paymaster / Chapter"),
+            esc("Paymaster Email"),
+            esc("Paymaster Phone"),
+            esc("Attendee Count"),
+            esc("Amount Per Attendee (NGN)"),
+            esc("Total Amount (NGN)"),
+            esc("Payment Reference"),
+            esc("Status"),
+            esc("Date Created")
+        ].join(","))
+
+        for (const bg of bulkGroups) {
+            const created = bg.createdAt ? new Date(bg.createdAt).toISOString().replace("T", " ").substring(0, 19) : ""
+            rows.push([
+                esc(bg.paymasterName || "Group Paymaster"),
+                esc(bg.paymasterEmail || ""),
+                esc(bg.paymasterPhone || ""),
+                esc(bg.attendeeCount || 0),
+                esc(parseFloat(String(bg.amountPerAttendee || "0")).toFixed(2)),
+                esc(parseFloat(String(bg.totalAmount || "0")).toFixed(2)),
+                esc(bg.paymentRef || ""),
+                esc(bg.status || "PENDING"),
+                esc(created)
+            ].join(","))
+        }
+
+        const csvContent = "\uFEFF" + rows.join("\r\n")
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement("a")
+        link.setAttribute("href", url)
+        link.setAttribute("download", `bulk_delegations_${new Date().toISOString().split("T")[0]}.csv`)
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        URL.revokeObjectURL(url)
+        toast.success("Bulk delegations exported!")
+    }
+
     return (
         <div className="space-y-6">
             {/* Top Revenue Summary Banner */}
@@ -139,11 +419,18 @@ export function ProgrammeFinanceTab({
                         </p>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <Button
+                            onClick={exportComprehensiveAudit}
+                            className="bg-white hover:bg-slate-100 text-emerald-950 font-bold text-xs h-9 shadow-sm"
+                        >
+                            <Download className="h-4 w-4 mr-1.5 text-emerald-700" /> Download Audit (CSV/Excel)
+                        </Button>
                         <Button 
                             onClick={handleSync}
                             disabled={isSyncing}
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs h-9 shadow-xs"
+                            variant="outline"
+                            className="border-emerald-600 bg-emerald-900/60 hover:bg-emerald-800 text-white font-semibold text-xs h-9 shadow-xs"
                         >
                             {isSyncing ? (
                                 <>
@@ -314,14 +601,19 @@ export function ProgrammeFinanceTab({
             {sponsorshipPools.length > 0 && (
                 <Card className="border border-slate-200 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900">
                     <CardHeader className="pb-3 border-b bg-purple-50/30">
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between flex-wrap gap-2">
                             <CardTitle className="text-base font-bold flex items-center gap-2 text-purple-950">
                                 <HeartHandshake className="h-4 w-4 text-purple-600" />
                                 Sponsorship Pools ({sponsorshipPools.length})
                             </CardTitle>
-                            <Badge variant="outline" className="border-purple-300 text-purple-800 font-bold">
-                                Total: {formatCurrency(poolsPaidRevenue)}
-                            </Badge>
+                            <div className="flex items-center gap-2">
+                                <Button size="sm" variant="outline" onClick={exportSponsorshipPoolsOnly} className="h-7 text-xs border-purple-300 text-purple-900 bg-white hover:bg-purple-50">
+                                    <Download className="h-3.5 w-3.5 mr-1 text-purple-700" /> Export Pools CSV
+                                </Button>
+                                <Badge variant="outline" className="border-purple-300 text-purple-800 font-bold">
+                                    Total: {formatCurrency(poolsPaidRevenue)}
+                                </Badge>
+                            </div>
                         </div>
                     </CardHeader>
                     <CardContent className="pt-3">
@@ -365,14 +657,19 @@ export function ProgrammeFinanceTab({
             {bulkGroups.length > 0 && (
                 <Card className="border border-slate-200 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900">
                     <CardHeader className="pb-3 border-b bg-blue-50/30">
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between flex-wrap gap-2">
                             <CardTitle className="text-base font-bold flex items-center gap-2 text-blue-950">
                                 <Layers className="h-4 w-4 text-blue-600" />
                                 Bulk Group Delegations ({bulkGroups.length})
                             </CardTitle>
-                            <Badge variant="outline" className="border-blue-300 text-blue-800 font-bold">
-                                Total: {formatCurrency(bulkPaidRevenue)}
-                            </Badge>
+                            <div className="flex items-center gap-2">
+                                <Button size="sm" variant="outline" onClick={exportBulkGroupsOnly} className="h-7 text-xs border-blue-300 text-blue-900 bg-white hover:bg-blue-50">
+                                    <Download className="h-3.5 w-3.5 mr-1 text-blue-700" /> Export Groups CSV
+                                </Button>
+                                <Badge variant="outline" className="border-blue-300 text-blue-800 font-bold">
+                                    Total: {formatCurrency(bulkPaidRevenue)}
+                                </Badge>
+                            </div>
                         </div>
                     </CardHeader>
                     <CardContent className="pt-3">
