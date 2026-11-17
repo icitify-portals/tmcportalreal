@@ -18,7 +18,8 @@ import {
     DoorOpen, 
     Store, 
     ChevronDown,
-    ExternalLink
+    ExternalLink,
+    Award
 } from "lucide-react"
 import Link from "next/link"
 
@@ -58,6 +59,13 @@ export function CampOperationsMenu({ programmeId }: { programmeId: string }) {
                     <Link href={`/dashboard/admin/programmes/${programmeId}/as-i-see-it`} className="flex items-center gap-2 py-2">
                         <Eye className="h-4 w-4 text-emerald-600" />
                         <span className="font-semibold text-xs">"As I See It" Triage Desk</span>
+                    </Link>
+                </DropdownMenuItem>
+
+                <DropdownMenuItem asChild className="rounded-xl cursor-pointer">
+                    <Link href={`/dashboard/admin/programmes/${programmeId}/departments`} className="flex items-center gap-2 py-2">
+                        <Award className="h-4 w-4 text-indigo-600" />
+                        <span className="font-semibold text-xs">Departmental KPI & Notes</span>
                     </Link>
                 </DropdownMenuItem>
 

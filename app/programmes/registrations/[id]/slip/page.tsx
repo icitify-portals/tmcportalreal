@@ -6,7 +6,7 @@ import { eq } from "drizzle-orm"
 import { redirect } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
-import { MapPin, Calendar, Clock, User, ShieldCheck, Mail, Phone, CreditCard, Printer, Radio, Utensils, Eye, MessageSquare, Store } from "lucide-react"
+import { MapPin, Calendar, Clock, User, ShieldCheck, Mail, Phone, CreditCard, Printer, Radio, Utensils, Eye, MessageSquare, Store, Award } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { ClientCurrency } from "@/components/ui/client-currency"
 import { format } from "date-fns"
@@ -166,6 +166,12 @@ export default async function AccessSlipPage({ params }: { params: Promise<{ id:
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gray-50 hover:bg-purple-50 text-gray-700 hover:text-purple-800 border border-gray-200 text-xs font-bold transition-all shrink-0"
                         >
                             <Store className="w-3.5 h-3.5 text-purple-600" /> Camp Bazaar
+                        </Link>
+                        <Link 
+                            href={`/programmes/${registration.programmeId}/departments/assess?reg=${registration.id}`}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gray-50 hover:bg-indigo-50 text-gray-700 hover:text-indigo-800 border border-gray-200 text-xs font-bold transition-all shrink-0"
+                        >
+                            <Award className="w-3.5 h-3.5 text-indigo-600" /> Rate Depts
                         </Link>
                     </div>
                 </div>

@@ -10,6 +10,10 @@ import {
     programmeVisitors,
     programmeGatePasses,
     programmeVendors,
+    programmeDepartments,
+    programmeDepartmentAssessments,
+    programmeDepartmentReviews,
+    programmeDepartmentActivityLogs,
     users,
     programmeRegistrations
 } from "@/lib/db/schema"
@@ -851,5 +855,355 @@ export async function deleteProgrammeVendor(vendorId: string) {
         return { success: true }
     } catch (error: any) {
         return { success: false, error: error.message }
+    }
+}
+
+// ============================================================================
+// 7. DEPARTMENTAL KPI ASSESSMENT & ACTIVITY DOCUMENTATION
+// ============================================================================
+
+const DEFAULT_DEPARTMENTS = [
+    { code: "DAWAH", name: "Dawah & Lectures Directorate", desc: "Sermons, spiritual guidance, lecture moderation, and tahajjud coordination" },
+    { code: "WELFARE", name: "Welfare & Feeding Directorate", desc: "Meal preparation, dining hall management, water, and camper nourishment" },
+    { code: "ACCOMMODATION", name: "Accommodation & Bedding Committee", desc: "Hostel room allocation, bedding, light, and sanitation" },
+    { code: "SECURITY", name: "Security & Safety Directorate", desc: "Camp perimeter guarding, gate passes, visitor vetting, and patrols" },
+    { code: "MEDICAL", name: "Medical & Health Services Team", desc: "Camp clinic, first aid, emergency treatment, and hygiene monitoring" },
+    { code: "LOGISTICS", name: "Logistics, Sound & Venue Setup", desc: "Public address systems, power generators, seating, and stage arrangement" },
+    { code: "MEDIA_IT", name: "Media, Broadcast & IT Directorate", desc: "Live streaming, photography, projection, and portal operations" },
+    { code: "FINANCE", name: "Registration & Finance Desk", desc: "Camp registration verification, collections, and financial clearance" },
+    { code: "BAZAAR", name: "Bazaar & Commercial Stalls Committee", desc: "Camp market organization, vendor stalls, and commercial regulation" },
+    { code: "DISCIPLINE", name: "Discipline & Camp Marshals", desc: "Punctuality, dress code adherence, order, and silence during lights-out" },
+]
+
+export async function ensureDefaultProgrammeDepartments(programmeId: string) {
+    try {
+        const existing = await db.select({ id: programmeDepartments.id })
+            .from(programmeDepartments)
+            .where(eq(programmeDepartments.programmeId, programmeId))
+
+        if (existing.length === 0) {
+            for (let i = 0; i < DEFAULT_DEPARTMENTS.length; i++) {
+                const dept = DEFAULT_DEPARTMENTS[i]
+                await db.insert(programmeDepartments).values({
+                    id: uuidv4(),
+                    programmeId,
+                    name: dept.name,
+                    code: dept.code,
+                    description: dept.desc,
+                    displayOrder: i + 1,
+                    status: "ACTIVE",
+                })
+            }
+        }
+        return { success: true }
+    } catch (error: any) {
+        console.error("Error seeding default departments:", error)
+        return { success: false, error: error.message }
+    }
+}
+
+export async function getProgrammeDepartments(programmeId: string) {
+    try {
+        await ensureDefaultProgrammeDepartments(programmeId)
+        const depts = await db.select()
+            .from(programmeDepartments)
+            .where(eq(programmeDepartments.programmeId, programmeId))
+            .orderBy(asc(programmeDepartments.displayOrder), asc(programmeDepartments.name))
+
+        return { success: true, data: depts }
+    } catch (error: any) {
+        console.error("Error fetching departments:", error)
+        return { success: false, error: error.message, data: [] }
+    }
+}
+
+export async function createProgrammeDepartment(data: {
+    programmeId: string
+    name: string
+    code: string
+    description?: string
+    leadOfficerName?: string
+    leadOfficerPhone?: string
+    leadOfficerEmail?: string
+}) {
+    const session = await getServerSession()
+    if (!session?.user?.id) return { success: false, error: "Unauthorized" }
+
+    try {
+        const id = uuidv4()
+        await db.insert(programmeDepartments).values({
+            id,
+            programmeId: data.programmeId,
+            name: data.name.trim(),
+            code: data.code.toUpperCase().replace(/\s+/g, '_'),
+            description: data.description?.trim() || null,
+            leadOfficerName: data.leadOfficerName?.trim() || null,
+            leadOfficerPhone: data.leadOfficerPhone?.trim() || null,
+            leadOfficerEmail: data.leadOfficerEmail?.trim() || null,
+            status: "ACTIVE",
+        })
+
+        revalidatePath(`/dashboard/admin/programmes/${data.programmeId}/departments`)
+        return { success: true, id }
+    } catch (error: any) {
+        return { success: false, error: error.message }
+    }
+}
+
+export async function submitDepartmentAssessment(data: {
+    programmeId: string
+    departmentId: string
+    registrationId?: string
+    evaluatorName?: string
+    overallRating: number
+    efficiencyRating?: number
+    serviceRating?: number
+    conductRating?: number
+    impactRating?: number
+    commendation?: string
+    areasOfImprovement?: string
+}) {
+    const session = await getServerSession()
+    if (!data.programmeId || !data.departmentId || !data.overallRating) {
+        return { success: false, error: "Please provide a valid rating" }
+    }
+
+    try {
+        const id = uuidv4()
+        await db.insert(programmeDepartmentAssessments).values({
+            id,
+            programmeId: data.programmeId,
+            departmentId: data.departmentId,
+            registrationId: data.registrationId || null,
+            userId: session?.user?.id || null,
+            evaluatorName: data.evaluatorName?.trim() || session?.user?.name || "Anonymous Delegate",
+            overallRating: Math.min(5, Math.max(1, data.overallRating)),
+            efficiencyRating: data.efficiencyRating ? Math.min(5, Math.max(1, data.efficiencyRating)) : null,
+            serviceRating: data.serviceRating ? Math.min(5, Math.max(1, data.serviceRating)) : null,
+            conductRating: data.conductRating ? Math.min(5, Math.max(1, data.conductRating)) : null,
+            impactRating: data.impactRating ? Math.min(5, Math.max(1, data.impactRating)) : null,
+            commendation: data.commendation?.trim() || null,
+            areasOfImprovement: data.areasOfImprovement?.trim() || null,
+        })
+
+        revalidatePath(`/dashboard/admin/programmes/${data.programmeId}/departments`)
+        revalidatePath(`/programmes/${data.programmeId}/departments/assess`)
+        return { success: true, id }
+    } catch (error: any) {
+        console.error("Submit department assessment error:", error)
+        return { success: false, error: error.message || "Failed to submit assessment" }
+    }
+}
+
+export async function getProgrammeDepartmentKPIOverview(programmeId: string) {
+    try {
+        await ensureDefaultProgrammeDepartments(programmeId)
+        const depts = await db.select()
+            .from(programmeDepartments)
+            .where(eq(programmeDepartments.programmeId, programmeId))
+            .orderBy(asc(programmeDepartments.displayOrder))
+
+        const allAssessments = await db.select()
+            .from(programmeDepartmentAssessments)
+            .where(eq(programmeDepartmentAssessments.programmeId, programmeId))
+
+        const allReviews = await db.select()
+            .from(programmeDepartmentReviews)
+            .where(eq(programmeDepartmentReviews.programmeId, programmeId))
+
+        const allLogs = await db.select({
+            id: programmeDepartmentActivityLogs.id,
+            departmentId: programmeDepartmentActivityLogs.departmentId,
+        }).from(programmeDepartmentActivityLogs).where(eq(programmeDepartmentActivityLogs.programmeId, programmeId))
+
+        const results = depts.map(dept => {
+            const assessments = allAssessments.filter(a => a.departmentId === dept.id)
+            const count = assessments.length
+            const avgOverall = count > 0 
+                ? (assessments.reduce((sum, a) => sum + a.overallRating, 0) / count).toFixed(2)
+                : "0.00"
+            const avgEfficiency = count > 0 
+                ? (assessments.reduce((sum, a) => sum + (a.efficiencyRating || a.overallRating), 0) / count).toFixed(2)
+                : "0.00"
+            const avgService = count > 0 
+                ? (assessments.reduce((sum, a) => sum + (a.serviceRating || a.overallRating), 0) / count).toFixed(2)
+                : "0.00"
+            const avgConduct = count > 0 
+                ? (assessments.reduce((sum, a) => sum + (a.conductRating || a.overallRating), 0) / count).toFixed(2)
+                : "0.00"
+
+            const review = allReviews.find(r => r.departmentId === dept.id) || null
+            const logCount = allLogs.filter(l => l.departmentId === dept.id).length
+
+            return {
+                department: dept,
+                assessmentCount: count,
+                avgOverall: parseFloat(avgOverall),
+                avgEfficiency: parseFloat(avgEfficiency),
+                avgService: parseFloat(avgService),
+                avgConduct: parseFloat(avgConduct),
+                review,
+                activityLogCount: logCount,
+            }
+        })
+
+        return { success: true, data: results }
+    } catch (error: any) {
+        console.error("Error computing departmental KPI overview:", error)
+        return { success: false, error: error.message, data: [] }
+    }
+}
+
+export async function saveDepartmentReview(data: {
+    programmeId: string
+    departmentId: string
+    reviewingCommitteeName: string
+    committeeScore: number
+    finalWeightedScore?: number
+    performanceTier: string
+    strengths?: string
+    weaknesses?: string
+    actionableRecommendations?: string
+    status: string
+}) {
+    const session = await getServerSession()
+    if (!session?.user?.id) return { success: false, error: "Unauthorized" }
+
+    try {
+        const [existing] = await db.select()
+            .from(programmeDepartmentReviews)
+            .where(and(
+                eq(programmeDepartmentReviews.programmeId, data.programmeId),
+                eq(programmeDepartmentReviews.departmentId, data.departmentId)
+            )).limit(1)
+
+        // Calculate current delegate score
+        const assessments = await db.select({ rating: programmeDepartmentAssessments.overallRating })
+            .from(programmeDepartmentAssessments)
+            .where(eq(programmeDepartmentAssessments.departmentId, data.departmentId))
+        const delAvg = assessments.length > 0 
+            ? assessments.reduce((acc, a) => acc + a.rating, 0) / assessments.length
+            : 0
+
+        // Delegate is on 1-5 scale, normalise to percentage: (delAvg / 5) * 100
+        const delPercentage = (delAvg / 5) * 100
+        const commScore = data.committeeScore || 0
+        // Weighted: 40% Delegates + 60% Committee
+        const finalWeighted = ((delPercentage * 0.4) + (commScore * 0.6)).toFixed(2)
+
+        const finalizedAt = data.status === "FINALIZED" ? new Date() : null
+
+        if (existing) {
+            await db.update(programmeDepartmentReviews).set({
+                reviewingCommitteeName: data.reviewingCommitteeName.trim(),
+                reviewerUserId: session.user.id,
+                delegateAverageScore: delAvg.toFixed(2),
+                committeeScore: commScore.toFixed(2),
+                finalWeightedScore: finalWeighted,
+                performanceTier: data.performanceTier,
+                strengths: data.strengths?.trim() || null,
+                weaknesses: data.weaknesses?.trim() || null,
+                actionableRecommendations: data.actionableRecommendations?.trim() || null,
+                status: data.status,
+                finalizedAt: finalizedAt || existing.finalizedAt,
+            }).where(eq(programmeDepartmentReviews.id, existing.id))
+        } else {
+            const id = uuidv4()
+            await db.insert(programmeDepartmentReviews).values({
+                id,
+                programmeId: data.programmeId,
+                departmentId: data.departmentId,
+                reviewingCommitteeName: data.reviewingCommitteeName.trim(),
+                reviewerUserId: session.user.id,
+                delegateAverageScore: delAvg.toFixed(2),
+                committeeScore: commScore.toFixed(2),
+                finalWeightedScore: finalWeighted,
+                performanceTier: data.performanceTier,
+                strengths: data.strengths?.trim() || null,
+                weaknesses: data.weaknesses?.trim() || null,
+                actionableRecommendations: data.actionableRecommendations?.trim() || null,
+                status: data.status,
+                finalizedAt,
+            })
+        }
+
+        revalidatePath(`/dashboard/admin/programmes/${data.programmeId}/departments`)
+        return { success: true }
+    } catch (error: any) {
+        console.error("Save department review error:", error)
+        return { success: false, error: error.message || "Failed to save review" }
+    }
+}
+
+export async function getDepartmentActivityLogs(programmeId: string, departmentId?: string) {
+    try {
+        let query = db.select({
+            id: programmeDepartmentActivityLogs.id,
+            programmeId: programmeDepartmentActivityLogs.programmeId,
+            departmentId: programmeDepartmentActivityLogs.departmentId,
+            departmentName: programmeDepartments.name,
+            departmentCode: programmeDepartments.code,
+            activityDate: programmeDepartmentActivityLogs.activityDate,
+            title: programmeDepartmentActivityLogs.title,
+            activityType: programmeDepartmentActivityLogs.activityType,
+            officerInCharge: programmeDepartmentActivityLogs.officerInCharge,
+            summary: programmeDepartmentActivityLogs.summary,
+            actionItems: programmeDepartmentActivityLogs.actionItems,
+            challengesEncountered: programmeDepartmentActivityLogs.challengesEncountered,
+            attachmentsUrl: programmeDepartmentActivityLogs.attachmentsUrl,
+            createdAt: programmeDepartmentActivityLogs.createdAt,
+        }).from(programmeDepartmentActivityLogs)
+        .leftJoin(programmeDepartments, eq(programmeDepartmentActivityLogs.departmentId, programmeDepartments.id))
+        .where(
+            departmentId 
+                ? and(eq(programmeDepartmentActivityLogs.programmeId, programmeId), eq(programmeDepartmentActivityLogs.departmentId, departmentId))
+                : eq(programmeDepartmentActivityLogs.programmeId, programmeId)
+        )
+        .orderBy(desc(programmeDepartmentActivityLogs.activityDate))
+
+        const logs = await query
+        return { success: true, data: logs }
+    } catch (error: any) {
+        console.error("Error fetching activity logs:", error)
+        return { success: false, error: error.message, data: [] }
+    }
+}
+
+export async function createDepartmentActivityLog(data: {
+    programmeId: string
+    departmentId: string
+    title: string
+    activityType: string
+    officerInCharge?: string
+    summary: string
+    actionItems?: string
+    challengesEncountered?: string
+    attachmentsUrl?: string
+}) {
+    const session = await getServerSession()
+    if (!data.programmeId || !data.departmentId || !data.title || !data.summary) {
+        return { success: false, error: "Please fill out all required fields" }
+    }
+
+    try {
+        const id = uuidv4()
+        await db.insert(programmeDepartmentActivityLogs).values({
+            id,
+            programmeId: data.programmeId,
+            departmentId: data.departmentId,
+            title: data.title.trim(),
+            activityType: data.activityType || "DAILY_LOG",
+            officerInCharge: data.officerInCharge?.trim() || session?.user?.name || "Duty Officer",
+            summary: data.summary.trim(),
+            actionItems: data.actionItems?.trim() || null,
+            challengesEncountered: data.challengesEncountered?.trim() || null,
+            attachmentsUrl: data.attachmentsUrl?.trim() || null,
+        })
+
+        revalidatePath(`/dashboard/admin/programmes/${data.programmeId}/departments`)
+        return { success: true, id }
+    } catch (error: any) {
+        console.error("Create activity log error:", error)
+        return { success: false, error: error.message || "Failed to save activity note" }
     }
 }

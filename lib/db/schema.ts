@@ -1399,6 +1399,77 @@ export const programmeVendors = mysqlTable("programme_vendors", {
     updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).$defaultFn(() => new Date()).$onUpdateFn(() => new Date()),
 });
 
+// Camp Departments / Directorates
+export const programmeDepartments = mysqlTable("programme_departments", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
+    programmeId: varchar("programmeId", { length: 255 }).notNull().references(() => programmes.id, { onDelete: "cascade" }),
+    name: varchar("name", { length: 255 }).notNull(),
+    code: varchar("code", { length: 50 }).notNull(), // 'DAWAH', 'WELFARE', 'ACCOMMODATION', 'SECURITY', 'MEDICAL', 'LOGISTICS', 'MEDIA_IT', 'FINANCE', 'BAZAAR', 'DISCIPLINE'
+    description: text("description"),
+    leadOfficerName: varchar("leadOfficerName", { length: 255 }),
+    leadOfficerPhone: varchar("leadOfficerPhone", { length: 50 }),
+    leadOfficerEmail: varchar("leadOfficerEmail", { length: 255 }),
+    displayOrder: int("displayOrder").default(0),
+    status: varchar("status", { length: 50 }).default('ACTIVE'), // 'ACTIVE', 'INACTIVE'
+    createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).$defaultFn(() => new Date()).$onUpdateFn(() => new Date()),
+});
+
+// Departmental KPI Assessment by Delegates / Participants
+export const programmeDepartmentAssessments = mysqlTable("programme_department_assessments", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
+    programmeId: varchar("programmeId", { length: 255 }).notNull().references(() => programmes.id, { onDelete: "cascade" }),
+    departmentId: varchar("departmentId", { length: 255 }).notNull().references(() => programmeDepartments.id, { onDelete: "cascade" }),
+    registrationId: varchar("registrationId", { length: 255 }),
+    userId: varchar("userId", { length: 255 }).references(() => users.id),
+    evaluatorName: varchar("evaluatorName", { length: 255 }),
+    overallRating: int("overallRating").notNull(), // 1 to 5
+    efficiencyRating: int("efficiencyRating"), // 1 to 5 (Punctuality, readiness, turnaround)
+    serviceRating: int("serviceRating"), // 1 to 5 (Quality of deliverable)
+    conductRating: int("conductRating"), // 1 to 5 (Courteousness, interpersonal manners)
+    impactRating: int("impactRating"), // 1 to 5 (Overall satisfaction)
+    commendation: text("commendation"),
+    areasOfImprovement: text("areasOfImprovement"),
+    createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+});
+
+// Departmental KPI Committee Review & Finalization
+export const programmeDepartmentReviews = mysqlTable("programme_department_reviews", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
+    programmeId: varchar("programmeId", { length: 255 }).notNull().references(() => programmes.id, { onDelete: "cascade" }),
+    departmentId: varchar("departmentId", { length: 255 }).notNull().references(() => programmeDepartments.id, { onDelete: "cascade" }),
+    reviewingCommitteeName: varchar("reviewingCommitteeName", { length: 255 }).notNull(), // e.g. "Central Working Committee"
+    reviewerUserId: varchar("reviewerUserId", { length: 255 }).references(() => users.id),
+    delegateAverageScore: decimal("delegateAverageScore", { precision: 5, scale: 2 }).default("0.00"),
+    committeeScore: decimal("committeeScore", { precision: 5, scale: 2 }).default("0.00"),
+    finalWeightedScore: decimal("finalWeightedScore", { precision: 5, scale: 2 }).default("0.00"),
+    performanceTier: varchar("performanceTier", { length: 50 }).default('SATISFACTORY'), // 'OUTSTANDING', 'EXCELLENT', 'SATISFACTORY', 'NEEDS_IMPROVEMENT', 'UNACCEPTABLE'
+    strengths: text("strengths"),
+    weaknesses: text("weaknesses"),
+    actionableRecommendations: text("actionableRecommendations"),
+    status: varchar("status", { length: 50 }).default('DRAFT'), // 'DRAFT', 'UNDER_REVIEW', 'FINALIZED'
+    finalizedAt: timestamp("finalizedAt", { mode: "date", fsp: 3 }),
+    createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).$defaultFn(() => new Date()).$onUpdateFn(() => new Date()),
+});
+
+// Departmental Activity Logs, Minutes & Notes
+export const programmeDepartmentActivityLogs = mysqlTable("programme_department_activity_logs", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
+    programmeId: varchar("programmeId", { length: 255 }).notNull().references(() => programmes.id, { onDelete: "cascade" }),
+    departmentId: varchar("departmentId", { length: 255 }).notNull().references(() => programmeDepartments.id, { onDelete: "cascade" }),
+    activityDate: timestamp("activityDate", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+    title: varchar("title", { length: 255 }).notNull(),
+    activityType: varchar("activityType", { length: 50 }).default('DAILY_LOG'), // 'MEETING_MINUTES', 'INCIDENT_REPORT', 'DAILY_LOG', 'HANDOVER_NOTE', 'RESOURCE_REQUEST'
+    officerInCharge: varchar("officerInCharge", { length: 255 }),
+    summary: text("summary").notNull(),
+    actionItems: text("actionItems"),
+    challengesEncountered: text("challengesEncountered"),
+    attachmentsUrl: varchar("attachmentsUrl", { length: 500 }),
+    createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).$defaultFn(() => new Date()).$onUpdateFn(() => new Date()),
+});
+
 // Finance Budgets
 export const financeBudgets = mysqlTable("finance_budgets", {
     id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
