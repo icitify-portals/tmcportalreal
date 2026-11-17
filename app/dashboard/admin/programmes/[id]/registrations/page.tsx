@@ -18,7 +18,8 @@ import {
     Users,
     Sparkles,
     ExternalLink,
-    Receipt
+    Receipt,
+    Tent
 } from "lucide-react"
 import Link from "next/link"
 import { ExportRegistrationsCSV } from "@/components/admin/programmes/export-csv"
@@ -36,6 +37,7 @@ import { ShareProgrammeDialog } from "@/components/programmes/share-programme-di
 import { ProgrammeShareTab } from "@/components/admin/programmes/programme-share-tab"
 import { ProgrammeFinanceTab } from "@/components/admin/programmes/programme-finance-tab"
 import { CampOperationsMenu } from "@/components/admin/programmes/camp-operations-menu"
+import { ProgrammeCampOperationsTab } from "@/components/admin/programmes/programme-camp-operations-tab"
 
 export const dynamic = "force-dynamic"
 
@@ -115,6 +117,13 @@ export default async function ProgrammeRegistrationsPage({ params }: { params: P
                             Registrations ({registrations.length})
                         </TabsTrigger>
                         <TabsTrigger 
+                            value="camp-operations" 
+                            className="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 data-[state=active]:bg-emerald-700 data-[state=active]:text-white shadow-xs py-2 px-3.5 rounded-lg transition-all"
+                        >
+                            <Tent className="h-4 w-4 mr-2 text-emerald-600 data-[state=active]:text-white" />
+                            Camp Operations & Logistics
+                        </TabsTrigger>
+                        <TabsTrigger 
                             value="financial-audit" 
                             className="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 data-[state=active]:bg-emerald-700 data-[state=active]:text-white shadow-xs py-2 px-3.5 rounded-lg transition-all"
                         >
@@ -171,7 +180,15 @@ export default async function ProgrammeRegistrationsPage({ params }: { params: P
                         )}
                     </TabsContent>
 
-                    {/* Tab 2: Financial Audit & Collections */}
+                    {/* Tab 2: Camp Operations & Logistics */}
+                    <TabsContent value="camp-operations" className="space-y-4">
+                        <ProgrammeCampOperationsTab 
+                            programmeId={programme.id}
+                            programmeTitle={programme.title}
+                        />
+                    </TabsContent>
+
+                    {/* Tab 3: Financial Audit & Collections */}
                     <TabsContent value="financial-audit" className="space-y-4">
                         <ProgrammeFinanceTab 
                             programmeId={programme.id}

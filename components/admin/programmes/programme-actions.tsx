@@ -10,7 +10,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { MoreHorizontal, Edit, Trash, Loader2, Users, Calendar, XCircle, Share2 } from "lucide-react"
+import { MoreHorizontal, Edit, Trash, Loader2, Users, Calendar, XCircle, Share2, Tent } from "lucide-react"
 import { EditProgrammeDialog } from "./edit-programme-dialog"
 import { deleteProgramme, postponeProgramme, cancelProgramme } from "@/lib/actions/programmes"
 import { toast } from "sonner"
@@ -122,6 +122,12 @@ export function ProgrammeActions({ programme, canEdit = true }: ProgrammeActions
                     <DropdownMenuItem asChild>
                         <Link href={`/dashboard/admin/programmes/${programme.id}/registrations`}>
                             <Users className="mr-2 h-4 w-4" /> Registrations
+                        </Link>
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem asChild>
+                        <Link href={`/dashboard/admin/programmes/${programme.id}/registrations`}>
+                            <Tent className="mr-2 h-4 w-4 text-emerald-600" /> Camp Operations & Links
                         </Link>
                     </DropdownMenuItem>
                     

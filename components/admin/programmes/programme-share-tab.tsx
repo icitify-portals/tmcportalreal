@@ -19,7 +19,13 @@ import {
     Download, 
     Link as LinkIcon,
     Sparkles,
-    ShieldCheck
+    ShieldCheck,
+    Calendar,
+    Utensils,
+    Eye,
+    Store,
+    Award,
+    Radio
 } from "lucide-react"
 import { generateWaiverLink } from "@/lib/actions/programmes"
 
@@ -45,6 +51,7 @@ export function ProgrammeShareTab({ programme }: ProgrammeShareTabProps) {
     const [origin, setOrigin] = useState("")
     const [waiverUrl, setWaiverUrl] = useState<string | null>(null)
     const [generatingWaiver, setGeneratingWaiver] = useState(false)
+    const [campQrItem, setCampQrItem] = useState<{ title: string; url: string } | null>(null)
 
     useEffect(() => {
         if (typeof window !== "undefined") {
@@ -533,6 +540,162 @@ Spread the word to friends and family!`
                     </Card>
                 </div>
             </div>
+
+            {/* Camp Operations & Delegate Services Share Section */}
+            <div className="space-y-4 pt-4 border-t border-slate-200 dark:border-slate-800">
+                <div>
+                    <div className="flex items-center gap-2">
+                        <Badge className="bg-emerald-600 text-white font-bold text-xs">Live Camp Operations</Badge>
+                        <h3 className="text-lg font-black text-slate-900 dark:text-white">
+                            Delegate Service Links & Broadcast Announcements
+                        </h3>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-1">
+                        Disseminate these specialized links to registered camp delegates via WhatsApp or display their QR codes across camp venues.
+                    </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {[
+                        {
+                            title: "Live Event Schedule & Ticker",
+                            path: `/programmes/${programme.id}/schedule`,
+                            icon: Calendar,
+                            desc: "Daily lecture timeline, speaker list, and live announcement ticker.",
+                            waText: `Assalamu alaykum.\n\n📌 *${programme.title}*\n📅 *Live Event Schedule & Announcement Ticker*\nTrack upcoming sessions, venue changes, and live announcements on the go:\n${origin}/programmes/${programme.id}/schedule`
+                        },
+                        {
+                            title: "Food Timetable & Meal Ratings",
+                            path: `/programmes/${programme.id}/meals`,
+                            icon: Utensils,
+                            desc: "Daily menu for Breakfast, Lunch & Dinner, plus interactive meal quality ratings.",
+                            waText: `Assalamu alaykum.\n\n📌 *${programme.title}*\n🍽️ *Food Timetable & Meal Ratings*\nCheck what is on the menu for Breakfast, Lunch & Dinner, and rate the food quality:\n${origin}/programmes/${programme.id}/meals`
+                        },
+                        {
+                            title: "\"As I See It\" Observation Box",
+                            path: `/programmes/${programme.id}/as-i-see-it`,
+                            icon: Eye,
+                            desc: "Real-time suggestion box for delegates with anonymous mode and leadership triage.",
+                            waText: `Assalamu alaykum.\n\n📌 *${programme.title}*\n👁️ *\"As I See It\" Observation Box*\nShare your real-time observations, facilities issues, and suggestions directly with the camp leadership:\n${origin}/programmes/${programme.id}/as-i-see-it`
+                        },
+                        {
+                            title: "Camp Bazaar & Vendor Directory",
+                            path: `/programmes/${programme.id}/vendors`,
+                            icon: Store,
+                            desc: "Explore camp bookshops, attire vendors, perfumes, herbal products, and food stalls.",
+                            waText: `Assalamu alaykum.\n\n📌 *${programme.title}*\n🏪 *Camp Bazaar & Vendor Directory*\nBrowse official stalls, books, attires, and contact vendors directly on WhatsApp:\n${origin}/programmes/${programme.id}/vendors`
+                        },
+                        {
+                            title: "Departmental KPI Assessment",
+                            path: `/programmes/${programme.id}/departments/assess`,
+                            icon: Award,
+                            desc: "Participant assessment of 10 camp directorates across 4 KPI performance dimensions.",
+                            waText: `Assalamu alaykum.\n\n📌 *${programme.title}*\n🏆 *Departmental KPI Assessment*\nRate the efficiency, quality, and service conduct of camp directorates and committees:\n${origin}/programmes/${programme.id}/departments/assess`
+                        },
+                    ].map((item, idx) => {
+                        const fullUrl = `${origin}${item.path}`
+                        const isCopied = copiedUrl === fullUrl
+                        return (
+                            <Card key={idx} className="rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs hover:shadow-md transition-all flex flex-col justify-between overflow-hidden bg-white dark:bg-slate-900">
+                                <CardContent className="p-4 space-y-2.5">
+                                    <div className="flex items-center gap-2.5">
+                                        <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-800 shrink-0">
+                                            <item.icon className="w-4 h-4" />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-sm font-black text-slate-900 dark:text-white leading-tight">
+                                                {item.title}
+                                            </h4>
+                                            <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">Delegate Link</span>
+                                        </div>
+                                    </div>
+                                    <p className="text-xs text-slate-600 dark:text-slate-300">
+                                        {item.desc}
+                                    </p>
+                                    <div className="p-1.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700 text-[11px] font-mono text-slate-600 dark:text-slate-300 truncate">
+                                        {fullUrl}
+                                    </div>
+                                </CardContent>
+                                <div className="p-3 bg-slate-50/80 dark:bg-slate-800/40 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-1.5">
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => copyToClipboard(fullUrl, item.title)}
+                                        className="h-8 text-xs font-semibold rounded-xl flex-1"
+                                    >
+                                        {isCopied ? <Check className="w-3.5 h-3.5 mr-1 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 mr-1" />}
+                                        {isCopied ? "Copied" : "Copy Link"}
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(item.waText)}`, "_blank")}
+                                        className="h-8 px-2.5 text-xs rounded-xl text-green-700 hover:bg-green-50 border-green-200"
+                                        title="Share via WhatsApp"
+                                    >
+                                        <MessageCircle className="w-3.5 h-3.5" />
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => setCampQrItem({ title: item.title, url: fullUrl })}
+                                        className="h-8 px-2.5 text-xs rounded-xl"
+                                        title="View QR Code"
+                                    >
+                                        <QrCode className="w-3.5 h-3.5" />
+                                    </Button>
+                                    <a href={item.path} target="_blank" rel="noreferrer">
+                                        <Button size="sm" variant="ghost" className="h-8 px-2 text-xs rounded-xl text-slate-500" title="Open Page">
+                                            <ExternalLink className="w-3.5 h-3.5" />
+                                        </Button>
+                                    </a>
+                                </div>
+                            </Card>
+                        )
+                    })}
+                </div>
+            </div>
+
+            {/* QR Modal for Camp Services */}
+            {campQrItem && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+                    <div className="bg-white rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-2xl border border-gray-200 text-center">
+                        <div className="border-b pb-3">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-emerald-700">Delegate Direct Access QR</p>
+                            <h3 className="font-black text-gray-900 text-base">{campQrItem.title}</h3>
+                            <p className="text-xs text-gray-500">{programme.title}</p>
+                        </div>
+
+                        <div className="flex justify-center p-3 bg-white rounded-2xl border-2 border-emerald-100 shadow-inner">
+                            <img 
+                                src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(campQrItem.url)}`}
+                                alt={campQrItem.title}
+                                className="w-56 h-56 rounded-xl object-contain"
+                            />
+                        </div>
+
+                        <p className="text-[11px] text-gray-400 font-mono truncate px-2">
+                            {campQrItem.url}
+                        </p>
+
+                        <div className="flex items-center justify-center gap-2 pt-2">
+                            <Button 
+                                onClick={() => copyToClipboard(campQrItem.url, campQrItem.title)} 
+                                className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-xl gap-1.5"
+                            >
+                                <Copy className="w-3.5 h-3.5" /> Copy Link
+                            </Button>
+                            <Button 
+                                variant="outline" 
+                                onClick={() => setCampQrItem(null)}
+                                className="font-semibold text-xs rounded-xl"
+                            >
+                                Close
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

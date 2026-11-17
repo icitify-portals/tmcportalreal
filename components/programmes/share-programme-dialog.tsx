@@ -22,7 +22,12 @@ import {
     QrCode, 
     MessageCircle, 
     Send, 
-    Download 
+    Download,
+    Calendar,
+    Utensils,
+    Eye,
+    Store,
+    Award 
 } from "lucide-react"
 
 export interface ShareProgrammeDialogProps {
@@ -288,6 +293,49 @@ export function ShareProgrammeDialog({
                             rows={5}
                             className="text-xs font-sans bg-muted/30 resize-none leading-relaxed"
                         />
+                    </div>
+
+                    {/* Delegate Camp Services Quick Links */}
+                    <div className="space-y-2 pt-2 border-t">
+                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
+                            <span>Camp Operations & Delegate Service Links</span>
+                            <span className="text-[10px] text-emerald-700 font-bold">1-Click Share</span>
+                        </Label>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                            {[
+                                { title: "Event Schedule & Ticker", path: `/programmes/${programme.id}/schedule`, icon: Calendar },
+                                { title: "Food Timetable & Ratings", path: `/programmes/${programme.id}/meals`, icon: Utensils },
+                                { title: "\"As I See It\" Box", path: `/programmes/${programme.id}/as-i-see-it`, icon: Eye },
+                                { title: "Camp Bazaar & Stalls", path: `/programmes/${programme.id}/vendors`, icon: Store },
+                                { title: "Departmental KPI Rating", path: `/programmes/${programme.id}/departments/assess`, icon: Award },
+                            ].map((item, idx) => {
+                                const fullUrl = `${origin}${item.path}`
+                                return (
+                                    <div key={idx} className="p-2 bg-muted/30 border rounded-xl flex items-center justify-between gap-1.5">
+                                        <div className="flex items-center gap-1.5 min-w-0">
+                                            <item.icon className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+                                            <span className="font-semibold text-slate-800 text-[11px] truncate">{item.title}</span>
+                                        </div>
+                                        <div className="flex items-center gap-1 shrink-0">
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    navigator.clipboard.writeText(fullUrl)
+                                                    toast.success(`${item.title} link copied!`)
+                                                }}
+                                                className="p-1 hover:bg-muted rounded text-slate-600"
+                                                title="Copy link"
+                                            >
+                                                <Copy className="w-3.5 h-3.5" />
+                                            </button>
+                                            <a href={item.path} target="_blank" rel="noreferrer" className="p-1 hover:bg-muted rounded text-slate-600">
+                                                <ExternalLink className="w-3.5 h-3.5" />
+                                            </a>
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
                     </div>
                 </div>
             </DialogContent>
