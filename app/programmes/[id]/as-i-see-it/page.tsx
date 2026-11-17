@@ -2,7 +2,7 @@ import { getProgrammeCampDetails } from "@/lib/actions/programme-camp-ops"
 import { notFound } from "next/navigation"
 import { PublicNav } from "@/components/layout/public-nav"
 import { AsISeeItForm } from "@/components/programme/as-i-see-it-dialog"
-import { ArrowLeft, Calendar, Utensils } from "lucide-react"
+import { ArrowLeft, Calendar, Utensils, Store } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { getServerSession } from "@/lib/session"
@@ -44,6 +44,11 @@ export default async function AsISeeItPage({
                         <Button variant="outline" size="sm" asChild className="border-amber-200 text-amber-800 hover:bg-amber-50">
                             <Link href={`/programmes/${id}/meals${registrationId ? `?reg=${registrationId}` : ''}`}>
                                 <Utensils className="w-4 h-4 mr-1.5" /> Food Timetable
+                            </Link>
+                        </Button>
+                        <Button variant="outline" size="sm" asChild className="border-purple-200 text-purple-800 hover:bg-purple-50">
+                            <Link href={`/programmes/${id}/vendors`}>
+                                <Store className="w-4 h-4 mr-1.5" /> Camp Bazaar
                             </Link>
                         </Button>
                     </div>

@@ -2,7 +2,7 @@ import { getProgrammeMealSchedules, getProgrammeCampDetails } from "@/lib/action
 import { notFound } from "next/navigation"
 import { PublicNav } from "@/components/layout/public-nav"
 import { MealsView } from "@/components/programme/meals-view"
-import { ArrowLeft, Calendar, Eye } from "lucide-react"
+import { ArrowLeft, Calendar, Eye, Store } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { getServerSession } from "@/lib/session"
@@ -45,6 +45,11 @@ export default async function ProgrammeMealsPage({
                         <Button variant="outline" size="sm" asChild className="border-emerald-200 text-emerald-800 hover:bg-emerald-50">
                             <Link href={`/programmes/${id}/as-i-see-it${registrationId ? `?reg=${registrationId}` : ''}`}>
                                 <Eye className="w-4 h-4 mr-1.5" /> As I See It Box
+                            </Link>
+                        </Button>
+                        <Button variant="outline" size="sm" asChild className="border-purple-200 text-purple-800 hover:bg-purple-50">
+                            <Link href={`/programmes/${id}/vendors`}>
+                                <Store className="w-4 h-4 mr-1.5" /> Camp Bazaar
                             </Link>
                         </Button>
                     </div>

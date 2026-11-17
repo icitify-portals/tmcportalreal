@@ -35,6 +35,7 @@ import { AddParticipantsDialog } from "@/components/admin/programmes/add-partici
 import { ShareProgrammeDialog } from "@/components/programmes/share-programme-dialog"
 import { ProgrammeShareTab } from "@/components/admin/programmes/programme-share-tab"
 import { ProgrammeFinanceTab } from "@/components/admin/programmes/programme-finance-tab"
+import { CampOperationsMenu } from "@/components/admin/programmes/camp-operations-menu"
 
 export const dynamic = "force-dynamic"
 
@@ -195,6 +196,7 @@ export default async function ProgrammeRegistrationsPage({ params }: { params: P
 function RegistrationsHeader({ programme, registrations }: { programme: any, registrations: any[] }) {
     return (
         <div className="flex items-center gap-2 flex-wrap">
+            <CampOperationsMenu programmeId={programme.id} />
             <ShareProgrammeDialog
                 programme={programme}
                 buttonVariant="outline"

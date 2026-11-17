@@ -7,6 +7,9 @@ import {
     programmeMealRatings, 
     programmeCampObservations, 
     programmeSchedules,
+    programmeVisitors,
+    programmeGatePasses,
+    programmeVendors,
     users,
     programmeRegistrations
 } from "@/lib/db/schema"
@@ -521,5 +524,332 @@ export async function getProgrammeCampDetails(programmeId: string) {
         return prog || null
     } catch {
         return null
+    }
+}
+
+// ============================================================================
+// 4. CAMP VISITOR MANAGEMENT
+// ============================================================================
+
+export async function getProgrammeVisitors(programmeId: string) {
+    try {
+        const visitors = await db.select()
+            .from(programmeVisitors)
+            .where(eq(programmeVisitors.programmeId, programmeId))
+            .orderBy(desc(programmeVisitors.createdAt))
+
+        return { success: true, data: visitors }
+    } catch (error: any) {
+        console.error("Error fetching visitors:", error)
+        return { success: false, error: error.message, data: [] }
+    }
+}
+
+export async function createProgrammeVisitor(data: {
+    programmeId: string
+    visitorName: string
+    phoneNumber: string
+    email?: string
+    organization?: string
+    purpose: string
+    hostDelegateName?: string
+    hostDelegatePhone?: string
+    tagNumber?: string
+    securityNotes?: string
+}) {
+    const session = await getServerSession()
+    if (!data.programmeId || !data.visitorName || !data.phoneNumber || !data.purpose) {
+        return { success: false, error: "Please fill out all required fields" }
+    }
+
+    try {
+        const id = uuidv4()
+        const count = await db.select({ count: sql<number>`count(*)` })
+            .from(programmeVisitors)
+            .where(eq(programmeVisitors.programmeId, data.programmeId))
+        const tag = data.tagNumber?.trim() || `VIS-${String(Number(count[0]?.count || 0) + 1).padStart(3, '0')}`
+
+        await db.insert(programmeVisitors).values({
+            id,
+            programmeId: data.programmeId,
+            visitorName: data.visitorName.trim(),
+            phoneNumber: data.phoneNumber.trim(),
+            email: data.email?.trim() || null,
+            organization: data.organization?.trim() || null,
+            purpose: data.purpose.trim(),
+            hostDelegateName: data.hostDelegateName?.trim() || null,
+            hostDelegatePhone: data.hostDelegatePhone?.trim() || null,
+            tagNumber: tag,
+            status: "CHECKED_IN",
+            securityNotes: data.securityNotes?.trim() || null,
+            checkedInBy: session?.user?.name || "Security Desk",
+        })
+
+        revalidatePath(`/dashboard/admin/programmes/${data.programmeId}/visitors`)
+        return { success: true, id, tagNumber: tag }
+    } catch (error: any) {
+        console.error("Create visitor error:", error)
+        return { success: false, error: error.message || "Failed to record visitor" }
+    }
+}
+
+export async function checkOutProgrammeVisitor(visitorId: string, securityNotes?: string) {
+    const session = await getServerSession()
+    try {
+        const [existing] = await db.select().from(programmeVisitors).where(eq(programmeVisitors.id, visitorId)).limit(1)
+        if (!existing) return { success: false, error: "Visitor not found" }
+
+        await db.update(programmeVisitors).set({
+            status: "CHECKED_OUT",
+            checkOutTime: new Date(),
+            checkedOutBy: session?.user?.name || "Security Desk",
+            securityNotes: securityNotes ? `${existing.securityNotes ? existing.securityNotes + " | " : ""}${securityNotes}` : existing.securityNotes,
+        }).where(eq(programmeVisitors.id, visitorId))
+
+        revalidatePath(`/dashboard/admin/programmes/${existing.programmeId}/visitors`)
+        return { success: true }
+    } catch (error: any) {
+        console.error("Visitor checkout error:", error)
+        return { success: false, error: error.message || "Failed to check out visitor" }
+    }
+}
+
+export async function deleteProgrammeVisitor(visitorId: string) {
+    const session = await getServerSession()
+    if (!session?.user?.id) return { success: false, error: "Unauthorized" }
+
+    try {
+        const [existing] = await db.select().from(programmeVisitors).where(eq(programmeVisitors.id, visitorId)).limit(1)
+        if (!existing) return { success: false, error: "Visitor not found" }
+
+        await db.delete(programmeVisitors).where(eq(programmeVisitors.id, visitorId))
+        revalidatePath(`/dashboard/admin/programmes/${existing.programmeId}/visitors`)
+        return { success: true }
+    } catch (error: any) {
+        return { success: false, error: error.message }
+    }
+}
+
+// ============================================================================
+// 5. CAMP GATE PASS / IN & OUT MOVEMENT TRACKER
+// ============================================================================
+
+export async function getProgrammeGatePasses(programmeId: string) {
+    try {
+        const passes = await db.select()
+            .from(programmeGatePasses)
+            .where(eq(programmeGatePasses.programmeId, programmeId))
+            .orderBy(desc(programmeGatePasses.createdAt))
+
+        return { success: true, data: passes }
+    } catch (error: any) {
+        console.error("Error fetching gate passes:", error)
+        return { success: false, error: error.message, data: [] }
+    }
+}
+
+export async function createProgrammeGatePass(data: {
+    programmeId: string
+    registrationId?: string
+    delegateName: string
+    phoneNumber: string
+    reason: string
+    destination: string
+    expectedReturnTime: string // ISO string or parsable date string
+    notes?: string
+}) {
+    const session = await getServerSession()
+    if (!data.programmeId || !data.delegateName || !data.phoneNumber || !data.destination || !data.expectedReturnTime) {
+        return { success: false, error: "Please fill out all required fields" }
+    }
+
+    try {
+        const id = uuidv4()
+        const count = await db.select({ count: sql<number>`count(*)` })
+            .from(programmeGatePasses)
+            .where(eq(programmeGatePasses.programmeId, data.programmeId))
+        const passNum = `GP-${String(Number(count[0]?.count || 0) + 1).padStart(4, '0')}`
+
+        await db.insert(programmeGatePasses).values({
+            id,
+            programmeId: data.programmeId,
+            registrationId: data.registrationId || null,
+            delegateName: data.delegateName.trim(),
+            phoneNumber: data.phoneNumber.trim(),
+            passNumber: passNum,
+            reason: data.reason.trim(),
+            destination: data.destination.trim(),
+            expectedReturnTime: new Date(data.expectedReturnTime),
+            status: "ACTIVE",
+            approvedBy: session?.user?.name || "Camp Marshal",
+            securityOfficerExit: session?.user?.name || "Main Gate Security",
+            notes: data.notes?.trim() || null,
+        })
+
+        revalidatePath(`/dashboard/admin/programmes/${data.programmeId}/gate-pass`)
+        return { success: true, id, passNumber: passNum }
+    } catch (error: any) {
+        console.error("Create gate pass error:", error)
+        return { success: false, error: error.message || "Failed to issue gate pass" }
+    }
+}
+
+export async function recordGatePassReturn(passId: string, returnNotes?: string) {
+    const session = await getServerSession()
+    try {
+        const [existing] = await db.select().from(programmeGatePasses).where(eq(programmeGatePasses.id, passId)).limit(1)
+        if (!existing) return { success: false, error: "Gate pass not found" }
+
+        const now = new Date()
+        const isOverdue = existing.expectedReturnTime && now > new Date(existing.expectedReturnTime)
+
+        await db.update(programmeGatePasses).set({
+            status: isOverdue ? "RETURNED_LATE" : "RETURNED",
+            actualReturnTime: now,
+            securityOfficerReturn: session?.user?.name || "Main Gate Security",
+            notes: returnNotes ? `${existing.notes ? existing.notes + " | " : ""}${returnNotes}` : existing.notes,
+        }).where(eq(programmeGatePasses.id, passId))
+
+        revalidatePath(`/dashboard/admin/programmes/${existing.programmeId}/gate-pass`)
+        return { success: true, isOverdue }
+    } catch (error: any) {
+        console.error("Gate pass return error:", error)
+        return { success: false, error: error.message || "Failed to record return" }
+    }
+}
+
+export async function cancelProgrammeGatePass(passId: string) {
+    try {
+        const [existing] = await db.select().from(programmeGatePasses).where(eq(programmeGatePasses.id, passId)).limit(1)
+        if (!existing) return { success: false, error: "Gate pass not found" }
+
+        await db.update(programmeGatePasses).set({
+            status: "CANCELLED"
+        }).where(eq(programmeGatePasses.id, passId))
+
+        revalidatePath(`/dashboard/admin/programmes/${existing.programmeId}/gate-pass`)
+        return { success: true }
+    } catch (error: any) {
+        return { success: false, error: error.message }
+    }
+}
+
+// ============================================================================
+// 6. CAMP VENDOR & BUSINESS REGISTRATION
+// ============================================================================
+
+export async function getProgrammeVendors(programmeId: string) {
+    try {
+        const vendors = await db.select()
+            .from(programmeVendors)
+            .where(eq(programmeVendors.programmeId, programmeId))
+            .orderBy(asc(programmeVendors.stallNumber), asc(programmeVendors.businessName))
+
+        return { success: true, data: vendors }
+    } catch (error: any) {
+        console.error("Error fetching vendors:", error)
+        return { success: false, error: error.message, data: [] }
+    }
+}
+
+export async function createProgrammeVendor(data: {
+    programmeId: string
+    businessName: string
+    ownerName: string
+    phoneNumber: string
+    whatsappNumber?: string
+    email?: string
+    category: string
+    description?: string
+    stallNumber?: string
+    feePaid?: string
+    paymentStatus?: string
+    securityClearance?: string
+}) {
+    const session = await getServerSession()
+    if (!data.programmeId || !data.businessName || !data.ownerName || !data.phoneNumber || !data.category) {
+        return { success: false, error: "Please fill out all required fields" }
+    }
+
+    try {
+        const id = uuidv4()
+        await db.insert(programmeVendors).values({
+            id,
+            programmeId: data.programmeId,
+            businessName: data.businessName.trim(),
+            ownerName: data.ownerName.trim(),
+            phoneNumber: data.phoneNumber.trim(),
+            whatsappNumber: data.whatsappNumber?.trim() || data.phoneNumber.trim(),
+            email: data.email?.trim() || null,
+            category: data.category.toUpperCase(),
+            description: data.description?.trim() || null,
+            stallNumber: data.stallNumber?.trim() || null,
+            feePaid: data.feePaid || "0.00",
+            paymentStatus: data.paymentStatus || "PENDING",
+            securityClearance: data.securityClearance || "APPROVED",
+            registeredBy: session?.user?.name || "Business Committee",
+        })
+
+        revalidatePath(`/dashboard/admin/programmes/${data.programmeId}/vendors`)
+        revalidatePath(`/programmes/${data.programmeId}/vendors`)
+        return { success: true, id }
+    } catch (error: any) {
+        console.error("Create vendor error:", error)
+        return { success: false, error: error.message || "Failed to register vendor" }
+    }
+}
+
+export async function updateProgrammeVendor(vendorId: string, data: Partial<{
+    businessName: string
+    ownerName: string
+    phoneNumber: string
+    whatsappNumber: string
+    email: string
+    category: string
+    description: string
+    stallNumber: string
+    feePaid: string
+    paymentStatus: string
+    securityClearance: string
+}>) {
+    try {
+        const [existing] = await db.select().from(programmeVendors).where(eq(programmeVendors.id, vendorId)).limit(1)
+        if (!existing) return { success: false, error: "Vendor not found" }
+
+        const updateData: any = {}
+        if (data.businessName !== undefined) updateData.businessName = data.businessName.trim()
+        if (data.ownerName !== undefined) updateData.ownerName = data.ownerName.trim()
+        if (data.phoneNumber !== undefined) updateData.phoneNumber = data.phoneNumber.trim()
+        if (data.whatsappNumber !== undefined) updateData.whatsappNumber = data.whatsappNumber.trim()
+        if (data.email !== undefined) updateData.email = data.email?.trim() || null
+        if (data.category !== undefined) updateData.category = data.category.toUpperCase()
+        if (data.description !== undefined) updateData.description = data.description?.trim() || null
+        if (data.stallNumber !== undefined) updateData.stallNumber = data.stallNumber?.trim() || null
+        if (data.feePaid !== undefined) updateData.feePaid = data.feePaid
+        if (data.paymentStatus !== undefined) updateData.paymentStatus = data.paymentStatus
+        if (data.securityClearance !== undefined) updateData.securityClearance = data.securityClearance
+
+        await db.update(programmeVendors).set(updateData).where(eq(programmeVendors.id, vendorId))
+
+        revalidatePath(`/dashboard/admin/programmes/${existing.programmeId}/vendors`)
+        revalidatePath(`/programmes/${existing.programmeId}/vendors`)
+        return { success: true }
+    } catch (error: any) {
+        console.error("Update vendor error:", error)
+        return { success: false, error: error.message || "Failed to update vendor" }
+    }
+}
+
+export async function deleteProgrammeVendor(vendorId: string) {
+    try {
+        const [existing] = await db.select().from(programmeVendors).where(eq(programmeVendors.id, vendorId)).limit(1)
+        if (!existing) return { success: false, error: "Vendor not found" }
+
+        await db.delete(programmeVendors).where(eq(programmeVendors.id, vendorId))
+        revalidatePath(`/dashboard/admin/programmes/${existing.programmeId}/vendors`)
+        revalidatePath(`/programmes/${existing.programmeId}/vendors`)
+        return { success: true }
+    } catch (error: any) {
+        return { success: false, error: error.message }
     }
 }

@@ -2,7 +2,7 @@ import { getProgrammeScheduleTimeline } from "@/lib/actions/programme-camp-ops"
 import { notFound } from "next/navigation"
 import { PublicNav } from "@/components/layout/public-nav"
 import { ScheduleTimeline } from "@/components/programme/schedule-timeline"
-import { Calendar, ArrowLeft, Download, Utensils, Eye } from "lucide-react"
+import { Calendar, ArrowLeft, Download, Utensils, Eye, Store } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 
@@ -44,6 +44,11 @@ export default async function ProgrammeSchedulePage({
                         <Button variant="outline" size="sm" asChild className="border-emerald-200 text-emerald-800 hover:bg-emerald-50">
                             <Link href={`/programmes/${id}/as-i-see-it`}>
                                 <Eye className="w-4 h-4 mr-1.5" /> As I See It
+                            </Link>
+                        </Button>
+                        <Button variant="outline" size="sm" asChild className="border-purple-200 text-purple-800 hover:bg-purple-50">
+                            <Link href={`/programmes/${id}/vendors`}>
+                                <Store className="w-4 h-4 mr-1.5" /> Camp Bazaar
                             </Link>
                         </Button>
                     </div>

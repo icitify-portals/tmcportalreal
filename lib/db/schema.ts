@@ -1335,6 +1335,70 @@ export const programmeSchedules = mysqlTable("programme_schedules", {
     updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).$defaultFn(() => new Date()).$onUpdateFn(() => new Date()),
 });
 
+// Camp Visitor Management (Day visitors, guest passes, security check-in/out)
+export const programmeVisitors = mysqlTable("programme_visitors", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
+    programmeId: varchar("programmeId", { length: 255 }).notNull().references(() => programmes.id, { onDelete: "cascade" }),
+    visitorName: varchar("visitorName", { length: 255 }).notNull(),
+    phoneNumber: varchar("phoneNumber", { length: 50 }).notNull(),
+    email: varchar("email", { length: 255 }),
+    organization: varchar("organization", { length: 255 }), // Branch / Zone / External
+    purpose: varchar("purpose", { length: 255 }).notNull(), // 'VISITING_DELEGATE', 'OFFICIAL_VISIT', 'GUEST_SPEAKER', 'DAY_PARTICIPATION', 'VENDOR_SUPPORT', 'OTHER'
+    hostDelegateName: varchar("hostDelegateName", { length: 255 }),
+    hostDelegatePhone: varchar("hostDelegatePhone", { length: 50 }),
+    tagNumber: varchar("tagNumber", { length: 50 }), // e.g. "VIS-001"
+    checkInTime: timestamp("checkInTime", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+    checkOutTime: timestamp("checkOutTime", { mode: "date", fsp: 3 }),
+    status: varchar("status", { length: 50 }).default('CHECKED_IN'), // 'CHECKED_IN', 'CHECKED_OUT', 'EXPECTED'
+    securityNotes: text("securityNotes"),
+    checkedInBy: varchar("checkedInBy", { length: 255 }),
+    checkedOutBy: varchar("checkedOutBy", { length: 255 }),
+    createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).$defaultFn(() => new Date()).$onUpdateFn(() => new Date()),
+});
+
+// Camp Gate Pass / Delegate In & Out Movement Tracker
+export const programmeGatePasses = mysqlTable("programme_gate_passes", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
+    programmeId: varchar("programmeId", { length: 255 }).notNull().references(() => programmes.id, { onDelete: "cascade" }),
+    registrationId: varchar("registrationId", { length: 255 }),
+    delegateName: varchar("delegateName", { length: 255 }).notNull(),
+    phoneNumber: varchar("phoneNumber", { length: 50 }).notNull(),
+    passNumber: varchar("passNumber", { length: 50 }).notNull(), // e.g. "GP-1001"
+    reason: varchar("reason", { length: 255 }).notNull(), // 'MEDICAL', 'OFFICIAL_ASSIGNMENT', 'PERSONAL_EMERGENCY', 'ATM_ERRAND', 'OTHER'
+    destination: varchar("destination", { length: 255 }).notNull(),
+    exitTime: timestamp("exitTime", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+    expectedReturnTime: timestamp("expectedReturnTime", { mode: "date", fsp: 3 }).notNull(),
+    actualReturnTime: timestamp("actualReturnTime", { mode: "date", fsp: 3 }),
+    status: varchar("status", { length: 50 }).default('ACTIVE'), // 'ACTIVE', 'RETURNED', 'OVERDUE', 'CANCELLED'
+    approvedBy: varchar("approvedBy", { length: 255 }),
+    securityOfficerExit: varchar("securityOfficerExit", { length: 255 }),
+    securityOfficerReturn: varchar("securityOfficerReturn", { length: 255 }),
+    notes: text("notes"),
+    createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).$defaultFn(() => new Date()).$onUpdateFn(() => new Date()),
+});
+
+// Camp Vendor & Business Owner Registration (Bazaar / Market stalls)
+export const programmeVendors = mysqlTable("programme_vendors", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
+    programmeId: varchar("programmeId", { length: 255 }).notNull().references(() => programmes.id, { onDelete: "cascade" }),
+    businessName: varchar("businessName", { length: 255 }).notNull(),
+    ownerName: varchar("ownerName", { length: 255 }).notNull(),
+    phoneNumber: varchar("phoneNumber", { length: 50 }).notNull(),
+    whatsappNumber: varchar("whatsappNumber", { length: 50 }),
+    email: varchar("email", { length: 255 }),
+    category: varchar("category", { length: 100 }).notNull(), // 'BOOKS_MEDIA', 'CLOTHING_ATTIRE', 'PERFUMERY_OILS', 'FOOD_BEVERAGES', 'ELECTRONICS', 'HEALTH_HERBAL', 'SERVICES', 'OTHER'
+    description: text("description"),
+    stallNumber: varchar("stallNumber", { length: 50 }), // e.g. "STALL-B04"
+    feePaid: decimal("feePaid", { precision: 10, scale: 2 }).default("0.00"),
+    paymentStatus: varchar("paymentStatus", { length: 50 }).default('PENDING'), // 'PENDING', 'PAID', 'WAIVED'
+    securityClearance: varchar("securityClearance", { length: 50 }).default('APPROVED'), // 'PENDING', 'APPROVED', 'REJECTED'
+    registeredBy: varchar("registeredBy", { length: 255 }),
+    createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).$defaultFn(() => new Date()).$onUpdateFn(() => new Date()),
+});
+
 // Finance Budgets
 export const financeBudgets = mysqlTable("finance_budgets", {
     id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
