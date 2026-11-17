@@ -1087,6 +1087,7 @@ export const programmes = mysqlTable("programmes", {
     progBankCode: varchar("progBankCode", { length: 100 }),
     progBankAccountNumber: varchar("progBankAccountNumber", { length: 50 }),
     progBankAccountName: varchar("progBankAccountName", { length: 255 }),
+    nextActionTicker: varchar("nextActionTicker", { length: 500 }),
     createdBy: varchar("createdBy", { length: 255 }).notNull().references(() => users.id),
     createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
     updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).$defaultFn(() => new Date()).$onUpdateFn(() => new Date()),
@@ -1258,6 +1259,80 @@ export const programmeFeedbackSubmissions = mysqlTable("programme_feedback_submi
     userId: varchar("userId", { length: 255 }).references(() => users.id),
     data: json("data").notNull(),
     submittedAt: timestamp("submittedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+});
+
+// Camp Food Timetable / Meal Schedules
+export const programmeMealSchedules = mysqlTable("programme_meal_schedules", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
+    programmeId: varchar("programmeId", { length: 255 }).notNull().references(() => programmes.id, { onDelete: "cascade" }),
+    dayNumber: int("dayNumber").notNull().default(1),
+    date: varchar("date", { length: 100 }), // e.g. "Thu, Dec 24, 2026"
+    mealType: varchar("mealType", { length: 50 }).notNull(), // 'BREAKFAST', 'LUNCH', 'DINNER', 'SAHUR', 'IFTAR'
+    menuTitle: varchar("menuTitle", { length: 255 }).notNull(),
+    description: text("description"),
+    servingTime: varchar("servingTime", { length: 100 }), // e.g. "7:00 AM - 8:30 AM"
+    venue: varchar("venue", { length: 255 }).default("Main Dining Hall"),
+    isActive: boolean("isActive").default(true),
+    createdBy: varchar("createdBy", { length: 255 }).references(() => users.id),
+    createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).$defaultFn(() => new Date()).$onUpdateFn(() => new Date()),
+});
+
+// Camp Food / Meal Quality Ratings
+export const programmeMealRatings = mysqlTable("programme_meal_ratings", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
+    mealScheduleId: varchar("mealScheduleId", { length: 255 }).notNull().references(() => programmeMealSchedules.id, { onDelete: "cascade" }),
+    programmeId: varchar("programmeId", { length: 255 }).notNull().references(() => programmes.id, { onDelete: "cascade" }),
+    registrationId: varchar("registrationId", { length: 255 }),
+    userId: varchar("userId", { length: 255 }).references(() => users.id),
+    raterName: varchar("raterName", { length: 255 }),
+    rating: int("rating").notNull(), // 1 to 5
+    tasteRating: int("tasteRating"), // 1 to 5
+    portionRating: int("portionRating"), // 1 to 5
+    timingRating: int("timingRating"), // 1 to 5
+    hygieneRating: int("hygieneRating"), // 1 to 5
+    comment: text("comment"),
+    createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+});
+
+// "As I See It" - Real-time Camp Observations & Suggestions Box
+export const programmeCampObservations = mysqlTable("programme_camp_observations", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
+    programmeId: varchar("programmeId", { length: 255 }).notNull().references(() => programmes.id, { onDelete: "cascade" }),
+    registrationId: varchar("registrationId", { length: 255 }),
+    userId: varchar("userId", { length: 255 }).references(() => users.id),
+    submitterName: varchar("submitterName", { length: 255 }),
+    isAnonymous: boolean("isAnonymous").default(false),
+    category: varchar("category", { length: 100 }).notNull(), // 'SANITATION', 'SECURITY', 'WELFARE', 'ACCOMMODATION', 'LECTURES', 'AUDIO_VISUAL', 'MEDICAL', 'GENERAL'
+    title: varchar("title", { length: 255 }).notNull(),
+    description: text("description").notNull(),
+    urgency: varchar("urgency", { length: 50 }).default('MEDIUM'), // 'LOW', 'MEDIUM', 'HIGH', 'URGENT'
+    status: varchar("status", { length: 50 }).default('PENDING'), // 'PENDING', 'INVESTIGATING', 'RESOLVED', 'FLAGGED_FOR_FINAL_DAY'
+    adminNotes: text("adminNotes"),
+    actionTaken: text("actionTaken"),
+    resolvedBy: varchar("resolvedBy", { length: 255 }).references(() => users.id),
+    resolvedAt: timestamp("resolvedAt", { mode: "date", fsp: 3 }),
+    createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).$defaultFn(() => new Date()).$onUpdateFn(() => new Date()),
+});
+
+// Programme Schedule / Daily Agenda
+export const programmeSchedules = mysqlTable("programme_schedules", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
+    programmeId: varchar("programmeId", { length: 255 }).notNull().references(() => programmes.id, { onDelete: "cascade" }),
+    dayNumber: int("dayNumber").notNull().default(1),
+    date: varchar("date", { length: 100 }), // e.g. "Day 1 - Thu, Dec 24, 2026"
+    startTime: varchar("startTime", { length: 50 }).notNull(), // e.g. "09:00 AM"
+    endTime: varchar("endTime", { length: 50 }), // e.g. "11:00 AM"
+    title: varchar("title", { length: 255 }).notNull(),
+    speaker: varchar("speaker", { length: 255 }),
+    venue: varchar("venue", { length: 255 }),
+    category: varchar("category", { length: 100 }).default('LECTURE'), // 'LECTURE', 'PRAYER', 'MEAL', 'WORKSHOP', 'SPORT', 'PLENARY', 'BREAK', 'OTHER'
+    description: text("description"),
+    isCurrentSession: boolean("isCurrentSession").default(false),
+    displayOrder: int("displayOrder").default(0),
+    createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).$defaultFn(() => new Date()).$onUpdateFn(() => new Date()),
 });
 
 // Finance Budgets

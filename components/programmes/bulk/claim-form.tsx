@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import { Loader2, CheckCircle } from "lucide-react";
 import { claimBulkSeat } from "@/lib/actions/programme-bulk";
 import { nigerianStatesAndLgas } from "@/lib/nigeria-data";
+import { beninStatesAndLgas } from "@/lib/benin-data";
 import { countries } from "@/lib/countries";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -30,8 +31,10 @@ export function ClaimForm({ token, registration, programme }: { token: string; r
         lga: registration.lga || "",
         branch: registration.branch || "",
     });
-    const isNigeria = data.country === "Nigeria";
-    const selectedStateData = nigerianStatesAndLgas.find(s => s.state === data.state);
+    const isBenin = data.country === "Benin" || data.country === "Benin Republic" || data.country === "Republic of Benin";
+    const isNigeria = !data.country || data.country === "Nigeria";
+    const availableStates = isBenin ? beninStatesAndLgas : isNigeria ? nigerianStatesAndLgas : [];
+    const selectedStateData = availableStates.find(s => s.state === data.state);
 
     async function onSubmit(e: React.FormEvent) {
         e.preventDefault();
@@ -75,16 +78,16 @@ export function ClaimForm({ token, registration, programme }: { token: string; r
                                 </SelectContent>
                             </Select>
                         </div>
-                        {isNigeria ? (
+                        {(isNigeria || isBenin) ? (
                             <div>
-                                <Label>State</Label>
+                                <Label>{isBenin ? "Department (State)" : "State"}</Label>
                                 <select
                                     value={data.state}
                                     onChange={(e) => setData({ ...data, state: e.target.value, lga: "" })}
                                     className="w-full h-9 border rounded-md px-3 text-sm"
                                 >
-                                    <option value="">Select state…</option>
-                                    {nigerianStatesAndLgas.map(s => (
+                                    <option value="">{isBenin ? "Select department…" : "Select state…"}</option>
+                                    {availableStates.map(s => (
                                         <option key={s.state} value={s.state}>{s.state}</option>
                                     ))}
                                 </select>
@@ -97,16 +100,16 @@ export function ClaimForm({ token, registration, programme }: { token: string; r
                         )}
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {isNigeria ? (
+                        {(isNigeria || isBenin) ? (
                             <div>
-                                <Label>LGA</Label>
+                                <Label>{isBenin ? "Commune (LGA)" : "LGA"}</Label>
                                 <select
                                     value={data.lga}
                                     onChange={(e) => setData({ ...data, lga: e.target.value })}
                                     disabled={!data.state}
                                     className="w-full h-9 border rounded-md px-3 text-sm disabled:opacity-50"
                                 >
-                                    <option value="">{data.state ? "Select LGA…" : "Select state first"}</option>
+                                    <option value="">{data.state ? (isBenin ? "Select commune…" : "Select LGA…") : "Select state first"}</option>
                                     {selectedStateData?.lgas.map(lga => (
                                         <option key={lga} value={lga}>{lga}</option>
                                     ))}

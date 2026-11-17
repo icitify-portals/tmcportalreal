@@ -24,6 +24,8 @@ import { toast } from "sonner"
 import { Loader2, UserPlus, CreditCard, MapPin, Globe } from "lucide-react"
 import { getActiveEarlyBird, formatTierWindows } from "@/lib/pricing"
 import { nigerianStatesAndLgas } from "@/lib/nigeria-data"
+import { beninStatesAndLgas } from "@/lib/benin-data"
+import { locationData } from "@/lib/location-data"
 import { countries } from "@/lib/countries"
 import {
     Select,
@@ -88,7 +90,13 @@ export function RegisterForProgrammeDialog({
         branch: ""
     })
 
-    const selectedStateData = nigerianStatesAndLgas.find(s => s.state === formData.state)
+    const isBenin = formData.country === "Benin" || formData.country === "Benin Republic" || formData.country === "Republic of Benin"
+    const isNigeria = !formData.country || formData.country === "Nigeria"
+    const availableStates = isBenin ? beninStatesAndLgas : isNigeria ? nigerianStatesAndLgas : []
+    const selectedStateData = availableStates.find(s => s.state === formData.state)
+    const availableBranches = (formData.state && formData.lga && locationData[formData.state])
+        ? locationData[formData.state].lgas.find(l => l.name === formData.lga)?.branches || []
+        : []
 
     async function handleRegister(e: React.FormEvent) {
         e.preventDefault()
@@ -440,33 +448,37 @@ export function RegisterForProgrammeDialog({
                                     </Select>
                                 </div>
 
-                                {formData.country === "Nigeria" ? (
+                                {(isNigeria || isBenin) ? (
                                     <>
                                         <div className="space-y-1.5">
-                                            <Label className="text-xs font-semibold uppercase text-gray-600">State</Label>
+                                            <Label className="text-xs font-semibold uppercase text-gray-600">
+                                                {isBenin ? "Department (State)" : "State"}
+                                            </Label>
                                             <Select 
                                                 value={formData.state} 
-                                                onValueChange={(v) => setFormData({...formData, state: v, lga: ""})}
+                                                onValueChange={(v) => setFormData({...formData, state: v, lga: "", branch: ""})}
                                             >
                                                 <SelectTrigger className="w-full">
-                                                    <SelectValue placeholder="Select State" />
+                                                    <SelectValue placeholder={isBenin ? "Select Department" : "Select State"} />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    {nigerianStatesAndLgas.map(s => (
+                                                    {availableStates.map(s => (
                                                         <SelectItem key={s.state} value={s.state}>{s.state}</SelectItem>
                                                     ))}
                                                 </SelectContent>
                                             </Select>
                                         </div>
                                         <div className="space-y-1.5">
-                                            <Label className="text-xs font-semibold uppercase text-gray-600">LGA</Label>
+                                            <Label className="text-xs font-semibold uppercase text-gray-600">
+                                                {isBenin ? "Commune (LGA)" : "LGA"}
+                                            </Label>
                                             <Select 
                                                 value={formData.lga} 
-                                                onValueChange={(v) => setFormData({...formData, lga: v})}
+                                                onValueChange={(v) => setFormData({...formData, lga: v, branch: ""})}
                                                 disabled={!formData.state}
                                             >
                                                 <SelectTrigger className="w-full">
-                                                    <SelectValue placeholder="Select LGA" />
+                                                    <SelectValue placeholder={isBenin ? "Select Commune" : "Select LGA"} />
                                                 </SelectTrigger>
                                                 <SelectContent>
                                                     {selectedStateData?.lgas.map(lga => (
@@ -500,13 +512,32 @@ export function RegisterForProgrammeDialog({
                                 )}
                             </div>
                             <div className="space-y-1.5">
-                                <Label htmlFor="branch" className="text-xs font-semibold uppercase text-gray-600">Branch / Centre (Optional)</Label>
-                                <Input 
-                                    id="branch" 
-                                    value={formData.branch} 
-                                    onChange={(e) => setFormData({...formData, branch: e.target.value})}
-                                    placeholder="e.g. Somolu, Bodija, Alimosho Central"
-                                />
+                                <Label htmlFor="branch" className="text-xs font-semibold uppercase text-gray-600">
+                                    {isBenin ? "Branch / Arrondissement (District)" : "Branch / Centre (Optional)"}
+                                </Label>
+                                {availableBranches.length > 0 ? (
+                                    <Select
+                                        value={formData.branch}
+                                        onValueChange={(v) => setFormData({...formData, branch: v})}
+                                        disabled={!formData.lga}
+                                    >
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="Select Branch" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {availableBranches.map(br => (
+                                                <SelectItem key={br} value={br}>{br}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                ) : (
+                                    <Input 
+                                        id="branch" 
+                                        value={formData.branch} 
+                                        onChange={(e) => setFormData({...formData, branch: e.target.value})}
+                                        placeholder={isBenin ? "e.g. Cotonou, Pobè" : "e.g. Somolu, Bodija, Alimosho Central"}
+                                    />
+                                )}
                             </div>
                         </div>
                     )}

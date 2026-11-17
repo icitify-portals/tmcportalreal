@@ -5,7 +5,8 @@ import { members, organizations } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
 import { redirect } from "next/navigation"
 import Image from "next/image"
-import { MapPin, Calendar, Clock, User, ShieldCheck, Mail, Phone, CreditCard, Printer } from "lucide-react"
+import Link from "next/link"
+import { MapPin, Calendar, Clock, User, ShieldCheck, Mail, Phone, CreditCard, Printer, Radio, Utensils, Eye, MessageSquare } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { ClientCurrency } from "@/components/ui/client-currency"
 import { format } from "date-fns"
@@ -118,7 +119,52 @@ export default async function AccessSlipPage({ params }: { params: Promise<{ id:
                     .no-print { display: none !important; }
                 }
             `}} />
-            <div className="max-w-3xl mx-auto bg-white border-2 border-gray-200 rounded-2xl shadow-xl overflow-hidden print:shadow-none print:border-1 print:max-w-full relative print-card">
+            <div className="max-w-3xl mx-auto space-y-4 print:space-y-0">
+                {/* Print Hidden Quick Navigation & Camp Tools Bar */}
+                <div className="print:hidden space-y-3">
+                    {/* Live Next Line of Action Ticker */}
+                    {registration.programme.nextActionTicker && (
+                        <div className="bg-gradient-to-r from-emerald-700 via-green-600 to-teal-800 text-white p-3.5 rounded-2xl shadow-sm flex items-center gap-3 animate-pulse">
+                            <div className="bg-white/20 p-2 rounded-xl shrink-0">
+                                <Radio className="w-4 h-4 text-amber-300" />
+                            </div>
+                            <div className="flex-1">
+                                <p className="text-[10px] font-black uppercase tracking-widest text-emerald-100">Live Camp Notice / Next Line of Action</p>
+                                <p className="text-xs sm:text-sm font-bold text-white">{registration.programme.nextActionTicker}</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Camp delegate quick buttons */}
+                    <div className="bg-white p-2.5 rounded-2xl border border-gray-200 shadow-xs flex items-center justify-between gap-2 overflow-x-auto">
+                        <Link 
+                            href={`/programmes/${registration.programmeId}/schedule`}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gray-50 hover:bg-emerald-50 text-gray-700 hover:text-emerald-800 border border-gray-200 text-xs font-bold transition-all shrink-0"
+                        >
+                            <Calendar className="w-3.5 h-3.5 text-emerald-600" /> Event Schedule
+                        </Link>
+                        <Link 
+                            href={`/programmes/${registration.programmeId}/meals?reg=${registration.id}`}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gray-50 hover:bg-amber-50 text-gray-700 hover:text-amber-800 border border-gray-200 text-xs font-bold transition-all shrink-0"
+                        >
+                            <Utensils className="w-3.5 h-3.5 text-amber-600" /> Food Timetable & Rating
+                        </Link>
+                        <Link 
+                            href={`/programmes/${registration.programmeId}/as-i-see-it?reg=${registration.id}`}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gray-50 hover:bg-emerald-50 text-gray-700 hover:text-emerald-800 border border-gray-200 text-xs font-bold transition-all shrink-0"
+                        >
+                            <Eye className="w-3.5 h-3.5 text-emerald-600" /> As I See It Box
+                        </Link>
+                        <Link 
+                            href={`/dashboard/programmes/${registration.programmeId}/group`}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gray-50 hover:bg-blue-50 text-gray-700 hover:text-blue-800 border border-gray-200 text-xs font-bold transition-all shrink-0"
+                        >
+                            <MessageSquare className="w-3.5 h-3.5 text-blue-600" /> Group Lounge
+                        </Link>
+                    </div>
+                </div>
+
+                <div className="bg-white border-2 border-gray-200 rounded-2xl shadow-xl overflow-hidden print:shadow-none print:border-1 print:max-w-full relative print-card">
                 
                 {/* Unpaid Watermark/Overlay for print protection */}
                 {isUnpaid && (
@@ -395,6 +441,7 @@ export default async function AccessSlipPage({ params }: { params: Promise<{ id:
                         )}
                     </div>
                 </div>
+            </div>
             </div>
 
             {/* Print Only Notice */}

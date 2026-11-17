@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { Loader2, UserCheck } from "lucide-react";
 import { updateBulkAttendee } from "@/lib/actions/programme-bulk";
 import { nigerianStatesAndLgas } from "@/lib/nigeria-data";
+import { beninStatesAndLgas } from "@/lib/benin-data";
 import { countries } from "@/lib/countries";
 
 /**
@@ -49,8 +50,10 @@ export function CompleteAttendeeDialog({
         state: registration.state || "",
         lga: registration.lga || "",
     });
-    const isNigeria = form.country === "Nigeria";
-    const selectedStateData = nigerianStatesAndLgas.find(s => s.state === form.state);
+    const isBenin = form.country === "Benin" || form.country === "Benin Republic" || form.country === "Republic of Benin";
+    const isNigeria = !form.country || form.country === "Nigeria";
+    const availableStates = isBenin ? beninStatesAndLgas : isNigeria ? nigerianStatesAndLgas : [];
+    const selectedStateData = availableStates.find(s => s.state === form.state);
 
     async function onSubmit(e: React.FormEvent) {
         e.preventDefault();
@@ -135,16 +138,16 @@ export function CompleteAttendeeDialog({
                                     </SelectContent>
                                 </Select>
                             </div>
-                            {isNigeria ? (
+                            {(isNigeria || isBenin) ? (
                                 <div>
-                                    <Label>State</Label>
+                                    <Label>{isBenin ? "Department (State)" : "State"}</Label>
                                     <select
                                         value={form.state}
                                         onChange={(e) => setForm({ ...form, state: e.target.value, lga: "" })}
                                         className="w-full h-9 border rounded-md px-3 text-sm"
                                     >
-                                        <option value="">Select state…</option>
-                                        {nigerianStatesAndLgas.map(s => (
+                                        <option value="">{isBenin ? "Select department…" : "Select state…"}</option>
+                                        {availableStates.map(s => (
                                             <option key={s.state} value={s.state}>{s.state}</option>
                                         ))}
                                     </select>
@@ -157,16 +160,16 @@ export function CompleteAttendeeDialog({
                             )}
                         </div>
                         <div>
-                            {isNigeria ? (
+                            {(isNigeria || isBenin) ? (
                                 <div>
-                                    <Label>LGA</Label>
+                                    <Label>{isBenin ? "Commune (LGA)" : "LGA"}</Label>
                                     <select
                                         value={form.lga}
                                         onChange={(e) => setForm({ ...form, lga: e.target.value })}
                                         disabled={!form.state}
                                         className="w-full h-9 border rounded-md px-3 text-sm disabled:opacity-50"
                                     >
-                                        <option value="">{form.state ? "Select LGA…" : "Select state first"}</option>
+                                        <option value="">{form.state ? (isBenin ? "Select commune…" : "Select LGA…") : "Select state first"}</option>
                                         {selectedStateData?.lgas.map(l => (
                                             <option key={l} value={l}>{l}</option>
                                         ))}

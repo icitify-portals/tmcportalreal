@@ -1,4 +1,6 @@
-export const locationData = {
+import { beninLocationData } from "./benin-data";
+
+export const nigeriaLocationData = {
   Lagos: {
     lgas: [
       { name: "Agbado / Oke-Odo", branches: ["Ajasa","Alagbado","Meiran","Oke Odo","Oke-Odo"] },
@@ -153,7 +155,6 @@ export const locationData = {
       { name: "Sagamu", branches: ["AYEGBAMI","Agura","IKENNE","IPERU","SABO","STATION"] },
       { name: "Yewa North", branches: ["AYETORO EEMADO C/MOSQUE","Ayetoro","Imasayi"] },
       { name: "Yewa South", branches: ["Ilaro","Owode"] },
-      { name: "Benin Republic", branches: ["Pobe"] },
     ],
   },
   Ondo: {
@@ -169,3 +170,26 @@ export const locationData = {
     ],
   },
 };
+
+// Combined location data containing both Nigerian and Benin Republic divisions
+export const locationData: Record<string, { lgas: Array<{ name: string; branches: string[] }> }> = {
+  ...nigeriaLocationData,
+  ...beninLocationData,
+};
+
+export const locationDataByCountry: Record<string, Record<string, { lgas: Array<{ name: string; branches: string[] }> }>> = {
+  Nigeria: nigeriaLocationData,
+  "Benin Republic": beninLocationData,
+  Benin: beninLocationData,
+  "Republic of Benin": beninLocationData,
+};
+
+export function getLocationDataByCountry(country?: string | null) {
+  if (!country) return locationData;
+  const clean = country.trim().toLowerCase();
+  if (clean === "ng" || clean === "nigeria") return nigeriaLocationData;
+  if (clean === "bj" || clean === "benin" || clean === "benin republic" || clean === "republic of benin") {
+    return beninLocationData;
+  }
+  return locationData;
+}

@@ -8,6 +8,8 @@ export interface Country {
 
 export const countries: Country[] = [
   { name: "Nigeria", code: "NG", phonePrefix: "+234" },
+  { name: "Benin Republic", code: "BJ", phonePrefix: "+229" },
+  { name: "Benin", code: "BJ", phonePrefix: "+229" },
   { name: "Afghanistan", code: "AF", phonePrefix: "+93" },
   { name: "Albania", code: "AL", phonePrefix: "+355" },
   { name: "Algeria", code: "DZ", phonePrefix: "+213" },

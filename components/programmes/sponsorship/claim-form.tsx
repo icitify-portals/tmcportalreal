@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { claimSponsoredSeat } from "@/lib/actions/programme-sponsorship";
 import { nigerianStatesAndLgas } from "@/lib/nigeria-data";
+import { beninStatesAndLgas } from "@/lib/benin-data";
 import { countries } from "@/lib/countries";
 import { Loader2, TicketCheck, UserPlus } from "lucide-react";
 
@@ -28,8 +29,10 @@ export function SponsoredClaimForm({ sponsorCode, programmeTitle }: { sponsorCod
     const [branch, setBranch] = useState("");
     const [pending, setPending] = useState(false);
     const [done, setDone] = useState<{ registrationId: string; claimedName: string } | null>(null);
-    const isNigeria = country === "Nigeria";
-    const selectedStateData = nigerianStatesAndLgas.find(s => s.state === state);
+    const isBenin = country === "Benin" || country === "Benin Republic" || country === "Republic of Benin";
+    const isNigeria = !country || country === "Nigeria";
+    const availableStates = isBenin ? beninStatesAndLgas : isNigeria ? nigerianStatesAndLgas : [];
+    const selectedStateData = availableStates.find(s => s.state === state);
 
     async function handleClaim(e: React.FormEvent) {
         e.preventDefault();
@@ -128,16 +131,16 @@ export function SponsoredClaimForm({ sponsorCode, programmeTitle }: { sponsorCod
                         </SelectContent>
                     </Select>
                 </div>
-                {isNigeria ? (
+                {(isNigeria || isBenin) ? (
                     <div>
-                        <Label>State</Label>
+                        <Label>{isBenin ? "Department (State)" : "State"}</Label>
                         <select
                             value={state}
                             onChange={(e) => { setState(e.target.value); setLga(""); }}
                             className="w-full h-9 border rounded-md px-3 text-sm"
                         >
-                            <option value="">Select state…</option>
-                            {nigerianStatesAndLgas.map(s => (
+                            <option value="">{isBenin ? "Select department…" : "Select state…"}</option>
+                            {availableStates.map(s => (
                                 <option key={s.state} value={s.state}>{s.state}</option>
                             ))}
                         </select>
@@ -150,16 +153,16 @@ export function SponsoredClaimForm({ sponsorCode, programmeTitle }: { sponsorCod
                 )}
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {isNigeria ? (
+                {(isNigeria || isBenin) ? (
                     <div>
-                        <Label>LGA</Label>
+                        <Label>{isBenin ? "Commune (LGA)" : "LGA"}</Label>
                         <select
                             value={lga}
                             onChange={(e) => setLga(e.target.value)}
                             disabled={!state}
                             className="w-full h-9 border rounded-md px-3 text-sm disabled:opacity-50"
                         >
-                            <option value="">{state ? "Select LGA…" : "Select state first"}</option>
+                            <option value="">{state ? (isBenin ? "Select commune…" : "Select LGA…") : "Select state first"}</option>
                             {selectedStateData?.lgas.map(l => (
                                 <option key={l} value={l}>{l}</option>
                             ))}

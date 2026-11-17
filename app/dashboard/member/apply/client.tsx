@@ -18,7 +18,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import Link from "next/link"
 import { nigerianStatesAndLgas } from "@/lib/nigeria-data"
 import { countries } from "@/lib/countries"
-import { locationData } from "@/lib/location-data"
+import { locationData, nigeriaLocationData } from "@/lib/location-data"
+import { beninLocationData } from "@/lib/benin-data"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 
 const genotypes = ['AA', 'AS', 'AC', 'SS', 'SC'];
@@ -241,8 +242,16 @@ export default function MembershipApplicationClientPage() {
     const numChildrenFemale = useWatch({ control, name: 'numChildrenFemale' }) || 0
     const totalChildren = Number(numChildrenMale) + Number(numChildrenFemale)
 
+    const selectedCountryOfResidence = useWatch({ control, name: 'country' })
+    const isBeninResident = selectedCountryOfResidence === "Benin" || selectedCountryOfResidence === "Benin Republic" || selectedCountryOfResidence === "Republic of Benin"
+    const isNigeriaResident = !selectedCountryOfResidence || selectedCountryOfResidence === "Nigeria"
+
     const statesOfOrigin = nigerianStatesAndLgas.map((s) => s.state)
-    const residenceStates = Object.keys(locationData)
+    const residenceStates = isBeninResident 
+        ? Object.keys(beninLocationData) 
+        : isNigeriaResident 
+        ? Object.keys(nigeriaLocationData) 
+        : Object.keys(locationData)
 
     const lgasForSelectedStateOfResidence = selectedStateOfResidence
         ? locationData[selectedStateOfResidence as keyof typeof locationData]?.lgas || []
@@ -580,10 +589,28 @@ export default function MembershipApplicationClientPage() {
                                                 render={({ field }) => (
                                                     <FormItem>
                                                         <FormLabel>Country of Residence</FormLabel>
-                                                        <FormControl>
-                                                            <Input {...field} readOnly disabled className="bg-muted" />
-                                                        </FormControl>
-                                                        <FormDescription>Pre-filled from signup.</FormDescription>
+                                                        <Select
+                                                            onValueChange={(value) => {
+                                                                field.onChange(value);
+                                                                form.setValue("state", "");
+                                                                form.setValue("local_government_area", "");
+                                                                form.setValue("branch", "");
+                                                            }}
+                                                            value={field.value || "Nigeria"}
+                                                        >
+                                                            <FormControl>
+                                                                <SelectTrigger>
+                                                                    <SelectValue placeholder="Select country" />
+                                                                </SelectTrigger>
+                                                            </FormControl>
+                                                            <SelectContent>
+                                                                {countries.map((c) => (
+                                                                    <SelectItem key={c.code} value={c.name}>
+                                                                        {c.name}
+                                                                    </SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
                                                         <FormMessage />
                                                     </FormItem>
                                                 )}
@@ -593,15 +620,15 @@ export default function MembershipApplicationClientPage() {
                                                 name="state"
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel>State of Residence</FormLabel>
+                                                        <FormLabel>{isBeninResident ? "Department (State)" : "State of Residence"}</FormLabel>
                                                         <Select onValueChange={(value) => {
                                                             field.onChange(value);
                                                             form.setValue("local_government_area", "");
                                                             form.setValue("branch", "");
-                                                        }} defaultValue={field.value}>
+                                                        }} value={field.value || ""}>
                                                             <FormControl>
                                                                 <SelectTrigger>
-                                                                    <SelectValue placeholder="Select state" />
+                                                                    <SelectValue placeholder={isBeninResident ? "Select department" : "Select state"} />
                                                                 </SelectTrigger>
                                                             </FormControl>
                                                             <SelectContent>
@@ -624,14 +651,14 @@ export default function MembershipApplicationClientPage() {
                                                 name="local_government_area"
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel>LGA of Residence</FormLabel>
+                                                        <FormLabel>{isBeninResident ? "Commune (LGA)" : "LGA of Residence"}</FormLabel>
                                                         <Select onValueChange={(value) => {
                                                             field.onChange(value);
                                                             form.setValue("branch", "");
                                                         }} value={field.value} disabled={!selectedStateOfResidence}>
                                                             <FormControl>
                                                                 <SelectTrigger>
-                                                                    <SelectValue placeholder="Select LGA" />
+                                                                    <SelectValue placeholder={isBeninResident ? "Select commune" : "Select LGA"} />
                                                                 </SelectTrigger>
                                                             </FormControl>
                                                             <SelectContent>
@@ -651,7 +678,7 @@ export default function MembershipApplicationClientPage() {
                                                 name="branch"
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel>Branch {branchesForSelectedLga.length === 0 && selectedLgaOfResidence && "(Optional)"}</FormLabel>
+                                                        <FormLabel>{isBeninResident ? "Branch / District (Arrondissement)" : "Branch"} {branchesForSelectedLga.length === 0 && selectedLgaOfResidence && "(Optional)"}</FormLabel>
                                                         <Select onValueChange={field.onChange} value={field.value} disabled={!selectedLgaOfResidence || branchesForSelectedLga.length === 0}>
                                                             <FormControl>
                                                                 <SelectTrigger>
