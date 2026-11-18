@@ -25,7 +25,10 @@ import {
     Eye,
     Store,
     Award,
-    Radio
+    Radio,
+    Megaphone,
+    Hash,
+    Tv
 } from "lucide-react"
 import { generateWaiverLink } from "@/lib/actions/programmes"
 
@@ -591,6 +594,27 @@ Spread the word to friends and family!`
                             icon: Award,
                             desc: "Participant assessment of 10 camp directorates across 4 KPI performance dimensions.",
                             waText: `Assalamu alaykum.\n\n📌 *${programme.title}*\n🏆 *Departmental KPI Assessment*\nRate the efficiency, quality, and service conduct of camp directorates and committees:\n${origin}/programmes/${programme.id}/departments/assess`
+                        },
+                        {
+                            title: "Camp Broadcasts & Noticeboard",
+                            path: `/programmes/${programme.id}/announcements`,
+                            icon: Megaphone,
+                            desc: "Read official camp circulars, urgent directives, prayer timings, and lost & found notices.",
+                            waText: `Assalamu alaykum.\n\n📌 *${programme.title}*\n📢 *Official Camp Noticeboard & Directives*\nStay updated on all camp announcements, lost & found alerts, and official circulars:\n${origin}/programmes/${programme.id}/announcements`
+                        },
+                        {
+                            title: "Officer & Zonal Channels",
+                            path: `/programmes/${programme.id}/channels`,
+                            icon: Hash,
+                            desc: "Structured in-portal rooms for Departmental and Zonal/State officers.",
+                            waText: `Assalamu alaykum.\n\n📌 *${programme.title}*\n💬 *Officer & Zonal Interaction Channels*\nCoordinate directly with fellow officers in your Zone or Directorate inside the portal:\n${origin}/programmes/${programme.id}/channels`
+                        },
+                        {
+                            title: "Virtual Participants Hub",
+                            path: `/programmes/${programme.id}/virtual`,
+                            icon: Tv,
+                            desc: "Live video/audio stream player, virtual attendance marking, handouts, and online Q&A.",
+                            waText: `Assalamu alaykum.\n\n📌 *${programme.title}*\n📺 *Virtual Participants Hub*\nJoin the livestream, mark online session attendance, download slides, and ask questions:\n${origin}/programmes/${programme.id}/virtual`
                         },
                     ].map((item, idx) => {
                         const fullUrl = `${origin}${item.path}`

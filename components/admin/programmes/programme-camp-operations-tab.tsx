@@ -22,7 +22,10 @@ import {
     Radio,
     ShieldCheck,
     Printer,
-    Download
+    Download,
+    Megaphone,
+    Hash,
+    Tv
 } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
@@ -162,6 +165,42 @@ Kindly share with all registered delegates.`
             color: "emerald",
             shareable: false,
         },
+        {
+            id: "announcements",
+            title: "Broadcast Notices & Info Window",
+            category: "Information Desk",
+            desc: "Publish official circulars, prayer updates, lost & found alerts, and push directly to delegates' noticeboard.",
+            adminPath: `/dashboard/admin/programmes/${programmeId}/announcements`,
+            publicPath: `/programmes/${programmeId}/announcements`,
+            icon: Megaphone,
+            color: "emerald",
+            shareable: true,
+            whatsappDesc: "Read official camp circulars, urgent notices, lost & found alerts, and directives.",
+        },
+        {
+            id: "channels",
+            title: "Officer & Zonal Channels",
+            category: "Team Coordination",
+            desc: "In-portal departmental & zonal coordination rooms replacing fragmented WhatsApp groups.",
+            adminPath: `/dashboard/admin/programmes/${programmeId}/channels`,
+            publicPath: `/programmes/${programmeId}/channels`,
+            icon: Hash,
+            color: "blue",
+            shareable: true,
+            whatsappDesc: "Join your Departmental or Zonal Officer Coordination Room inside the portal.",
+        },
+        {
+            id: "virtual",
+            title: "Virtual Participants Hub",
+            category: "Live Broadcast",
+            desc: "Live video/audio stream player, virtual session attendance marking, lecture slides, and online Q&A.",
+            adminPath: `/dashboard/admin/programmes/${programmeId}/virtual`,
+            publicPath: `/programmes/${programmeId}/virtual`,
+            icon: Tv,
+            color: "indigo",
+            shareable: true,
+            whatsappDesc: "Join the live stream, mark virtual attendance, and send questions to the stage.",
+        },
     ]
 
     return (
@@ -175,7 +214,7 @@ Kindly share with all registered delegates.`
                                 Camp Operations Command
                             </Badge>
                             <Badge variant="outline" className="border-teal-500 text-teal-200 text-xs">
-                                8 Active Operational Modules
+                                11 Active Operational Modules
                             </Badge>
                         </div>
                         <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white">

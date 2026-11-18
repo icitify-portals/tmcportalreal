@@ -14,6 +14,12 @@ import {
     programmeDepartmentAssessments,
     programmeDepartmentReviews,
     programmeDepartmentActivityLogs,
+    programmeAnnouncements,
+    programmeChannelMessages,
+    programmeVirtualConfigs,
+    programmeVirtualCheckins,
+    programmeVirtualQuestions,
+    programmeMaterials,
     users,
     programmeRegistrations
 } from "@/lib/db/schema"
@@ -1205,5 +1211,362 @@ export async function createDepartmentActivityLog(data: {
     } catch (error: any) {
         console.error("Create activity log error:", error)
         return { success: false, error: error.message || "Failed to save activity note" }
+    }
+}
+
+// ============================================================================
+// 8. INFORMATION DISSEMINATION & BROADCAST NOTICEBOARD (ITEM 7)
+// ============================================================================
+
+export async function getProgrammeAnnouncements(programmeId: string) {
+    try {
+        const items = await db.select()
+            .from(programmeAnnouncements)
+            .where(eq(programmeAnnouncements.programmeId, programmeId))
+            .orderBy(desc(programmeAnnouncements.isPinned), desc(programmeAnnouncements.createdAt))
+
+        return { success: true, data: items }
+    } catch (error: any) {
+        console.error("Error fetching announcements:", error)
+        return { success: false, error: error.message || "Failed to load announcements", data: [] }
+    }
+}
+
+export async function createProgrammeAnnouncement(data: {
+    programmeId: string
+    title: string
+    content: string
+    category?: string
+    priority?: string
+    targetAudience?: string
+    attachmentUrl?: string
+    isPinned?: boolean
+    alsoUpdateTicker?: boolean
+}) {
+    const session = await getServerSession()
+    if (!session?.user?.id) return { success: false, error: "Unauthorized" }
+
+    if (!data.programmeId || !data.title.trim() || !data.content.trim()) {
+        return { success: false, error: "Title and message content are required" }
+    }
+
+    try {
+        const id = uuidv4()
+        await db.insert(programmeAnnouncements).values({
+            id,
+            programmeId: data.programmeId,
+            title: data.title.trim(),
+            content: data.content.trim(),
+            category: data.category || "GENERAL",
+            priority: data.priority || "NORMAL",
+            targetAudience: data.targetAudience || "ALL_DELEGATES",
+            attachmentUrl: data.attachmentUrl?.trim() || null,
+            authorName: session.user.name || "Camp Secretariat",
+            isPinned: !!data.isPinned,
+        })
+
+        if (data.alsoUpdateTicker) {
+            const tickerSnippet = `${data.title.trim()}: ${data.content.trim().slice(0, 180)}`
+            await db.update(programmes).set({
+                nextActionTicker: tickerSnippet,
+            }).where(eq(programmes.id, data.programmeId))
+        }
+
+        revalidatePath(`/programmes/${data.programmeId}/announcements`)
+        revalidatePath(`/dashboard/admin/programmes/${data.programmeId}/announcements`)
+        revalidatePath(`/programmes/${data.programmeId}/schedule`)
+        revalidatePath(`/programmes/${data.programmeId}/meals`)
+        return { success: true, id }
+    } catch (error: any) {
+        console.error("Create announcement error:", error)
+        return { success: false, error: error.message || "Failed to publish announcement" }
+    }
+}
+
+export async function togglePinAnnouncement(id: string, isPinned: boolean) {
+    const session = await getServerSession()
+    if (!session?.user?.id) return { success: false, error: "Unauthorized" }
+
+    try {
+        const [existing] = await db.select().from(programmeAnnouncements).where(eq(programmeAnnouncements.id, id)).limit(1)
+        if (!existing) return { success: false, error: "Announcement not found" }
+
+        await db.update(programmeAnnouncements).set({ isPinned }).where(eq(programmeAnnouncements.id, id))
+        revalidatePath(`/programmes/${existing.programmeId}/announcements`)
+        revalidatePath(`/dashboard/admin/programmes/${existing.programmeId}/announcements`)
+        return { success: true }
+    } catch (error: any) {
+        return { success: false, error: error.message }
+    }
+}
+
+export async function deleteProgrammeAnnouncement(id: string) {
+    const session = await getServerSession()
+    if (!session?.user?.id) return { success: false, error: "Unauthorized" }
+
+    try {
+        const [existing] = await db.select().from(programmeAnnouncements).where(eq(programmeAnnouncements.id, id)).limit(1)
+        if (!existing) return { success: false, error: "Announcement not found" }
+
+        await db.delete(programmeAnnouncements).where(eq(programmeAnnouncements.id, id))
+        revalidatePath(`/programmes/${existing.programmeId}/announcements`)
+        revalidatePath(`/dashboard/admin/programmes/${existing.programmeId}/announcements`)
+        return { success: true }
+    } catch (error: any) {
+        return { success: false, error: error.message }
+    }
+}
+
+// ============================================================================
+// 9. DEPARTMENTAL & ZONAL OFFICER INTERACTION CHANNELS (ITEM 9)
+// ============================================================================
+
+export async function getProgrammeChannelMessages(programmeId: string, channelKey: string) {
+    try {
+        const messages = await db.select()
+            .from(programmeChannelMessages)
+            .where(and(
+                eq(programmeChannelMessages.programmeId, programmeId),
+                eq(programmeChannelMessages.channelKey, channelKey)
+            ))
+            .orderBy(asc(programmeChannelMessages.createdAt))
+
+        return { success: true, data: messages }
+    } catch (error: any) {
+        console.error("Error fetching channel messages:", error)
+        return { success: false, error: error.message || "Failed to fetch channel messages", data: [] }
+    }
+}
+
+export async function postProgrammeChannelMessage(data: {
+    programmeId: string
+    channelType: string
+    channelKey: string
+    channelLabel: string
+    senderName: string
+    senderRole?: string
+    content: string
+    attachmentUrl?: string
+    isPinned?: boolean
+}) {
+    const session = await getServerSession()
+    if (!data.programmeId || !data.channelKey || !data.content.trim()) {
+        return { success: false, error: "Message content is required" }
+    }
+
+    try {
+        const id = uuidv4()
+        const finalSenderName = data.senderName?.trim() || session?.user?.name || "Camp Officer"
+
+        await db.insert(programmeChannelMessages).values({
+            id,
+            programmeId: data.programmeId,
+            channelType: data.channelType,
+            channelKey: data.channelKey,
+            channelLabel: data.channelLabel,
+            senderId: session?.user?.id || null,
+            senderName: finalSenderName,
+            senderRole: data.senderRole?.trim() || "Officer / Member",
+            content: data.content.trim(),
+            attachmentUrl: data.attachmentUrl?.trim() || null,
+            isPinned: !!data.isPinned,
+        })
+
+        revalidatePath(`/programmes/${data.programmeId}/channels`)
+        revalidatePath(`/dashboard/admin/programmes/${data.programmeId}/channels`)
+        return { success: true, id }
+    } catch (error: any) {
+        console.error("Post channel message error:", error)
+        return { success: false, error: error.message || "Failed to post message" }
+    }
+}
+
+export async function togglePinChannelMessage(id: string, isPinned: boolean) {
+    try {
+        const [existing] = await db.select().from(programmeChannelMessages).where(eq(programmeChannelMessages.id, id)).limit(1)
+        if (!existing) return { success: false, error: "Message not found" }
+
+        await db.update(programmeChannelMessages).set({ isPinned }).where(eq(programmeChannelMessages.id, id))
+        revalidatePath(`/programmes/${existing.programmeId}/channels`)
+        revalidatePath(`/dashboard/admin/programmes/${existing.programmeId}/channels`)
+        return { success: true }
+    } catch (error: any) {
+        return { success: false, error: error.message }
+    }
+}
+
+// ============================================================================
+// 10. VIRTUAL PARTICIPANTS HUB (ITEM 10)
+// ============================================================================
+
+export async function getVirtualHubData(programmeId: string) {
+    try {
+        const [prog, configRows, checkins, questions, materials] = await Promise.all([
+            getProgrammeCampDetails(programmeId),
+            db.select().from(programmeVirtualConfigs).where(eq(programmeVirtualConfigs.programmeId, programmeId)).limit(1),
+            db.select().from(programmeVirtualCheckins).where(eq(programmeVirtualCheckins.programmeId, programmeId)).orderBy(desc(programmeVirtualCheckins.checkedInAt)),
+            db.select().from(programmeVirtualQuestions).where(eq(programmeVirtualQuestions.programmeId, programmeId)).orderBy(desc(programmeVirtualQuestions.createdAt)),
+            db.select().from(programmeMaterials).where(eq(programmeMaterials.programmeId, programmeId)).orderBy(desc(programmeMaterials.createdAt)),
+        ])
+
+        return {
+            success: true,
+            programme: prog,
+            config: configRows[0] || null,
+            checkins,
+            questions,
+            materials,
+        }
+    } catch (error: any) {
+        console.error("Error fetching virtual hub data:", error)
+        return {
+            success: false,
+            error: error.message || "Failed to load virtual hub",
+            programme: null,
+            config: null,
+            checkins: [],
+            questions: [],
+            materials: [],
+        }
+    }
+}
+
+export async function saveVirtualConfig(data: {
+    programmeId: string
+    streamStatus: string
+    videoStreamUrl?: string
+    audioStreamUrl?: string
+    zoomOrMeetUrl?: string
+    currentSessionTitle?: string
+    currentSpeaker?: string
+    welcomeNote?: string
+}) {
+    const session = await getServerSession()
+    if (!session?.user?.id) return { success: false, error: "Unauthorized" }
+
+    try {
+        const [existing] = await db.select()
+            .from(programmeVirtualConfigs)
+            .where(eq(programmeVirtualConfigs.programmeId, data.programmeId))
+            .limit(1)
+
+        if (existing) {
+            await db.update(programmeVirtualConfigs).set({
+                streamStatus: data.streamStatus || "LIVE",
+                videoStreamUrl: data.videoStreamUrl?.trim() || null,
+                audioStreamUrl: data.audioStreamUrl?.trim() || null,
+                zoomOrMeetUrl: data.zoomOrMeetUrl?.trim() || null,
+                currentSessionTitle: data.currentSessionTitle?.trim() || null,
+                currentSpeaker: data.currentSpeaker?.trim() || null,
+                welcomeNote: data.welcomeNote?.trim() || null,
+            }).where(eq(programmeVirtualConfigs.id, existing.id))
+        } else {
+            await db.insert(programmeVirtualConfigs).values({
+                id: uuidv4(),
+                programmeId: data.programmeId,
+                streamStatus: data.streamStatus || "LIVE",
+                videoStreamUrl: data.videoStreamUrl?.trim() || null,
+                audioStreamUrl: data.audioStreamUrl?.trim() || null,
+                zoomOrMeetUrl: data.zoomOrMeetUrl?.trim() || null,
+                currentSessionTitle: data.currentSessionTitle?.trim() || null,
+                currentSpeaker: data.currentSpeaker?.trim() || null,
+                welcomeNote: data.welcomeNote?.trim() || null,
+            })
+        }
+
+        revalidatePath(`/programmes/${data.programmeId}/virtual`)
+        revalidatePath(`/dashboard/admin/programmes/${data.programmeId}/virtual`)
+        return { success: true }
+    } catch (error: any) {
+        console.error("Save virtual config error:", error)
+        return { success: false, error: error.message || "Failed to save virtual stream config" }
+    }
+}
+
+export async function submitVirtualCheckin(data: {
+    programmeId: string
+    registrationId?: string
+    delegateName: string
+    emailOrPhone?: string
+    stateOrBranch?: string
+    sessionTitle: string
+    dayNumber?: number
+}) {
+    if (!data.programmeId || !data.delegateName.trim() || !data.sessionTitle.trim()) {
+        return { success: false, error: "Please provide your name and session title" }
+    }
+
+    try {
+        const id = uuidv4()
+        await db.insert(programmeVirtualCheckins).values({
+            id,
+            programmeId: data.programmeId,
+            registrationId: data.registrationId || null,
+            delegateName: data.delegateName.trim(),
+            emailOrPhone: data.emailOrPhone?.trim() || null,
+            stateOrBranch: data.stateOrBranch?.trim() || null,
+            sessionTitle: data.sessionTitle.trim(),
+            dayNumber: data.dayNumber || 1,
+        })
+
+        revalidatePath(`/programmes/${data.programmeId}/virtual`)
+        revalidatePath(`/dashboard/admin/programmes/${data.programmeId}/virtual`)
+        return { success: true, id }
+    } catch (error: any) {
+        console.error("Submit virtual checkin error:", error)
+        return { success: false, error: error.message || "Failed to record virtual attendance" }
+    }
+}
+
+export async function submitVirtualQuestion(data: {
+    programmeId: string
+    sessionTitle?: string
+    askerName: string
+    stateOrBranch?: string
+    question: string
+}) {
+    if (!data.programmeId || !data.askerName.trim() || !data.question.trim()) {
+        return { success: false, error: "Your name and question are required" }
+    }
+
+    try {
+        const id = uuidv4()
+        await db.insert(programmeVirtualQuestions).values({
+            id,
+            programmeId: data.programmeId,
+            sessionTitle: data.sessionTitle?.trim() || "Live Session",
+            askerName: data.askerName.trim(),
+            stateOrBranch: data.stateOrBranch?.trim() || null,
+            question: data.question.trim(),
+            status: "PENDING",
+        })
+
+        revalidatePath(`/programmes/${data.programmeId}/virtual`)
+        revalidatePath(`/dashboard/admin/programmes/${data.programmeId}/virtual`)
+        return { success: true, id }
+    } catch (error: any) {
+        console.error("Submit virtual question error:", error)
+        return { success: false, error: error.message || "Failed to submit question" }
+    }
+}
+
+export async function answerVirtualQuestion(id: string, status: string, answerText?: string) {
+    const session = await getServerSession()
+    if (!session?.user?.id) return { success: false, error: "Unauthorized" }
+
+    try {
+        const [existing] = await db.select().from(programmeVirtualQuestions).where(eq(programmeVirtualQuestions.id, id)).limit(1)
+        if (!existing) return { success: false, error: "Question not found" }
+
+        await db.update(programmeVirtualQuestions).set({
+            status,
+            answerText: answerText?.trim() || existing.answerText,
+        }).where(eq(programmeVirtualQuestions.id, id))
+
+        revalidatePath(`/programmes/${existing.programmeId}/virtual`)
+        revalidatePath(`/dashboard/admin/programmes/${existing.programmeId}/virtual`)
+        return { success: true }
+    } catch (error: any) {
+        return { success: false, error: error.message }
     }
 }

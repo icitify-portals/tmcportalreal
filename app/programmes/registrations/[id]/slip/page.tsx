@@ -6,7 +6,7 @@ import { eq } from "drizzle-orm"
 import { redirect } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
-import { MapPin, Calendar, Clock, User, ShieldCheck, Mail, Phone, CreditCard, Printer, Radio, Utensils, Eye, MessageSquare, Store, Award } from "lucide-react"
+import { MapPin, Calendar, Clock, User, ShieldCheck, Mail, Phone, CreditCard, Printer, Radio, Utensils, Eye, MessageSquare, Store, Award, Megaphone, Hash, Tv } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { ClientCurrency } from "@/components/ui/client-currency"
 import { format } from "date-fns"
@@ -172,6 +172,24 @@ export default async function AccessSlipPage({ params }: { params: Promise<{ id:
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gray-50 hover:bg-indigo-50 text-gray-700 hover:text-indigo-800 border border-gray-200 text-xs font-bold transition-all shrink-0"
                         >
                             <Award className="w-3.5 h-3.5 text-indigo-600" /> Rate Depts
+                        </Link>
+                        <Link 
+                            href={`/programmes/${registration.programmeId}/announcements`}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gray-50 hover:bg-emerald-50 text-gray-700 hover:text-emerald-800 border border-gray-200 text-xs font-bold transition-all shrink-0"
+                        >
+                            <Megaphone className="w-3.5 h-3.5 text-emerald-600" /> Notices
+                        </Link>
+                        <Link 
+                            href={`/programmes/${registration.programmeId}/channels`}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gray-50 hover:bg-blue-50 text-gray-700 hover:text-blue-800 border border-gray-200 text-xs font-bold transition-all shrink-0"
+                        >
+                            <Hash className="w-3.5 h-3.5 text-blue-600" /> Officer Rooms
+                        </Link>
+                        <Link 
+                            href={`/programmes/${registration.programmeId}/virtual?reg=${registration.id}`}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gray-50 hover:bg-indigo-50 text-gray-700 hover:text-indigo-800 border border-gray-200 text-xs font-bold transition-all shrink-0"
+                        >
+                            <Tv className="w-3.5 h-3.5 text-indigo-600" /> Virtual Hub
                         </Link>
                     </div>
                 </div>

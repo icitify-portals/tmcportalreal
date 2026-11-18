@@ -1470,6 +1470,76 @@ export const programmeDepartmentActivityLogs = mysqlTable("programme_department_
     updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).$defaultFn(() => new Date()).$onUpdateFn(() => new Date()),
 });
 
+// Broadcast Notices & Information Dissemination Window (Item 7)
+export const programmeAnnouncements = mysqlTable("programme_announcements", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
+    programmeId: varchar("programmeId", { length: 255 }).notNull().references(() => programmes.id, { onDelete: "cascade" }),
+    title: varchar("title", { length: 255 }).notNull(),
+    content: text("content").notNull(),
+    category: varchar("category", { length: 50 }).default('GENERAL'), // 'GENERAL', 'URGENT_DIRECTIVE', 'PRAYER_SPIRITUAL', 'LOGISTICS_WELFARE', 'LOST_AND_FOUND', 'HEALTH_SAFETY'
+    priority: varchar("priority", { length: 50 }).default('NORMAL'), // 'NORMAL', 'HIGH', 'CRITICAL'
+    targetAudience: varchar("targetAudience", { length: 100 }).default('ALL_DELEGATES'),
+    attachmentUrl: varchar("attachmentUrl", { length: 500 }),
+    authorName: varchar("authorName", { length: 255 }),
+    isPinned: boolean("isPinned").default(false),
+    createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).$defaultFn(() => new Date()).$onUpdateFn(() => new Date()),
+});
+
+// Departmental & Zonal Officer Interaction Channels (Item 9)
+export const programmeChannelMessages = mysqlTable("programme_channel_messages", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
+    programmeId: varchar("programmeId", { length: 255 }).notNull().references(() => programmes.id, { onDelete: "cascade" }),
+    channelType: varchar("channelType", { length: 50 }).notNull(), // 'COMMAND', 'DEPARTMENT', 'ZONE'
+    channelKey: varchar("channelKey", { length: 100 }).notNull(),
+    channelLabel: varchar("channelLabel", { length: 255 }).notNull(),
+    senderId: varchar("senderId", { length: 255 }),
+    senderName: varchar("senderName", { length: 255 }).notNull(),
+    senderRole: varchar("senderRole", { length: 100 }),
+    content: text("content").notNull(),
+    isPinned: boolean("isPinned").default(false),
+    attachmentUrl: varchar("attachmentUrl", { length: 500 }),
+    createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+});
+
+// Virtual Participants Hub (Item 10)
+export const programmeVirtualConfigs = mysqlTable("programme_virtual_configs", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
+    programmeId: varchar("programmeId", { length: 255 }).notNull().references(() => programmes.id, { onDelete: "cascade" }),
+    streamStatus: varchar("streamStatus", { length: 50 }).default('LIVE'), // 'LIVE', 'STARTING_SOON', 'BREAK', 'OFFLINE'
+    videoStreamUrl: varchar("videoStreamUrl", { length: 500 }),
+    audioStreamUrl: varchar("audioStreamUrl", { length: 500 }),
+    zoomOrMeetUrl: varchar("zoomOrMeetUrl", { length: 500 }),
+    currentSessionTitle: varchar("currentSessionTitle", { length: 255 }),
+    currentSpeaker: varchar("currentSpeaker", { length: 255 }),
+    welcomeNote: text("welcomeNote"),
+    updatedAt: timestamp("updatedAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`).$defaultFn(() => new Date()).$onUpdateFn(() => new Date()),
+});
+
+export const programmeVirtualCheckins = mysqlTable("programme_virtual_checkins", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
+    programmeId: varchar("programmeId", { length: 255 }).notNull().references(() => programmes.id, { onDelete: "cascade" }),
+    registrationId: varchar("registrationId", { length: 255 }),
+    delegateName: varchar("delegateName", { length: 255 }).notNull(),
+    emailOrPhone: varchar("emailOrPhone", { length: 255 }),
+    stateOrBranch: varchar("stateOrBranch", { length: 255 }),
+    sessionTitle: varchar("sessionTitle", { length: 255 }).notNull(),
+    dayNumber: int("dayNumber").default(1),
+    checkedInAt: timestamp("checkedInAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+});
+
+export const programmeVirtualQuestions = mysqlTable("programme_virtual_questions", {
+    id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
+    programmeId: varchar("programmeId", { length: 255 }).notNull().references(() => programmes.id, { onDelete: "cascade" }),
+    sessionTitle: varchar("sessionTitle", { length: 255 }),
+    askerName: varchar("askerName", { length: 255 }).notNull(),
+    stateOrBranch: varchar("stateOrBranch", { length: 255 }),
+    question: text("question").notNull(),
+    status: varchar("status", { length: 50 }).default('PENDING'), // 'PENDING', 'ANSWERED_LIVE', 'ANSWERED_TEXT', 'DISMISSED'
+    answerText: text("answerText"),
+    createdAt: timestamp("createdAt", { mode: "date", fsp: 3 }).default(sql`CURRENT_TIMESTAMP(3)`),
+});
+
 // Finance Budgets
 export const financeBudgets = mysqlTable("finance_budgets", {
     id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),

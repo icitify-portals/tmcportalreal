@@ -27,7 +27,10 @@ import {
     Utensils,
     Eye,
     Store,
-    Award 
+    Award,
+    Megaphone,
+    Hash,
+    Tv
 } from "lucide-react"
 
 export interface ShareProgrammeDialogProps {
@@ -308,6 +311,9 @@ export function ShareProgrammeDialog({
                                 { title: "\"As I See It\" Box", path: `/programmes/${programme.id}/as-i-see-it`, icon: Eye },
                                 { title: "Camp Bazaar & Stalls", path: `/programmes/${programme.id}/vendors`, icon: Store },
                                 { title: "Departmental KPI Rating", path: `/programmes/${programme.id}/departments/assess`, icon: Award },
+                                { title: "Camp Broadcasts & Notices", path: `/programmes/${programme.id}/announcements`, icon: Megaphone },
+                                { title: "Officer & Zonal Channels", path: `/programmes/${programme.id}/channels`, icon: Hash },
+                                { title: "Virtual Participants Hub", path: `/programmes/${programme.id}/virtual`, icon: Tv },
                             ].map((item, idx) => {
                                 const fullUrl = `${origin}${item.path}`
                                 return (
