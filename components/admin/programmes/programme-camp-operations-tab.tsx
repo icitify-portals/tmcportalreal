@@ -226,6 +226,15 @@ Kindly share with all registered delegates.`
                     </div>
 
                     <div className="flex items-center gap-2 flex-wrap">
+                        <Button
+                            variant="outline"
+                            asChild
+                            className="bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-500 text-xs font-bold rounded-xl"
+                        >
+                            <a href="/TMC_Camp_Operations_Testing_Guide.pdf" download="TMC_Camp_Operations_Testing_Guide.pdf">
+                                <Download className="w-3.5 h-3.5 mr-1.5" /> Download Testing Guide (PDF)
+                            </a>
+                        </Button>
                         <Button 
                             variant="outline" 
                             className="bg-white/10 hover:bg-white/20 text-white border-white/20 text-xs font-bold rounded-xl"
