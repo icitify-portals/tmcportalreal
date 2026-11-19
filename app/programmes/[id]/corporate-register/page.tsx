@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { Loader2, CreditCard, Building, ShieldCheck } from "lucide-react";
 import { registerForProgramme, getProgrammeDetailsAction, initializeProgrammeRegistrationPayment } from "@/lib/actions/programmes";
+import { getCorporateTiers } from "@/lib/programme-tiers";
 import { toast } from "sonner";
 
 const LEVEL_TO_TIER_KEYWORD: Record<string, string> = {
@@ -67,13 +68,14 @@ export default function CorporateRegisterPage() {
     }, [session]);
 
     const tierKeyword = LEVEL_TO_TIER_KEYWORD[(session?.user as any)?.officialLevel || ""];
-    const corporateTier = programme?.pricingTiers
-        ? Object.entries(typeof programme.pricingTiers === 'string' ? JSON.parse(programme.pricingTiers) : programme.pricingTiers)
-            .find(([label]) => label.includes(tierKeyword))
-        : null;
+    const allCorporateTiers = getCorporateTiers(programme?.pricingTiers);
+    const corporateTier =
+        (tierKeyword ? allCorporateTiers.find((t) => t.label.includes(tierKeyword)) : undefined) ||
+        allCorporateTiers[0] ||
+        null;
 
-    const tierAmount = corporateTier ? Number(corporateTier[1]) : 0;
-    const tierLabel = corporateTier ? corporateTier[0] : null;
+    const tierAmount = corporateTier ? corporateTier.amount : 0;
+    const tierLabel = corporateTier ? corporateTier.label : null;
 
     const isAuthorized = !!tierLabel && !!session?.user;
     const isOfficer = !!tierLabel;

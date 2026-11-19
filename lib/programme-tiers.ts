@@ -42,7 +42,14 @@ export const isCorporateLabel = (label: string): boolean => norm(label).includes
 // Note: "non executive" or "non official" is a member tier, NOT a non-member/guest tier!
 export const isNonMemberLabel = (label: string): boolean => {
     const n = norm(label)
-    if (n.includes("non executive") || n.includes("non-executive") || n.includes("non official")) {
+    if (
+        n.includes("non executive") ||
+        n.includes("non-executive") ||
+        n.includes("non official") ||
+        n.includes("non-official") ||
+        n.includes("non officer") ||
+        n.includes("non-officer")
+    ) {
         return false
     }
     return n.includes("non member") || n.includes("non-member") || n.includes("guest") || n.includes("visitor")
@@ -77,11 +84,16 @@ const OFFICIAL_KEYWORDS: Record<string, string[]> = {
     BRANCH: ["branch", "bec"],
 }
 
+const ALL_LEVEL_KEYWORDS = Object.values(OFFICIAL_KEYWORDS).flat()
+
 // Ordered preference when falling back to a general individual membership tier.
 const MEMBER_KEYWORDS = [
     "non executive",
     "non-executive",
     "non official",
+    "non-official",
+    "non officer",
+    "non-officer",
     "general member",
     "ordinary",
     "delegate",
@@ -114,11 +126,20 @@ export function resolveEntitlement(input: EntitlementInput): Entitlement {
             if (match) return { kind: "member-tier", baseAmount: match[1], tierLabel: match[0] }
         }
 
-        // Generic executive/official tier for any official if level-specific tier is not found
+        // Generic executive/official/officer tier only if the label has no other level keyword
         if (level) {
             const genericExec = eligible.find(([label]) => {
                 const n = norm(label)
-                return (n.includes("executive") || n.includes("official")) && !n.includes("non executive") && !n.includes("non-executive") && !n.includes("non official")
+                return (
+                    (n.includes("executive") || n.includes("official") || n.includes("officer")) &&
+                    !n.includes("non executive") &&
+                    !n.includes("non-executive") &&
+                    !n.includes("non official") &&
+                    !n.includes("non-official") &&
+                    !n.includes("non officer") &&
+                    !n.includes("non-officer") &&
+                    !containsAny(n, ALL_LEVEL_KEYWORDS)
+                )
             })
             if (genericExec) return { kind: "member-tier", baseAmount: genericExec[1], tierLabel: genericExec[0] }
         }

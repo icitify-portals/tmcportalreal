@@ -1370,10 +1370,10 @@ export async function registerForProgramme(programmeId: string, data?: z.infer<t
 
             // If it's a paid programme and they haven't paid yet or partially paid
             if (programme.paymentRequired && parseFloat(programme.amount || "0") > 0) {
-                 // Update details if provided
+                 // Update details if provided (and refresh PENDING_PAYMENT tier/amount against current programme tiers)
                  if (data) {
                      const validData = RegistrationSchema.parse(data)
-                     await db.update(programmeRegistrations).set({
+                     const pendingUpdate: Record<string, any> = {
                          name: validData.name || undefined,
                          phone: validData.phone || undefined,
                          gender: validData.gender || undefined,
@@ -1382,7 +1382,23 @@ export async function registerForProgramme(programmeId: string, data?: z.infer<t
                          state: validData.state || undefined,
                          lga: validData.lga || undefined,
                          branch: validData.branch || undefined,
-                     }).where(eq(programmeRegistrations.id, existingReg.id))
+                     }
+                     if (existingReg.status === 'PENDING_PAYMENT') {
+                         const recalcEntitlement = await getEntitlementForProgramme(programme, session, normalizedEmail)
+                         const reqTier = validData.registrationTier || null
+                         const selectedCorp = reqTier
+                             ? getCorporateTiers(programme.pricingTiers).find(t => t.label === reqTier)
+                             : undefined
+                         const recalculatedBase = selectedCorp && selectedCorp.amount >= recalcEntitlement.baseAmount
+                             ? selectedCorp.amount
+                             : recalcEntitlement.baseAmount
+                         const recalculatedTierLabel = selectedCorp && selectedCorp.amount >= recalcEntitlement.baseAmount
+                             ? selectedCorp.label
+                             : recalcEntitlement.tierLabel
+                         pendingUpdate.lockedAmount = recalculatedBase.toString()
+                         pendingUpdate.registrationTier = recalculatedTierLabel
+                     }
+                     await db.update(programmeRegistrations).set(pendingUpdate).where(eq(programmeRegistrations.id, existingReg.id))
                  }
                  
                  const isPartial = existingReg.status === 'PARTIALLY_PAID'
