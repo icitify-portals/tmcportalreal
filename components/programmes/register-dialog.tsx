@@ -23,6 +23,7 @@ import { payWithWalletBalance } from "@/lib/actions/wallet"
 import { toast } from "sonner"
 import { Loader2, UserPlus, CreditCard, MapPin, Globe } from "lucide-react"
 import { getActiveEarlyBird, formatTierWindows } from "@/lib/pricing"
+import { flattenPricingTiers } from "@/lib/programme-tiers"
 import { nigerianStatesAndLgas } from "@/lib/nigeria-data"
 import { beninStatesAndLgas } from "@/lib/benin-data"
 import { locationData } from "@/lib/location-data"
@@ -42,6 +43,7 @@ export function RegisterForProgrammeDialog({
     earlyBirdAmount,
     earlyBirdDeadline,
     tiers,
+    pricingTiers,
     allowInstallments,
     minInstallmentAmount,
     triggerText,
@@ -53,6 +55,7 @@ export function RegisterForProgrammeDialog({
     earlyBirdAmount?: number,
     earlyBirdDeadline?: string | Date,
     tiers?: { label?: string | null, startAt?: string | Date | null, endAt?: string | Date | null, amount: number | string }[],
+    pricingTiers?: any,
     allowInstallments?: boolean,
     minInstallmentAmount?: number,
     triggerText?: string,
@@ -67,10 +70,22 @@ export function RegisterForProgrammeDialog({
     // Deadline by which an EB-discounted price must be fully paid (tier window end or legacy deadline)
     const ebCompletionDeadline = activeTier?.deadline || (legacyEb && earlyBirdDeadline ? new Date(earlyBirdDeadline) : null);
     const tierWindows = tiers && tiers.length > 0 ? formatTierWindows(tiers) : [];
+    const pricingTierEntries = Object.entries(flattenPricingTiers(pricingTiers)).map(([label, val]) => ({
+        label,
+        amount: Number(val),
+    }));
+    const defaultTierObj =
+        pricingTierEntries.find((t) => t.label.toLowerCase().includes("member")) ||
+        pricingTierEntries.find((t) => t.amount === displayAmount) ||
+        pricingTierEntries[0] ||
+        null;
     const { data: session } = useSession()
     const [open, setOpen] = useState(false)
     const [isSubmitting, setIsSubmitting] = useState(false)
-    const [customAmount, setCustomAmount] = useState<string>(displayAmount.toString())
+    const [selectedTierLabel, setSelectedTierLabel] = useState<string>(defaultTierObj?.label || "")
+    const selectedTierObj = pricingTierEntries.find((t) => t.label === selectedTierLabel) || defaultTierObj;
+    const effectiveTierAmount = selectedTierObj ? selectedTierObj.amount : displayAmount;
+    const [customAmount, setCustomAmount] = useState<string>(effectiveTierAmount.toString())
     const [paymentMethod, setPaymentMethod] = useState<"PAYSTACK" | "WALLET">("PAYSTACK")
     // Pay-together extras: named people (bulk) or open seats (sponsorship), one checkout
     const [extrasMode, setExtrasMode] = useState<"none" | "named" | "open">("none")
@@ -147,13 +162,23 @@ export function RegisterForProgrammeDialog({
                 return
             }
 
-            // If logged in, we don't need formData (action handles it from session)
-            // If guest, we pass formData
-            const result = await registerForProgramme(programmeId, session ? undefined : formData)
+            const payloadData = session
+                ? {
+                    name: session.user?.name || "Member",
+                    email: session.user?.email || "",
+                    registrationTier: selectedTierObj?.label || undefined,
+                    amountPaid: parseFloat(customAmount || String(effectiveTierAmount)),
+                }
+                : {
+                    ...formData,
+                    registrationTier: selectedTierObj?.label || undefined,
+                    amountPaid: parseFloat(customAmount || String(effectiveTierAmount)),
+                }
+            const result = await registerForProgramme(programmeId, payloadData as any)
 
             if (result.success) {
                 if (result.paymentRequired) {
-                    const payAmount = parseFloat(customAmount || "0")
+                    const payAmount = parseFloat(customAmount || String(effectiveTierAmount))
                     if (session && paymentMethod === "WALLET") {
                         toast.info("Processing wallet payment...")
                         const payResult = await payWithWalletBalance(result.registrationId!, payAmount)
@@ -245,23 +270,60 @@ export function RegisterForProgrammeDialog({
                         <div className="rounded-lg border p-3 text-xs">Early bird ended — normal ₦{Number(amount).toLocaleString()}</div>
                     )}
 
-                    {displayAmount > 0 && allowInstallments && (
+                    {pricingTierEntries.length > 0 && (
+                        <div className="space-y-2 border p-3 rounded-md bg-emerald-50/40">
+                            <Label className="text-xs font-bold uppercase tracking-wider text-emerald-800 block">
+                                Select Payment Tier / Registration Category
+                            </Label>
+                            <Select
+                                value={selectedTierObj?.label || ""}
+                                onValueChange={(val) => {
+                                    setSelectedTierLabel(val)
+                                    const tier = pricingTierEntries.find((t) => t.label === val)
+                                    if (tier) {
+                                        setCustomAmount(String(tier.amount))
+                                    }
+                                }}
+                            >
+                                <SelectTrigger className="w-full bg-white">
+                                    <SelectValue placeholder="Choose payment tier" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {pricingTierEntries.map((t) => (
+                                        <SelectItem key={t.label} value={t.label}>
+                                            {t.label} — ₦{t.amount.toLocaleString()}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <div className="text-[11px] text-emerald-900 space-y-0.5 pt-1">
+                                {pricingTierEntries.map((t) => (
+                                    <div key={t.label} className="flex justify-between">
+                                        <span>{t.label}</span>
+                                        <span className="font-bold">₦{t.amount.toLocaleString()}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {effectiveTierAmount > 0 && allowInstallments && (
                         <div className="border p-3 rounded-md bg-green-50/50 my-2 space-y-3">
                             <Label className="text-xs font-bold uppercase tracking-wider text-green-800 block">Payment Options</Label>
                             <RadioGroup 
                                 defaultValue="FULL" 
                                 onValueChange={(v) => {
                                     if (v === "FULL") {
-                                        setCustomAmount(displayAmount.toString())
+                                        setCustomAmount(effectiveTierAmount.toString())
                                     } else {
-                                        setCustomAmount(minInstallmentAmount ? minInstallmentAmount.toString() : displayAmount.toString())
+                                        setCustomAmount(minInstallmentAmount ? minInstallmentAmount.toString() : effectiveTierAmount.toString())
                                     }
                                 }}
                                 className="flex gap-4"
                             >
                                 <div className="flex items-center space-x-2">
                                     <RadioGroupItem value="FULL" id="full-pay" />
-                                    <Label htmlFor="full-pay" className="text-sm font-medium">Full Amount (₦{displayAmount})</Label>
+                                    <Label htmlFor="full-pay" className="text-sm font-medium">Full Amount (₦{effectiveTierAmount.toLocaleString()})</Label>
                                 </div>
                                 <div className="flex items-center space-x-2">
                                     <RadioGroupItem value="PARTIAL" id="partial-pay" />
@@ -269,14 +331,14 @@ export function RegisterForProgrammeDialog({
                                 </div>
                             </RadioGroup>
 
-                            {customAmount !== displayAmount.toString() && (
+                            {customAmount !== effectiveTierAmount.toString() && (
                                 <div className="space-y-1 animate-in fade-in slide-in-from-top-1">
                                     <Label htmlFor="inst-amount" className="text-xs font-bold uppercase text-green-700">Installment Amount (₦)</Label>
                                     <Input 
                                         id="inst-amount" 
                                         type="number" 
                                         min={minInstallmentAmount || 0}
-                                        max={displayAmount} 
+                                        max={effectiveTierAmount} 
                                         value={customAmount}
                                         onChange={(e) => setCustomAmount(e.target.value)}
                                         className="bg-white"
@@ -557,12 +619,12 @@ export function RegisterForProgrammeDialog({
                         <Button type="submit" disabled={isSubmitting} className="bg-green-700 hover:bg-green-800">
                             {isSubmitting ? (
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            ) : displayAmount > 0 ? (
+                            ) : effectiveTierAmount > 0 ? (
                                 <CreditCard className="mr-2 h-4 w-4" />
                             ) : (
                                 <UserPlus className="mr-2 h-4 w-4" />
                             )}
-                            {displayAmount > 0 ? "Proceed to Payment" : "Confirm Registration"}
+                            {effectiveTierAmount > 0 ? `Proceed to Payment (₦${effectiveTierAmount.toLocaleString()})` : "Confirm Registration"}
                         </Button>
                     </DialogFooter>
                 </form>

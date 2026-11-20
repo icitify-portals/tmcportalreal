@@ -7,7 +7,7 @@ import { format } from "date-fns"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { getActiveEarlyBird, formatTierWindows } from "@/lib/pricing"
-import { getCorporateTiers } from "@/lib/programme-tiers"
+import { flattenPricingTiers, getCorporateTiers } from "@/lib/programme-tiers"
 import { ShareProgrammeDialog } from "@/components/programmes/share-programme-dialog"
 
 export async function ProgrammeGrid({ level, state, organizationId, organizationCode, query }: { level?: string, state?: string, organizationId?: string, organizationCode?: string, query?: string }) {
@@ -38,6 +38,7 @@ export async function ProgrammeGrid({ level, state, organizationId, organization
                 const tierWindows = tiers.length > 0 ? formatTierWindows(tiers) : [];
                 // Tier price wins when a window is active, else legacy single-EB, else normal
                 const pricedAmount = activeTier ? activeTier.amount : effectiveAmount;
+                const pricingTierEntries = Object.entries(flattenPricingTiers((p as any).pricingTiers));
                 const hasCorporateTiers = getCorporateTiers((p as any).pricingTiers).length > 0;
 
                 return (
@@ -88,6 +89,19 @@ export async function ProgrammeGrid({ level, state, organizationId, organization
                             <p className="text-sm text-gray-600 line-clamp-3">
                                 {p.description}
                             </p>
+                            {p.paymentRequired && pricingTierEntries.length > 0 && (
+                                <div className="rounded-lg border border-emerald-200 bg-emerald-50/50 p-2.5 space-y-1">
+                                    <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-800">Payment Tiers</p>
+                                    <div className="grid grid-cols-1 gap-0.5 text-xs">
+                                        {pricingTierEntries.map(([label, amt]) => (
+                                            <div key={label} className="flex items-center justify-between gap-2 text-emerald-950">
+                                                <span className="truncate">{label}</span>
+                                                <span className="font-bold whitespace-nowrap">₦{Number(amt).toLocaleString()}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                             {p.paymentRequired && (
                                 <div className="text-[11px] space-y-1">
                                     <div className="flex items-center justify-between">
@@ -177,6 +191,7 @@ export async function ProgrammeGrid({ level, state, organizationId, organization
                                                         earlyBirdAmount={p.earlyBirdAmount ? parseFloat(p.earlyBirdAmount) : undefined}
                                                         earlyBirdDeadline={p.earlyBirdDeadline}
                                                         tiers={tiers}
+                                                        pricingTiers={(p as any).pricingTiers}
                                                         allowInstallments={p.allowInstallments || false}
                                                         minInstallmentAmount={parseFloat(p.minInstallmentAmount || "0")}
                                                         triggerText="Restart"
@@ -245,6 +260,7 @@ export async function ProgrammeGrid({ level, state, organizationId, organization
                                                 earlyBirdAmount={p.earlyBirdAmount ? parseFloat(p.earlyBirdAmount) : undefined}
                                                 earlyBirdDeadline={p.earlyBirdDeadline}
                                                 tiers={tiers}
+                                                pricingTiers={(p as any).pricingTiers}
                                                 allowInstallments={p.allowInstallments || false}
                                                 minInstallmentAmount={parseFloat(p.minInstallmentAmount || "0")}
                                             />

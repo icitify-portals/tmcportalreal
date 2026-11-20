@@ -38,8 +38,8 @@ import { FileUpload } from "@/components/ui/file-upload"
 import { ProgrammeMaterialsManager } from "./programme-materials-manager"
 
 const TIER_LABELS = [
-    "National Executive", "State Executive", "LGA Executive", 
-    "Professional", "Student", "Non-Member", "Corporate", "Custom..."
+    "National Officers", "National Executive", "State Officials", "State Executive", "LGA Executive",
+    "Members", "Professional", "Student", "Non-Member", "Corporate Registration", "Corporate", "Custom..."
 ]
 
 interface PricingTierRow {

@@ -19,7 +19,7 @@ import { members } from "@/lib/db/schema"
 import { initializePayment, verifyPayment } from "@/lib/payments"
 import { createPaystackSubaccount } from "@/lib/payments"
 import { sendEmail, emailTemplates } from "@/lib/email"
-import { resolveEntitlement, getCorporateTiers } from "@/lib/programme-tiers"
+import { resolveEntitlement, getCorporateTiers, flattenPricingTiers, isCorporateLabel } from "@/lib/programme-tiers"
 import crypto from "crypto"
 import { RRule, rrulestr } from "rrule"
 import { getEffectiveAmount, isEarlyBirdActive, getActiveEarlyBird, resolvePayableTotal } from "@/lib/pricing"
@@ -1372,7 +1372,7 @@ export async function registerForProgramme(programmeId: string, data?: z.infer<t
             if (programme.paymentRequired && parseFloat(programme.amount || "0") > 0) {
                  // Update details if provided (and refresh PENDING_PAYMENT tier/amount against current programme tiers)
                  if (data) {
-                     const validData = RegistrationSchema.parse(data)
+                     const validData = RegistrationSchema.partial().parse(data)
                      const pendingUpdate: Record<string, any> = {
                          name: validData.name || undefined,
                          phone: validData.phone || undefined,
@@ -1385,18 +1385,17 @@ export async function registerForProgramme(programmeId: string, data?: z.infer<t
                      }
                      if (existingReg.status === 'PENDING_PAYMENT') {
                          const recalcEntitlement = await getEntitlementForProgramme(programme, session, normalizedEmail)
+                         const allTiers = flattenPricingTiers(programme.pricingTiers)
                          const reqTier = validData.registrationTier || null
-                         const selectedCorp = reqTier
-                             ? getCorporateTiers(programme.pricingTiers).find(t => t.label === reqTier)
-                             : undefined
-                         const recalculatedBase = selectedCorp && selectedCorp.amount >= recalcEntitlement.baseAmount
-                             ? selectedCorp.amount
-                             : recalcEntitlement.baseAmount
-                         const recalculatedTierLabel = selectedCorp && selectedCorp.amount >= recalcEntitlement.baseAmount
-                             ? selectedCorp.label
-                             : recalcEntitlement.tierLabel
+                         const requestedAmount = reqTier && allTiers[reqTier] != null ? Number(allTiers[reqTier]) : null
+                         const validRequested = requestedAmount !== null && requestedAmount >= recalcEntitlement.baseAmount
+                         const recalculatedBase = validRequested ? requestedAmount : recalcEntitlement.baseAmount
+                         const recalculatedTierLabel = validRequested ? reqTier : recalcEntitlement.tierLabel
                          pendingUpdate.lockedAmount = recalculatedBase.toString()
                          pendingUpdate.registrationTier = recalculatedTierLabel
+                         if (validRequested && reqTier && isCorporateLabel(reqTier)) {
+                             pendingUpdate.isCorporateRegistration = true
+                         }
                      }
                      await db.update(programmeRegistrations).set(pendingUpdate).where(eq(programmeRegistrations.id, existingReg.id))
                  }
@@ -1431,33 +1430,23 @@ export async function registerForProgramme(programmeId: string, data?: z.infer<t
         let baseAmount = entitlement.baseAmount
         let tierLabel = entitlement.tierLabel
 
-        // A manually selected CORPORATE / chapter tier overrides the individual entitlement,
-        // but never below the user's own required category fee.
+        // Allow selecting any configured pricing tier provided it is at least the user's
+        // computed minimum entitlement fee (so users cannot self-select a cheaper tier).
+        const allTiers = flattenPricingTiers(programme.pricingTiers)
         const requestedTier = data?.registrationTier || null
-        const selectedCorporate = requestedTier
-            ? getCorporateTiers(programme.pricingTiers).find(t => t.label === requestedTier)
-            : undefined
+        const requestedAmount = requestedTier && allTiers[requestedTier] != null ? Number(allTiers[requestedTier]) : null
 
-        if (selectedCorporate) {
-            if (selectedCorporate.amount < entitlement.baseAmount) {
-                return { success: false, error: `The corporate tier must be at least your category fee of ₦${entitlement.baseAmount}.` }
+        if (requestedTier && requestedAmount !== null) {
+            if (requestedAmount < entitlement.baseAmount) {
+                return {
+                    success: false,
+                    error: `Minimum fee for your category (${entitlement.tierLabel || "Member"}) is ₦${entitlement.baseAmount}.`
+                }
             }
-            baseAmount = selectedCorporate.amount
-            tierLabel = selectedCorporate.label
+            baseAmount = requestedAmount
+            tierLabel = requestedTier
         } else if (requestedTier) {
-            // Enforce entitlement — users cannot self-select a cheaper tier than the one assigned to them.
-            if (entitlement.kind === 'guest') {
-                if (!entitlement.tierLabel) {
-                    return { success: false, error: "Tiered pricing is reserved for registered members. The standard fee applies to guests." }
-                }
-                if (requestedTier !== entitlement.tierLabel) {
-                    return { success: false, error: `Guests are assigned the minimum (${entitlement.tierLabel}) fee of ₦${entitlement.baseAmount}. You may pay more if you wish.` }
-                }
-            } else if (entitlement.kind === 'member-standard') {
-                return { success: false, error: "Tiered pricing does not apply to your membership level. The standard fee applies." }
-            } else if (entitlement.tierLabel && requestedTier !== entitlement.tierLabel) {
-                return { success: false, error: `Your tier is locked to ${entitlement.tierLabel} (₦${entitlement.baseAmount}). Contact the admin if your level is incorrect.` }
-            }
+            return { success: false, error: "Invalid registration tier selected." }
         }
 
         let userAmount = data?.amountPaid ? parseFloat(data.amountPaid.toString()) : baseAmount;
@@ -1497,7 +1486,7 @@ export async function registerForProgramme(programmeId: string, data?: z.infer<t
                 return applied.deadline
             })(),
             // Corporate / entity registration fields
-            isCorporateRegistration: data?.isCorporateRegistration || false,
+            isCorporateRegistration: data?.isCorporateRegistration || (tierLabel ? isCorporateLabel(tierLabel) : false),
             corporateEntityName: data?.corporateEntityName || null,
             delegationSize: data?.delegationSize ? parseInt(data.delegationSize.toString()) : 1,
         }

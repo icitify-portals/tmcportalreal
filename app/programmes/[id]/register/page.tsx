@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Textarea } from "@/components/ui/textarea"
 import { registerForProgramme, initializeProgrammeRegistrationPayment, getProgrammeDetailsAction, checkEmailEntitlementAction } from "@/lib/actions/programmes"
-import { getCorporateTiers } from "@/lib/programme-tiers"
+import { flattenPricingTiers, getCorporateTiers, isCorporateLabel } from "@/lib/programme-tiers"
 import { payWithWalletBalance } from "@/lib/actions/wallet"
 import { toast } from "sonner"
 import { Loader2, UserPlus, CreditCard, ShieldCheck, CheckCircle2, AlertCircle } from "lucide-react"
@@ -40,7 +40,7 @@ function RegistrationContent() {
     const [isLoading, setIsLoading] = useState(true)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [paymentMethod, setPaymentMethod] = useState<"PAYSTACK" | "WALLET">("PAYSTACK")
-    const [corporateTier, setCorporateTier] = useState("")
+    const [selectedTierLabel, setSelectedTierLabel] = useState("")
     const [existingReg, setExistingReg] = useState<any>(null)
     
     const [formData, setFormData] = useState({
@@ -77,6 +77,41 @@ function RegistrationContent() {
         }
         loadProgramme()
     }, [programmeId])
+
+    const allPricingTiers = programme?.pricingTiers
+        ? Object.entries(flattenPricingTiers(programme.pricingTiers)).map(([label, amount]) => ({ label, amount: Number(amount) }))
+        : []
+
+    useEffect(() => {
+        if (!programme || allPricingTiers.length === 0) return
+        const entLabel = (programme.entitlement as any)?.tierLabel as string | null | undefined
+        const entMin = Number((programme.entitlement as any)?.baseAmount || 0)
+        const currentSelected = allPricingTiers.find((t) => t.label === selectedTierLabel)
+
+        let nextTier = ""
+        if (entLabel && allPricingTiers.some((t) => t.label === entLabel)) {
+            nextTier = entLabel
+        } else if (currentSelected && currentSelected.amount >= entMin) {
+            nextTier = currentSelected.label
+        } else {
+            const memberMatch = allPricingTiers.find((t) => t.label.toLowerCase().includes("member") && t.amount >= entMin)
+            const firstEligible = allPricingTiers.find((t) => t.amount >= entMin) || allPricingTiers[0]
+            nextTier = (memberMatch || firstEligible).label
+        }
+
+        if (nextTier && nextTier !== selectedTierLabel) {
+            setSelectedTierLabel(nextTier)
+            const picked = allPricingTiers.find((t) => t.label === nextTier)
+            if (picked) {
+                setFormData((prev) => ({
+                    ...prev,
+                    registrationTier: picked.label,
+                    amountPaid: picked.amount.toString(),
+                }))
+            }
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [programme?.id, programme?.pricingTiers, (programme?.entitlement as any)?.tierLabel, (programme?.entitlement as any)?.baseAmount])
 
     useEffect(() => {
         if (session?.user) {
@@ -128,11 +163,11 @@ function RegistrationContent() {
         try {
             // Enforce minimum payment on frontend too — the server computes the locked entitlement price
             const entitlementMeta = programme.entitlement as { kind: string; baseAmount: number; tierLabel: string | null } | undefined
-            const corpTiers = programme.pricingTiers ? getCorporateTiers(programme.pricingTiers) : []
-            const selectedCorporate = corpTiers.find((t) => t.label === corporateTier)
-            const baseAmount = selectedCorporate
-                ? selectedCorporate.amount
-                : entitlementMeta && Number(entitlementMeta.baseAmount) > 0 ? Number(entitlementMeta.baseAmount) : effectiveNormal
+            const selectedTierObj = allPricingTiers.find((t) => t.label === selectedTierLabel)
+            const entitlementFloor = entitlementMeta && Number(entitlementMeta.baseAmount) > 0 ? Number(entitlementMeta.baseAmount) : effectiveNormal
+            const baseAmount = selectedTierObj
+                ? Math.max(selectedTierObj.amount, entitlementFloor)
+                : entitlementFloor
 
             const userAmount = formData.amountPaid ? parseFloat(formData.amountPaid) : baseAmount;
             
@@ -142,7 +177,12 @@ function RegistrationContent() {
                 return;
             }
 
-            const submissionData = { ...formData, amountPaid: userAmount, registrationTier: selectedCorporate ? selectedCorporate.label : entitlementMeta?.tierLabel || "" };
+            const submissionData = {
+                ...formData,
+                amountPaid: userAmount,
+                registrationTier: selectedTierObj ? selectedTierObj.label : (entitlementMeta?.tierLabel || ""),
+                isCorporateRegistration: selectedTierObj ? isCorporateLabel(selectedTierObj.label) : false,
+            };
 
             const result = await registerForProgramme(programmeId, submissionData, waiverCode || undefined)
 
@@ -222,8 +262,8 @@ function RegistrationContent() {
     const entitlementMeta = programme.entitlement as { kind: string; baseAmount: number; tierLabel: string | null } | undefined
     const resolvedBase = entitlementMeta && Number(entitlementMeta.baseAmount) > 0 ? Number(entitlementMeta.baseAmount) : effectiveNormal
     const corporateTiers = programme.pricingTiers ? getCorporateTiers(programme.pricingTiers) : []
-    const selectedCorporate = corporateTiers.find((t) => t.label === corporateTier)
-    const displayBase = selectedCorporate ? selectedCorporate.amount : resolvedBase
+    const selectedTier = allPricingTiers.find((t) => t.label === selectedTierLabel)
+    const displayBase = selectedTier ? Math.max(selectedTier.amount, resolvedBase) : resolvedBase
 
     return (
         <div className="max-w-2xl mx-auto px-4 py-4 sm:py-8">
@@ -504,46 +544,80 @@ function RegistrationContent() {
                         {(() => {
                             const entitlement = entitlementMeta
                             const baseAmount = displayBase
-
-                            const categoryInfo = entitlement ? ({
-                                "member-tier": { label: entitlement.tierLabel || "Member Category", note: "Your price is locked to your membership category." },
-                                "guest": { label: entitlement.tierLabel || "Guest (Non-Member)", note: entitlement.tierLabel ? "Minimum fee for guests. You may pay more." : "Tiered pricing is reserved for registered members — the standard fee applies." },
-                                "member-standard": null as null
-                            } as Record<string, { label: string; note: string } | null>)[entitlement.kind] : null
+                            const minAllowed = entitlement?.kind === "member-tier" ? Number(entitlement.baseAmount || 0) : 0
 
                             return (
                                 <>
-                                    {entitlement && categoryInfo && !selectedCorporate && (
+                                    {!isWaiverActive && programme?.paymentRequired && allPricingTiers.length > 0 && (
+                                        <div className="space-y-2.5 pt-4 border-t">
+                                            <div className="flex items-center justify-between gap-2">
+                                                <Label className="text-xs font-bold uppercase text-gray-500">Select Payment Tier / Registration Category</Label>
+                                                {entitlement?.tierLabel && (
+                                                    <span className="text-[11px] font-semibold text-emerald-700">Detected: {entitlement.tierLabel}</span>
+                                                )}
+                                            </div>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                                {allPricingTiers.map((tier) => {
+                                                    const isSelected = selectedTierLabel === tier.label
+                                                    const isDisabled = minAllowed > 0 && tier.amount < minAllowed
+                                                    return (
+                                                        <button
+                                                            key={tier.label}
+                                                            type="button"
+                                                            disabled={isDisabled}
+                                                            onClick={() => {
+                                                                setSelectedTierLabel(tier.label)
+                                                                setFormData((prev) => ({
+                                                                    ...prev,
+                                                                    registrationTier: tier.label,
+                                                                    amountPaid: tier.amount.toString(),
+                                                                }))
+                                                            }}
+                                                            className={`text-left p-3 rounded-lg border transition-all flex items-center justify-between gap-2 ${
+                                                                isSelected
+                                                                    ? "border-green-600 bg-green-50 ring-2 ring-green-600/20"
+                                                                    : isDisabled
+                                                                    ? "border-gray-200 bg-gray-100 opacity-55 cursor-not-allowed"
+                                                                    : "border-gray-200 bg-white hover:border-green-400 hover:bg-green-50/30"
+                                                            }`}
+                                                        >
+                                                            <div>
+                                                                <p className={`text-sm font-bold ${isSelected ? "text-green-900" : "text-gray-800"}`}>{tier.label}</p>
+                                                                {isCorporateLabel(tier.label) && (
+                                                                    <p className="text-[10px] text-emerald-700 font-medium">Chapter / Entity block</p>
+                                                                )}
+                                                                {isDisabled && (
+                                                                    <p className="text-[10px] text-gray-500">Below your category minimum</p>
+                                                                )}
+                                                            </div>
+                                                            <p className={`text-base font-extrabold whitespace-nowrap ${isSelected ? "text-green-800" : "text-gray-900"}`}>
+                                                                ₦{tier.amount.toLocaleString()}
+                                                            </p>
+                                                        </button>
+                                                    )
+                                                })}
+                                            </div>
+                                            {corporateTiers.length > 0 && (
+                                                <p className="text-[10px] text-gray-500 font-medium">
+                                                    Registering a whole chapter or delegation? You can select a Corporate tier above or use the{" "}
+                                                    <a className="text-green-700 font-bold underline" href={`/programmes/${programmeId}/corporate-register`}>
+                                                        dedicated corporate registration page
+                                                    </a>.
+                                                </p>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {allPricingTiers.length === 0 && entitlement && entitlement.tierLabel && (
                                         <div className="space-y-2 pt-4 border-t">
                                             <Label className="text-xs font-bold uppercase text-gray-500">Your Registration Category</Label>
                                             <div className="rounded-lg border border-green-200 bg-green-50/40 p-3 flex items-center justify-between gap-2">
                                                 <div>
-                                                    <p className="text-sm font-bold text-green-900">{categoryInfo.label}</p>
-                                                    <p className="text-[11px] text-green-700">{categoryInfo.note}</p>
+                                                    <p className="text-sm font-bold text-green-900">{entitlement.tierLabel}</p>
+                                                    <p className="text-[11px] text-green-700">Your price is locked to your membership category.</p>
                                                 </div>
                                                 <p className="text-base font-extrabold text-green-800 whitespace-nowrap">₦{baseAmount.toLocaleString()}</p>
                                             </div>
-                                        </div>
-                                    )}
-
-                                    {!isWaiverActive && programme?.paymentRequired && corporateTiers.length > 0 && (
-                                        <div className="space-y-2 pt-4 border-t">
-                                            <Label className="text-xs font-bold uppercase text-gray-500">Corporate / Chapter Registration (Optional)</Label>
-                                            <Select
-                                                value={corporateTier || "none"}
-                                                onValueChange={(v) => setCorporateTier(v === "none" ? "" : v)}
-                                            >
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Register as an individual (my category)" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="none">Individual — my category ({entitlementMeta?.tierLabel ? `${entitlementMeta.tierLabel} ` : ""}₦{resolvedBase.toLocaleString()})</SelectItem>
-                                                    {corporateTiers.map((t) => (
-                                                        <SelectItem key={t.label} value={t.label}>{t.label} — ₦{t.amount.toLocaleString()}</SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                            <p className="text-[10px] text-gray-500 font-medium">Use this only if you are registering on behalf of a chapter, branch, LGA or state chapter. For a full entity registration (chapter name + delegation size), use the <a className="text-green-700 font-bold underline" href={`/programmes/${programmeId}/corporate-register`}>corporate registration page</a>.</p>
                                         </div>
                                     )}
 
@@ -560,7 +634,7 @@ function RegistrationContent() {
                                                 required
                                                 className="border-green-300 focus-visible:ring-green-500 bg-green-50/20"
                                             />
-                                            <p className="text-[10px] text-gray-500 font-medium">The minimum at registration is <strong className="text-black">₦{baseAmount.toLocaleString()}</strong>{selectedCorporate ? ` (${selectedCorporate.label})` : " for your category"}. You are free to pay more.</p>
+                                            <p className="text-[10px] text-gray-500 font-medium">The minimum at registration is <strong className="text-black">₦{baseAmount.toLocaleString()}</strong>{selectedTier ? ` (${selectedTier.label})` : " for your category"}. You are free to pay more.</p>
                                         </div>
                                     )}
                                     
@@ -604,7 +678,7 @@ function RegistrationContent() {
                                     <UserPlus className="mr-2 h-5 w-5" />
                                 )}
                                 {isWaiverActive ? "Complete Registration (Free)" :
-                                    programme.paymentRequired && displayBase > 0 ? `Proceed to Payment (₦${displayBase.toLocaleString()}${selectedCorporate ? ` • ${selectedCorporate.label}` : entitlementMeta?.tierLabel ? ` • ${entitlementMeta.tierLabel}` : isEarlyBird ? " Early Bird" : ""})` :
+                                    programme.paymentRequired && displayBase > 0 ? `Proceed to Payment (₦${displayBase.toLocaleString()}${selectedTier ? ` • ${selectedTier.label}` : entitlementMeta?.tierLabel ? ` • ${entitlementMeta.tierLabel}` : isEarlyBird ? " Early Bird" : ""})` :
                                         "Confirm Registration"}
                             </Button>
                         </div>
