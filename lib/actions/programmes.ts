@@ -337,8 +337,8 @@ const ReportSchema = z.object({
 })
 
 const RegistrationSchema = z.object({
-    name: z.string().min(1, "Name is required"),
-    email: z.string().email("Invalid email"),
+    name: z.string().optional(),
+    email: z.string().optional(),
     phone: z.string().optional(),
     gender: z.string().optional(),
     address: z.string().optional(),
@@ -349,7 +349,12 @@ const RegistrationSchema = z.object({
     registrationTier: z.string().optional(),
     amountPaid: z.coerce.number().optional(),
     isCorporateRegistration: z.boolean().optional(),
+    corporateRegistration: z.boolean().optional(),
     corporateEntityName: z.string().optional(),
+    entityName: z.string().optional(),
+    contactName: z.string().optional(),
+    contactEmail: z.string().optional(),
+    contactPhone: z.string().optional(),
     delegationSize: z.coerce.number().optional(),
 })
 
@@ -1316,19 +1321,28 @@ export async function registerForProgramme(programmeId: string, data?: z.infer<t
 
         // Check for existing registration
         let existingReg: { id: string, status: string | null, email: string } | null = null;
-        const normalizedEmail = data?.email?.trim().toLowerCase() || session?.user?.email?.trim().toLowerCase();
+        const normalizedEmail = (data?.email?.trim() || (data as any)?.contactEmail?.trim() || session?.user?.email?.trim() || "")?.toLowerCase();
         const emailVariants: string[] = []
         if (normalizedEmail) {
             emailVariants.push(normalizedEmail)
             if (normalizedEmail.includes("bamgbala")) emailVariants.push(normalizedEmail.replace(/bamgbala/g, "bangbala"))
             if (normalizedEmail.includes("bangbala")) emailVariants.push(normalizedEmail.replace(/bangbala/g, "bamgbala"))
         }
+
+        const isCorp = Boolean(
+            data?.isCorporateRegistration ||
+            (data as any)?.corporateRegistration ||
+            (data?.registrationTier ? isCorporateLabel(data.registrationTier) : false)
+        );
+        const corpName = data?.corporateEntityName?.trim() || (data as any)?.entityName?.trim() || null;
         
         if (session?.user) {
             const results = await db.select({ id: programmeRegistrations.id, status: programmeRegistrations.status, email: programmeRegistrations.email }).from(programmeRegistrations)
                 .where(and(
                     eq(programmeRegistrations.programmeId, programmeId),
-                    eq(programmeRegistrations.userId, session.user.id)
+                    eq(programmeRegistrations.userId, session.user.id),
+                    eq(programmeRegistrations.isCorporateRegistration, isCorp),
+                    ...(isCorp && corpName ? [eq(programmeRegistrations.corporateEntityName, corpName)] : [])
                 )).limit(1)
             if (results.length > 0) existingReg = results[0]
         } 
@@ -1338,7 +1352,9 @@ export async function registerForProgramme(programmeId: string, data?: z.infer<t
             const results = await db.select({ id: programmeRegistrations.id, status: programmeRegistrations.status, email: programmeRegistrations.email }).from(programmeRegistrations)
                 .where(and(
                     eq(programmeRegistrations.programmeId, programmeId),
-                    or(...emailVariants.map(e => sql`LOWER(${programmeRegistrations.email}) = ${e}`))
+                    or(...emailVariants.map(e => sql`LOWER(${programmeRegistrations.email}) = ${e}`)),
+                    eq(programmeRegistrations.isCorporateRegistration, isCorp),
+                    ...(isCorp && corpName ? [eq(programmeRegistrations.corporateEntityName, corpName)] : [])
                 )).limit(1)
             if (results.length > 0) existingReg = results[0]
         }
@@ -1437,7 +1453,9 @@ export async function registerForProgramme(programmeId: string, data?: z.infer<t
         const requestedAmount = requestedTier && allTiers[requestedTier] != null ? Number(allTiers[requestedTier]) : null
 
         if (requestedTier && requestedAmount !== null) {
-            if (requestedAmount < entitlement.baseAmount) {
+            // For individual tiers, enforce entitlement minimum.
+            // For corporate tiers (isCorporateLabel), allow the exact corporate fee.
+            if (!isCorporateLabel(requestedTier) && requestedAmount < entitlement.baseAmount) {
                 return {
                     success: false,
                     error: `Minimum fee for your category (${entitlement.tierLabel || "Member"}) is ₦${entitlement.baseAmount}.`
@@ -1486,8 +1504,8 @@ export async function registerForProgramme(programmeId: string, data?: z.infer<t
                 return applied.deadline
             })(),
             // Corporate / entity registration fields
-            isCorporateRegistration: data?.isCorporateRegistration || (tierLabel ? isCorporateLabel(tierLabel) : false),
-            corporateEntityName: data?.corporateEntityName || null,
+            isCorporateRegistration: isCorp,
+            corporateEntityName: corpName,
             delegationSize: data?.delegationSize ? parseInt(data.delegationSize.toString()) : 1,
         }
 
@@ -1565,9 +1583,9 @@ export async function registerForProgramme(programmeId: string, data?: z.infer<t
                 ...registrationData,
                 userId: effectiveUserId,
                 memberId: memberData?.id || null,
-                name: data?.name?.trim() || (session?.user as any)?.name || memberData?.userName || "Unknown",
-                email: normalizedEmail,
-                phone: data?.phone?.trim() || memberData?.userPhone || (session?.user as any)?.phone || null,
+                name: data?.name?.trim() || (data as any)?.contactName?.trim() || corpName || (session?.user as any)?.name || memberData?.userName || "Participant",
+                email: normalizedEmail || (data as any)?.contactEmail?.trim()?.toLowerCase() || session?.user?.email?.trim()?.toLowerCase(),
+                phone: data?.phone?.trim() || (data as any)?.contactPhone?.trim() || memberData?.userPhone || (session?.user as any)?.phone || null,
                 gender: (data?.gender as any) || (memberData?.gender as any) || 'MALE',
                 address: data?.address?.trim() || memberData?.address || null,
                 country: data?.country?.trim() || memberData?.userCountry || "Nigeria",
@@ -1576,19 +1594,26 @@ export async function registerForProgramme(programmeId: string, data?: z.infer<t
                 branch: resolvedBranch
             }
         } else if (data) {
-            // Guest registration
-            const validData = RegistrationSchema.parse(data)
+            // Guest or representative registration
+            const effectiveName = data.name?.trim() || (data as any).contactName?.trim() || corpName || "Participant";
+            const effectiveEmail = (data.email?.trim() || (data as any).contactEmail?.trim() || normalizedEmail || "").toLowerCase();
+            const effectivePhone = data.phone?.trim() || (data as any).contactPhone?.trim() || null;
+
+            if (!effectiveName || !effectiveEmail) {
+                return { success: false, error: "Name and email are required" }
+            }
+
             registrationData = {
                 ...registrationData,
-                name: validData.name,
-                email: validData.email,
-                phone: validData.phone,
-                gender: validData.gender,
-                address: validData.address,
-                country: validData.country || "Nigeria",
-                state: validData.state || null,
-                lga: validData.lga || null,
-                branch: validData.branch || null
+                name: effectiveName,
+                email: effectiveEmail,
+                phone: effectivePhone,
+                gender: data.gender || "MALE",
+                address: data.address || null,
+                country: data.country || "Nigeria",
+                state: data.state || null,
+                lga: data.lga || null,
+                branch: data.branch || null
             }
         } else {
             return { success: false, error: "Registration data required for guests" }

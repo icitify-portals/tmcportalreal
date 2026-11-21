@@ -61,6 +61,34 @@ export function getCorporateTiers(pricingTiers: unknown): { label: string; amoun
         .map(([label, amount]) => ({ label, amount }))
 }
 
+export function matchCorporateTierForLevel(
+    corporateTiers: { label: string; amount: number }[],
+    officialLevel?: string | null
+): { label: string; amount: number } | null {
+    if (!corporateTiers || corporateTiers.length === 0) return null
+    const lvl = (officialLevel || "").toUpperCase()
+    if (lvl === "STATE") {
+        const found = corporateTiers.find((t) => {
+            const n = norm(t.label)
+            return n.includes("state")
+        })
+        if (found) return found
+    } else if (lvl === "LOCAL_GOVERNMENT" || lvl === "LGA") {
+        const found = corporateTiers.find((t) => {
+            const n = norm(t.label)
+            return n.includes("local government") || n.includes("lg") || n.includes("lga")
+        })
+        if (found) return found
+    } else if (lvl === "BRANCH") {
+        const found = corporateTiers.find((t) => {
+            const n = norm(t.label)
+            return n.includes("branch")
+        })
+        if (found) return found
+    }
+    return corporateTiers[0] || null
+}
+
 export interface EntitlementInput {
     pricingTiers: unknown
     amount: number | string | null

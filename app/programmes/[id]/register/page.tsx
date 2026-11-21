@@ -188,8 +188,8 @@ function RegistrationContent() {
 
             if (result.success) {
                 if (result.isWaiver) {
-                    toast.success("Registration successful! Offline payment verified.")
-                    router.push(`/dashboard/member/programmes`) // Or a success page
+                    toast.success("Registration successful! Priority access granted.")
+                    router.push(`/programmes/registrations/${result.registrationId}/slip`)
                 } else if (result.paymentRequired) {
                     const payAmount = userAmount;
                     if (session && paymentMethod === "WALLET") {
@@ -197,7 +197,7 @@ function RegistrationContent() {
                         const payResult = await payWithWalletBalance(result.registrationId!, payAmount)
                         if (payResult.success) {
                             toast.success("Wallet payment successful")
-                            router.push(`/dashboard/member/programmes`)
+                            router.push(`/programmes/registrations/${result.registrationId}/slip`)
                         } else {
                             toast.error(payResult.error || "Wallet payment failed")
                         }
@@ -212,7 +212,7 @@ function RegistrationContent() {
                     }
                 } else {
                     toast.success("Successfully registered for programme")
-                    router.push(`/dashboard/member/programmes`)
+                    router.push(`/programmes/registrations/${result.registrationId}/slip`)
                 }
             } else if (result.registrationId) {
                 if (result.status === 'PARTIALLY_PAID') {
